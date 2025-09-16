@@ -1,0 +1,11 @@
+one:
+  name: Launch Event
+  starts_on: 2025-10-01
+  ends_on: 2025-10-02
+  location: Main Hall
+
+two:
+  name: Awards Night
+  starts_on: 2025-11-15
+  ends_on: 2025-11-15
+  location: Ballroom

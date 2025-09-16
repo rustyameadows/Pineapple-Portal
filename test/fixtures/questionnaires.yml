@@ -1,0 +1,11 @@
+checklist:
+  event: one
+  title: Kickoff Checklist
+  description: Ensure all launch-day tasks are ready.
+  is_template: false
+
+survey_template:
+  event: one
+  title: Post-Event Survey
+  description: Gather attendee feedback.
+  is_template: true

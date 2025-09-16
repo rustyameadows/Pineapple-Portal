@@ -3,8 +3,8 @@ class Document < ApplicationRecord
   has_many :attachments, dependent: :destroy
 
   before_validation :assign_defaults, on: :create
+  before_create :demote_existing_latest
   before_update :prevent_file_metadata_change
-  after_commit :demote_previous_versions, on: :create
 
   validates :title, :storage_uri, :checksum, :content_type, presence: true
   validates :size_bytes, numericality: { greater_than: 0 }
@@ -39,11 +39,9 @@ class Document < ApplicationRecord
     throw :abort
   end
 
-  def demote_previous_versions
-    return unless is_latest?
+  def demote_existing_latest
+    return if logical_id.blank?
 
-    self.class.where.not(id: id)
-              .where(logical_id: logical_id, is_latest: true)
-              .update_all(is_latest: false)
+    self.class.where(logical_id: logical_id, is_latest: true).update_all(is_latest: false)
   end
 end

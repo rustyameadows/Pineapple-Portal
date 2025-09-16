@@ -1,0 +1,14 @@
+first:
+  questionnaire: checklist
+  event: one
+  prompt: Confirm venue booking.
+  help_text: Include reservation details.
+  response_type: text
+  position: 1
+
+second:
+  questionnaire: survey_template
+  event: one
+  prompt: How satisfied were attendees?
+  response_type: choice
+  position: 1

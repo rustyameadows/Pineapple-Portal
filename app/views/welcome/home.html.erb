@@ -1,6 +1,6 @@
-<section class="prose">
+<section>
   <h1>Pineapple Portal</h1>
-  <p class="lead">Welcome aboard! This landing page confirms the app is wired to PostgreSQL.</p>
+  <p>Welcome aboard! This landing page confirms the app is wired to PostgreSQL.</p>
 
   <% if @users.any? %>
     <h2>Sample Users</h2>
@@ -17,23 +17,23 @@
   <% end %>
 
   <h2>Add a User</h2>
-  <%= form_with model: @user, url: users_path, class: "stack" do |form| %>
-    <div>
-      <%= form.label :name %>
+  <%= form_with model: @user, url: users_path do |form| %>
+    <p>
+      <%= form.label :name %><br>
       <%= form.text_field :name, required: true %>
-    </div>
-    <div>
-      <%= form.label :email %>
+    </p>
+    <p>
+      <%= form.label :email %><br>
       <%= form.email_field :email, required: true %>
-    </div>
-    <div>
-      <%= form.label :password %>
+    </p>
+    <p>
+      <%= form.label :password %><br>
       <%= form.password_field :password, required: true %>
-    </div>
-    <div>
-      <%= form.label :password_confirmation %>
+    </p>
+    <p>
+      <%= form.label :password_confirmation %><br>
       <%= form.password_field :password_confirmation, required: true %>
-    </div>
-    <%= form.submit "Create User" %>
+    </p>
+    <p><%= form.submit "Create User" %></p>
   <% end %>
 </section>

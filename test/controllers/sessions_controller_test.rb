@@ -14,14 +14,14 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_url
     follow_redirect!
-    assert_select "p.flash.notice", text: /Welcome back/
+    assert_select "div.flash-notice", text: /Welcome back/
   end
 
   test "renders errors on invalid login" do
     post login_url, params: { email: "missing@example.com", password: "bad" }
 
     assert_response :unprocessable_content
-    assert_select "p.flash.alert", text: /Invalid email or password/
+    assert_select "div.flash-alert", text: /Invalid email or password/
   end
 
   test "logs out" do
@@ -32,6 +32,6 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to login_url
     follow_redirect!
-    assert_select "p.flash.notice", text: /Logged out/
+    assert_select "div.flash-notice", text: /Logged out/
   end
 end

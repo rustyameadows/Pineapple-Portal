@@ -25,7 +25,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     post users_url, params: { user: { name: "", email: "", password: "", password_confirmation: "" } }
 
     assert_response :unprocessable_content
-    assert_select "p.flash.alert", text: /can't be blank/
+    assert_select "div.flash-alert", text: /can't be blank/
   end
 
   test "first user can sign up without prior login" do

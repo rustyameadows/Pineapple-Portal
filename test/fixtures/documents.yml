@@ -1,0 +1,12 @@
+contract_v1:
+  event: one
+  title: Production Contract
+  storage_uri: documents/contract-v1.pdf
+  checksum: contract-checksum-v1
+  size_bytes: 2048
+  logical_id: 11111111-1111-1111-1111-111111111111
+  version: 1
+  is_latest: true
+  content_type: application/pdf
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
