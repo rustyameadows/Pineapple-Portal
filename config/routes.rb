@@ -16,7 +16,10 @@ Rails.application.routes.draw do
       resources :questions, only: %i[new create edit update destroy]
     end
 
-    resources :documents, only: %i[index new create]
+    resources :documents, only: %i[index new create] do
+      collection { post :presign, to: "document_uploads#create" }
+      member { get :download }
+    end
   end
 
   get "/questionnaire_templates", to: "questionnaires#templates", as: :questionnaire_templates

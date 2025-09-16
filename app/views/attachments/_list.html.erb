@@ -7,7 +7,11 @@
           - <%= attachment.notes %>
         <% end %>
         <% if attachment.document.present? %>
-          : <%= link_to attachment.document.title, document_path(attachment.document) %> (v<%= attachment.document.version %>)
+          :
+          <%= link_to attachment.document.title, document_path(attachment.document) %>
+          (v<%= attachment.document.version %>)
+          |
+          <%= link_to "Download", download_event_document_path(attachment.document.event, attachment.document) %>
         <% elsif attachment.document_logical_id.present? %>
           : logical ID <%= attachment.document_logical_id %>
         <% end %>

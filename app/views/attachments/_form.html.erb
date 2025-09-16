@@ -1,17 +1,49 @@
-<%= form_with url: attachments_path do |form| %>
+<%
+  event_for_entity = case entity
+                     when Event then entity
+                     when Questionnaire then entity.event
+                     when Question then entity.event
+                     else
+                       nil
+                     end
+  presign_url = event_for_entity ? presign_event_documents_path(event_for_entity) : nil
+%>
+
+<%= form_with url: attachments_path, data: (presign_url ? { attachment_upload_form: true, presign_url: presign_url } : {}) do |form| %>
   <%= form.hidden_field :entity_type, value: entity.class.name %>
   <%= form.hidden_field :entity_id, value: entity.id %>
 
-  <div>
-    <%= form.label :document_id, "Document version" %><br>
-    <%= form.collection_select :document_id, documents, :id, ->(doc) { "#{doc.title} (v#{doc.version})" }, include_blank: true %>
-  </div>
+  <fieldset>
+    <legend>Link existing document</legend>
+    <div>
+      <%= form.label :document_id, "Document version" %><br>
+      <%= form.collection_select :document_id, documents, :id, ->(doc) { "#{doc.title} (v#{doc.version})" }, include_blank: true %>
+    </div>
 
-  <div>
-    <%= form.label :document_logical_id, "Logical ID (optional)" %><br>
-    <%= form.text_field :document_logical_id %>
-    <p>Provide this to always reference the latest version. Leave blank if selecting a specific version above.</p>
-  </div>
+    <div>
+      <%= form.label :document_logical_id, "Logical ID (optional)" %><br>
+      <%= form.text_field :document_logical_id %>
+      <p>Provide this to always reference the latest version. Leave blank if selecting a specific version above.</p>
+    </div>
+  </fieldset>
+
+  <% if presign_url %>
+    <fieldset>
+      <legend>or upload a file</legend>
+      <div>
+        <label for="attachment_file_<%= entity.id %>">File</label><br>
+        <input type="file" id="attachment_file_<%= entity.id %>" data-attachment-upload-target="file">
+      </div>
+      <p data-attachment-upload-target="status">Optional: upload a new file to attach.</p>
+
+      <%= form.hidden_field :file_upload_title %>
+      <%= form.hidden_field :file_upload_storage_uri %>
+      <%= form.hidden_field :file_upload_checksum %>
+      <%= form.hidden_field :file_upload_size_bytes %>
+      <%= form.hidden_field :file_upload_content_type %>
+      <%= form.hidden_field :file_upload_logical_id %>
+    </fieldset>
+  <% end %>
 
   <div>
     <%= form.label :context %><br>

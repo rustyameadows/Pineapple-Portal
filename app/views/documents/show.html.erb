@@ -9,6 +9,45 @@
 <p>Checksum: <code><%= @document.checksum %></code></p>
 
 <p>
+  <%= link_to "Download this version", download_event_document_path(@document.event, @document) %>
+  <% if @document.is_latest? %>
+    (latest)
+  <% else %>
+    | <%= link_to "Download latest version", download_event_document_path(@document.event, @versions.first) %>
+  <% end %>
+</p>
+
+<section>
+  <h2>Version history</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Version</th>
+        <th>Uploaded</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @versions.each do |version| %>
+        <tr>
+          <td>v<%= version.version %></td>
+          <td><%= version.created_at&.to_s(:long) || "—" %></td>
+          <td>
+            <% if version == @document %>
+              Viewing
+            <% else %>
+              <%= link_to "View", document_path(version) %>
+            <% end %>
+            |
+            <%= link_to "Download", download_event_document_path(version.event, version) %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>
+
+<p>
   <%= link_to "Upload new version", new_event_document_path(@document.event, logical_id: @document.logical_id) %> |
   <%= link_to "Edit", edit_document_path(@document) %> |
   <%= button_to "Delete", document_path(@document), method: :delete, data: { confirm: "Delete this document?" } %>
@@ -30,3 +69,84 @@
     <p>No available entities to attach.</p>
   <% end %>
 </section>
+
+<% content_for :scripts do %>
+  <script type="module">
+    const checksumHex = async (file) => {
+      const buffer = await file.arrayBuffer();
+      const digest = await crypto.subtle.digest("SHA-256", buffer);
+      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll("[data-attachment-upload-form]").forEach((form) => {
+        const fileInput = form.querySelector("[data-attachment-upload-target='file']");
+        const statusEl = form.querySelector("[data-attachment-upload-target='status']");
+        const submitButton = form.querySelector("input[type=submit], button[type=submit]");
+        const selectExisting = form.querySelector("select[name='attachment[document_id]']");
+        const csrfToken = document.querySelector("meta[name='csrf-token']")?.content;
+
+        const storageUriInput = form.querySelector("#attachment_file_upload_storage_uri");
+        const checksumInput = form.querySelector("#attachment_file_upload_checksum");
+        const sizeInput = form.querySelector("#attachment_file_upload_size_bytes");
+        const contentTypeInput = form.querySelector("#attachment_file_upload_content_type");
+        const titleInput = form.querySelector("#attachment_file_upload_title");
+        const logicalIdInput = form.querySelector("#attachment_file_upload_logical_id");
+
+        fileInput?.addEventListener("change", async () => {
+          const file = fileInput.files?.[0];
+          if (!file) {
+            if (submitButton) submitButton.disabled = false;
+            if (statusEl) statusEl.textContent = "Optional: upload a new file to attach.";
+            return;
+          }
+
+          if (submitButton) submitButton.disabled = true;
+          if (selectExisting) selectExisting.value = "";
+          if (statusEl) statusEl.textContent = "Preparing upload...";
+
+          try {
+            const response = await fetch(form.dataset.presignUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": csrfToken || ""
+              },
+              body: JSON.stringify({ filename: file.name, content_type: file.type || "application/octet-stream" })
+            });
+
+            if (!response.ok) throw new Error("Could not prepare upload");
+
+            const data = await response.json();
+
+            if (statusEl) statusEl.textContent = "Uploading file...";
+
+            const uploadResponse = await fetch(data.upload_url, {
+              method: "PUT",
+              headers: { "Content-Type": data.content_type },
+              body: file
+            });
+
+            if (!uploadResponse.ok) throw new Error("Upload failed");
+
+            const checksum = await checksumHex(file);
+
+            if (storageUriInput) storageUriInput.value = data.storage_uri;
+            if (checksumInput) checksumInput.value = checksum;
+            if (sizeInput) sizeInput.value = file.size;
+            if (contentTypeInput) contentTypeInput.value = data.content_type;
+            if (titleInput) titleInput.value = file.name;
+            if (logicalIdInput) logicalIdInput.value = data.logical_id;
+
+            if (statusEl) statusEl.textContent = "File uploaded. Add notes and click Add Attachment.";
+            if (submitButton) submitButton.disabled = false;
+          } catch (error) {
+            console.error(error);
+            if (statusEl) statusEl.textContent = "Upload failed. Please try again.";
+            if (submitButton) submitButton.disabled = true;
+          }
+        });
+      });
+    });
+  </script>
+<% end %>

@@ -14,6 +14,10 @@ class Document < ApplicationRecord
 
   scope :latest, -> { where(is_latest: true) }
 
+  def self.next_version_for(logical_id)
+    where(logical_id: logical_id).maximum(:version).to_i + 1
+  end
+
   def physical_key
     storage_uri
   end

@@ -1,5 +1,12 @@
 <% form_url = @form_url || (@document.persisted? ? document_path(@document) : event_documents_path(@document.event)) %>
-<%= form_with model: @document, url: form_url do |form| %>
+<%
+  form_options = { model: @document, url: form_url }
+  if @document.new_record?
+    presign_url = presign_event_documents_path(@document.event)
+    form_options[:data] = { document_upload_form: true, presign_url: presign_url }
+  end
+%>
+<%= form_with(**form_options) do |form| %>
   <% if @document.errors.any? %>
     <div class="errors">
       <h2><%= pluralize(@document.errors.count, "error") %> prevented saving:</h2>
@@ -16,31 +23,28 @@
     <%= form.text_field :title %>
   </div>
 
-  <div>
-    <%= form.label :content_type %><br>
-    <%= form.text_field :content_type %>
-  </div>
-
   <% if form.object.new_record? %>
     <div>
-      <%= form.label :size_bytes %><br>
-      <%= form.number_field :size_bytes %>
+      <label for="document_file">File</label><br>
+      <input type="file" id="document_file" data-document-upload-target="file">
     </div>
 
-    <div>
-      <%= form.label :checksum %><br>
-      <%= form.text_field :checksum %>
-    </div>
+    <p data-document-upload-target="status">Select a file to upload to R2.</p>
 
-    <div>
-      <%= form.label :storage_uri, "R2 object key" %><br>
-      <%= form.text_field :storage_uri %>
-    </div>
+    <%= form.hidden_field :storage_uri %>
+    <%= form.hidden_field :checksum %>
+    <%= form.hidden_field :size_bytes %>
+    <%= form.hidden_field :content_type %>
 
     <div>
       <%= form.label :logical_id, "Existing logical ID (optional)" %><br>
       <%= form.text_field :logical_id %>
       <p>If provided, this upload becomes the next version of that document.</p>
+    </div>
+  <% else %>
+    <div>
+      <%= form.label :content_type %><br>
+      <%= form.text_field :content_type %>
     </div>
   <% end %>
 

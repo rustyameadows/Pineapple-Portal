@@ -1,6 +1,7 @@
 class DocumentsController < ApplicationController
   before_action :set_event, only: %i[index new create]
   before_action :set_document, only: %i[show edit update destroy]
+  before_action :set_document_for_download, only: :download
 
   def index
     @documents = @event.documents.order(:title, :version)
@@ -9,6 +10,7 @@ class DocumentsController < ApplicationController
   def show
     @attachments = @document.attachments.includes(:entity).order(:context, :position)
     @available_entities = available_entities_for(@document.event)
+    @versions = Document.where(logical_id: @document.logical_id).order(version: :desc)
   end
 
   def new
@@ -47,6 +49,11 @@ class DocumentsController < ApplicationController
     redirect_to event_documents_path(event), notice: "Document deleted."
   end
 
+  def download
+    storage = R2::Storage.new
+    redirect_to storage.presigned_download_url(key: @document.storage_uri), allow_other_host: true
+  end
+
   private
 
   def set_event
@@ -55,6 +62,11 @@ class DocumentsController < ApplicationController
 
   def set_document
     @document = Document.find(params[:id])
+  end
+
+  def set_document_for_download
+    @event = Event.find(params[:event_id])
+    @document = @event.documents.find(params[:id])
   end
 
   def document_params
