@@ -22,7 +22,7 @@
           <td><%= document.version %></td>
           <td><%= document.is_latest? ? "Yes" : "No" %></td>
           <td>
-            <%= link_to "View", document_path(document) %> |
+            <%= link_to "View", event_document_path(@event, document) %> |
             <%= link_to "Download", download_event_document_path(@event, document) %>
           </td>
         </tr>

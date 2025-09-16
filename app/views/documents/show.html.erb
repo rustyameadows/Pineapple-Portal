@@ -1,6 +1,6 @@
 <h1><%= @document.title %> (v<%= @document.version %>)</h1>
 
-<p>Event: <%= link_to @document.event.name, event_path(@document.event) %></p>
+<p>Event: <%= link_to @event.name, event_path(@event) %></p>
 <p>Logical ID: <%= @document.logical_id %></p>
 <p>Latest version: <%= @document.is_latest? ? "Yes" : "No" %></p>
 <p>Content type: <%= @document.content_type %></p>
@@ -9,11 +9,11 @@
 <p>Checksum: <code><%= @document.checksum %></code></p>
 
 <p>
-  <%= link_to "Download this version", download_event_document_path(@document.event, @document) %>
+  <%= link_to "Download this version", download_event_document_path(@event, @document) %>
   <% if @document.is_latest? %>
     (latest)
   <% else %>
-    | <%= link_to "Download latest version", download_event_document_path(@document.event, @versions.first) %>
+    | <%= link_to "Download latest version", download_event_document_path(@event, @versions.first) %>
   <% end %>
 </p>
 
@@ -36,10 +36,10 @@
             <% if version == @document %>
               Viewing
             <% else %>
-              <%= link_to "View", document_path(version) %>
+              <%= link_to "View", event_document_path(@event, version) %>
             <% end %>
             |
-            <%= link_to "Download", download_event_document_path(version.event, version) %>
+            <%= link_to "Download", download_event_document_path(@event, version) %>
           </td>
         </tr>
       <% end %>
@@ -48,9 +48,9 @@
 </section>
 
 <p>
-  <%= link_to "Upload new version", new_event_document_path(@document.event, logical_id: @document.logical_id) %> |
-  <%= link_to "Edit", edit_document_path(@document) %> |
-  <%= button_to "Delete", document_path(@document), method: :delete, data: { confirm: "Delete this document?" } %>
+  <%= link_to "Upload new version", new_event_document_path(@event, logical_id: @document.logical_id) %> |
+  <%= link_to "Edit", edit_event_document_path(@event, @document) %> |
+  <%= button_to "Delete", event_document_path(@event, @document), method: :delete, data: { confirm: "Delete this document?" } %>
 </p>
 
 <section>

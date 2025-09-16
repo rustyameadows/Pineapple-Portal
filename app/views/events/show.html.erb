@@ -59,7 +59,7 @@
     <ul>
       <% @event.documents.latest.each do |document| %>
         <li>
-          <%= link_to document.title, document_path(document) %>
+          <%= link_to document.title, event_document_path(@event, document) %>
           (v<%= document.version %>)
         </li>
       <% end %>

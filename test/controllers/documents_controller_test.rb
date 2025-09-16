@@ -26,7 +26,7 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to document_url(Document.last)
+    assert_redirected_to event_document_url(@event, Document.last)
   end
 
   test "creates new version" do
@@ -43,7 +43,7 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to document_url(Document.last)
+    assert_redirected_to event_document_url(@event, Document.last)
     assert_equal 2, Document.last.version
   end
 end

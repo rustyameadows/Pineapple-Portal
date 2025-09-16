@@ -8,7 +8,7 @@
         <% end %>
         <% if attachment.document.present? %>
           :
-          <%= link_to attachment.document.title, document_path(attachment.document) %>
+          <%= link_to attachment.document.title, event_document_path(attachment.document.event, attachment.document) %>
           (v<%= attachment.document.version %>)
           |
           <%= link_to "Download", download_event_document_path(attachment.document.event, attachment.document) %>

@@ -1,8 +1,8 @@
-<% form_url = @form_url || (@document.persisted? ? document_path(@document) : event_documents_path(@document.event)) %>
 <%
-  form_options = { model: @document, url: form_url }
+  event = @event || @document.event
+  form_options = { model: [event, @document] }
   if @document.new_record?
-    presign_url = presign_event_documents_path(@document.event)
+    presign_url = presign_event_documents_path(event)
     form_options[:data] = { document_upload_form: true, presign_url: presign_url }
   end
 %>
