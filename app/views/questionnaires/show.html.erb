@@ -13,76 +13,78 @@
 </div>
 
 <p>
-  <%= link_to "Add Question", new_questionnaire_question_path(@questionnaire) %> |
-  <%= link_to "Edit Questionnaire", edit_questionnaire_path(@questionnaire) %> |
-  <%= button_to "Delete Questionnaire", questionnaire_path(@questionnaire), method: :delete, data: { confirm: "Delete this questionnaire?" } %>
+  <%= link_to "Add Question", new_event_questionnaire_question_path(@event, @questionnaire) %> |
+  <%= link_to "Edit Questionnaire", edit_event_questionnaire_path(@event, @questionnaire) %> |
+  <%= button_to "Delete Questionnaire", event_questionnaire_path(@event, @questionnaire), method: :delete, data: { confirm: "Delete this questionnaire?" } %>
 </p>
 
 <% if @questions.any? %>
-  <% @questions.each do |question| %>
-    <section class="question-block">
-      <div class="question-content">
-        <h3>Question <%= question.position %></h3>
-        <p><strong>Prompt:</strong> <%= simple_format(question.prompt) %></p>
-        <% if question.help_text.present? %>
-          <p><strong>Help:</strong> <%= simple_format(question.help_text) %></p>
-        <% end %>
+  <div class="questions-list" data-question-sort data-reorder-url="<%= reorder_event_questionnaire_questions_path(@event, @questionnaire) %>" data-csrf-token="<%= form_authenticity_token %>">
+    <% @questions.each do |question| %>
+      <section class="question-block" data-question-id="<%= question.id %>">
+        <div class="question-content">
+          <div class="question-handle" title="Drag to reorder" aria-hidden="true" draggable="true">⋮⋮</div>
+
+          <p><strong>Prompt:</strong> <%= simple_format(question.prompt) %></p>
+          <% if question.help_text.present? %>
+            <p><strong>Help:</strong> <%= simple_format(question.help_text) %></p>
+          <% end %>
         <p>
-          <%= link_to "Edit", edit_question_path(question) %> |
-          <%= button_to "Delete", question_path(question), method: :delete, data: { confirm: "Remove this question?" } %>
+          <%= link_to "Edit", edit_event_questionnaire_question_path(@event, @questionnaire, question) %> |
+          <%= button_to "Delete", event_questionnaire_question_path(@event, @questionnaire, question), method: :delete, data: { confirm: "Remove this question?" } %>
         </p>
       </div>
       <div class="question-answer">
-        <h4>Answer</h4>
+
         <% if @questionnaire.template? %>
           <p>Templates do not record answers.</p>
-        <% elsif question.answer_value.present? %>
-          <p><%= simple_format(question.answer_value) %></p>
         <% else %>
-          <p>No answer recorded.</p>
-        <% end %>
+          <%= form_with model: [@event, @questionnaire, question], url: answer_event_questionnaire_question_path(@event, @questionnaire, question), method: :patch, data: { answer_upload_form: true, presign_url: presign_event_documents_path(@event) } do |f| %>
+            <div>
+              <%= f.label :answer_value, "Response" %><br>
+              <%= f.text_area :answer_value, rows: 4 %>
+            </div>
+            <div>
+              <%= f.label :file_title, "File" %><br>
+              <input type="file" data-answer-upload-target="file">
+              <p data-answer-upload-target="status">Optional: attach a file.</p>
+            </div>
+            <%= f.hidden_field :file_storage_uri %>
+            <%= f.hidden_field :file_checksum %>
+            <%= f.hidden_field :file_size_bytes %>
+            <%= f.hidden_field :file_content_type %>
+            <%= f.hidden_field :file_title %>
+            <%= f.hidden_field :file_logical_id %>
+            <div class="answer-actions">
+              <%= f.submit "Save" %>
+            </div>
+          <% end %>
 
         <% attachments = question.attachments.order(:position) %>
         <% if attachments.any? %>
           <h4>Attachments</h4>
           <ul>
             <% attachments.each do |attachment| %>
+              <% document = attachment.document || @event.documents.latest.find_by(logical_id: attachment.document_logical_id) %>
+              <% next unless document %>
               <li>
-                <% if attachment.document.present? %>
-                  <%= link_to attachment.document.title, event_document_path(@event, attachment.document) %>
-                  (v<%= attachment.document.version %>) |
-                  <%= link_to "Download", download_event_document_path(@event, attachment.document) %>
-                <% elsif attachment.document_logical_id.present? %>
-                  <% latest = @event.documents.latest.find_by(logical_id: attachment.document_logical_id) %>
-                  <% if latest %>
-                    <%= link_to latest.title, event_document_path(@event, latest) %>
-                    (latest) |
-                    <%= link_to "Download", download_event_document_path(@event, latest) %>
-                  <% else %>
-                    Latest document (<code><%= attachment.document_logical_id %></code>) not found.
-                  <% end %>
-                <% end %>
-                <% if attachment.notes.present? %>
-                  – <%= attachment.notes %>
-                <% end %>
+                <%= link_to document.title, event_document_path(@event, document) %>
+                (v<%= document.version %>) |
+                <%= link_to "Download", download_event_document_path(@event, document) %>
               </li>
             <% end %>
           </ul>
         <% end %>
-
-        <% unless @questionnaire.template? %>
-          <div class="attachment-form">
-            <h4>Add Attachment</h4>
-            <%= render "attachments/form", entity: question, documents: documents_for_entity(question) %>
-          </div>
         <% end %>
-      </div>
-    </section>
-  <% end %>
+      </section>
+    <% end %>
+  </div>
 <% else %>
   <p>No questions yet.</p>
 <% end %>
 
 <% content_for :scripts do %>
   <%= render "attachments/upload_script" %>
+  <%= render "questionnaires/answer_upload_script" %>
+  <%= render "questionnaires/sort_script" %>
 <% end %>

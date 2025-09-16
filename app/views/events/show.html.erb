@@ -25,7 +25,7 @@
     <ul>
       <% @questionnaires.each do |questionnaire| %>
         <li>
-          <%= link_to questionnaire.title, questionnaire_path(questionnaire) %>
+          <%= link_to questionnaire.title, event_questionnaire_path(@event, questionnaire) %>
           <% if questionnaire.template? %>
             <strong>(Template)</strong>
           <% end %>
@@ -42,7 +42,7 @@
   <% if @templates.any? %>
     <ul>
       <% @templates.each do |template| %>
-        <li><%= link_to template.title, questionnaire_path(template) %></li>
+        <li><%= link_to template.title, event_questionnaire_path(template.event, template) %></li>
       <% end %>
     </ul>
   <% else %>

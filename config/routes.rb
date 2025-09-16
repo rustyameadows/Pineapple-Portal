@@ -12,8 +12,11 @@ Rails.application.routes.draw do
   resources :users, only: %i[new create]
 
   resources :events do
-    resources :questionnaires, shallow: true do
-      resources :questions, only: %i[new create edit update destroy]
+    resources :questionnaires do
+      resources :questions, only: %i[new create edit update destroy] do
+        member { patch :answer }
+        collection { patch :reorder }
+      end
     end
 
     resources :documents do

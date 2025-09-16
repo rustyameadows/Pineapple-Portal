@@ -61,7 +61,7 @@ bin/rails test
 ## Event Planning Features
 
 - **Events** – create and manage engagements, each with its own questionnaires, documents, and attachments.
-- **Questionnaires** – build checklists for an event and optionally flag them as templates for later reuse. Questions are managed inline, and templates display in `/questionnaires/templates`.
+- **Questionnaires** – build checklists for an event and optionally flag them as templates for later reuse. Questions display in a two-column layout with inline answer editing, drag-and-drop reordering, and attachments tied directly to each response. Templates display in `/questionnaires/templates`.
 - **Documents** – upload documents to Cloudflare R2 (by supplying the object key), keep a full version history by reusing a logical ID, and attach them to events, questionnaires, or individual questions.
 - **Documents** – upload documents to Cloudflare R2 directly from the browser (the form fetches a presigned URL, uploads the file, then saves metadata), keep a full version history by reusing a logical ID, and attach them to events, questionnaires, or individual questions.
 - **Attachments** – tie documents to prompts/help/answers with ordered positions so questionnaires can surface supporting files.

@@ -46,23 +46,49 @@ nav {
   border-color: #c66;
 }
 
+.flash-toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  min-width: 200px;
+}
+
 .questionnaire-header {
   margin-bottom: 1.5em;
 }
 
+.questions-list {
+  display: grid;
+  gap: 1.5em;
+}
+
 .question-block {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1em;
   border: 1px solid #ccc;
   padding: 1em;
-  margin-bottom: 1.5em;
+  margin-bottom: 0;
+  background: #fff;
 }
 
-.question-block .question-content,
-.question-block .question-answer {
-  flex: 1 1 45%;
-  min-width: 260px;
+@media (max-width: 700px) {
+  .question-block {
+    grid-template-columns: 1fr;
+  }
+}
+
+.question-handle {
+  font-size: 1.25rem;
+  cursor: grab;
+  user-select: none;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+.question-block.dragging {
+  opacity: 0.7;
 }
 
 .question-block h3 {
@@ -76,4 +102,17 @@ nav {
 
 .question-answer ul {
   padding-left: 1.2em;
+}
+.answer-actions {
+  margin-top: 0.75em;
+}
+
+.answer-actions input[type="submit"],
+.answer-actions button {
+  padding: 0.4em 0.8em;
+}
+
+[data-answer-upload-target='status'] {
+  font-size: 0.9em;
+  color: #555;
 }

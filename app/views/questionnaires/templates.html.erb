@@ -6,7 +6,7 @@
   <ul>
     <% @questionnaires.each do |questionnaire| %>
       <li>
-        <%= link_to questionnaire.title, questionnaire_path(questionnaire) %>
+        <%= link_to questionnaire.title, event_questionnaire_path(questionnaire.event, questionnaire) %>
         (<%= questionnaire.event.name %>)
       </li>
     <% end %>

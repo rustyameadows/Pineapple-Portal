@@ -1,0 +1,105 @@
+<script type="module">
+  document.addEventListener("DOMContentLoaded", () => {
+    const list = document.querySelector("[data-question-sort]");
+    if (!list) return;
+
+    const csrfToken = list.dataset.csrfToken || document.querySelector("meta[name='csrf-token']")?.content;
+    let draggingItem = null;
+
+    const showFlash = (message, type = "notice") => {
+      const flash = document.createElement("div");
+      flash.className = `flash flash-${type} flash-toast`;
+      flash.textContent = message;
+      document.body.prepend(flash);
+      setTimeout(() => flash.remove(), 2000);
+    };
+
+    const reorder = () => {
+      const order = Array.from(list.querySelectorAll("[data-question-id]")).map((node) => node.dataset.questionId);
+      const formData = new URLSearchParams();
+      order.forEach((id) => formData.append("order[]", id));
+
+      fetch(list.dataset.reorderUrl, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "X-CSRF-Token": csrfToken || ""
+        },
+        body: formData.toString(),
+        credentials: "same-origin"
+      })
+        .then((response) => {
+          if (response.ok) {
+            console.log("Reorder persisted", order);
+            showFlash("Question order saved.");
+          } else {
+            console.error("Reorder failed", response.status);
+            showFlash("Unable to save order", "alert");
+          }
+        })
+        .catch((error) => {
+          console.error("Reorder failed", error);
+          showFlash("Unable to save order", "alert");
+        });
+    };
+
+    list.querySelectorAll("[data-question-id]").forEach((item) => {
+      item.setAttribute("draggable", "true");
+    });
+
+    list.addEventListener("dragstart", (event) => {
+      const handle = event.target.closest(".question-handle");
+      if (!handle) {
+        event.preventDefault();
+        return;
+      }
+
+      draggingItem = handle.closest("[data-question-id]");
+      if (!draggingItem) return;
+      draggingItem.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", draggingItem.dataset.questionId || "");
+    });
+
+    const positionItem = (event) => {
+      if (!draggingItem) return;
+      const target = event.target.closest("[data-question-id]");
+      if (!target || target === draggingItem) return;
+
+      const rect = target.getBoundingClientRect();
+      const offset = event.clientY - rect.top;
+      const insertAfter = offset > rect.height / 2;
+
+      if (insertAfter) {
+        target.after(draggingItem);
+      } else {
+        target.before(draggingItem);
+      }
+    };
+
+    list.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      positionItem(event);
+    });
+
+    list.addEventListener("dragenter", (event) => {
+      event.preventDefault();
+      positionItem(event);
+    });
+
+    list.addEventListener("drop", (event) => {
+      event.preventDefault();
+      if (!draggingItem) return;
+      draggingItem.classList.remove("dragging");
+      draggingItem = null;
+      reorder();
+    });
+
+    list.addEventListener("dragend", () => {
+      if (!draggingItem) return;
+      draggingItem.classList.remove("dragging");
+      draggingItem = null;
+      reorder();
+    });
+  });
+</script>

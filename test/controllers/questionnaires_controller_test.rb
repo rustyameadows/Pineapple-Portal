@@ -11,7 +11,7 @@ class QuestionnairesControllerTest < ActionDispatch::IntegrationTest
       post event_questionnaires_url(@event), params: { questionnaire: { title: "AV Checklist", description: "Audio/visual checks" } }
     end
 
-    assert_redirected_to questionnaire_url(Questionnaire.last)
+    assert_redirected_to event_questionnaire_url(@event, Questionnaire.last)
   end
 
   test "lists templates" do
