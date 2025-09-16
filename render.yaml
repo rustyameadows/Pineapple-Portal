@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: pineapple-portal
+    env: ruby
+    buildCommand: ./bin/render-build.sh
+    startCommand: bundle exec puma -C config/puma.rb
+    plan: starter
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pineapple-portal-db
+          property: connectionString
+      - key: RAILS_MASTER_KEY
+        sync: false
+      - key: RAILS_SERVE_STATIC_FILES
+        value: "true"
+      - key: RAILS_LOG_TO_STDOUT
+        value: "true"
+    healthCheckPath: /up
+databases:
+  - name: pineapple-portal-db
+    databaseName: pineapple_portal
+    user: pineapple_portal
