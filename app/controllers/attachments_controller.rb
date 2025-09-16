@@ -2,28 +2,38 @@ class AttachmentsController < ApplicationController
   before_action :set_attachment, only: %i[destroy]
 
   def create
-    @attachment = Attachment.new(attachment_params)
+    raw = attachment_params
+    entity = find_entity(raw.delete(:entity_type), raw.delete(:entity_id))
+
+    attrs = raw.slice(:document_id, :document_logical_id, :context, :position, :notes)
+    attrs[:document_id] = attrs[:document_id].presence
+    attrs[:document_logical_id] = attrs[:document_logical_id].presence
+
+    attrs[:context] = if entity.is_a?(Question)
+                        "answer"
+                      else
+                        attrs[:context].presence || "other"
+                      end
+
+    attrs[:position] = attrs[:position].presence || next_position_for(entity)
+
     upload_attrs = file_upload_params
 
     if upload_attrs.present?
-      entity = find_entity(@attachment.entity_type, @attachment.entity_id)
-      event = event_for_entity(entity)
+      document = event_for_entity(entity).documents.new(upload_attrs)
 
-      document = event.documents.new(upload_attrs)
-
-      if document.save
-        @attachment.document = document
-        @attachment.document_logical_id = nil
-      else
-        document.errors.full_messages.each { |msg| @attachment.errors.add(:base, msg) }
+      unless document.save
+        attachment = entity.attachments.new(attrs)
+        document.errors.full_messages.each { |msg| attachment.errors.add(:base, msg) }
+        return handle_attachment_response(attachment)
       end
+
+      attrs[:document] = document
+      attrs[:document_logical_id] = nil
     end
 
-    if @attachment.errors.empty? && @attachment.save
-      redirect_back fallback_location: root_path, notice: "Attachment added." 
-    else
-      redirect_back fallback_location: root_path, alert: @attachment.errors.full_messages.to_sentence
-    end
+    attachment = entity.attachments.new(attrs)
+    handle_attachment_response(attachment)
   end
 
   def destroy
@@ -40,9 +50,11 @@ class AttachmentsController < ApplicationController
   def attachment_params
     raw = params.require(:attachment).permit(:entity_type, :entity_id, :document_id, :document_logical_id, :context, :position, :notes)
     raw[:entity_type] = safe_entity_type(raw[:entity_type])
-    raw[:entity_id] = raw[:entity_id].present? ? raw[:entity_id].to_i : nil
-    raw[:document_id] = raw[:document_id].present? ? raw[:document_id].to_i : nil
-    raw
+    raw[:entity_id] = raw[:entity_id].presence && raw[:entity_id].to_i
+    raise ActionController::BadRequest, "Missing entity" unless raw[:entity_id]
+    raw[:document_id] = raw[:document_id].presence && raw[:document_id].to_i
+    raw[:position] = raw[:position].presence && raw[:position].to_i
+    raw.to_h.symbolize_keys
   end
 
   def safe_entity_type(value)
@@ -60,7 +72,7 @@ class AttachmentsController < ApplicationController
       :file_upload_size_bytes,
       :file_upload_content_type,
       :file_upload_logical_id
-    )
+    ).to_h.symbolize_keys
 
     storage_uri = permitted[:file_upload_storage_uri].presence
     return if storage_uri.blank?
@@ -86,6 +98,18 @@ class AttachmentsController < ApplicationController
     when Question then entity.event
     else
       raise ArgumentError, "Unsupported entity for attachment"
+    end
+  end
+
+  def next_position_for(entity)
+    entity.attachments.maximum(:position).to_i + 1
+  end
+
+  def handle_attachment_response(attachment)
+    if attachment.errors.empty? && attachment.save
+      redirect_back fallback_location: root_path, notice: "Attachment added."
+    else
+      redirect_back fallback_location: root_path, alert: attachment.errors.full_messages.to_sentence
     end
   end
 end

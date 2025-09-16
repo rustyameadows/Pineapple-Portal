@@ -8,7 +8,7 @@ class DocumentsController < ApplicationController
 
   def show
     @attachments = @document.attachments.includes(:entity).order(:context, :position)
-    @available_entities = available_entities_for(@document.event)
+    @available_entities = available_entities_for(@event)
     @versions = Document.where(logical_id: @document.logical_id).order(version: :desc)
   end
 

@@ -7,25 +7,29 @@
                        nil
                      end
   presign_url = event_for_entity ? presign_event_documents_path(event_for_entity) : nil
+  question_entity = entity.is_a?(Question)
+  next_position = entity.attachments.maximum(:position).to_i + 1
 %>
 
 <%= form_with url: attachments_path, data: (presign_url ? { attachment_upload_form: true, presign_url: presign_url } : {}) do |form| %>
   <%= form.hidden_field :entity_type, value: entity.class.name %>
   <%= form.hidden_field :entity_id, value: entity.id %>
 
-  <fieldset>
-    <legend>Link existing document</legend>
-    <div>
-      <%= form.label :document_id, "Document version" %><br>
-      <%= form.collection_select :document_id, documents, :id, ->(doc) { "#{doc.title} (v#{doc.version})" }, include_blank: true %>
-    </div>
+  <% if documents.any? %>
+    <fieldset>
+      <legend>Link existing document</legend>
+      <div>
+        <%= form.label :document_id, "Document version" %><br>
+        <%= form.collection_select :document_id, documents, :id, ->(doc) { "#{doc.title} (v#{doc.version})" }, include_blank: true %>
+      </div>
 
-    <div>
-      <%= form.label :document_logical_id, "Logical ID (optional)" %><br>
-      <%= form.text_field :document_logical_id %>
-      <p>Provide this to always reference the latest version. Leave blank if selecting a specific version above.</p>
-    </div>
-  </fieldset>
+      <div>
+        <%= form.label :document_logical_id, "Logical ID (optional)" %><br>
+        <%= form.text_field :document_logical_id %>
+        <p>Provide this to always reference the latest version. Leave blank if selecting a specific version above.</p>
+      </div>
+    </fieldset>
+  <% end %>
 
   <% if presign_url %>
     <fieldset>
@@ -45,15 +49,20 @@
     </fieldset>
   <% end %>
 
-  <div>
-    <%= form.label :context %><br>
-    <%= form.select :context, Attachment.contexts.keys.map { |key| [key.humanize, key] } %>
-  </div>
+  <% if question_entity %>
+    <%= form.hidden_field :context, value: "answer" %>
+    <%= form.hidden_field :position, value: next_position %>
+  <% else %>
+    <div>
+      <%= form.label :context %><br>
+      <%= form.select :context, Attachment.contexts.keys.map { |key| [key.humanize, key] } %>
+    </div>
 
-  <div>
-    <%= form.label :position %><br>
-    <%= form.number_field :position, value: 1, min: 1 %>
-  </div>
+    <div>
+      <%= form.label :position %><br>
+      <%= form.number_field :position, value: next_position, min: 1 %>
+    </div>
+  <% end %>
 
   <div>
     <%= form.label :notes %><br>

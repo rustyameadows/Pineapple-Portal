@@ -20,7 +20,7 @@ questionnaire = event.questionnaires.find_or_create_by!(title: "Kickoff Checklis
   form.description = "Confirm initial logistics for the event."
 end
 
-questionnaire.questions.find_or_create_by!(prompt: "Confirm venue booking is complete.") do |question|
+question = questionnaire.questions.find_or_create_by!(prompt: "Confirm venue booking is complete.") do |question|
   question.help_text = "Include reservation number and point of contact."
   question.response_type = "text"
 end
@@ -36,6 +36,6 @@ document = event.documents.find_or_create_by!(title: "Production Contract", stor
   doc.size_bytes = 1024
 end
 
-Attachment.find_or_create_by!(entity: questionnaire, document: document, context: :prompt, position: 1) do |attachment|
-  attachment.notes = "Reference contract details while completing this questionnaire."
+Attachment.find_or_create_by!(entity: question, document: document, context: :answer, position: 1) do |attachment|
+  attachment.notes = "Reference contract details while completing this checklist."
 end

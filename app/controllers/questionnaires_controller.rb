@@ -3,6 +3,7 @@ class QuestionnairesController < ApplicationController
   before_action :set_questionnaire, only: %i[show edit update destroy]
 
   def show
+    @event = @questionnaire.event
     @questions = @questionnaire.questions.order(:position)
   end
 

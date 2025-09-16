@@ -1,7 +1,7 @@
-checklist_prompt:
-  entity_type: Questionnaire
-  entity_id: <%= ActiveRecord::FixtureSet.identify(:checklist) %>
+checklist_answer_attachment:
+  entity_type: Question
+  entity_id: <%= ActiveRecord::FixtureSet.identify(:first) %>
   document: contract_v1
-  context: prompt
+  context: answer
   position: 1
   notes: Reference the contract when completing the checklist.

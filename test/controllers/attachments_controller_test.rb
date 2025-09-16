@@ -11,11 +11,9 @@ class AttachmentsControllerTest < ActionDispatch::IntegrationTest
     assert_difference("Attachment.count") do
       post attachments_url, params: {
         attachment: {
-          entity_type: "Questionnaire",
-          entity_id: @questionnaire.id,
-          document_id: @document.id,
-          context: "help_text",
-          position: 2
+          entity_type: "Question",
+          entity_id: questions(:first).id,
+          document_id: @document.id
         }
       }
     end
@@ -27,10 +25,8 @@ class AttachmentsControllerTest < ActionDispatch::IntegrationTest
     assert_difference(["Document.count", "Attachment.count"]) do
       post attachments_url, params: {
         attachment: {
-          entity_type: "Questionnaire",
-          entity_id: @questionnaire.id,
-          context: "answer",
-          position: 1,
+          entity_type: "Question",
+          entity_id: questions(:first).id,
           file_upload_title: "Answer Sheet.pdf",
           file_upload_storage_uri: "documents/#{@questionnaire.event.id}/abc/v1/answer-sheet.pdf",
           file_upload_checksum: "deadbeef",
@@ -47,7 +43,7 @@ class AttachmentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "removes attachment" do
-    attachment = attachments(:checklist_prompt)
+    attachment = attachments(:checklist_answer_attachment)
 
     assert_difference("Attachment.count", -1) do
       delete attachment_url(attachment)
