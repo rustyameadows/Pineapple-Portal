@@ -8,10 +8,12 @@ class QuestionnairesController < ApplicationController
 
   def new
     @questionnaire = @event.questionnaires.new
+    @form_url = event_questionnaires_path(@event)
   end
 
   def create
     @questionnaire = @event.questionnaires.new(questionnaire_params)
+    @form_url = event_questionnaires_path(@event)
 
     if @questionnaire.save
       redirect_to @questionnaire, notice: "Questionnaire created."
@@ -20,9 +22,12 @@ class QuestionnairesController < ApplicationController
     end
   end
 
-  def edit; end
+  def edit
+    @form_url = questionnaire_path(@questionnaire)
+  end
 
   def update
+    @form_url = questionnaire_path(@questionnaire)
     if @questionnaire.update(questionnaire_params)
       redirect_to @questionnaire, notice: "Questionnaire updated."
     else

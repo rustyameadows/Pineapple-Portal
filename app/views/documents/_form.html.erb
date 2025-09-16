@@ -1,4 +1,5 @@
-<%= form_with model: @document do |form| %>
+<% form_url = @form_url || (@document.persisted? ? document_path(@document) : event_documents_path(@document.event)) %>
+<%= form_with model: @document, url: form_url do |form| %>
   <% if @document.errors.any? %>
     <div class="errors">
       <h2><%= pluralize(@document.errors.count, "error") %> prevented saving:</h2>

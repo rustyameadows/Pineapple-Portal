@@ -14,10 +14,12 @@ class DocumentsController < ApplicationController
   def new
     @document = @event.documents.new
     @document.logical_id = params[:logical_id] if params[:logical_id].present?
+    @form_url = event_documents_path(@event)
   end
 
   def create
     @document = @event.documents.new(document_params)
+    @form_url = event_documents_path(@event)
 
     if @document.save
       redirect_to document_path(@document), notice: "Document saved."
@@ -26,9 +28,12 @@ class DocumentsController < ApplicationController
     end
   end
 
-  def edit; end
+  def edit
+    @form_url = document_path(@document)
+  end
 
   def update
+    @form_url = document_path(@document)
     if @document.update(edit_document_params)
       redirect_to @document, notice: "Document updated."
     else
