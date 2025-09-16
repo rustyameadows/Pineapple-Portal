@@ -4,6 +4,7 @@ services:
     env: ruby
     buildCommand: ./bin/render-build.sh
     startCommand: bundle exec puma -C config/puma.rb
+    postDeployCommand: bundle exec rake db:seed
     plan: free
     envVars:
       - key: DATABASE_URL
