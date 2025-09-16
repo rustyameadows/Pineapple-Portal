@@ -31,7 +31,7 @@
       <% @versions.each do |version| %>
         <tr>
           <td>v<%= version.version %></td>
-          <td><%= version.created_at&.to_s(:long) || "—" %></td>
+          <td><%= version.created_at&.to_fs(:long) || "—" %></td>
           <td>
             <% if version == @document %>
               Viewing
