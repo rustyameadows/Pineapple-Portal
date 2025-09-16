@@ -3,7 +3,9 @@
 one:
   name: Ada Fixture
   email: ada_fixture@example.com
+  password_digest: <%= BCrypt::Password.create("password123") %>
 
 two:
   name: Grace Fixture
   email: grace_fixture@example.com
+  password_digest: <%= BCrypt::Password.create("password123") %>
