@@ -4,7 +4,7 @@ services:
     env: ruby
     buildCommand: ./bin/render-build.sh
     startCommand: bundle exec puma -C config/puma.rb
-    plan: starter
+    plan: free
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -19,5 +19,6 @@ services:
     healthCheckPath: /up
 databases:
   - name: pineapple-portal-db
+    plan: free
     databaseName: pineapple_portal
     user: pineapple_portal
