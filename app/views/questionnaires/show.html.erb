@@ -39,3 +39,16 @@
     <p>No questions yet.</p>
   <% end %>
 </section>
+
+<section>
+  <h2>Attachments</h2>
+  <%= render "attachments/list", attachments: @questionnaire.attachments.order(:context, :position) %>
+
+  <h3>Add attachment</h3>
+  <% documents = @questionnaire.event.documents.order(:title, :version) %>
+  <% if documents.any? %>
+    <%= render "attachments/form", entity: @questionnaire, documents: documents %>
+  <% else %>
+    <p>No documents available for this event yet.</p>
+  <% end %>
+</section>

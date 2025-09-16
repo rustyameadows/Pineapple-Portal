@@ -1,0 +1,34 @@
+<%= form_with url: attachments_path do |form| %>
+  <%= form.hidden_field :entity_type, value: entity.class.name %>
+  <%= form.hidden_field :entity_id, value: entity.id %>
+
+  <div>
+    <%= form.label :document_id, "Document version" %><br>
+    <%= form.collection_select :document_id, documents, :id, ->(doc) { "#{doc.title} (v#{doc.version})" }, include_blank: true %>
+  </div>
+
+  <div>
+    <%= form.label :document_logical_id, "Logical ID (optional)" %><br>
+    <%= form.text_field :document_logical_id %>
+    <p>Provide this to always reference the latest version. Leave blank if selecting a specific version above.</p>
+  </div>
+
+  <div>
+    <%= form.label :context %><br>
+    <%= form.select :context, Attachment.contexts.keys.map { |key| [key.humanize, key] } %>
+  </div>
+
+  <div>
+    <%= form.label :position %><br>
+    <%= form.number_field :position, value: 1, min: 1 %>
+  </div>
+
+  <div>
+    <%= form.label :notes %><br>
+    <%= form.text_field :notes %>
+  </div>
+
+  <div>
+    <%= form.submit "Add Attachment" %>
+  </div>
+<% end %>

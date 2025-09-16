@@ -15,11 +15,16 @@ Rails.application.routes.draw do
     resources :questionnaires, shallow: true do
       resources :questions, only: %i[new create edit update destroy]
     end
+
+    resources :documents, only: %i[index new create]
   end
 
   resources :questionnaires, only: [] do
     collection { get :templates }
   end
+
+  resources :documents, only: %i[show edit update destroy]
+  resources :attachments, only: %i[create destroy]
 
   get "/login", to: "sessions#new"
   post "/login", to: "sessions#create"

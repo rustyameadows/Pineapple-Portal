@@ -1,0 +1,49 @@
+<%= form_with model: @document do |form| %>
+  <% if @document.errors.any? %>
+    <div class="errors">
+      <h2><%= pluralize(@document.errors.count, "error") %> prevented saving:</h2>
+      <ul>
+        <% @document.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :title %><br>
+    <%= form.text_field :title %>
+  </div>
+
+  <div>
+    <%= form.label :content_type %><br>
+    <%= form.text_field :content_type %>
+  </div>
+
+  <% if form.object.new_record? %>
+    <div>
+      <%= form.label :size_bytes %><br>
+      <%= form.number_field :size_bytes %>
+    </div>
+
+    <div>
+      <%= form.label :checksum %><br>
+      <%= form.text_field :checksum %>
+    </div>
+
+    <div>
+      <%= form.label :storage_uri, "R2 object key" %><br>
+      <%= form.text_field :storage_uri %>
+    </div>
+
+    <div>
+      <%= form.label :logical_id, "Existing logical ID (optional)" %><br>
+      <%= form.text_field :logical_id %>
+      <p>If provided, this upload becomes the next version of that document.</p>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

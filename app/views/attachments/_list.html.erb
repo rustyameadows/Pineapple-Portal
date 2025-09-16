@@ -1,0 +1,20 @@
+<% if attachments.any? %>
+  <ul>
+    <% attachments.each do |attachment| %>
+      <li>
+        <strong><%= attachment.context %></strong>
+        <% if attachment.notes.present? %>
+          - <%= attachment.notes %>
+        <% end %>
+        <% if attachment.document.present? %>
+          : <%= link_to attachment.document.title, document_path(attachment.document) %> (v<%= attachment.document.version %>)
+        <% elsif attachment.document_logical_id.present? %>
+          : logical ID <%= attachment.document_logical_id %>
+        <% end %>
+        <%= button_to "Remove", attachment_path(attachment), method: :delete, data: { confirm: "Remove attachment?" } %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No attachments.</p>
+<% end %>

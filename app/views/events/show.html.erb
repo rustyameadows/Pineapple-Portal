@@ -50,3 +50,21 @@
   <% end %>
   <p><%= link_to "View all templates", templates_questionnaires_path %></p>
 </section>
+
+<section>
+  <h2>Documents</h2>
+  <p><%= link_to "Manage documents", event_documents_path(@event) %></p>
+
+  <% if @event.documents.any? %>
+    <ul>
+      <% @event.documents.latest.each do |document| %>
+        <li>
+          <%= link_to document.title, document_path(document) %>
+          (v<%= document.version %>)
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p>No documents uploaded yet.</p>
+  <% end %>
+</section>

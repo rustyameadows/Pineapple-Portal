@@ -1,0 +1,32 @@
+<h1><%= @document.title %> (v<%= @document.version %>)</h1>
+
+<p>Event: <%= link_to @document.event.name, event_path(@document.event) %></p>
+<p>Logical ID: <%= @document.logical_id %></p>
+<p>Latest version: <%= @document.is_latest? ? "Yes" : "No" %></p>
+<p>Content type: <%= @document.content_type %></p>
+<p>Size: <%= number_to_human_size(@document.size_bytes) %></p>
+<p>Storage key: <code><%= @document.storage_uri %></code></p>
+<p>Checksum: <code><%= @document.checksum %></code></p>
+
+<p>
+  <%= link_to "Upload new version", new_event_document_path(@document.event, logical_id: @document.logical_id) %> |
+  <%= link_to "Edit", edit_document_path(@document) %> |
+  <%= button_to "Delete", document_path(@document), method: :delete, data: { confirm: "Delete this document?" } %>
+</p>
+
+<section>
+  <h2>Attachments</h2>
+  <%= render "attachments/list", attachments: @attachments %>
+</section>
+
+<section>
+  <h2>Attach to…</h2>
+  <% if @available_entities.any? %>
+    <% @available_entities.each do |entity| %>
+      <h3><%= entity_label(entity) %></h3>
+      <%= render "attachments/form", entity: entity, documents: documents_for_entity(entity) %>
+    <% end %>
+  <% else %>
+    <p>No available entities to attach.</p>
+  <% end %>
+</section>

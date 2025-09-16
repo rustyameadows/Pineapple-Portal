@@ -1,0 +1,31 @@
+<h1>Documents for <%= @event.name %></h1>
+
+<p>
+  <%= link_to "Upload Document", new_event_document_path(@event) %> |
+  <%= link_to "Back to Event", event_path(@event) %>
+</p>
+
+<% if @documents.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Version</th>
+        <th>Latest?</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @documents.each do |document| %>
+        <tr>
+          <td><%= document.title %></td>
+          <td><%= document.version %></td>
+          <td><%= document.is_latest? ? "Yes" : "No" %></td>
+          <td><%= link_to "View", document_path(document) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p>No documents yet.</p>
+<% end %>
