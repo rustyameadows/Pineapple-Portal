@@ -17,6 +17,7 @@
 
 ## 4. Download & Management UX
 - In `documents#show`, add “Download latest” and “Download this version” links using presigned GET URLs.
+- Add an event-scoped download route (`/events/:event_id/documents/:id/download`) that generates a presigned URL server-side and redirects the browser, keeping user-facing URLs tidy.
 - Display upload timestamp, file size, checksum, and a button to copy the object key for manual inspection.
 - Provide a table listing all versions (title, version, uploaded at, download link) to make history clear.
 
