@@ -81,6 +81,16 @@ R2_REGION=auto
 
 Provide those values locally (e.g. in `.env`) and on Render. When deploying, add them to the Render service environment along with `DATABASE_URL` and `RAILS_MASTER_KEY`.
 
+### Local secrets file
+
+`dotenv-rails` loads environment files automatically in development and test. Copy the example file and fill in your credentials:
+
+```bash
+cp config/r2.env.example .env.local
+```
+
+Edit `.env.local` with your actual keys. The file is already ignored by git (`.gitignore`). `bin/rails server` / `bin/dev` will pick it up automatically after restart.
+
 ## Render Deployment
 Render is configured via `render.yaml`, `Procfile`, and `bin/render-build.sh`.
 
