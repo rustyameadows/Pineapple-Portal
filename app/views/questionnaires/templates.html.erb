@@ -1,0 +1,16 @@
+<h1>Template Questionnaires</h1>
+
+<p><%= link_to "All Events", events_path %></p>
+
+<% if @questionnaires.any? %>
+  <ul>
+    <% @questionnaires.each do |questionnaire| %>
+      <li>
+        <%= link_to questionnaire.title, questionnaire_path(questionnaire) %>
+        (<%= questionnaire.event.name %>)
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No templates found.</p>
+<% end %>

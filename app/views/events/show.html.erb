@@ -1,0 +1,52 @@
+<h1><%= @event.name %></h1>
+
+<p>
+  Dates:
+  <% if @event.starts_on.present? %>
+    <%= @event.starts_on %> - <%= @event.ends_on || @event.starts_on %>
+  <% else %>
+    Not set
+  <% end %>
+</p>
+
+<p>Location: <%= @event.location.presence || "—" %></p>
+
+<p>
+  <%= link_to "Edit Event", edit_event_path(@event) %> |
+  <%= link_to "All Events", events_path %> |
+  <%= button_to "Delete Event", event_path(@event), method: :delete, data: { confirm: "Are you sure?" } %>
+</p>
+
+<section>
+  <h2>Questionnaires</h2>
+  <p><%= link_to "New Questionnaire", new_event_questionnaire_path(@event) %></p>
+
+  <% if @questionnaires.any? %>
+    <ul>
+      <% @questionnaires.each do |questionnaire| %>
+        <li>
+          <%= link_to questionnaire.title, questionnaire_path(questionnaire) %>
+          <% if questionnaire.template? %>
+            <strong>(Template)</strong>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p>No questionnaires yet.</p>
+  <% end %>
+</section>
+
+<section>
+  <h2>Available Templates</h2>
+  <% if @templates.any? %>
+    <ul>
+      <% @templates.each do |template| %>
+        <li><%= link_to template.title, questionnaire_path(template) %></li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p>No templates marked yet.</p>
+  <% end %>
+  <p><%= link_to "View all templates", templates_questionnaires_path %></p>
+</section>

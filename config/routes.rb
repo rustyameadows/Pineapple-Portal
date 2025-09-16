@@ -11,6 +11,16 @@ Rails.application.routes.draw do
 
   resources :users, only: %i[new create]
 
+  resources :events do
+    resources :questionnaires, shallow: true do
+      resources :questions, only: %i[new create edit update destroy]
+    end
+  end
+
+  resources :questionnaires, only: [] do
+    collection { get :templates }
+  end
+
   get "/login", to: "sessions#new"
   post "/login", to: "sessions#create"
   delete "/logout", to: "sessions#destroy"

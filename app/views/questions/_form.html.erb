@@ -1,0 +1,31 @@
+<%= form_with model: @question do |form| %>
+  <% if @question.errors.any? %>
+    <div class="errors">
+      <h2><%= pluralize(@question.errors.count, "error") %> prevented saving:</h2>
+      <ul>
+        <% @question.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :prompt %><br>
+    <%= form.text_area :prompt %>
+  </div>
+
+  <div>
+    <%= form.label :help_text %><br>
+    <%= form.text_area :help_text %>
+  </div>
+
+  <div>
+    <%= form.label :response_type %><br>
+    <%= form.select :response_type, options_for_select(["text", "boolean", "choice"], @question.response_type) %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

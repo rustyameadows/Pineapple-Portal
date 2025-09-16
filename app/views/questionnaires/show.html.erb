@@ -1,0 +1,41 @@
+<h1><%= @questionnaire.title %></h1>
+
+<p>Event: <%= link_to @questionnaire.event.name, event_path(@questionnaire.event) %></p>
+
+<p><%= simple_format(@questionnaire.description.presence || "No description") %></p>
+
+<p>
+  <% if @questionnaire.template? %>
+    <strong>This questionnaire is marked as a template.</strong>
+  <% end %>
+</p>
+
+<p>
+  <%= link_to "Edit", edit_questionnaire_path(@questionnaire) %> |
+  <%= button_to "Delete", questionnaire_path(@questionnaire), method: :delete, data: { confirm: "Are you sure?" } %>
+</p>
+
+<section>
+  <h2>Questions</h2>
+  <p><%= link_to "Add Question", new_questionnaire_question_path(@questionnaire) %></p>
+
+  <% if @questions.any? %>
+    <ol>
+      <% @questions.each do |question| %>
+        <li>
+          <strong><%= question.prompt %></strong>
+          <% if question.help_text.present? %>
+            <div><em><%= question.help_text %></em></div>
+          <% end %>
+          <div>Response type: <%= question.response_type %></div>
+          <div>
+            <%= link_to "Edit", edit_question_path(question) %> |
+            <%= button_to "Delete", question_path(question), method: :delete, data: { confirm: "Remove this question?" } %>
+          </div>
+        </li>
+      <% end %>
+    </ol>
+  <% else %>
+    <p>No questions yet.</p>
+  <% end %>
+</section>

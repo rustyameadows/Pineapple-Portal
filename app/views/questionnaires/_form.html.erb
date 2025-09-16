@@ -1,0 +1,33 @@
+<%= form_with model: @questionnaire do |form| %>
+  <% if @questionnaire.errors.any? %>
+    <div class="errors">
+      <h2><%= pluralize(@questionnaire.errors.count, "error") %> prevented saving:</h2>
+      <ul>
+        <% @questionnaire.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :title %><br>
+    <%= form.text_field :title %>
+  </div>
+
+  <div>
+    <%= form.label :description %><br>
+    <%= form.text_area :description %>
+  </div>
+
+  <div>
+    <%= form.label :is_template do %>
+      <%= form.check_box :is_template %>
+      Mark as template
+    <% end %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

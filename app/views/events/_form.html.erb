@@ -1,0 +1,36 @@
+<%= form_with model: @event do |form| %>
+  <% if @event.errors.any? %>
+    <div class="errors">
+      <h2><%= pluralize(@event.errors.count, "error") %> prevented saving:</h2>
+      <ul>
+        <% @event.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :name %><br>
+    <%= form.text_field :name %>
+  </div>
+
+  <div>
+    <%= form.label :starts_on %><br>
+    <%= form.date_field :starts_on %>
+  </div>
+
+  <div>
+    <%= form.label :ends_on %><br>
+    <%= form.date_field :ends_on %>
+  </div>
+
+  <div>
+    <%= form.label :location %><br>
+    <%= form.text_field :location %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>
