@@ -3,8 +3,8 @@ services:
     name: pineapple-portal
     env: ruby
     buildCommand: ./bin/render-build.sh
+    preDeployCommand: RAILS_ENV=production bundle exec rails db:migrate && bundle exec rails db:seed
     startCommand: bundle exec puma -C config/puma.rb
-    postDeployCommand: bundle exec rake db:seed
     plan: free
     envVars:
       - key: DATABASE_URL
