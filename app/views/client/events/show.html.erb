@@ -46,3 +46,28 @@
     <% end %>
   </div>
 </section>
+
+<section class="client-team">
+  <h2 class="client-team__heading">My Planning Team</h2>
+  <% if @planning_team_members.any? %>
+    <ul class="client-team__list">
+      <% @planning_team_members.each do |team_member| %>
+        <% user = team_member.user %>
+        <li class="client-team__item">
+          <h3 class="client-team__name"><%= user.name %></h3>
+          <% if user.title.present? %>
+            <p class="client-team__title"><%= user.title %></p>
+          <% end %>
+          <ul class="client-team__contact">
+            <% if user.phone_number.present? %>
+              <li><strong>Phone:</strong> <%= user.phone_number %></li>
+            <% end %>
+            <li><strong>Email:</strong> <%= mail_to user.email %></li>
+          </ul>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="client-team__empty">Your planning team will appear here once your planner publishes their contact details.</p>
+  <% end %>
+</section>

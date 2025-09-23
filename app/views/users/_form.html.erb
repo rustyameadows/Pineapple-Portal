@@ -1,0 +1,53 @@
+<% user = local_assigns.fetch(:user) %>
+<% first_account = local_assigns.fetch(:first_account, false) %>
+<% allow_role_select = local_assigns.fetch(:allow_role_select, false) %>
+<% submit_label = local_assigns.fetch(:submit_label, user.new_record? ? (first_account ? "Create Account" : "Invite Teammate") : "Save Changes") %>
+<% require_password = local_assigns.fetch(:require_password, user.new_record?) %>
+
+<%= form_with model: user, local: true, class: "stack" do |form| %>
+  <div>
+    <%= form.label :name %>
+    <%= form.text_field :name, required: true %>
+  </div>
+
+  <div>
+    <%= form.label :title, "Title" %>
+    <%= form.text_field :title, placeholder: "Lead Planner" %>
+  </div>
+
+  <div>
+    <%= form.label :phone_number, "Phone" %>
+    <%= form.telephone_field :phone_number, placeholder: "555-123-4567" %>
+  </div>
+
+  <div>
+    <%= form.label :email %>
+    <%= form.email_field :email, required: true %>
+  </div>
+
+  <% if allow_role_select %>
+    <div>
+      <%= form.label :role %>
+      <%= form.select :role, User.roles.keys.map { |role| [role.humanize, role] } %>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :password %>
+    <% password_options = { autocomplete: user.new_record? ? "new-password" : "off" } %>
+    <% password_options[:required] = true if require_password %>
+    <%= form.password_field :password, **password_options %>
+    <% unless require_password %>
+      <p class="form-help">Leave blank to keep the current password.</p>
+    <% end %>
+  </div>
+
+  <div>
+    <%= form.label :password_confirmation %>
+    <% confirmation_options = { autocomplete: user.new_record? ? "new-password" : "off" } %>
+    <% confirmation_options[:required] = true if require_password %>
+    <%= form.password_field :password_confirmation, **confirmation_options %>
+  </div>
+
+  <%= form.submit submit_label %>
+<% end %>

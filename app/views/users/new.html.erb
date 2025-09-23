@@ -1,37 +1,27 @@
+<% first_account = User.none? %>
+
 <section class="prose">
-  <h1>Create the First Account</h1>
-  <p class="lead">Set up the initial user so you can sign in to the portal.</p>
+  <h1><%= first_account ? "Create the First Account" : "Add a Teammate" %></h1>
+  <p class="lead">
+    <%= first_account ? "Set up the initial user so you can sign in to the portal." : "Invite another planner or teammate to Pineapple Portal." %>
+  </p>
 
   <% if flash[:alert].present? %>
     <p class="flash alert"><%= flash[:alert] %></p>
   <% end %>
 
-  <%= form_with model: @user, url: users_path, class: "stack" do |form| %>
-    <div>
-      <%= form.label :name %>
-      <%= form.text_field :name, required: true %>
-    </div>
+  <%= render "form", user: @user, first_account: first_account, allow_role_select: (current_user&.admin? || first_account), submit_label: (first_account ? "Create Account" : "Invite Teammate"), require_password: true %>
 
-    <div>
-      <%= form.label :email %>
-      <%= form.email_field :email, required: true %>
-    </div>
-
-    <div>
-      <%= form.label :password %>
-      <%= form.password_field :password, required: true %>
-    </div>
-
-    <div>
-      <%= form.label :password_confirmation %>
-      <%= form.password_field :password_confirmation, required: true %>
-    </div>
-
-    <%= form.submit "Create Account" %>
+  <% unless first_account %>
+    <p>
+      Need to change roles? Only admins can adjust them.
+    </p>
   <% end %>
 
-  <p>
-    Already have access?
-    <%= link_to "Log in", login_path %>.
-  </p>
+  <% if first_account %>
+    <p>
+      Already have access?
+      <%= link_to "Log in", login_path %>.
+    </p>
+  <% end %>
 </section>

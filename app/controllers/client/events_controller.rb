@@ -31,6 +31,7 @@ module Client
           path: client_event_financials_path(@event)
         }
       ]
+      @planning_team_members = @event.event_team_members.includes(:user).client_visible.references(:users).order("users.name")
     end
 
     private

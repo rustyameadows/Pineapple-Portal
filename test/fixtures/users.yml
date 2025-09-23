@@ -3,9 +3,31 @@
 one:
   name: Ada Fixture
   email: ada_fixture@example.com
+  role: planner
+  title: Lead Planner
+  phone_number: 555-111-2222
   password_digest: <%= BCrypt::Password.create("password123") %>
 
 two:
   name: Grace Fixture
   email: grace_fixture@example.com
+  role: admin
+  title: Operations Director
+  phone_number: 555-333-4444
+  password_digest: <%= BCrypt::Password.create("password123") %>
+
+planner_two:
+  name: Brooke Planner
+  email: brooke_planner@example.com
+  role: planner
+  title: Associate Planner
+  phone_number: 555-666-7777
+  password_digest: <%= BCrypt::Password.create("password123") %>
+
+client_contact:
+  name: Client Contact
+  email: client_contact@example.com
+  role: client
+  title: CEO
+  phone_number: 555-888-9999
   password_digest: <%= BCrypt::Password.create("password123") %>

@@ -9,7 +9,7 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  resources :users, only: %i[index new create]
+  resources :users, only: %i[index new create edit update]
 
   resources :events do
     resource :settings, only: :show, module: :events do
@@ -24,6 +24,8 @@ Rails.application.routes.draw do
         patch :move_down
       end
     end
+
+    resources :team_members, only: %i[create update destroy], module: :events
 
     resources :questionnaires do
       member do

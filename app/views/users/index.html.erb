@@ -23,16 +23,26 @@
               <thead>
                 <tr>
                   <th>Name</th>
+                  <th>Title</th>
                   <th>Email</th>
+                  <th>Phone</th>
+                  <th>Role</th>
                   <th>Joined</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 <% @users.each do |user| %>
                   <tr>
                     <td><%= user.name %></td>
+                    <td><%= user.title.presence || "—" %></td>
                     <td><%= user.email %></td>
+                    <td><%= user.phone_number.presence || "—" %></td>
+                    <td><%= user.role.humanize %></td>
                     <td><%= user.created_at&.strftime('%b %-d, %Y') %></td>
+                    <td class="event-table__actions">
+                      <%= link_to "Edit", edit_user_path(user), class: "event-section__link" %>
+                    </td>
                   </tr>
                 <% end %>
               </tbody>

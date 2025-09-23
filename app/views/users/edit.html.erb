@@ -1,0 +1,23 @@
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Team</p>
+            <h1 class="event-section__title">Edit Teammate</h1>
+            <p class="event-section__lead">Update contact details and portal visibility roles.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <%= render "form", user: @user, allow_role_select: current_user&.admin?, submit_label: "Save Changes", require_password: false %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

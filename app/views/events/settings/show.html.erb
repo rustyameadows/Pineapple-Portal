@@ -83,6 +83,74 @@
           </div>
         </div>
       </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Team</p>
+            <h2 class="event-section__title">Planning Team</h2>
+            <p class="event-section__lead">Control which planners are assigned to this event and visible to your clients.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__team">
+            <% if @team_members.any? %>
+              <table class="event-table">
+                <thead>
+                  <tr>
+                    <th>Planner</th>
+                    <th>Title</th>
+                    <th>Phone</th>
+                    <th>Client Visible</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @team_members.each do |team_member| %>
+                    <% user = team_member.user %>
+                    <tr>
+                      <td><%= user.name %></td>
+                      <td><%= user.title.presence || "—" %></td>
+                      <td><%= user.phone_number.presence || "—" %></td>
+                      <td>
+                        <%= form_with model: [@event, team_member], url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do |form| %>
+                          <label class="event-settings__toggle">
+                            <%= form.check_box :client_visible, { checked: team_member.client_visible?, onchange: "this.form.submit()" }, true, false %>
+                            <span>Visible</span>
+                          </label>
+                        <% end %>
+                      </td>
+                      <td class="event-table__actions">
+                        <%= link_to "Remove", event_team_member_path(@event, team_member), data: { turbo_method: :delete, turbo_confirm: "Remove #{user.name} from this event?" }, class: "event-section__link event-section__link--danger" %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% else %>
+              <p class="event-settings__empty">No planners are assigned yet. Add your planning team below.</p>
+            <% end %>
+
+            <div class="event-settings__new-link">
+              <h3>Add Planner</h3>
+              <% if @available_planners.any? %>
+                <%= form_with model: [@event, @team_member], url: event_team_members_path(@event), local: true, class: "event-settings__form" do |form| %>
+                  <div class="event-settings__field">
+                    <%= form.label :user_id, "Planner" %>
+                    <%= form.collection_select :user_id, @available_planners, :id, ->(user) { "#{user.name}#{user.title.present? ? " – #{user.title}" : ""}" }, include_blank: "Select planner" %>
+                  </div>
+                  <div class="event-settings__form-actions">
+                    <%= form.submit "Add to event" %>
+                  </div>
+                <% end %>
+              <% else %>
+                <p class="event-settings__empty">All planners are already assigned to this event.</p>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 <% end %>

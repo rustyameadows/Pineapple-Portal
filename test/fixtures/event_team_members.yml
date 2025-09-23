@@ -1,0 +1,9 @@
+one:
+  event: one
+  user: one
+  client_visible: true
+
+two:
+  event: one
+  user: two
+  client_visible: false

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_24_001000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_24_004100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -81,6 +81,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_001000) do
     t.datetime "updated_at", null: false
     t.index ["event_id", "position"], name: "index_event_links_on_event_id_and_position"
     t.index ["event_id"], name: "index_event_links_on_event_id"
+  end
+
+  create_table "event_team_members", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.bigint "user_id", null: false
+    t.boolean "client_visible", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["client_visible"], name: "index_event_team_members_on_client_visible"
+    t.index ["event_id", "user_id"], name: "index_event_team_members_on_event_id_and_user_id", unique: true
+    t.index ["event_id"], name: "index_event_team_members_on_event_id"
+    t.index ["user_id"], name: "index_event_team_members_on_user_id"
   end
 
   create_table "events", force: :cascade do |t|
@@ -167,13 +179,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_001000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "password_digest"
+    t.string "role", default: "planner", null: false
+    t.string "title"
+    t.string "phone_number"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["role"], name: "index_users_on_role"
   end
 
   add_foreign_key "approvals", "events"
   add_foreign_key "attachments", "documents"
   add_foreign_key "documents", "events"
   add_foreign_key "event_links", "events"
+  add_foreign_key "event_team_members", "events"
+  add_foreign_key "event_team_members", "users"
   add_foreign_key "payments", "events"
   add_foreign_key "questionnaire_sections", "questionnaires"
   add_foreign_key "questionnaires", "events"
