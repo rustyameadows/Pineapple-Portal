@@ -21,3 +21,6 @@ Never modify an existing migration file—even one you authored—without explic
 
 ## Session Kickoff
 When a new collaboration session begins, read this handbook and acknowledge explicitly that you have done so before taking any action.
+
+## Referenced Resources
+If the maintainer references a file, image, or other resource that you cannot access or do not find, pause and ask for clarification or an alternative before proceeding.
