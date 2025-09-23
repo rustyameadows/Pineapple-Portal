@@ -1,0 +1,7 @@
+reception_vendor:
+  calendar_item: reception
+  event_calendar_tag: vendor
+
+afterparty_vendor:
+  calendar_item: afterparty
+  event_calendar_tag: vendor

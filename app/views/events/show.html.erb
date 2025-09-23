@@ -58,13 +58,19 @@
         ] %>
       <% end %>
 
-      <% calendar_links = [
-        { label: "Run of Show", url: "#", state: :active },
-        { label: "Day Of", url: "#", state: :active },
-        { label: "Decision", url: "#", state: :active },
-        { label: "Planning", url: "#", state: :active },
-        { label: "Guest", url: "#", state: :active }
-      ] %>
+      <% calendar_links = [] %>
+      <% if @calendar.present? %>
+        <% calendar_links << { label: @calendar.name, url: event_calendar_path(@event), state: :active } %>
+        <% Array(@calendar_views).each do |view| %>
+          <% calendar_links << { label: view.name, url: event_calendar_view_path(@event, view), state: :active } %>
+        <% end %>
+      <% end %>
+
+      <% if calendar_links.empty? %>
+        <% calendar_links = [
+          { label: "Create your run of show", url: event_calendar_path(@event), state: :highlight }
+        ] %>
+      <% end %>
 
       <% payment_links = @payments.map do |payment| %>
         <% state = payment.paid? ? :completed : :active %>

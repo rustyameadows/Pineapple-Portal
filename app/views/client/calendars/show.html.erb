@@ -1,0 +1,68 @@
+<section class="client-page client-page--calendar">
+  <header class="client-page__header">
+    <h1><%= @active_view.name %></h1>
+    <p><%= @active_view.description %></p>
+    <p class="client-calendar__meta">Times shown in <strong><%= @timezone_label %></strong>.</p>
+    <% if @active_view.hide_locked? %>
+      <p class="client-calendar__note">Locked items are hidden in this view.</p>
+    <% end %>
+  </header>
+
+  <% if @nav_links.size > 1 %>
+    <nav class="client-calendar__nav">
+      <ul class="client-calendar__nav-list">
+        <% @nav_links.each do |nav_view| %>
+          <% link_classes = ["client-calendar__nav-link"] %>
+          <% link_classes << "client-calendar__nav-link--active" if nav_view.slug == @active_view.slug %>
+          <li class="client-calendar__nav-item">
+            <%= link_to nav_view.name, client_event_calendar_path(@event, nav_view.slug), class: link_classes.join(" ") %>
+          </li>
+        <% end %>
+      </ul>
+    </nav>
+  <% end %>
+
+  <% if @items.any? %>
+    <table class="client-table client-calendar__table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Item</th>
+          <th>Tags</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @items.each do |item| %>
+          <% when_label = calendar_item_time_label(item, @calendar.timezone) %>
+          <% anchor_label = calendar_item_relative_label(item) %>
+          <% tags_label = calendar_item_tags_label(item) %>
+          <% duration_label = calendar_item_duration_label(item) %>
+          <tr>
+            <td class="client-calendar__when"><%= when_label %></td>
+            <td class="client-calendar__details">
+              <div class="client-calendar__title">
+                <strong><%= item.title %></strong>
+                <% if item.locked? %>
+                  <span class="client-calendar__badge">Locked</span>
+                <% end %>
+              </div>
+              <% if anchor_label %>
+                <p class="client-calendar__anchor"><%= anchor_label %></p>
+              <% end %>
+              <% if item.notes.present? %>
+                <div class="client-calendar__notes"><%= simple_format(item.notes) %></div>
+              <% end %>
+            </td>
+            <td class="client-calendar__tags"><%= tags_label %></td>
+            <td class="client-calendar__duration"><%= duration_label %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="client-placeholder">
+      <p>No schedule items are available for this view yet. Check back soon!</p>
+    </div>
+  <% end %>
+</section>

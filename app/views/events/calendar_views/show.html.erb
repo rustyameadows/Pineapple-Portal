@@ -1,0 +1,83 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Derived Calendars</p>
+            <h1 class="event-section__title"><%= @view.name %></h1>
+            <p class="event-section__subtitle">
+              <%= @view.description.presence || "Filtered view of the run of show." %>
+            </p>
+          </div>
+          <%= link_to "Edit View", edit_event_calendar_view_path(@event, @view), class: "event-section__cta" %>
+        </header>
+
+        <div class="event-section__body">
+          <p class="event-section__note">
+            Showing
+            <% if @view.tag_filter.present? %>
+              items tagged with
+              <strong><%= @view.tag_filter.map { |tag_id| @tags_by_id[tag_id]&.name }.compact.join(', ') %></strong>.
+            <% else %>
+              all items from the run of show.
+            <% end %>
+            <% if @view.hide_locked? %>
+              Locked items are hidden in this view.
+            <% end %>
+          </p>
+
+          <% if @items.any? %>
+            <table class="event-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Start</th>
+                  <th>Notes</th>
+                  <th>Tags</th>
+                  <th>Locked</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @items.each do |item| %>
+                  <% start_time = item.effective_starts_at && item.effective_starts_at.in_time_zone(@calendar.timezone) %>
+                  <tr>
+                    <td><%= item.title %></td>
+                    <td>
+                      <% if start_time %>
+                        <%= start_time.strftime("%b %-d %l:%M %p") %>
+                      <% else %>
+                        <span class="event-table__status event-table__status--pending">TBD</span>
+                      <% end %>
+                    </td>
+                    <td><%= simple_format(item.notes) if item.notes.present? %></td>
+                    <td>
+                      <% if item.event_calendar_tags.any? %>
+                        <%= item.event_calendar_tags.map(&:name).join(', ') %>
+                      <% else %>
+                        <span class="event-table__status">None</span>
+                      <% end %>
+                    </td>
+                    <td><%= item.locked? ? "Yes" : "No" %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <div class="event-section__empty">
+              <p>No items match this view yet.</p>
+            </div>
+          <% end %>
+
+          <div class="event-section__actions">
+            <%= link_to "Back to Run of Show", event_calendar_path(@event), class: "event-section__link" %>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

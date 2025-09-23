@@ -18,6 +18,18 @@ Rails.application.routes.draw do
     resources :payments, module: :events
     resources :approvals, module: :events
 
+    resource :calendar, only: %i[show update], module: :events do
+      resources :items,
+                controller: "calendar_items",
+                except: :index
+      resources :tags,
+                only: %i[create update destroy],
+                controller: "calendar_tags"
+      resources :views,
+                controller: "calendar_views",
+                except: :index
+    end
+
     resources :event_links, only: %i[create update destroy], module: :events do
       member do
         patch :move_up
@@ -55,6 +67,7 @@ Rails.application.routes.draw do
   namespace :client, path: "portal" do
     resources :events, only: :show do
       resource :decision_calendar, only: :show, controller: :decision_calendars
+      resources :calendars, only: %i[index show], param: :slug
       resource :guest_list, only: :show, controller: :guest_lists
       resources :questionnaires, only: %i[index show] do
         member do

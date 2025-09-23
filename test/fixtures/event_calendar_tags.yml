@@ -1,0 +1,9 @@
+vendor:
+  event_calendar: run_of_show
+  name: Vendor
+  position: 0
+
+day_of:
+  event_calendar: run_of_show
+  name: Day Of
+  position: 1

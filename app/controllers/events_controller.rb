@@ -11,6 +11,8 @@ class EventsController < ApplicationController
     @event_links = @event.event_links.ordered
     @payments = @event.payments.ordered
     @approvals = @event.approvals.ordered
+    @calendar = @event.run_of_show_calendar
+    @calendar_views = @calendar&.event_calendar_views&.order(:position)
   end
 
   def new

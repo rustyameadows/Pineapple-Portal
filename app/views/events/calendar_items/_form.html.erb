@@ -1,0 +1,76 @@
+<% form_url = item.persisted? ? event_calendar_item_path(@event, item) : event_calendar_items_path(@event) %>
+<%= form_with model: item, url: form_url, class: "event-form", method: (item.persisted? ? :patch : :post) do |form| %>
+  <% if item.errors.any? %>
+    <div class="event-form__errors">
+      <p><strong><%= pluralize(item.errors.count, "error") %> prevented this item from being saved:</strong></p>
+      <ul>
+        <% item.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="event-form__group">
+    <%= form.label :title %>
+    <%= form.text_field :title, required: true %>
+  </div>
+
+  <div class="event-form__group">
+    <%= form.label :notes %>
+    <%= form.text_area :notes, rows: 4 %>
+  </div>
+
+  <div class="event-form__row">
+    <div class="event-form__group">
+      <%= form.label :starts_at, "Absolute Start" %>
+      <%= form.datetime_local_field :starts_at %>
+      <p class="event-section__note">Leave blank when using relative timing.</p>
+    </div>
+    <div class="event-form__group">
+      <%= form.label :duration_minutes, "Duration (minutes)" %>
+      <%= form.number_field :duration_minutes, min: 0 %>
+    </div>
+  </div>
+
+  <div class="event-form__row">
+    <div class="event-form__group">
+      <%= form.label :relative_anchor_id, "Relative Anchor" %>
+      <%= form.select :relative_anchor_id, options_for_select(@anchor_options, item.relative_anchor_id), { include_blank: "Absolute" }, class: "event-form__select" %>
+    </div>
+    <div class="event-form__group">
+      <%= form.label :relative_offset_minutes, "Offset (minutes)" %>
+      <%= form.number_field :relative_offset_minutes %>
+    </div>
+    <div class="event-form__group event-form__group--checkbox">
+      <%= form.check_box :relative_before %>
+      <%= form.label :relative_before, "Occurs before anchor" %>
+    </div>
+  </div>
+
+  <div class="event-form__group event-form__group--checkbox">
+    <%= form.check_box :locked %>
+    <%= form.label :locked, "Lock start time" %>
+  </div>
+
+  <div class="event-form__group">
+    <%= form.label :event_calendar_tag_ids, "Tags" %>
+    <% if @available_tags.any? %>
+      <% @available_tags.each do |tag| %>
+        <% field_id = "calendar_item_tag_#{tag.id}" %>
+        <div class="event-form__group event-form__group--checkbox">
+          <%= check_box_tag "calendar_item[event_calendar_tag_ids][]", tag.id, item.event_calendar_tag_ids.include?(tag.id), id: field_id %>
+          <%= label_tag field_id, tag.name %>
+        </div>
+      <% end %>
+      <%= hidden_field_tag "calendar_item[event_calendar_tag_ids][]", "" %>
+    <% else %>
+      <p class="event-section__note">No tags yet. Add tags from the calendar overview.</p>
+    <% end %>
+  </div>
+
+  <div class="event-form__actions">
+    <%= form.submit class: "event-form__submit" %>
+    <%= link_to "Cancel", event_calendar_path(@event), class: "event-form__cancel" %>
+  </div>
+<% end %>

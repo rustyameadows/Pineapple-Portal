@@ -1,0 +1,241 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Calendars</p>
+            <h1 class="event-section__title">Run of Show</h1>
+            <p class="event-section__subtitle">Build and adjust the master schedule for <%= @event.name %>.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <%= form_with model: @calendar, url: event_calendar_path(@event), class: "event-form", method: :patch do |form| %>
+            <div class="event-form__row">
+              <div class="event-form__group">
+                <%= form.label :name, "Calendar Name" %>
+                <%= form.text_field :name, required: true %>
+              </div>
+              <div class="event-form__group">
+                <%= form.label :timezone, "Timezone" %>
+                <%= form.select :timezone, @time_zones.map { |tz| [tz.to_s, tz.tzinfo&.identifier || tz.name] }, {}, class: "event-form__select" %>
+              </div>
+            </div>
+
+            <div class="event-form__group">
+              <%= form.label :description, "Description" %>
+              <%= form.text_area :description, rows: 3 %>
+            </div>
+
+            <div class="event-form__group event-form__group--checkbox">
+              <%= form.check_box :client_visible %>
+              <%= form.label :client_visible, "Show this calendar on the client portal" %>
+            </div>
+
+            <div class="event-form__actions">
+              <%= form.submit "Save Details", class: "event-form__submit" %>
+            </div>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Schedule</p>
+            <h2 class="event-section__title">Scheduled Items</h2>
+            <p class="event-section__subtitle">Absolute times update automatically when anchors shift.</p>
+          </div>
+          <%= link_to "Add Item", new_event_calendar_item_path(@event), class: "event-section__cta" %>
+        </header>
+
+        <% if @items.any? %>
+          <table class="event-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Start</th>
+                <th>Anchor</th>
+                <th>Offset</th>
+                <th>Duration</th>
+                <th>Tags</th>
+                <th>Locked</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @items.each do |item| %>
+                <% anchor = item.relative_anchor %>
+                <% start_time = item.effective_starts_at && item.effective_starts_at.in_time_zone(@calendar.timezone) %>
+                <tr>
+                  <td>
+                    <strong><%= item.title %></strong>
+                    <% if item.notes.present? %>
+                      <p class="event-section__note"><%= simple_format(item.notes) %></p>
+                    <% end %>
+                  </td>
+                  <td>
+                    <% if start_time %>
+                      <%= start_time.strftime("%b %-d %l:%M %p") %>
+                    <% else %>
+                      <span class="event-table__status event-table__status--pending">TBD</span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <%= anchor ? anchor.title : "Absolute" %>
+                  </td>
+                  <td>
+                    <% if item.relative? %>
+                      <%= item.relative_before? ? "#{item.relative_offset_minutes} min before" : "#{item.relative_offset_minutes} min after" %>
+                    <% else %>
+                      —
+                    <% end %>
+                  </td>
+                  <td><%= item.duration_minutes.present? ? "#{item.duration_minutes} min" : "—" %></td>
+                  <td>
+                    <% if item.event_calendar_tags.any? %>
+                      <%= item.event_calendar_tags.map(&:name).join(', ') %>
+                    <% else %>
+                      <span class="event-table__status">None</span>
+                    <% end %>
+                  </td>
+                  <td><%= item.locked? ? "Yes" : "No" %></td>
+                  <td class="event-table__actions">
+                    <%= link_to "Edit", edit_event_calendar_item_path(@event, item), class: "event-section__link" %>
+                    <%= button_to "Delete", event_calendar_item_path(@event, item), method: :delete, data: { confirm: "Remove this item?" }, class: "event-section__link event-section__link--danger" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <div class="event-section__empty">
+            <p>No items yet — start by adding your ceremony or kickoff milestone.</p>
+          </div>
+        <% end %>
+      </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Tags</p>
+            <h2 class="event-section__title">Organize by Tag</h2>
+            <p class="event-section__subtitle">Use tags to power derived calendars for different audiences.</p>
+          </div>
+        </header>
+
+        <% if @tags.any? %>
+          <table class="event-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Color</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @tags.each do |tag| %>
+                <tr>
+                  <td><%= tag.name %></td>
+                  <td><%= tag.color_token.presence || "—" %></td>
+                  <td class="event-table__actions">
+                    <%= form_with model: tag, url: event_calendar_tag_path(@event, tag), class: "event-form", method: :patch do |form| %>
+                      <div class="event-form__row">
+                        <div class="event-form__group">
+                          <%= form.label :name, "Name" %>
+                          <%= form.text_field :name %>
+                        </div>
+                        <div class="event-form__group">
+                          <%= form.label :color_token, "Color" %>
+                          <%= form.text_field :color_token %>
+                        </div>
+                      </div>
+                      <div class="event-form__actions">
+                        <%= form.submit "Save", class: "event-form__submit" %>
+                        <%= link_to "Remove", event_calendar_tag_path(@event, tag), data: { turbo_method: :delete, turbo_confirm: "Remove this tag?" }, class: "event-form__cancel" %>
+                      </div>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <div class="event-section__empty">
+            <p>No tags yet. Add one below to start grouping schedule items.</p>
+          </div>
+        <% end %>
+
+        <%= form_with model: @new_tag, url: event_calendar_tags_path(@event), class: "event-form" do |form| %>
+          <div class="event-form__row">
+            <div class="event-form__group">
+              <%= form.label :name, "New Tag" %>
+              <%= form.text_field :name, required: true %>
+            </div>
+            <div class="event-form__group">
+              <%= form.label :color_token, "Color" %>
+              <%= form.text_field :color_token %>
+            </div>
+          </div>
+          <div class="event-form__actions">
+            <%= form.submit "Add Tag", class: "event-form__submit" %>
+          </div>
+        <% end %>
+      </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Derived Views</p>
+            <h2 class="event-section__title">Filtered Calendars</h2>
+            <p class="event-section__subtitle">Create tailored versions for vendors, clients, or internal teams.</p>
+          </div>
+          <%= link_to "New View", new_event_calendar_view_path(@event), class: "event-section__cta" %>
+        </header>
+
+        <% if @views.any? %>
+          <table class="event-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Tags</th>
+                <th>Hide Locked</th>
+                <th>Client Visible</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @views.each do |view| %>
+                <tr>
+                  <td><%= link_to view.name, event_calendar_view_path(@event, view) %></td>
+                  <td>
+                    <% if view.tag_filter.present? %>
+                      <%= view.tag_filter.map { |tag_id| @tags_by_id[tag_id]&.name }.compact.join(", ") %>
+                    <% else %>
+                      <span class="event-table__status">All items</span>
+                    <% end %>
+                  </td>
+                  <td><%= view.hide_locked? ? "Yes" : "No" %></td>
+                  <td><%= view.client_visible? ? "Yes" : "No" %></td>
+                  <td class="event-table__actions">
+                    <%= link_to "Edit", edit_event_calendar_view_path(@event, view), class: "event-section__link" %>
+                    <%= button_to "Delete", event_calendar_view_path(@event, view), method: :delete, data: { confirm: "Remove this view?" }, class: "event-section__link event-section__link--danger" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <div class="event-section__empty">
+            <p>No derived calendars yet. Create one to share a focused schedule.</p>
+          </div>
+        <% end %>
+      </section>
+    </div>
+  </div>
+<% end %>

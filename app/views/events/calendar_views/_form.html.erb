@@ -1,0 +1,62 @@
+<% form_url = view.persisted? ? event_calendar_view_path(@event, view) : event_calendar_views_path(@event) %>
+<%= form_with model: view, url: form_url, class: "event-form", method: (view.persisted? ? :patch : :post) do |form| %>
+  <% if view.errors.any? %>
+    <div class="event-form__errors">
+      <p><strong><%= pluralize(view.errors.count, "error") %> prevented this view from being saved:</strong></p>
+      <ul>
+        <% view.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="event-form__row">
+    <div class="event-form__group">
+      <%= form.label :name %>
+      <%= form.text_field :name, required: true %>
+    </div>
+    <div class="event-form__group">
+      <%= form.label :slug, "URL Slug" %>
+      <%= form.text_field :slug %>
+    </div>
+  </div>
+
+  <div class="event-form__group">
+    <%= form.label :description %>
+    <%= form.text_area :description, rows: 3 %>
+  </div>
+
+  <div class="event-form__group">
+    <%= form.label :tag_filter, "Include Tags" %>
+    <% if @tags.any? %>
+      <% selected_tag_ids = Array(view.tag_filter).map(&:to_i) %>
+      <% @tags.each do |tag| %>
+        <% field_id = "calendar_view_tag_#{tag.id}" %>
+        <div class="event-form__group event-form__group--checkbox">
+          <%= check_box_tag "event_calendar_view[tag_filter][]", tag.id, selected_tag_ids.include?(tag.id), id: field_id %>
+          <%= label_tag field_id, tag.name %>
+        </div>
+      <% end %>
+      <%= hidden_field_tag "event_calendar_view[tag_filter][]", "" %>
+    <% else %>
+      <p class="event-section__note">No tags yet. Create tags on the run of show page.</p>
+    <% end %>
+  </div>
+
+  <div class="event-form__row">
+    <div class="event-form__group event-form__group--checkbox">
+      <%= form.check_box :hide_locked %>
+      <%= form.label :hide_locked, "Hide locked items" %>
+    </div>
+    <div class="event-form__group event-form__group--checkbox">
+      <%= form.check_box :client_visible %>
+      <%= form.label :client_visible, "Visible on client portal" %>
+    </div>
+  </div>
+
+  <div class="event-form__actions">
+    <%= form.submit class: "event-form__submit" %>
+    <%= link_to "Cancel", event_calendar_path(@event), class: "event-form__cancel" %>
+  </div>
+<% end %>
