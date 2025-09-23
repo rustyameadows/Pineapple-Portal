@@ -22,24 +22,26 @@
   </head>
 
   <body>
-    <nav>
-      <%= link_to "Pineapple Portal", root_path %> |
-      <%= link_to "Events", events_path %> |
-      <%= link_to "Templates", questionnaire_templates_path %> |
-      <%= link_to "Team", users_path %>
-      <% if logged_in? %>
-        | Signed in as <%= current_user.name %>
-        | <%= button_to "Log out", logout_path, method: :delete, form: { style: "display:inline" } %>
-      <% else %>
-        | <%= link_to "Log in", login_path %>
-      <% end %>
-    </nav>
+    <% if content_for?(:page_shell) %>
+      <%= yield :page_shell %>
+    <% else %>
+      <nav>
+        <%= link_to "Pineapple Portal", root_path %> |
+        <%= link_to "Events", events_path %> |
+        <%= link_to "Templates", questionnaire_templates_path %> |
+        <%= link_to "Team", users_path %>
+        <% if logged_in? %>
+          | Signed in as <%= current_user.name %>
+          | <%= button_to "Log out", logout_path, method: :delete, form: { style: "display:inline" } %>
+        <% else %>
+          | <%= link_to "Log in", login_path %>
+        <% end %>
+      </nav>
 
-    <% flash.each do |type, message| %>
-      <div class="flash flash-<%= type %>"><%= message %></div>
+      <%= render "shared/flash" %>
+
+      <%= yield %>
     <% end %>
-
-    <%= yield %>
     <%= yield :scripts %>
   </body>
 </html>

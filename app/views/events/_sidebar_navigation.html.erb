@@ -1,0 +1,49 @@
+<aside class="event-sidebar">
+  <div class="event-sidebar__brand">
+    <%= link_to events_path, class: "event-sidebar__brand-link" do %>
+      <span class="event-sidebar__brand-top">Pineapple</span>
+      <span class="event-sidebar__brand-bottom">Productions</span>
+    <% end %>
+  </div>
+
+  <div class="event-sidebar__context">
+    <span class="event-sidebar__context-label">Currently Viewing</span>
+    <h2 class="event-sidebar__event-name"><%= event.name %></h2>
+  </div>
+
+  <% primary_links = [
+    { label: "Questionnaires", url: event_questionnaires_path(event) },
+    { label: "Calendars", url: "#" },
+    { label: "Documents", url: event_documents_path(event) },
+    { label: "Signatures + Approvals", url: "#" },
+    { label: "Payments", url: "#" },
+    { label: "Event Info", url: "#" }
+  ] %>
+
+  <nav class="event-sidebar__nav">
+    <ul>
+      <% primary_links.each do |link| %>
+        <li>
+          <%= link_to link[:label], link[:url], class: "event-sidebar__link#{' event-sidebar__link--stub' if link[:url] == '#'}" %>
+        </li>
+      <% end %>
+    </ul>
+  </nav>
+
+  <% secondary_links = [
+    { label: "Events", url: events_path },
+    { label: "Documents", url: event_documents_path(event) },
+    { label: "Templates", url: questionnaire_templates_path },
+    { label: "Settings", url: event_settings_path(event) }
+  ] %>
+
+  <nav class="event-sidebar__nav event-sidebar__nav--secondary">
+    <ul>
+      <% secondary_links.each do |link| %>
+        <li>
+          <%= link_to link[:label], link[:url], class: "event-sidebar__link#{' event-sidebar__link--stub' if link[:url] == '#'}" %>
+        </li>
+      <% end %>
+    </ul>
+  </nav>
+</aside>

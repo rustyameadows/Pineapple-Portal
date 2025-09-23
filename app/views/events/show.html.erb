@@ -1,54 +1,166 @@
-<h1><%= @event.name %></h1>
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
 
-<p>
-  Dates:
-  <% if @event.starts_on.present? %>
-    <%= @event.starts_on %> - <%= @event.ends_on || @event.starts_on %>
-  <% else %>
-    Not set
-  <% end %>
-</p>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-<p>Location: <%= @event.location.presence || "—" %></p>
+      <% event_date = @event.starts_on || @event.ends_on %>
+      <% formatted_event_date = event_date&.strftime("%B %-d, %Y") %>
+      <% days_until = event_date ? (event_date - Date.current).to_i : nil %>
+      <% countdown_label = if days_until
+                              if days_until.positive?
+                                "#{days_until} days"
+                              elsif days_until.zero?
+                                "Today"
+                              else
+                                "#{days_until.abs} days ago"
+                              end
+                            end %>
+      <% event_date_range_label = if @event.starts_on.present? && @event.ends_on.present?
+                                    if @event.starts_on == @event.ends_on
+                                      @event.starts_on.strftime("%B %-d, %Y")
+                                    else
+                                      "#{@event.starts_on.strftime('%B %-d, %Y')} - #{@event.ends_on.strftime('%B %-d, %Y')}"
+                                    end
+                                  elsif @event.starts_on.present?
+                                    @event.starts_on.strftime("%B %-d, %Y")
+                                  elsif @event.ends_on.present?
+                                    @event.ends_on.strftime("%B %-d, %Y")
+                                  else
+                                    "Dates TBD"
+                                  end %>
 
-<p>
-  <%= link_to "Edit Event", edit_event_path(@event) %> |
-  <%= link_to "Settings", event_settings_path(@event) %> |
-  <%= link_to "All Events", events_path %> |
-  <%= button_to "Delete Event", event_path(@event), method: :delete, data: { confirm: "Are you sure?" } %>
-</p>
+      <% questionnaire_items = [
+        { label: "Client Q+A", url: "#", state: :completed },
+        { label: "Contact Information", url: "#", state: :completed }
+      ] + @event.questionnaires.order(:title).map do |questionnaire|
+        { label: questionnaire.title, url: event_questionnaire_path(@event, questionnaire), state: :active }
+      end %>
 
-<section>
-  <h2>Questionnaires</h2>
-  <p><%= link_to "New Questionnaire", new_event_questionnaire_path(@event) %></p>
+      <% document_items = [
+        { label: "Packets", url: "#", state: :active },
+        { label: "Uploads", url: "#", state: :active },
+        { label: "Client Uploads", url: "#", state: :active }
+      ] + @event.documents.latest.map do |document|
+        { label: document.title, url: event_document_path(@event, document), state: :highlight }
+      end %>
 
-  <% if @questionnaires.any? %>
-    <ul>
-      <% @questionnaires.each do |questionnaire| %>
-        <li>
-          <%= link_to questionnaire.title, event_questionnaire_path(@event, questionnaire) %>
-        </li>
-      <% end %>
-    </ul>
-  <% else %>
-    <p>No questionnaires yet.</p>
-  <% end %>
-</section>
+      <% quick_links = [
+        { label: "Packets", url: "#", state: :active },
+        { label: "Uploads", url: "#", state: :active },
+        { label: "Client Uploads", url: "#", state: :active },
+        { label: "Pineapple Documents", url: "#", state: :highlight }
+      ] %>
 
-<section>
-  <h2>Documents</h2>
-  <p><%= link_to "Manage documents", event_documents_path(@event) %></p>
+      <% calendar_links = [
+        { label: "Run of Show", url: "#", state: :active },
+        { label: "Day Of", url: "#", state: :active },
+        { label: "Decision", url: "#", state: :active },
+        { label: "Planning", url: "#", state: :active },
+        { label: "Guest", url: "#", state: :active }
+      ] %>
 
-  <% if @event.documents.any? %>
-    <ul>
-      <% @event.documents.latest.each do |document| %>
-        <li>
-          <%= link_to document.title, event_document_path(@event, document) %>
-          (v<%= document.version %>)
-        </li>
-      <% end %>
-    </ul>
-  <% else %>
-    <p>No documents uploaded yet.</p>
-  <% end %>
-</section>
+      <% payment_links = [
+        { label: "Deposit", url: "#", state: :completed },
+        { label: "Phase 1 - Planning", url: "#", state: :active },
+        { label: "Phase 2 - Design", url: "#", state: :active },
+        { label: "Phase 3 - Production", url: "#", state: :active },
+        { label: "Phase 4 - Wrap", url: "#", state: :active },
+        { label: "Incidentals", url: "#", state: :active }
+      ] %>
+
+      <% approval_links = [
+        { label: "Initial Contract", url: "#", state: :completed },
+        { label: "Budget Range", url: "#", state: :completed },
+        { label: "Vendor Approval Packet", url: "#", state: :active },
+        { label: "Final Budget", url: "#", state: :active },
+        { label: "Pineapple Marketing", url: "#", state: :active },
+        { label: "Release", url: "#", state: :active }
+      ] %>
+
+      <% event_link_groups = [
+        { title: "Questionnaires", items: questionnaire_items },
+        { title: "Documents", items: document_items },
+        { title: "Quick Links", items: quick_links },
+        { title: "Calendars", items: calendar_links },
+        { title: "Payments", items: payment_links },
+        { title: "Approvals", items: approval_links }
+      ] %>
+
+      <% activity_items = [
+        { pre: "Your client added 28 entries in the", link_text: "Guest List", post: "." },
+        { pre: "Your client", link_text: "Booked the Wedding Photographer", post: "." },
+        { pre: "Your client completed the", link_text: "Design Q+A questionnaire", post: "." },
+        { pre: "Your client added 6 items in the", link_text: "Inspiration Folder", post: "." },
+        { pre: "Your client is in the process of", link_text: "Booking the Band", post: "." },
+        { pre: "Your client paid the", link_text: "Deposit Invoice", post: "." },
+        { pre: "Your client completed the", link_text: "Contact Information questionnaire", post: "." }
+      ] %>
+
+      <section class="event-hero">
+        <div class="event-hero__top">
+          <div class="event-hero__meta">
+            <p class="event-hero__location">
+              <%= @event.location.presence || "Location TBD" %>
+            </p>
+            <h1 class="event-hero__title"><%= @event.name %></h1>
+            <p class="event-hero__dates"><%= event_date_range_label %></p>
+          </div>
+          <div class="event-hero__date">
+            <p class="event-hero__date-primary"><%= formatted_event_date || "Date TBD" %></p>
+            <% if countdown_label %>
+              <p class="event-hero__date-secondary"><%= countdown_label.upcase %></p>
+            <% end %>
+          </div>
+        </div>
+        <div class="event-hero__actions">
+          <%= link_to "Event Settings", event_settings_path(@event), class: "event-hero__action" %>
+          <%= link_to "Portal", "#", class: "event-hero__action event-hero__action--portal" %>
+        </div>
+      </section>
+
+      <div class="event-layout__body">
+        <section class="event-links">
+          <h2 class="event-links__title">Event Links</h2>
+          <div class="event-links__panel">
+            <% event_link_groups.each_slice(3) do |group_row| %>
+              <div class="event-links__row">
+                <% group_row.each do |group| %>
+                  <section class="event-links__group">
+                    <h3 class="event-links__group-title"><%= group[:title] %></h3>
+                    <ul class="event-links__list">
+                      <% group[:items].each do |item| %>
+                        <% item_classes = ["event-links__list-item"] %>
+                        <% item_classes << "event-links__list-item--completed" if item[:state] == :completed %>
+                        <% item_classes << "event-links__list-item--highlight" if item[:state] == :highlight %>
+                        <li class="<%= item_classes.join(' ') %>">
+                          <%= link_to item[:label], item[:url], class: "event-links__link" %>
+                        </li>
+                      <% end %>
+                    </ul>
+                  </section>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </section>
+
+        <aside class="event-layout__activity event-activity">
+          <h2 class="event-activity__title">Recent Activity</h2>
+          <div class="event-activity__items">
+            <% activity_items.each do |activity| %>
+              <article class="event-activity__item">
+                <p>
+                  <span><%= activity[:pre] %></span>
+                  <%= link_to activity[:link_text], "#", class: "event-activity__link" %>
+                  <span><%= activity[:post] %></span>
+                </p>
+              </article>
+            <% end %>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+<% end %>
