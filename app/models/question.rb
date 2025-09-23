@@ -7,7 +7,6 @@ class Question < ApplicationRecord
 
   before_validation :sync_relationships_from_questionnaire
 
-  validate :answers_only_on_instances
   validate :section_matches_questionnaire
 
   validates :prompt, presence: true
@@ -23,15 +22,6 @@ class Question < ApplicationRecord
 
     self.event = questionnaire.event
     self.questionnaire_section ||= questionnaire.sections.first
-  end
-
-  def answers_only_on_instances
-    return if questionnaire.blank?
-    return unless questionnaire.template?
-
-    if answer_value.present? || answer_raw.present? || answered_at.present?
-      errors.add(:base, "Template questions cannot store answers")
-    end
   end
 
   def section_matches_questionnaire

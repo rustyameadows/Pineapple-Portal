@@ -16,12 +16,4 @@ class QuestionTest < ActiveSupport::TestCase
     assert question.valid?
     assert_equal questionnaire.event, question.event
   end
-
-  test "template question cannot store answers" do
-    question = questions(:second)
-    question.answer_value = "Yes"
-
-    assert_not question.valid?
-    assert_includes question.errors[:base], "Template questions cannot store answers"
-  end
 end
