@@ -10,6 +10,7 @@ class Questionnaire < ApplicationRecord
 
   scope :templates, -> { where(is_template: true) }
   scope :for_event, ->(event_id) { where(event_id: event_id) }
+  scope :client_visible, -> { where(client_visible: true) }
 
   before_validation :clear_template_source_when_template
   after_create_commit :ensure_default_section

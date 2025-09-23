@@ -1,0 +1,29 @@
+<section class="client-page">
+  <header class="client-page__header">
+    <h1>Financial Overview</h1>
+    <p>Invoice and payment checkpoints will appear here as we publish them.</p>
+  </header>
+
+  <% if @milestones.any? %>
+    <ul class="client-list">
+      <% @milestones.each do |milestone| %>
+        <li>
+          <strong><%= milestone[:label] %></strong>
+          <% if milestone[:due_on] %>
+            <span>Due <%= milestone[:due_on].strftime('%B %-d, %Y') %></span>
+          <% else %>
+            <span>Timing TBD</span>
+          <% end %>
+          <% if milestone[:amount] %>
+            <span>· <%= number_to_currency(milestone[:amount]) %></span>
+          <% end %>
+          <span class="client-financials__status client-financials__status--<%= milestone[:status] %>"><%= milestone[:status].to_s.humanize %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="client-placeholder">
+      <p>There aren’t any financial milestones to show right now.</p>
+    </div>
+  <% end %>
+</section>

@@ -49,6 +49,13 @@
   <% end %>
 
   <div>
+    <%= form.label :client_visible do %>
+      <%= form.check_box :client_visible %>
+      Share with client portal
+    <% end %>
+  </div>
+
+  <div>
     <%= form.submit %>
   </div>
 <% end %>

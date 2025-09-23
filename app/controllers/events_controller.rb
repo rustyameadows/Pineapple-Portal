@@ -8,6 +8,7 @@ class EventsController < ApplicationController
 
   def show
     @questionnaires = @event.questionnaires.order(:title)
+    @event_links = @event.event_links.ordered
   end
 
   def new

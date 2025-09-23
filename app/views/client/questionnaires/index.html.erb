@@ -1,0 +1,20 @@
+<section class="client-page">
+  <header class="client-page__header">
+    <h1>Questionnaires</h1>
+    <p>Share details that help us tailor the experience. Completed questionnaires remain visible for easy reference.</p>
+  </header>
+
+  <% if @questionnaires.any? %>
+    <ul class="client-list">
+      <% @questionnaires.each do |questionnaire| %>
+        <li>
+          <%= link_to questionnaire.title, client_event_questionnaire_path(@event, questionnaire) %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="client-placeholder">
+      <p>No questionnaires are available yet. Check back soon or reach out if you’re expecting something here.</p>
+    </div>
+  <% end %>
+</section>

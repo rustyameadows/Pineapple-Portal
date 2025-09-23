@@ -1,0 +1,48 @@
+<% event_date_range_label = if @event.starts_on.present? && @event.ends_on.present?
+                              if @event.starts_on == @event.ends_on
+                                @event.starts_on.strftime("%B %-d, %Y")
+                              else
+                                "#{@event.starts_on.strftime('%B %-d, %Y')} – #{@event.ends_on.strftime('%B %-d, %Y')}"
+                              end
+                            elsif @event.starts_on.present?
+                              @event.starts_on.strftime("%B %-d, %Y")
+                            elsif @event.ends_on.present?
+                              @event.ends_on.strftime("%B %-d, %Y")
+                            else
+                              "Dates TBD"
+                            end %>
+
+<section class="client-hero">
+  <div class="client-hero__meta">
+    <p class="client-hero__eyebrow"><%= @event.location.presence || "Location TBD" %></p>
+    <h1 class="client-hero__title"><%= @event.name %></h1>
+    <p class="client-hero__dates"><%= event_date_range_label %></p>
+  </div>
+
+  <div class="client-hero__links">
+    <h2 class="client-hero__links-title">Quick Links</h2>
+    <% if @quick_links.any? %>
+      <ul class="client-hero__links-list">
+        <% @quick_links.each do |link| %>
+          <li><%= link_to link.label, link.url, target: "_blank", rel: "noopener" %></li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="client-hero__links-empty">Your planner hasn’t published any quick links yet.</p>
+    <% end %>
+  </div>
+</section>
+
+<section class="client-dashboard">
+  <h2 class="client-dashboard__heading">Explore Your Planning Tools</h2>
+  <div class="client-dashboard__grid client-dashboard__grid--three">
+    <% @module_cards.each do |card|
+         link_label = card.fetch(:link_label, "Open") %>
+      <article class="client-dashboard__card">
+        <h3><%= card[:title] %></h3>
+        <p><%= card[:description] %></p>
+        <%= link_to link_label, card[:path], class: "client-dashboard__cta" %>
+      </article>
+    <% end %>
+  </div>
+</section>

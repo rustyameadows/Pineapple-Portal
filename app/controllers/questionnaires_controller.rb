@@ -60,7 +60,7 @@ class QuestionnairesController < ApplicationController
   end
 
   def questionnaire_params
-    params.require(:questionnaire).permit(:title, :description, :is_template,
+    params.require(:questionnaire).permit(:title, :description, :is_template, :client_visible,
                                           sections_attributes: %i[id title helper_text position _destroy])
   end
 

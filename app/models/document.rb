@@ -13,6 +13,7 @@ class Document < ApplicationRecord
   validates :is_latest, inclusion: { in: [true, false] }
 
   scope :latest, -> { where(is_latest: true) }
+  scope :client_visible, -> { where(client_visible: true) }
 
   def self.next_version_for(logical_id)
     where(logical_id: logical_id).maximum(:version).to_i + 1

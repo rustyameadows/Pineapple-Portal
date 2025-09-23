@@ -1,0 +1,21 @@
+<section class="client-page">
+  <header class="client-page__header">
+    <h1>Design &amp; Inspiration</h1>
+    <p>Preview boards, files, and inspiration shared by your planning team.</p>
+  </header>
+
+  <% if @documents.any? %>
+    <ul class="client-list">
+      <% @documents.each do |document| %>
+        <li>
+          <strong><%= document.title %></strong>
+          <span>Version <%= document.version %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="client-placeholder">
+      <p>No inspiration files yet. Your planner will add items once they’re ready.</p>
+    </div>
+  <% end %>
+</section>

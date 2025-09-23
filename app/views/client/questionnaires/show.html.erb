@@ -1,0 +1,52 @@
+<section class="client-page">
+  <header class="client-page__header">
+    <h1><%= @questionnaire.title %></h1>
+    <% if @questionnaire.description.present? %>
+      <p><%= simple_format(@questionnaire.description) %></p>
+    <% end %>
+  </header>
+
+  <% @sections.each do |section| %>
+    <section class="client-questionnaire__section">
+      <header>
+        <h2><%= section.title %></h2>
+        <% if section.helper_text.present? %>
+          <p class="client-questionnaire__helper"><%= simple_format(section.helper_text) %></p>
+        <% end %>
+      </header>
+
+      <% questions = section.questions.order(:position) %>
+      <% if questions.any? %>
+        <ul class="client-questionnaire__questions">
+          <% questions.each do |question| %>
+            <li>
+              <p class="client-questionnaire__prompt"><strong><%= question.prompt %></strong></p>
+              <% if question.help_text.present? %>
+                <p class="client-questionnaire__helper"><%= simple_format(question.help_text) %></p>
+              <% end %>
+
+              <%= form_with url: client_event_questionnaire_question_answer_path(@event, @questionnaire, question), method: :patch, local: true do |form| %>
+                <div class="client-questionnaire__control">
+                  <% case question.response_type %>
+                  <% when "boolean" %>
+                    <%= form.label :answer_value, "Your response" %><br>
+                    <%= form.select :answer_value, options_for_select([["Select", ""], ["Yes", "Yes"], ["No", "No"]], question.answer_value), include_blank: false %>
+                  <% else %>
+                    <%= form.label :answer_value, "Your response" %><br>
+                    <%= form.text_area :answer_value, value: question.answer_value, rows: 4 %>
+                  <% end %>
+                </div>
+
+                <div>
+                  <%= form.submit "Save response" %>
+                </div>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="client-questionnaire__empty">No questions in this section yet.</p>
+      <% end %>
+    </section>
+  <% end %>
+</section>

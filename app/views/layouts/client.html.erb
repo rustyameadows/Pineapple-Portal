@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Client Portal<%= " – #{@event.name}" if defined?(@event) && @event.present? %></title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body class="client-shell">
+    <header class="client-shell__header">
+      <div class="client-shell__header-inner">
+        <div class="client-shell__branding">
+          <%= link_to "Pineapple Productions", root_path, class: "client-shell__brand" %>
+        </div>
+      </div>
+    </header>
+
+    <main class="client-shell__main">
+      <%= render "shared/flash" %>
+      <%= yield %>
+    </main>
+  </body>
+</html>

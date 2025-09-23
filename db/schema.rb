@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_16_061000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_23_001200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -44,11 +44,24 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_16_061000) do
     t.string "content_type", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "client_visible", default: false, null: false
+    t.index ["client_visible"], name: "index_documents_on_client_visible"
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["logical_id", "version"], name: "index_documents_on_logical_id_and_version", unique: true
     t.index ["logical_id"], name: "index_documents_on_logical_id_latest", unique: true, where: "(is_latest = true)"
     t.check_constraint "size_bytes > 0", name: "documents_size_positive"
     t.check_constraint "version > 0", name: "documents_version_positive"
+  end
+
+  create_table "event_links", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "label", null: false
+    t.string "url", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id", "position"], name: "index_event_links_on_event_id_and_position"
+    t.index ["event_id"], name: "index_event_links_on_event_id"
   end
 
   create_table "events", force: :cascade do |t|
@@ -82,6 +95,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_16_061000) do
     t.bigint "template_source_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "client_visible", default: false, null: false
+    t.index ["client_visible"], name: "index_questionnaires_on_client_visible"
     t.index ["event_id", "template_source_id"], name: "index_questionnaires_on_event_id_and_template_source_id", unique: true, where: "(template_source_id IS NOT NULL)"
     t.index ["event_id"], name: "index_questionnaires_on_event_id"
     t.index ["is_template"], name: "index_questionnaires_on_is_template"
@@ -118,6 +133,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_16_061000) do
 
   add_foreign_key "attachments", "documents"
   add_foreign_key "documents", "events"
+  add_foreign_key "event_links", "events"
   add_foreign_key "questionnaire_sections", "questionnaires"
   add_foreign_key "questionnaires", "events"
   add_foreign_key "questionnaires", "questionnaires", column: "template_source_id"

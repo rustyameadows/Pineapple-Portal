@@ -46,12 +46,15 @@
         { label: document.title, url: event_document_path(@event, document), state: :highlight }
       end %>
 
-      <% quick_links = [
-        { label: "Packets", url: "#", state: :active },
-        { label: "Uploads", url: "#", state: :active },
-        { label: "Client Uploads", url: "#", state: :active },
-        { label: "Pineapple Documents", url: "#", state: :highlight }
-      ] %>
+      <% quick_links = @event_links.map do |link|
+        { label: link.label, url: link.url, state: :active }
+      end %>
+
+      <% if quick_links.empty? %>
+        <% quick_links = [
+          { label: "Add quick links in Event Settings", url: event_settings_path(@event), state: :highlight }
+        ] %>
+      <% end %>
 
       <% calendar_links = [
         { label: "Run of Show", url: "#", state: :active },
@@ -116,7 +119,7 @@
         </div>
         <div class="event-hero__actions">
           <%= link_to "Event Settings", event_settings_path(@event), class: "event-hero__action" %>
-          <%= link_to "Portal", "#", class: "event-hero__action event-hero__action--portal" %>
+          <%= link_to "Portal", client_event_path(@event), class: "event-hero__action event-hero__action--portal" %>
         </div>
       </section>
 

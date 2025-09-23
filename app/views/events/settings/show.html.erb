@@ -14,6 +14,64 @@
     <p>TODO: General settings (branding, key contacts, onboarding checklist).</p>
   </div>
 
+  <section class="stack">
+    <h2>Client Portal Quick Links</h2>
+    <p>Control the shortcuts clients see in the portal hero. Links display in the order listed below.</p>
+
+    <div class="panel stack">
+      <% if @event_links.any? %>
+        <ul class="stack" style="gap: 1rem;">
+          <% @event_links.each_with_index do |event_link, index| %>
+            <li class="stack" style="gap: 0.5rem; border: 1px solid #e0e2e6; border-radius: 8px; padding: 1rem;">
+              <%= form_with model: [@event, event_link], local: true, html: { class: "stack", style: "gap: 0.75rem;" } do |form| %>
+                <div>
+                  <%= form.label :label, "Label" %><br>
+                  <%= form.text_field :label, required: true %>
+                </div>
+                <div>
+                  <%= form.label :url, "URL" %><br>
+                  <%= form.url_field :url, required: true %>
+                </div>
+                <div>
+                  <%= form.submit "Save changes" %>
+                </div>
+              <% end %>
+
+              <div class="inline-actions" style="display: flex; gap: 0.75rem; align-items: center;">
+                <% if index.positive? %>
+                  <%= link_to "Move up", move_up_event_event_link_path(@event, event_link), data: { turbo_method: :patch }, style: "background: #f4f4f7; padding: 0.5rem 0.75rem; border-radius: 6px; text-decoration: none;" %>
+                <% end %>
+                <% if index < @event_links.length - 1 %>
+                  <%= link_to "Move down", move_down_event_event_link_path(@event, event_link), data: { turbo_method: :patch }, style: "background: #f4f4f7; padding: 0.5rem 0.75rem; border-radius: 6px; text-decoration: none;" %>
+                <% end %>
+                <%= link_to "Remove", event_event_link_path(@event, event_link), data: { turbo_method: :delete, turbo_confirm: "Remove this quick link?" }, style: "background: #ffe8e5; color: #9d1b0d; padding: 0.5rem 0.75rem; border-radius: 6px; text-decoration: none;" %>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p>No quick links yet. Use the form below to add the first client shortcut.</p>
+      <% end %>
+
+      <div class="stack" style="gap: 0.75rem; border-top: 1px solid #e0e2e6; padding-top: 1rem;">
+        <h3>Add Quick Link</h3>
+        <%= form_with model: [@event, @event_link], local: true, html: { class: "stack", style: "gap: 0.75rem;" } do |form| %>
+          <div>
+            <%= form.label :label, "Label" %><br>
+            <%= form.text_field :label, required: true %>
+          </div>
+          <div>
+            <%= form.label :url, "URL" %><br>
+            <%= form.url_field :url, required: true, placeholder: "https://" %>
+          </div>
+          <div>
+            <%= form.submit "Add quick link" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
   <h2>Explore Upcoming Areas</h2>
   <ul>
     <li><%= link_to "Team Permissions", team_event_settings_path(@event) %></li>

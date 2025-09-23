@@ -17,6 +17,13 @@ Rails.application.routes.draw do
       get :notifications
     end
 
+    resources :event_links, only: %i[create update destroy], module: :events do
+      member do
+        patch :move_up
+        patch :move_down
+      end
+    end
+
     resources :questionnaires do
       resources :sections, controller: "questionnaire_sections", only: %i[create update destroy] do
         collection { patch :reorder }
@@ -30,6 +37,20 @@ Rails.application.routes.draw do
     resources :documents do
       collection { post :presign, to: "document_uploads#create" }
       member { get :download }
+    end
+  end
+
+  namespace :client, path: "portal" do
+    resources :events, only: :show do
+      resource :decision_calendar, only: :show, controller: :decision_calendars
+      resource :guest_list, only: :show, controller: :guest_lists
+      resources :questionnaires, only: %i[index show] do
+        resources :questions, only: [] do
+          patch :answer, to: "question_answers#update"
+        end
+      end
+      resources :designs, only: :index
+      resources :financials, only: :index
     end
   end
 

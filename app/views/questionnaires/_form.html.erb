@@ -27,6 +27,13 @@
     <% end %>
   </div>
 
+  <div class="questionnaire-form__checkbox">
+    <%= form.label :client_visible do %>
+      <%= form.check_box :client_visible %>
+      Visible to clients in the portal
+    <% end %>
+  </div>
+
   <div>
     <%= form.submit %>
   </div>
