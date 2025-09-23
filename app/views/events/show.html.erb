@@ -31,20 +31,21 @@
                                     "Dates TBD"
                                   end %>
 
-      <% questionnaire_items = [
-        { label: "Client Q+A", url: "#", state: :completed },
-        { label: "Contact Information", url: "#", state: :completed }
-      ] + @event.questionnaires.order(:title).map do |questionnaire|
+      <% questionnaire_items = @event.questionnaires.order(:title).map do |questionnaire|
         { label: questionnaire.title, url: event_questionnaire_path(@event, questionnaire), state: :active }
       end %>
+
+      <% if questionnaire_items.empty? %>
+        <% questionnaire_items = [
+          { label: "Create your first questionnaire", url: new_event_questionnaire_path(@event), state: :highlight }
+        ] %>
+      <% end %>
 
       <% document_items = [
         { label: "Packets", url: "#", state: :active },
         { label: "Uploads", url: "#", state: :active },
         { label: "Client Uploads", url: "#", state: :active }
-      ] + @event.documents.latest.map do |document|
-        { label: document.title, url: event_document_path(@event, document), state: :highlight }
-      end %>
+      ] %>
 
       <% quick_links = @event_links.map do |link|
         { label: link.label, url: link.url, state: :active }

@@ -1,0 +1,39 @@
+<% event = local_assigns.fetch(:event) %>
+<%= form_with model: event, url: event_path(event), method: :patch, local: true, html: { class: "event-settings__details-form" } do |form| %>
+  <% if event.errors.any? %>
+    <div class="event-settings__form-errors">
+      <h3><%= pluralize(event.errors.count, "error") %> prevented saving:</h3>
+      <ul>
+        <% event.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="event-settings__details-grid">
+    <div class="event-settings__field">
+      <%= form.label :name, "Event Title" %>
+      <%= form.text_field :name, required: true %>
+    </div>
+
+    <div class="event-settings__field">
+      <%= form.label :location, "Location" %>
+      <%= form.text_field :location %>
+    </div>
+
+    <div class="event-settings__field">
+      <%= form.label :starts_on, "Start Date" %>
+      <%= form.date_field :starts_on %>
+    </div>
+
+    <div class="event-settings__field">
+      <%= form.label :ends_on, "End Date" %>
+      <%= form.date_field :ends_on %>
+    </div>
+  </div>
+
+  <div class="event-settings__form-actions">
+    <%= form.submit "Save Event Details", class: "event-section__cta" %>
+  </div>
+<% end %>

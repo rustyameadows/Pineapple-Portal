@@ -7,10 +7,6 @@ module Events
       @event_links = @event.event_links.ordered
     end
 
-    def team; end
-
-    def notifications; end
-
     private
 
     def set_event

@@ -1,80 +1,88 @@
-<section class="stack">
-  <p class="breadcrumbs">
-    <%= link_to "Events", events_path %> /
-    <%= link_to @event.name, event_path(@event) %> /
-    Settings
-  </p>
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
 
-  <h1><%= @event.name %> Settings</h1>
-  <p class="dashboard__meta">
-    Configuration hub for this event. These panels are placeholders until product finalizes the controls.
-  </p>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-  <div class="dashboard__empty">
-    <p>TODO: General settings (branding, key contacts, onboarding checklist).</p>
-  </div>
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Event Settings</p>
+            <h1 class="event-section__title"><%= @event.name %></h1>
+            <p class="event-section__lead">Update the essentials for this event and keep the client view in sync.</p>
+          </div>
+        </header>
 
-  <section class="stack">
-    <h2>Client Portal Quick Links</h2>
-    <p>Control the shortcuts clients see in the portal hero. Links display in the order listed below.</p>
+        <div class="event-section__body">
+          <%= render "events/settings/event_details_form", event: @event %>
+        </div>
+      </section>
 
-    <div class="panel stack">
-      <% if @event_links.any? %>
-        <ul class="stack" style="gap: 1rem;">
-          <% @event_links.each_with_index do |event_link, index| %>
-            <li class="stack" style="gap: 0.5rem; border: 1px solid #e0e2e6; border-radius: 8px; padding: 1rem;">
-              <%= form_with model: [@event, event_link], local: true, html: { class: "stack", style: "gap: 0.75rem;" } do |form| %>
-                <div>
-                  <%= form.label :label, "Label" %><br>
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Client Portal</p>
+            <h2 class="event-section__title">Quick Links</h2>
+            <p class="event-section__lead">Control the shortcuts clients see in the portal hero. Links display in the order listed below.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__quick-links">
+            <% if @event_links.any? %>
+              <ul class="event-settings__link-list">
+                <% @event_links.each_with_index do |event_link, index| %>
+                  <li class="event-settings__link-item">
+                    <%= form_with model: [@event, event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                      <div class="event-settings__field">
+                        <%= form.label :label, "Label" %>
+                        <%= form.text_field :label, required: true %>
+                      </div>
+                      <div class="event-settings__field">
+                        <%= form.label :url, "URL" %>
+                        <%= form.url_field :url, required: true %>
+                      </div>
+                      <div class="event-settings__form-actions">
+                        <%= form.submit "Save changes" %>
+                      </div>
+                    <% end %>
+
+                    <div class="event-settings__controls">
+                      <% if index.positive? %>
+                        <%= link_to "Move up", move_up_event_event_link_path(@event, event_link), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                      <% end %>
+                      <% if index < @event_links.length - 1 %>
+                        <%= link_to "Move down", move_down_event_event_link_path(@event, event_link), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                      <% end %>
+                      <%= link_to "Remove", event_event_link_path(@event, event_link), data: { turbo_method: :delete, turbo_confirm: "Remove this quick link?" }, class: "event-settings__control event-settings__control--danger" %>
+                    </div>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="event-settings__empty">No quick links yet. Use the form below to add the first client shortcut.</p>
+            <% end %>
+
+            <div class="event-settings__new-link">
+              <h3>Add Quick Link</h3>
+              <%= form_with model: [@event, @event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                <div class="event-settings__field">
+                  <%= form.label :label, "Label" %>
                   <%= form.text_field :label, required: true %>
                 </div>
-                <div>
-                  <%= form.label :url, "URL" %><br>
-                  <%= form.url_field :url, required: true %>
+                <div class="event-settings__field">
+                  <%= form.label :url, "URL" %>
+                  <%= form.url_field :url, required: true, placeholder: "https://" %>
                 </div>
-                <div>
-                  <%= form.submit "Save changes" %>
+                <div class="event-settings__form-actions">
+                  <%= form.submit "Add quick link" %>
                 </div>
               <% end %>
-
-              <div class="inline-actions" style="display: flex; gap: 0.75rem; align-items: center;">
-                <% if index.positive? %>
-                  <%= link_to "Move up", move_up_event_event_link_path(@event, event_link), data: { turbo_method: :patch }, style: "background: #f4f4f7; padding: 0.5rem 0.75rem; border-radius: 6px; text-decoration: none;" %>
-                <% end %>
-                <% if index < @event_links.length - 1 %>
-                  <%= link_to "Move down", move_down_event_event_link_path(@event, event_link), data: { turbo_method: :patch }, style: "background: #f4f4f7; padding: 0.5rem 0.75rem; border-radius: 6px; text-decoration: none;" %>
-                <% end %>
-                <%= link_to "Remove", event_event_link_path(@event, event_link), data: { turbo_method: :delete, turbo_confirm: "Remove this quick link?" }, style: "background: #ffe8e5; color: #9d1b0d; padding: 0.5rem 0.75rem; border-radius: 6px; text-decoration: none;" %>
-              </div>
-            </li>
-          <% end %>
-        </ul>
-      <% else %>
-        <p>No quick links yet. Use the form below to add the first client shortcut.</p>
-      <% end %>
-
-      <div class="stack" style="gap: 0.75rem; border-top: 1px solid #e0e2e6; padding-top: 1rem;">
-        <h3>Add Quick Link</h3>
-        <%= form_with model: [@event, @event_link], local: true, html: { class: "stack", style: "gap: 0.75rem;" } do |form| %>
-          <div>
-            <%= form.label :label, "Label" %><br>
-            <%= form.text_field :label, required: true %>
+            </div>
           </div>
-          <div>
-            <%= form.label :url, "URL" %><br>
-            <%= form.url_field :url, required: true, placeholder: "https://" %>
-          </div>
-          <div>
-            <%= form.submit "Add quick link" %>
-          </div>
-        <% end %>
-      </div>
+        </div>
+      </section>
     </div>
-  </section>
-
-  <h2>Explore Upcoming Areas</h2>
-  <ul>
-    <li><%= link_to "Team Permissions", team_event_settings_path(@event) %></li>
-    <li><%= link_to "Notifications", notifications_event_settings_path(@event) %></li>
-  </ul>
-</section>
+  </div>
+<% end %>

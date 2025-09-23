@@ -13,8 +13,6 @@ Rails.application.routes.draw do
 
   resources :events do
     resource :settings, only: :show, module: :events do
-      get :team
-      get :notifications
     end
 
     resources :event_links, only: %i[create update destroy], module: :events do
