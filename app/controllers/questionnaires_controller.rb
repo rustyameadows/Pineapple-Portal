@@ -1,6 +1,6 @@
 class QuestionnairesController < ApplicationController
   before_action :set_event
-  before_action :set_questionnaire, only: %i[show edit update destroy]
+  before_action :set_questionnaire, only: %i[show edit update destroy mark_finished mark_in_progress]
   before_action :load_sections, only: %i[show edit]
 
   def index
@@ -40,6 +40,22 @@ class QuestionnairesController < ApplicationController
     redirect_to event_path(@event), notice: "Questionnaire deleted."
   end
 
+  def mark_finished
+    if @questionnaire.update(status: Questionnaire::STATUSES[:finished])
+      redirect_to event_questionnaire_path(@event, @questionnaire), notice: "Questionnaire marked as finished."
+    else
+      redirect_to event_questionnaire_path(@event, @questionnaire), alert: @questionnaire.errors.full_messages.to_sentence
+    end
+  end
+
+  def mark_in_progress
+    if @questionnaire.update(status: Questionnaire::STATUSES[:in_progress])
+      redirect_to event_questionnaire_path(@event, @questionnaire), notice: "Questionnaire marked as in progress."
+    else
+      redirect_to event_questionnaire_path(@event, @questionnaire), alert: @questionnaire.errors.full_messages.to_sentence
+    end
+  end
+
   def templates
     @questionnaires = Questionnaire.templates.order(:title)
   end
@@ -58,6 +74,7 @@ class QuestionnairesController < ApplicationController
                       end
     @event ||= @questionnaire.event
   end
+
 
   def questionnaire_params
     params.require(:questionnaire).permit(:title, :description, :is_template, :client_visible,

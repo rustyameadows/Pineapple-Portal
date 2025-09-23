@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_23_001200) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_23_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -96,10 +96,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_23_001200) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "client_visible", default: false, null: false
+    t.string "status", default: "in_progress", null: false
     t.index ["client_visible"], name: "index_questionnaires_on_client_visible"
     t.index ["event_id", "template_source_id"], name: "index_questionnaires_on_event_id_and_template_source_id", unique: true, where: "(template_source_id IS NOT NULL)"
     t.index ["event_id"], name: "index_questionnaires_on_event_id"
     t.index ["is_template"], name: "index_questionnaires_on_is_template"
+    t.index ["status"], name: "index_questionnaires_on_status"
     t.index ["template_source_id"], name: "index_questionnaires_on_template_source_id"
   end
 

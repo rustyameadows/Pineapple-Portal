@@ -1,6 +1,6 @@
 module Client
   class QuestionnairesController < EventScopedController
-    before_action :set_questionnaire, only: :show
+    before_action :set_questionnaire, only: %i[show mark_finished mark_in_progress]
     before_action :load_sections, only: :show
 
     def index
@@ -8,6 +8,22 @@ module Client
     end
 
     def show
+    end
+
+    def mark_finished
+      if @questionnaire.update(status: Questionnaire::STATUSES[:finished])
+        redirect_to client_event_questionnaire_path(@event, @questionnaire), notice: "Questionnaire marked as finished."
+      else
+        redirect_to client_event_questionnaire_path(@event, @questionnaire), alert: @questionnaire.errors.full_messages.to_sentence
+      end
+    end
+
+    def mark_in_progress
+      if @questionnaire.update(status: Questionnaire::STATUSES[:in_progress])
+        redirect_to client_event_questionnaire_path(@event, @questionnaire), notice: "Questionnaire marked as in progress."
+      else
+        redirect_to client_event_questionnaire_path(@event, @questionnaire), alert: @questionnaire.errors.full_messages.to_sentence
+      end
     end
 
     private

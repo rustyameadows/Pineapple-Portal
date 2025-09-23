@@ -10,6 +10,11 @@
           <div>
             <p class="event-section__eyebrow">Questionnaire</p>
             <h1 class="event-section__title"><%= @questionnaire.title %></h1>
+            <p class="event-section__status">
+              <span class="event-status-tag <%= @questionnaire.finished? ? 'event-status-tag--finished' : 'event-status-tag--in-progress' %>">
+                <%= @questionnaire.finished? ? 'Finished' : 'In Progress' %>
+              </span>
+            </p>
             <% if @questionnaire.description.present? %>
               <p class="event-section__lead"><%= simple_format(@questionnaire.description) %></p>
             <% end %>
@@ -18,6 +23,11 @@
             <% end %>
           </div>
           <div class="event-section__actions">
+            <% if @questionnaire.finished? %>
+              <%= button_to "Mark as In Progress", mark_in_progress_event_questionnaire_path(@event, @questionnaire), method: :patch, class: "event-section__cta" %>
+            <% else %>
+              <%= button_to "Mark as Finished", mark_finished_event_questionnaire_path(@event, @questionnaire), method: :patch, class: "event-section__cta" %>
+            <% end %>
             <%= link_to "Edit Questionnaire", edit_event_questionnaire_path(@event, @questionnaire), class: "event-section__cta" %>
           </div>
         </header>

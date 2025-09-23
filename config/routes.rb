@@ -23,6 +23,10 @@ Rails.application.routes.draw do
     end
 
     resources :questionnaires do
+      member do
+        patch :mark_finished
+        patch :mark_in_progress
+      end
       resources :sections, controller: "questionnaire_sections", only: %i[create update destroy] do
         collection { patch :reorder }
       end
@@ -43,6 +47,10 @@ Rails.application.routes.draw do
       resource :decision_calendar, only: :show, controller: :decision_calendars
       resource :guest_list, only: :show, controller: :guest_lists
       resources :questionnaires, only: %i[index show] do
+        member do
+          patch :mark_finished
+          patch :mark_in_progress
+        end
         resources :questions, only: [] do
           patch :answer, to: "question_answers#update"
         end

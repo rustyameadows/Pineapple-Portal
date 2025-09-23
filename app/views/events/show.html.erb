@@ -32,7 +32,8 @@
                                   end %>
 
       <% questionnaire_items = @event.questionnaires.order(:title).map do |questionnaire|
-        { label: questionnaire.title, url: event_questionnaire_path(@event, questionnaire), state: :active }
+        state = questionnaire.finished? ? :completed : :active
+        { label: questionnaire.title, url: event_questionnaire_path(@event, questionnaire), state: state }
       end %>
 
       <% if questionnaire_items.empty? %>

@@ -1,25 +1,41 @@
-<section class="dashboard">
-  <header class="dashboard__header">
-    <h1>Event Dashboard</h1>
-    <p class="dashboard__lead">Track every active event from one place.</p>
-    <p class="dashboard__meta">
-      Need questionnaire patterns? Visit the
-      <%= link_to "template library", questionnaire_templates_path %>.
-    </p>
-  </header>
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
 
-  <% if @events.any? %>
-    <div class="event-card-grid">
-      <% @events.each do |event| %>
-        <%= render "events/card", event: event %>
-      <% end %>
+    <div class="event-layout__main">
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Dashboard</p>
+            <h1 class="event-section__title">Your Active Events</h1>
+            <p class="event-section__lead">Track progress across every engagement and jump back into planning.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "New Event", new_event_path, class: "event-section__cta" %>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <% if @events.any? %>
+            <div class="event-card-grid event-card-grid--two">
+              <% @events.each do |event| %>
+                <%= render "events/card", event: event %>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="event-section__empty">
+              <p>No active events yet.</p>
+              <p>
+                <%= link_to "Create your first event", new_event_path, class: "event-section__cta" %>
+              </p>
+            </div>
+          <% end %>
+
+          <p class="event-section__note">
+            Need questionnaire patterns? Visit the <%= link_to "template library", questionnaire_templates_path %>.
+          </p>
+        </div>
+      </section>
     </div>
-  <% else %>
-    <div class="dashboard__empty">
-      <p>No active events yet.</p>
-      <p>
-        <%= link_to "Create your first event", new_event_path, class: "dashboard__cta" %>
-      </p>
-    </div>
-  <% end %>
-</section>
+  </div>
+<% end %>

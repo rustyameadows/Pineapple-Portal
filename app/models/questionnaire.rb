@@ -11,17 +11,34 @@ class Questionnaire < ApplicationRecord
   scope :templates, -> { where(is_template: true) }
   scope :for_event, ->(event_id) { where(event_id: event_id) }
   scope :client_visible, -> { where(client_visible: true) }
+  scope :in_progress, -> { where(status: "in_progress") }
+  scope :finished, -> { where(status: "finished") }
+
+  STATUSES = {
+    in_progress: "in_progress",
+    finished: "finished"
+  }.freeze
 
   before_validation :clear_template_source_when_template
   after_create_commit :ensure_default_section
+  after_initialize :set_default_status, if: :new_record?
 
   validates :title, presence: true
   validates :template_source_id,
             uniqueness: { scope: :event_id, allow_nil: true }
   validate :template_source_only_for_instances
+  validates :status, inclusion: { in: STATUSES.values }
 
   def template?
     is_template?
+  end
+
+  def finished?
+    status == STATUSES[:finished]
+  end
+
+  def in_progress?
+    status == STATUSES[:in_progress]
   end
 
   private
@@ -40,5 +57,9 @@ class Questionnaire < ApplicationRecord
     return if sections.exists?
 
     sections.create!(title: "Section 1")
+  end
+
+  def set_default_status
+    self.status ||= STATUSES[:in_progress]
   end
 end

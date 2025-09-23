@@ -1,0 +1,17 @@
+<aside class="event-sidebar">
+  <div class="event-sidebar__brand">
+    <%= link_to root_path, class: "event-sidebar__brand-link" do %>
+      <span class="event-sidebar__brand-top">Pineapple</span>
+      <span class="event-sidebar__brand-bottom">Productions</span>
+    <% end %>
+  </div>
+
+  <nav class="event-sidebar__nav event-sidebar__nav--secondary event-sidebar__nav--index">
+    <ul>
+      <li><%= link_to "Events", events_path, class: "event-sidebar__link" %></li>
+      <li><%= link_to "Documents", "#", class: "event-sidebar__link event-sidebar__link--stub" %></li>
+      <li><%= link_to "Templates", questionnaire_templates_path, class: "event-sidebar__link" %></li>
+      <li><%= link_to "Settings", "#", class: "event-sidebar__link event-sidebar__link--stub" %></li>
+    </ul>
+  </nav>
+</aside>

@@ -7,8 +7,14 @@
   <% if @questionnaires.any? %>
     <ul class="client-list">
       <% @questionnaires.each do |questionnaire| %>
-        <li>
-          <%= link_to questionnaire.title, client_event_questionnaire_path(@event, questionnaire) %>
+        <% status_label = questionnaire.finished? ? "Finished" : "In Progress" %>
+        <li class="client-list__item">
+          <span class="client-list__title">
+            <%= link_to questionnaire.title, client_event_questionnaire_path(@event, questionnaire) %>
+          </span>
+          <span class="client-status-tag <%= questionnaire.finished? ? 'client-status-tag--finished' : 'client-status-tag--in-progress' %>">
+            <%= status_label %>
+          </span>
         </li>
       <% end %>
     </ul>
