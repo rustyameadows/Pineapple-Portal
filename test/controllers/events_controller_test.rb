@@ -8,7 +8,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   test "lists events" do
     get events_url
     assert_response :success
-    assert_select "h1", text: "Events"
+    assert_select "h1", text: "Active Projects"
   end
 
   test "creates event" do

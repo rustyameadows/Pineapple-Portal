@@ -1,0 +1,72 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section event-section--detail">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Approval</p>
+            <h1 class="event-section__title"><%= @approval.title %></h1>
+            <% if @approval.acknowledged_at.present? %>
+              <p class="event-section__subtitle">Acknowledged <%= l(@approval.acknowledged_at, format: :long) %></p>
+            <% else %>
+              <p class="event-section__subtitle">Awaiting client acknowledgement</p>
+            <% end %>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Edit", edit_event_approval_path(@event, @approval), class: "event-section__link" %>
+            <%= button_to "Delete", event_approval_path(@event, @approval), method: :delete, data: { confirm: "Delete this approval?" }, class: "event-section__danger" %>
+          </div>
+        </header>
+
+        <div class="event-summary-grid">
+          <div>
+            <h2 class="event-summary-grid__label">Status</h2>
+            <p class="event-summary-grid__value"><span class="event-pill event-pill--<%= @approval.status %>"><%= @approval.status.humanize %></span></p>
+          </div>
+          <div>
+            <h2 class="event-summary-grid__label">Client Visible</h2>
+            <p class="event-summary-grid__value"><%= @approval.client_visible? ? "Yes" : "No" %></p>
+          </div>
+          <div>
+            <h2 class="event-summary-grid__label">Client Name</h2>
+            <p class="event-summary-grid__value"><%= @approval.client_name.presence || "—" %></p>
+          </div>
+        </div>
+
+        <% if @approval.summary.present? %>
+          <section class="event-detail-block">
+            <h2>Summary</h2>
+            <p><%= simple_format(@approval.summary) %></p>
+          </section>
+        <% end %>
+
+        <% if @approval.instructions.present? %>
+          <section class="event-detail-block">
+            <h2>Instructions</h2>
+            <p><%= simple_format(@approval.instructions) %></p>
+          </section>
+        <% end %>
+
+        <% if @approval.client_note.present? %>
+          <section class="event-detail-block">
+            <h2>Client Note</h2>
+            <p><%= simple_format(@approval.client_note) %></p>
+          </section>
+        <% end %>
+
+        <section class="event-detail-block">
+          <header class="event-detail-block__header">
+            <h2>Attachments</h2>
+          </header>
+          <%= render "attachments/list", attachments: @approval.attachments %>
+          <%= render "attachments/form", entity: @approval, documents: @event.documents.latest %>
+          <%= render "attachments/upload_script" %>
+        </section>
+      </section>
+    </div>
+  </div>
+<% end %>

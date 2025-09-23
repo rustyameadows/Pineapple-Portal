@@ -11,6 +11,6 @@ class WelcomeControllerTest < ActionDispatch::IntegrationTest
 
     get root_url
     assert_response :success
-    assert_select "h1", text: "Pineapple Portal"
+    assert_select "h1", text: "Your Active Events"
   end
 end

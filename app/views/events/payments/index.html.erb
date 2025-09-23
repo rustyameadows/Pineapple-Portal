@@ -1,0 +1,54 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Payments</p>
+            <h1 class="event-section__title">Payment Schedule</h1>
+            <p class="event-section__subtitle">Manage payment milestones for <%= @event.name %>.</p>
+          </div>
+          <%= link_to "New Payment", new_event_payment_path(@event), class: "event-section__cta" %>
+        </header>
+
+        <% if @payments.any? %>
+          <table class="event-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Due</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Visible to Client</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @payments.each do |payment| %>
+                <tr>
+                  <td><%= link_to payment.title, event_payment_path(@event, payment) %></td>
+                  <td><%= payment.due_on ? payment.due_on.strftime("%b %-d, %Y") : "TBD" %></td>
+                  <td><%= number_to_currency(payment.amount) %></td>
+                  <td class="event-table__status event-table__status--<%= payment.status %>"><%= payment.status.humanize %></td>
+                  <td><%= payment.client_visible? ? "Yes" : "No" %></td>
+                  <td class="event-table__actions">
+                    <%= link_to "Edit", edit_event_payment_path(@event, payment), class: "event-section__link" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <div class="event-section__empty">
+            <p>No payments scheduled yet.</p>
+            <p><%= link_to "Create your first payment", new_event_payment_path(@event), class: "event-section__cta" %></p>
+          </div>
+        <% end %>
+      </section>
+    </div>
+  </div>
+<% end %>

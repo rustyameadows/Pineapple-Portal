@@ -1,0 +1,65 @@
+<%= form_with model: [@event, payment], class: "event-form" do |form| %>
+  <% if payment.errors.any? %>
+    <div class="event-form__errors">
+      <p><strong><%= pluralize(payment.errors.count, "error") %> prevented this payment from being saved:</strong></p>
+      <ul>
+        <% payment.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="event-form__group">
+    <%= form.label :title %>
+    <%= form.text_field :title, required: true %>
+  </div>
+
+  <div class="event-form__row">
+    <div class="event-form__group">
+      <%= form.label :amount %>
+      <%= form.number_field :amount, step: 0.01, min: 0 %>
+    </div>
+    <div class="event-form__group">
+      <%= form.label :due_on, "Due Date" %>
+      <%= form.date_field :due_on %>
+    </div>
+  </div>
+
+  <div class="event-form__group">
+    <%= form.label :description, "Notes" %>
+    <%= form.text_area :description, rows: 4 %>
+  </div>
+
+  <div class="event-form__row">
+    <div class="event-form__group">
+      <%= form.label :status %>
+      <%= form.select :status, Payment.statuses.keys.map { |key| [key.humanize, key] } %>
+    </div>
+    <div class="event-form__group event-form__group--checkbox">
+      <%= form.check_box :client_visible %>
+      <%= form.label :client_visible, "Visible on client portal" %>
+    </div>
+  </div>
+
+  <div class="event-form__row">
+    <div class="event-form__group">
+      <%= form.label :paid_at, "Paid On" %>
+      <%= form.datetime_local_field :paid_at %>
+    </div>
+    <div class="event-form__group">
+      <%= form.label :paid_by_client_at, "Marked Paid By Client" %>
+      <%= form.datetime_local_field :paid_by_client_at %>
+    </div>
+  </div>
+
+  <div class="event-form__group">
+    <%= form.label :client_note, "Client Note" %>
+    <%= form.text_area :client_note, rows: 3 %>
+  </div>
+
+  <div class="event-form__actions">
+    <%= form.submit class: "event-form__submit" %>
+    <%= link_to "Cancel", payment.persisted? ? event_payment_path(@event, payment) : event_payments_path(@event), class: "event-form__cancel" %>
+  </div>
+<% end %>

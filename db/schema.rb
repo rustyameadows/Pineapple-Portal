@@ -10,9 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_23_011000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_24_001000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "approvals", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "title", null: false
+    t.text "summary"
+    t.text "instructions"
+    t.boolean "client_visible", default: false, null: false
+    t.string "status", default: "pending", null: false
+    t.string "client_name"
+    t.text "client_note"
+    t.datetime "acknowledged_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id", "client_visible"], name: "index_approvals_on_event_id_and_client_visible"
+    t.index ["event_id", "status"], name: "index_approvals_on_event_id_and_status"
+    t.index ["event_id"], name: "index_approvals_on_event_id"
+  end
 
   create_table "attachments", force: :cascade do |t|
     t.string "entity_type", null: false
@@ -78,6 +95,24 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_23_011000) do
     t.index ["name"], name: "index_events_on_name"
   end
 
+  create_table "payments", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "title", null: false
+    t.decimal "amount", precision: 12, scale: 2, default: "0.0", null: false
+    t.date "due_on"
+    t.text "description"
+    t.boolean "client_visible", default: false, null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "paid_at"
+    t.datetime "paid_by_client_at"
+    t.text "client_note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id", "due_on"], name: "index_payments_on_event_id_and_due_on"
+    t.index ["event_id", "status"], name: "index_payments_on_event_id_and_status"
+    t.index ["event_id"], name: "index_payments_on_event_id"
+  end
+
   create_table "questionnaire_sections", force: :cascade do |t|
     t.bigint "questionnaire_id", null: false
     t.string "title", null: false
@@ -135,9 +170,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_23_011000) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "approvals", "events"
   add_foreign_key "attachments", "documents"
   add_foreign_key "documents", "events"
   add_foreign_key "event_links", "events"
+  add_foreign_key "payments", "events"
   add_foreign_key "questionnaire_sections", "questionnaires"
   add_foreign_key "questionnaires", "events"
   add_foreign_key "questionnaires", "questionnaires", column: "template_source_id"

@@ -15,6 +15,9 @@ Rails.application.routes.draw do
     resource :settings, only: :show, module: :events do
     end
 
+    resources :payments, module: :events
+    resources :approvals, module: :events
+
     resources :event_links, only: %i[create update destroy], module: :events do
       member do
         patch :move_up
@@ -62,6 +65,9 @@ Rails.application.routes.draw do
       end
       resources :designs, only: :index
       resources :financials, only: :index
+      resources :payments, only: [] do
+        member { patch :mark_paid, to: "payments#mark_paid" }
+      end
     end
   end
 

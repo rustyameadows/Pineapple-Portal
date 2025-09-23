@@ -58,7 +58,7 @@ class AttachmentsController < ApplicationController
   end
 
   def safe_entity_type(value)
-    allowed = %w[Event Questionnaire Question]
+    allowed = %w[Event Questionnaire Question Payment Approval]
     return value if allowed.include?(value)
 
     raise ActionController::BadRequest, "Unsupported entity_type"
@@ -96,6 +96,8 @@ class AttachmentsController < ApplicationController
     when Event then entity
     when Questionnaire then entity.event
     when Question then entity.event
+    when Payment then entity.event
+    when Approval then entity.event
     else
       raise ArgumentError, "Unsupported entity for attachment"
     end

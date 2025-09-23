@@ -66,23 +66,32 @@
         { label: "Guest", url: "#", state: :active }
       ] %>
 
-      <% payment_links = [
-        { label: "Deposit", url: "#", state: :completed },
-        { label: "Phase 1 - Planning", url: "#", state: :active },
-        { label: "Phase 2 - Design", url: "#", state: :active },
-        { label: "Phase 3 - Production", url: "#", state: :active },
-        { label: "Phase 4 - Wrap", url: "#", state: :active },
-        { label: "Incidentals", url: "#", state: :active }
-      ] %>
+      <% payment_links = @payments.map do |payment| %>
+        <% state = payment.paid? ? :completed : :active %>
+        <% label = if payment.due_on.present?
+                     "#{payment.title} (due #{payment.due_on.strftime('%b %-d')})"
+                   else
+                     payment.title
+                   end %>
+        <% { label: label, url: event_payment_path(@event, payment), state: state } %>
+      <% end %>
 
-      <% approval_links = [
-        { label: "Initial Contract", url: "#", state: :completed },
-        { label: "Budget Range", url: "#", state: :completed },
-        { label: "Vendor Approval Packet", url: "#", state: :active },
-        { label: "Final Budget", url: "#", state: :active },
-        { label: "Pineapple Marketing", url: "#", state: :active },
-        { label: "Release", url: "#", state: :active }
-      ] %>
+      <% if payment_links.empty? %>
+        <% payment_links = [
+          { label: "Add payment milestones", url: new_event_payment_path(@event), state: :highlight }
+        ] %>
+      <% end %>
+
+      <% approval_links = @approvals.map do |approval| %>
+        <% state = approval.acknowledged? ? :completed : :active %>
+        <% { label: approval.title, url: event_approval_path(@event, approval), state: state } %>
+      <% end %>
+
+      <% if approval_links.empty? %>
+        <% approval_links = [
+          { label: "Add signatures & approvals", url: new_event_approval_path(@event), state: :highlight }
+        ] %>
+      <% end %>
 
       <% event_link_groups = [
         { title: "Questionnaires", items: questionnaire_items },

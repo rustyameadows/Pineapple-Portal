@@ -3,6 +3,8 @@
                      when Event then entity
                      when Questionnaire then entity.event
                      when Question then entity.event
+                     when Payment then entity.event
+                     when Approval then entity.event
                      else
                        nil
                      end

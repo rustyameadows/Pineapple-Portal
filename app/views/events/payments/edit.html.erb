@@ -1,0 +1,20 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Payments</p>
+            <h1 class="event-section__title">Edit Payment</h1>
+          </div>
+        </header>
+
+        <%= render "form", payment: @payment %>
+      </section>
+    </div>
+  </div>
+<% end %>

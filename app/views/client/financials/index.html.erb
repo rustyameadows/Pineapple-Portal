@@ -1,29 +1,50 @@
 <section class="client-page">
   <header class="client-page__header">
-    <h1>Financial Overview</h1>
-    <p>Invoice and payment checkpoints will appear here as we publish them.</p>
+    <h1>Payments</h1>
+    <p>Track upcoming payments and let your planner know when you’ve sent one.</p>
   </header>
 
-  <% if @milestones.any? %>
+  <% if @payments.any? %>
     <ul class="client-list">
-      <% @milestones.each do |milestone| %>
+      <% @payments.each do |payment| %>
         <li>
-          <strong><%= milestone[:label] %></strong>
-          <% if milestone[:due_on] %>
-            <span>Due <%= milestone[:due_on].strftime('%B %-d, %Y') %></span>
+          <div class="client-financials__header">
+            <div>
+              <strong><%= payment.title %></strong>
+              <span><%= payment.due_on ? "Due #{payment.due_on.strftime('%B %-d, %Y')}" : "Timing TBD" %></span>
+              <span>· <%= number_to_currency(payment.amount) %></span>
+            </div>
+            <span class="client-financials__status client-financials__status--<%= payment.status %>"><%= payment.status.humanize %></span>
+          </div>
+
+          <% if payment.description.present? %>
+            <p class="client-financials__note"><%= simple_format(payment.description) %></p>
+          <% end %>
+
+          <% if payment.paid? %>
+            <% if payment.client_note.present? %>
+              <p class="client-financials__note"><strong>Your note:</strong> <%= simple_format(payment.client_note) %></p>
+            <% end %>
+            <p class="client-financials__meta">Marked paid <%= l(payment.paid_at, format: :long) %>.</p>
           <% else %>
-            <span>Timing TBD</span>
+            <div class="client-financials__form">
+              <%= form_with url: mark_paid_client_event_payment_path(@event, payment), method: :patch do |form| %>
+                <div>
+                  <%= form.label :client_note, "Optional note" %><br>
+                  <%= form.text_area :client_note, rows: 2, placeholder: "Add a quick note (check number, transfer confirmation, etc.)" %>
+                </div>
+                <div>
+                  <%= form.submit "Mark as Paid" %>
+                </div>
+              <% end %>
+            </div>
           <% end %>
-          <% if milestone[:amount] %>
-            <span>· <%= number_to_currency(milestone[:amount]) %></span>
-          <% end %>
-          <span class="client-financials__status client-financials__status--<%= milestone[:status] %>"><%= milestone[:status].to_s.humanize %></span>
         </li>
       <% end %>
     </ul>
   <% else %>
     <div class="client-placeholder">
-      <p>There aren’t any financial milestones to show right now.</p>
+      <p>There aren’t any payments published yet. Your planner will add them here when ready.</p>
     </div>
   <% end %>
 </section>

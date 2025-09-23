@@ -1,6 +1,7 @@
 first:
   questionnaire: checklist
   event: one
+  questionnaire_section: checklist_section
   prompt: Confirm venue booking.
   help_text: Include reservation details.
   response_type: text
@@ -9,6 +10,7 @@ first:
 second:
   questionnaire: survey_template
   event: one
+  questionnaire_section: survey_section
   prompt: How satisfied were attendees?
   response_type: choice
   position: 1

@@ -13,10 +13,10 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
       } }
     end
 
-    assert_redirected_to root_url
+    assert_redirected_to users_url
     follow_redirect!
-    assert_match "User created.", @response.body
-    assert_select "li", text: /New User/
+    assert_select "div.flash.flash-notice", text: "User created."
+    assert_select "tbody tr td", text: "New User"
   end
 
   test "renders errors when invalid for signed-in user" do
@@ -25,7 +25,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     post users_url, params: { user: { name: "", email: "", password: "", password_confirmation: "" } }
 
     assert_response :unprocessable_content
-    assert_select "div.flash-alert", text: /can't be blank/
+    assert_select "div.flash.flash-alert", text: /can't be blank/
   end
 
   test "first user can sign up without prior login" do
@@ -42,7 +42,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_url
     follow_redirect!
-    assert_match "User created.", @response.body
+    assert_select "div.flash.flash-notice", text: "Welcome aboard!"
   end
 
   private

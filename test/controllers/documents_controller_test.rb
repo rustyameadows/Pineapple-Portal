@@ -10,7 +10,7 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
   test "lists documents for event" do
     get event_documents_url(@event)
     assert_response :success
-    assert_select "h1", text: /Documents/
+    assert_select "h1", text: "Files for #{@event.name}"
   end
 
   test "uploads new document" do

@@ -1,0 +1,59 @@
+<%= form_with model: [@event, approval], class: "event-form" do |form| %>
+  <% if approval.errors.any? %>
+    <div class="event-form__errors">
+      <p><strong><%= pluralize(approval.errors.count, "error") %> prevented this approval from being saved:</strong></p>
+      <ul>
+        <% approval.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="event-form__group">
+    <%= form.label :title %>
+    <%= form.text_field :title, required: true %>
+  </div>
+
+  <div class="event-form__group">
+    <%= form.label :summary, "Summary" %>
+    <%= form.text_area :summary, rows: 4 %>
+  </div>
+
+  <div class="event-form__group">
+    <%= form.label :instructions, "Instructions" %>
+    <%= form.text_area :instructions, rows: 6 %>
+  </div>
+
+  <div class="event-form__row">
+    <div class="event-form__group">
+      <%= form.label :status %>
+      <%= form.select :status, Approval.statuses.keys.map { |key| [key.humanize, key] } %>
+    </div>
+    <div class="event-form__group event-form__group--checkbox">
+      <%= form.check_box :client_visible %>
+      <%= form.label :client_visible, "Visible on client portal" %>
+    </div>
+  </div>
+
+  <div class="event-form__row">
+    <div class="event-form__group">
+      <%= form.label :acknowledged_at, "Acknowledged On" %>
+      <%= form.datetime_local_field :acknowledged_at %>
+    </div>
+    <div class="event-form__group">
+      <%= form.label :client_name, "Client Name" %>
+      <%= form.text_field :client_name %>
+    </div>
+  </div>
+
+  <div class="event-form__group">
+    <%= form.label :client_note, "Client Note" %>
+    <%= form.text_area :client_note, rows: 4 %>
+  </div>
+
+  <div class="event-form__actions">
+    <%= form.submit class: "event-form__submit" %>
+    <%= link_to "Cancel", approval.persisted? ? event_approval_path(@event, approval) : event_approvals_path(@event), class: "event-form__cancel" %>
+  </div>
+<% end %>

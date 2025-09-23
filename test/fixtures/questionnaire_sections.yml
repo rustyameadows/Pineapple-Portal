@@ -1,0 +1,9 @@
+checklist_section:
+  questionnaire: checklist
+  title: Checklist Section
+  position: 1
+
+survey_section:
+  questionnaire: survey_template
+  title: Survey Section
+  position: 1

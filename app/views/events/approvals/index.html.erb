@@ -1,0 +1,52 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Approvals</p>
+            <h1 class="event-section__title">Signatures & Approvals</h1>
+            <p class="event-section__subtitle">Capture approvals and supporting documents for <%= @event.name %>.</p>
+          </div>
+          <%= link_to "New Approval", new_event_approval_path(@event), class: "event-section__cta" %>
+        </header>
+
+        <% if @approvals.any? %>
+          <table class="event-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Visible to Client</th>
+                <th>Updated</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @approvals.each do |approval| %>
+                <tr>
+                  <td><%= link_to approval.title, event_approval_path(@event, approval) %></td>
+                  <td class="event-table__status event-table__status--<%= approval.status %>"><%= approval.status.humanize %></td>
+                  <td><%= approval.client_visible? ? "Yes" : "No" %></td>
+                  <td><%= l(approval.updated_at, format: :short) %></td>
+                  <td class="event-table__actions">
+                    <%= link_to "Edit", edit_event_approval_path(@event, approval), class: "event-section__link" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <div class="event-section__empty">
+            <p>No approvals yet.</p>
+            <p><%= link_to "Create your first approval", new_event_approval_path(@event), class: "event-section__cta" %></p>
+          </div>
+        <% end %>
+      </section>
+    </div>
+  </div>
+<% end %>
