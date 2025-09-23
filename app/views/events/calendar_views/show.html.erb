@@ -36,8 +36,8 @@
               <thead>
                 <tr>
                   <th>Title</th>
-                  <th>Start</th>
-                  <th>End</th>
+                  <th>Schedule</th>
+                  <th>Timing</th>
                   <th>Notes</th>
                   <th>Tags</th>
                   <th>Locked</th>
@@ -45,12 +45,10 @@
               </thead>
               <tbody>
                 <% @items.each do |item| %>
-                  <% start_label = calendar_item_time_label(item, @calendar.timezone) %>
-                  <% end_label = calendar_item_end_label(item, @calendar.timezone) %>
                   <tr>
                     <td><%= item.title %></td>
-                    <td><%= start_label %></td>
-                    <td><%= end_label || "—" %></td>
+                    <td><%= calendar_item_time_label(item, @calendar.timezone) %></td>
+                    <td><%= calendar_item_timing_text(item) %></td>
                     <td><%= simple_format(item.notes) if item.notes.present? %></td>
                     <td>
                       <% if item.event_calendar_tags.any? %>

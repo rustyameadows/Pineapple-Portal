@@ -14,11 +14,6 @@ module CalendarHelper
     end
   end
 
-  def calendar_item_end_label(item, timezone)
-    finish_time = item.effective_ends_at&.in_time_zone(timezone)
-    finish_time && format_time_or_date(finish_time)
-  end
-
   def calendar_item_relative_label(item)
     return unless item.relative? && item.relative_anchor
 
@@ -44,6 +39,38 @@ module CalendarHelper
   def calendar_item_tags_label(item)
     names = item.event_calendar_tags.map(&:name).reject(&:blank?)
     names.any? ? names.join(', ') : "—"
+  end
+
+  def calendar_item_timing_text(item)
+    return "" if item.absolute?
+
+    anchor = item.relative_anchor
+    return "" unless anchor
+
+    offset = item.relative_offset_minutes.to_i
+    anchor_title = anchor.title
+
+    if item.relative_to_anchor_end?
+      if offset.zero?
+        "Immediately after #{anchor_title}"
+      elsif offset.positive?
+        "#{offset} min after #{anchor_title} ends"
+      else
+        "#{offset.abs} min before #{anchor_title} ends"
+      end
+    else
+      if offset.zero?
+        if anchor.duration_minutes.present?
+          "Immediately after #{anchor_title}"
+        else
+          "At the same time as #{anchor_title}"
+        end
+      elsif offset.positive?
+        "#{offset} min after #{anchor_title}"
+      else
+        "#{offset.abs} min before #{anchor_title}"
+      end
+    end
   end
 
   def calendar_tag_style(tag)

@@ -9,18 +9,15 @@
         <%= link_to "← Back to Calendars", event_calendars_path(@event), class: "event-section__link" %>
       </div>
 
-      <section class="event-section">
-        <header class="event-section__header">
+      <section class="event-section event-calendars__details">
+        <header class="event-section__header event-calendars__header">
           <div>
             <p class="event-section__eyebrow">Run of Show</p>
             <h1 class="event-section__title"><%= @calendar.name %></h1>
             <p class="event-section__subtitle">Edit calendar details and keep the master schedule up to date.</p>
           </div>
-        </header>
-
-        <div class="event-section__body">
-          <%= form_with model: @calendar, url: event_calendar_path(@event), class: "event-form", method: :patch do |form| %>
-            <div class="event-form__row">
+          <%= form_with model: @calendar, url: event_calendar_path(@event), class: "event-form event-calendars__form", method: :patch do |form| %>
+            <div class="event-calendars__form-grid">
               <div class="event-form__group">
                 <%= form.label :name, "Calendar Name" %>
                 <%= form.text_field :name, required: true %>
@@ -29,23 +26,20 @@
                 <%= form.label :timezone, "Timezone" %>
                 <%= form.select :timezone, @time_zones.map { |tz| [tz.to_s, tz.tzinfo&.identifier || tz.name] }, {}, class: "event-form__select" %>
               </div>
+              <div class="event-form__group event-calendars__description">
+                <%= form.label :description, "Description" %>
+                <%= form.text_area :description, rows: 3 %>
+              </div>
+              <div class="event-form__group event-form__group--checkbox event-calendars__visibility">
+                <%= form.check_box :client_visible %>
+                <%= form.label :client_visible, "Show on client portal" %>
+              </div>
             </div>
-
-            <div class="event-form__group">
-              <%= form.label :description, "Description" %>
-              <%= form.text_area :description, rows: 3 %>
-            </div>
-
-            <div class="event-form__group event-form__group--checkbox">
-              <%= form.check_box :client_visible %>
-              <%= form.label :client_visible, "Show this calendar on the client portal" %>
-            </div>
-
-            <div class="event-form__actions">
+            <div class="event-form__actions event-calendars__actions">
               <%= form.submit "Save Details", class: "event-form__submit" %>
             </div>
           <% end %>
-        </div>
+        </header>
       </section>
 
       <section class="event-section">
@@ -63,11 +57,8 @@
             <thead>
               <tr>
                 <th>Title</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Anchor</th>
-                <th>Offset</th>
-                <th>Duration</th>
+                <th>Schedule</th>
+                <th>Timing</th>
                 <th>Tags</th>
                 <th>Locked</th>
                 <th></th>
@@ -76,28 +67,15 @@
             <tbody>
               <% @items.each do |item| %>
                 <% start_label = calendar_item_time_label(item, @calendar.timezone) %>
-                <% end_label = calendar_item_end_label(item, @calendar.timezone) %>
-                <% anchor_label = calendar_item_relative_label(item) %>
                 <tr>
                   <td>
                     <strong><%= item.title %></strong>
                     <% if item.notes.present? %>
-                      <p class="event-section__note"><%= simple_format(item.notes) %></p>
+                      <p class="event-calendars__note"><%= simple_format(item.notes) %></p>
                     <% end %>
                   </td>
                   <td><%= start_label %></td>
-                  <td><%= end_label || "—" %></td>
-                  <td><%= anchor_label || "Absolute" %></td>
-                  <td>
-                    <% if item.relative? %>
-                      <% base = item.relative_to_anchor_end? ? "Anchor end" : "Anchor start" %>
-                      <%= item.relative_before? ? "#{item.relative_offset_minutes} min before" : "#{item.relative_offset_minutes} min after" %><br>
-                      <span class="event-table__status">(from <%= base %>)</span>
-                    <% else %>
-                      —
-                    <% end %>
-                  </td>
-                  <td><%= calendar_item_duration_label(item) %></td>
+                  <td><%= calendar_item_timing_text(item) %></td>
                   <td>
                     <% if item.event_calendar_tags.any? %>
                       <div class="event-tag-list">
@@ -125,8 +103,8 @@
         <% end %>
       </section>
 
-      <section class="event-section">
-        <header class="event-section__header">
+      <section class="event-section event-calendars__tags">
+        <header class="event-section__header event-calendars__tags-header">
           <div>
             <p class="event-section__eyebrow">Tags</p>
             <h2 class="event-section__title">Organize by Tag</h2>
@@ -135,62 +113,39 @@
         </header>
 
         <% if @tags.any? %>
-          <table class="event-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Preview</th>
-                <th>Color Token</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <% @tags.each do |tag| %>
-                <tr>
-                  <td><%= tag.name %></td>
-                  <td><span class="event-tag-pill" style="<%= calendar_tag_style(tag) %>"><%= tag.name %></span></td>
-                  <td><%= tag.color_token.presence || "—" %></td>
-                  <td class="event-table__actions">
-                    <%= form_with model: tag, url: event_calendar_tag_path(@event, tag), class: "event-form", method: :patch do |form| %>
-                      <div class="event-form__row">
-                        <div class="event-form__group">
-                          <%= form.label :name, "Name" %>
-                          <%= form.text_field :name %>
-                        </div>
-                        <div class="event-form__group">
-                          <%= form.label :color_token, "Color" %>
-                          <%= form.text_field :color_token, placeholder: "e.g. #f97316 or coral" %>
-                        </div>
-                      </div>
-                      <div class="event-form__actions">
-                        <%= form.submit "Save", class: "event-form__submit" %>
-                        <%= link_to "Remove", event_calendar_tag_path(@event, tag), data: { turbo_method: :delete, turbo_confirm: "Remove this tag?" }, class: "event-form__cancel" %>
-                      </div>
-                    <% end %>
-                  </td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
+          <ul class="event-calendars__tag-list">
+            <% @tags.each do |tag| %>
+              <li class="event-calendars__tag-row">
+                <div class="event-calendars__tag-info">
+                  <strong class="event-calendars__tag-name"><%= tag.name %></strong>
+                  <span class="event-tag-pill" style="<%= calendar_tag_style(tag) %>"><%= tag.name %></span>
+                </div>
+                <%= form_with model: tag, url: event_calendar_tag_path(@event, tag), class: "event-calendars__tag-form", method: :patch do |form| %>
+                  <div class="event-calendars__tag-fields">
+                    <%= form.text_field :name, placeholder: "Name", class: "event-calendars__input" %>
+                    <%= form.text_field :color_token, placeholder: "Color", class: "event-calendars__input event-calendars__input--color" %>
+                    <div class="event-calendars__tag-actions">
+                      <%= form.submit "Save", class: "event-form__submit event-form__submit--small" %>
+                      <%= link_to "Remove", event_calendar_tag_path(@event, tag), data: { turbo_method: :delete, turbo_confirm: "Remove this tag?" }, class: "event-form__cancel" %>
+                    </div>
+                  </div>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
         <% else %>
           <div class="event-section__empty">
             <p>No tags yet. Add one below to start grouping schedule items.</p>
           </div>
         <% end %>
 
-        <%= form_with model: @new_tag, url: event_calendar_tags_path(@event), class: "event-form" do |form| %>
-          <div class="event-form__row">
-            <div class="event-form__group">
-              <%= form.label :name, "New Tag" %>
-              <%= form.text_field :name, required: true %>
+        <%= form_with model: @new_tag, url: event_calendar_tags_path(@event), class: "event-form event-calendars__new-tag" do |form| %>
+          <div class="event-calendars__tag-fields">
+            <%= form.text_field :name, placeholder: "New tag", class: "event-calendars__input", required: true %>
+            <%= form.text_field :color_token, placeholder: "Color (optional)", class: "event-calendars__input event-calendars__input--color" %>
+            <div class="event-form__actions event-calendars__tag-actions">
+              <%= form.submit "Add Tag", class: "event-form__submit event-form__submit--small" %>
             </div>
-            <div class="event-form__group">
-              <%= form.label :color_token, "Color" %>
-              <%= form.text_field :color_token, placeholder: "Optional" %>
-            </div>
-          </div>
-          <div class="event-form__actions">
-            <%= form.submit "Add Tag", class: "event-form__submit" %>
           </div>
         <% end %>
       </section>
@@ -206,7 +161,7 @@
         </header>
 
         <% if @views.any? %>
-          <table class="event-table">
+          <table class="event-table event-calendars__table">
             <thead>
               <tr>
                 <th>Name</th>

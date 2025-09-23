@@ -58,7 +58,7 @@
         ] %>
       <% end %>
 
-      <% calendar_links = [{ label: "All Calendars", url: event_calendars_path(@event), state: :active }] %>
+      <% calendar_links = [] %>
       <% if @calendar.present? %>
         <% calendar_links << { label: @calendar.name, url: event_calendar_path(@event), state: :active } %>
         <% Array(@calendar_views).each do |view| %>

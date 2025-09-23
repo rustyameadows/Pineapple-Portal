@@ -2181,3 +2181,126 @@ nav {
   display: block;
   margin-bottom: 0.25rem;
 }
+
+.event-calendars__details {
+  padding-bottom: 1rem;
+}
+
+.event-calendars__header {
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.event-calendars__form {
+  max-width: 36rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.event-calendars__form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.event-calendars__description textarea {
+  min-height: 3.5rem;
+}
+
+.event-calendars__visibility {
+  margin-top: 0.5rem;
+}
+
+.event-calendars__actions {
+  margin-top: 0.75rem;
+  justify-content: flex-end;
+}
+
+.event-calendars__table {
+  margin-top: 1rem;
+}
+
+.event-calendars__note {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.event-calendars__tags {
+  padding-top: 1.5rem;
+}
+
+.event-calendars__tags-header {
+  margin-bottom: 1rem;
+}
+
+.event-calendars__tag-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.event-calendars__tag-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
+
+
+.event-calendars__tag-info {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.event-calendars__tag-name {
+  font-size: 1rem;
+  text-transform: capitalize;
+}
+
+.event-calendars__tag-form {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.event-calendars__tag-fields {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.event-calendars__input {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.event-calendars__input--color {
+  width: 9rem;
+}
+
+.event-calendars__tag-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.event-form__submit--small {
+  padding: 0.45rem 0.9rem;
+}
+
+.event-calendars__new-tag {
+  display: flex;
+  justify-content: flex-start;
+}
