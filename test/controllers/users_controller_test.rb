@@ -32,6 +32,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "first user can sign up without prior login" do
+    EventTeamMember.delete_all
     User.delete_all
 
     assert_difference("User.count") do

@@ -67,8 +67,10 @@ Rails.application.routes.draw do
       end
       resources :designs, only: :index
       resources :financials, only: :index
-      resources :payments, only: [] do
-        member { patch :mark_paid, to: "payments#mark_paid" }
+      resources :payments, only: :show do
+        member do
+          patch :mark_paid, to: "payments#mark_paid"
+        end
       end
     end
   end

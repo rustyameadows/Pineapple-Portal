@@ -5,43 +5,28 @@
   </header>
 
   <% if @payments.any? %>
-    <ul class="client-list">
-      <% @payments.each do |payment| %>
-        <li>
-          <div class="client-financials__header">
-            <div>
-              <strong><%= payment.title %></strong>
-              <span><%= payment.due_on ? "Due #{payment.due_on.strftime('%B %-d, %Y')}" : "Timing TBD" %></span>
-              <span>· <%= number_to_currency(payment.amount) %></span>
-            </div>
-            <span class="client-financials__status client-financials__status--<%= payment.status %>"><%= payment.status.humanize %></span>
-          </div>
-
-          <% if payment.description.present? %>
-            <p class="client-financials__note"><%= simple_format(payment.description) %></p>
-          <% end %>
-
-          <% if payment.paid? %>
-            <% if payment.client_note.present? %>
-              <p class="client-financials__note"><strong>Your note:</strong> <%= simple_format(payment.client_note) %></p>
-            <% end %>
-            <p class="client-financials__meta">Marked paid <%= l(payment.paid_at, format: :long) %>.</p>
-          <% else %>
-            <div class="client-financials__form">
-              <%= form_with url: mark_paid_client_event_payment_path(@event, payment), method: :patch do |form| %>
-                <div>
-                  <%= form.label :client_note, "Optional note" %><br>
-                  <%= form.text_area :client_note, rows: 2, placeholder: "Add a quick note (check number, transfer confirmation, etc.)" %>
-                </div>
-                <div>
-                  <%= form.submit "Mark as Paid" %>
-                </div>
-              <% end %>
-            </div>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
+    <table class="client-table">
+      <thead>
+        <tr>
+          <th>Payment</th>
+          <th>Due</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @payments.each do |payment| %>
+          <tr>
+            <td><%= link_to payment.title, client_event_payment_path(@event, payment) %></td>
+            <td><%= payment.due_on ? payment.due_on.strftime('%b %-d, %Y') : "Timing TBD" %></td>
+            <td><%= number_to_currency(payment.amount) %></td>
+            <td><span class="client-financials__status client-financials__status--<%= payment.status %>"><%= payment.status.humanize %></span></td>
+            <td class="client-table__actions"><%= link_to "View", client_event_payment_path(@event, payment), class: "client-link" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
   <% else %>
     <div class="client-placeholder">
       <p>There aren’t any payments published yet. Your planner will add them here when ready.</p>

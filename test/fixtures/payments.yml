@@ -1,0 +1,18 @@
+visible_payment:
+  event: one
+  title: Deposit
+  amount: 1000.00
+  due_on: 2025-10-01
+  description: Initial project deposit.
+  client_visible: true
+  status: pending
+
+paid_payment:
+  event: one
+  title: Final Balance
+  amount: 2500.00
+  due_on: 2025-10-15
+  description: Remaining balance due after event.
+  client_visible: true
+  status: paid
+  paid_at: 2025-10-16 12:00:00
