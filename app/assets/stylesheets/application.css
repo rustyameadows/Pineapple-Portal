@@ -1258,6 +1258,50 @@ nav {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+.event-docs__summary {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #eadcc7;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.event-docs__summary thead {
+  background: #f8f1e5;
+}
+
+.event-docs__summary th,
+.event-docs__summary td {
+  padding: 0.9rem 1.1rem;
+  text-align: left;
+  border-bottom: 1px solid #eadcc7;
+}
+
+.event-docs__summary tbody tr:last-child th,
+.event-docs__summary tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.event-docs__summary-row--active {
+  background: #fff6e8;
+}
+
+.event-docs__summary-link {
+  text-decoration: none;
+  color: #3c2e25;
+  font-weight: 600;
+}
+
+.event-docs__summary-link:hover,
+.event-docs__summary-link:focus {
+  text-decoration: underline;
+}
+
+.event-docs__summary-link--disabled {
+  color: #b9a897;
+  cursor: default;
+}
+
 .event-docs__card {
   border: 1px solid #eadcc7;
   border-radius: 12px;

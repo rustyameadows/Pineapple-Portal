@@ -3,7 +3,19 @@ class DocumentsController < ApplicationController
   before_action :set_document, only: %i[show edit update destroy download]
 
   def index
-    @documents = @event.documents.order(:title, :version)
+    @document_groups = build_document_groups
+  end
+
+  def packets
+    render_grouped_documents(:packet)
+  end
+
+  def staff_uploads
+    render_grouped_documents(:staff_upload)
+  end
+
+  def client_uploads
+    render_grouped_documents(:client_upload)
   end
 
   def show
@@ -59,16 +71,44 @@ class DocumentsController < ApplicationController
   end
 
   def document_params
-    params.require(:document).permit(:title, :storage_uri, :checksum, :size_bytes, :content_type, :logical_id, :client_visible)
+    params.require(:document).permit(:title, :storage_uri, :checksum, :size_bytes, :content_type, :logical_id, :client_visible, :source)
   end
 
   def edit_document_params
-    params.require(:document).permit(:title, :content_type, :client_visible)
+    params.require(:document).permit(:title, :content_type, :client_visible, :source)
   end
 
   def available_entities_for(event)
     [event] + event.questionnaires.includes(:questions).flat_map do |questionnaire|
       [questionnaire] + questionnaire.questions
     end
+  end
+
+  def render_grouped_documents(source_key)
+    @source_key = source_key.to_s
+    @label = document_source_label(@source_key)
+    @documents = @event.documents.where(source: @source_key).order(:title)
+    @document_groups = build_document_groups
+    render :group
+  end
+
+  def build_document_groups
+    Document.sources.keys.map do |key|
+      scope = @event.documents.where(source: key)
+      {
+        key: key,
+        label: document_source_label(key),
+        documents_count: scope.count,
+        images_count: scope.where("content_type LIKE ?", "image/%").count
+      }
+    end
+  end
+
+  def document_source_label(key)
+    {
+      "packet" => "Packets",
+      "staff_upload" => "Uploads",
+      "client_upload" => "Client Uploads"
+    }[key] || key.humanize
   end
 end

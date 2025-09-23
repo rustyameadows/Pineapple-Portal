@@ -6,11 +6,18 @@ class Document < ApplicationRecord
   before_create :demote_existing_latest
   before_update :prevent_file_metadata_change
 
+  enum :source, {
+    packet: "packet",
+    staff_upload: "staff_upload",
+    client_upload: "client_upload"
+  }
+
   validates :title, :storage_uri, :checksum, :content_type, presence: true
   validates :size_bytes, numericality: { greater_than: 0 }
   validates :version, numericality: { greater_than: 0 }
   validates :logical_id, presence: true
   validates :is_latest, inclusion: { in: [true, false] }
+  validates :source, inclusion: { in: sources.keys }
 
   scope :latest, -> { where(is_latest: true) }
   scope :client_visible, -> { where(client_visible: true) }
@@ -29,6 +36,7 @@ class Document < ApplicationRecord
     self.logical_id ||= SecureRandom.uuid
     self.version ||= next_version_number
     self.is_latest = true if is_latest.nil?
+    self.source ||= "staff_upload"
   end
 
   def next_version_number

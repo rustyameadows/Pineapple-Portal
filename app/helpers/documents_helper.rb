@@ -22,4 +22,17 @@ module DocumentsHelper
       Document.none
     end
   end
+
+  def document_group_path(event, key)
+    case key.to_s
+    when "packet"
+      packets_event_documents_path(event)
+    when "staff_upload"
+      staff_uploads_event_documents_path(event)
+    when "client_upload"
+      client_uploads_event_documents_path(event)
+    else
+      event_documents_path(event)
+    end
+  end
 end

@@ -23,6 +23,11 @@
     <%= form.text_field :title %>
   </div>
 
+  <div>
+    <%= form.label :source, "Document Type" %><br>
+    <%= form.select :source, options_for_select(Document.sources.keys.map { |key| [key.humanize, key] }, form.object.source || "staff_upload") %>
+  </div>
+
   <% if form.object.new_record? %>
     <div>
       <label for="document_file">File</label><br>

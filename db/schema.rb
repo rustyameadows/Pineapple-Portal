@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_23_010000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_23_011000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -45,10 +45,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_23_010000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "client_visible", default: false, null: false
+    t.string "source", default: "staff_upload", null: false
     t.index ["client_visible"], name: "index_documents_on_client_visible"
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["logical_id", "version"], name: "index_documents_on_logical_id_and_version", unique: true
     t.index ["logical_id"], name: "index_documents_on_logical_id_latest", unique: true, where: "(is_latest = true)"
+    t.index ["source"], name: "index_documents_on_source"
     t.check_constraint "size_bytes > 0", name: "documents_size_positive"
     t.check_constraint "version > 0", name: "documents_version_positive"
   end

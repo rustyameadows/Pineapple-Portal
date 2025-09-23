@@ -1,0 +1,21 @@
+<table class="event-docs__summary">
+  <thead>
+    <tr>
+      <th scope="col">Category</th>
+      <th scope="col">Documents</th>
+      <th scope="col">Images</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% groups.each do |group| %>
+      <% active = defined?(active_key) && active_key.present? && group[:key] == active_key %>
+      <tr class="<%= 'event-docs__summary-row--active' if active %>">
+        <th scope="row">
+          <%= link_to group[:label], document_group_path(event, group[:key]), class: "event-docs__summary-link" %>
+        </th>
+        <td><%= group[:documents_count] %></td>
+        <td><%= group[:images_count] %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -37,6 +37,11 @@ Rails.application.routes.draw do
     end
 
     resources :documents do
+      collection do
+        get :packets
+        get :staff_uploads
+        get :client_uploads
+      end
       collection { post :presign, to: "document_uploads#create" }
       member { get :download }
     end

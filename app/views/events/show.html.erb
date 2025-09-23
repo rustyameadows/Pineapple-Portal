@@ -43,9 +43,9 @@
       <% end %>
 
       <% document_items = [
-        { label: "Packets", url: "#", state: :active },
-        { label: "Uploads", url: "#", state: :active },
-        { label: "Client Uploads", url: "#", state: :active }
+        { label: "Packets", url: packets_event_documents_path(@event), state: :active },
+        { label: "Uploads", url: staff_uploads_event_documents_path(@event), state: :active },
+        { label: "Client Uploads", url: client_uploads_event_documents_path(@event), state: :active }
       ] %>
 
       <% quick_links = @event_links.map do |link|
