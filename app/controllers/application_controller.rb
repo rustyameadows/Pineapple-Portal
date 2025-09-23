@@ -17,7 +17,7 @@ class ApplicationController < ActionController::Base
   end
 
   def require_login
-    return if logged_in?
+    return if logged_in? || User.none?
 
     redirect_to login_path, alert: "Please log in to continue."
   end

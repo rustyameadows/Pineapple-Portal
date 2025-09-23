@@ -2,12 +2,12 @@ class EventsController < ApplicationController
   before_action :set_event, only: %i[show edit update destroy]
 
   def index
-    @events = Event.order(:starts_on, :name)
+    @active_events = Event.active.order(Arel.sql("COALESCE(events.starts_on, events.updated_at, events.created_at) ASC"))
+    @archived_events = Event.archived.order(updated_at: :desc)
   end
 
   def show
     @questionnaires = @event.questionnaires.order(:title)
-    @templates = Questionnaire.templates.order(:title)
   end
 
   def new

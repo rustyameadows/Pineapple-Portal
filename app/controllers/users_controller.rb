@@ -1,6 +1,10 @@
 class UsersController < ApplicationController
   skip_before_action :require_login, only: %i[new create], if: -> { User.none? }
 
+  def index
+    @users = User.order(:name)
+  end
+
   def new
     @user = User.new
   end
@@ -9,17 +13,10 @@ class UsersController < ApplicationController
     @user = User.new(user_params)
 
     if @user.save
-      session[:user_id] = @user.id unless logged_in?
-      redirect_to root_path, notice: "User created."
+      handle_post_create_redirect
     else
       flash.now[:alert] = @user.errors.full_messages.to_sentence
-
-      if logged_in?
-        @users = User.order(created_at: :desc)
-        render "welcome/home", status: :unprocessable_content
-      else
-        render :new, status: :unprocessable_content
-      end
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -27,5 +24,14 @@ class UsersController < ApplicationController
 
   def user_params
     params.require(:user).permit(:name, :email, :password, :password_confirmation)
+  end
+
+  def handle_post_create_redirect
+    if User.count == 1
+      session[:user_id] = @user.id
+      redirect_to root_path, notice: "Welcome aboard!"
+    else
+      redirect_to users_path, notice: "User created."
+    end
   end
 end

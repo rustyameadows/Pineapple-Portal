@@ -25,7 +25,8 @@
     <nav>
       <%= link_to "Pineapple Portal", root_path %> |
       <%= link_to "Events", events_path %> |
-      <%= link_to "Templates", questionnaire_templates_path %>
+      <%= link_to "Templates", questionnaire_templates_path %> |
+      <%= link_to "Team", users_path %>
       <% if logged_in? %>
         | Signed in as <%= current_user.name %>
         | <%= button_to "Log out", logout_path, method: :delete, form: { style: "display:inline" } %>

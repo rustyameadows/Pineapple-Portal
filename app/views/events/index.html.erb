@@ -1,30 +1,41 @@
-<h1>Events</h1>
+<section class="stack">
+  <header class="dashboard__header">
+    <h1>Events</h1>
+    <p class="dashboard__meta">Manage every event, past or present.</p>
+  </header>
 
-<p><%= link_to "New Event", new_event_path %></p>
+  <p>
+    <%= link_to "New Event", new_event_path, class: "dashboard__cta" %>
+  </p>
 
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Dates</th>
-      <th>Location</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @events.each do |event| %>
-      <tr>
-        <td><%= event.name %></td>
-        <td>
-          <% if event.starts_on.present? %>
-            <%= event.starts_on %> - <%= event.ends_on || event.starts_on %>
-          <% else %>
-            Not set
-          <% end %>
-        </td>
-        <td><%= event.location.presence || "—" %></td>
-        <td><%= link_to "View", event_path(event) %></td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
+  <h2>Active Events</h2>
+  <% if @active_events.any? %>
+    <div class="event-card-grid">
+      <% @active_events.each do |event| %>
+        <%= render "card", event: event %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="dashboard__empty">No active events yet.</div>
+  <% end %>
+
+  <% if @archived_events.any? %>
+    <h2>Archived Events</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Archived On</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @archived_events.each do |event| %>
+          <tr>
+            <td><%= link_to event.name, event_path(event) %></td>
+            <td><%= event.archived_at&.strftime("%b %e, %Y") || "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</section>

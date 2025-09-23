@@ -1,0 +1,26 @@
+<article class="event-card">
+  <header class="event-card__header">
+    <h3 class="event-card__title">
+      <%= link_to event.name, event_path(event), class: "event-card__title-link" %>
+    </h3>
+    <% if event.starts_on.present? || event.ends_on.present? %>
+      <p class="event-card__dates">
+        <%= event.starts_on&.strftime("%b %e, %Y") || "Date TBD" %>
+        -
+        <%= (event.ends_on || event.starts_on)&.strftime("%b %e, %Y") || "Date TBD" %>
+      </p>
+    <% else %>
+      <p class="event-card__dates">Dates TBD</p>
+    <% end %>
+  </header>
+
+  <p class="event-card__location">
+    Location:
+    <strong><%= event.location.presence || "To be announced" %></strong>
+  </p>
+
+  <div class="event-card__actions">
+    <%= link_to "Open Event", event_path(event), class: "event-card__cta" %>
+    <%= link_to "Settings", event_settings_path(event), class: "event-card__secondary" %>
+  </div>
+</article>

@@ -1,0 +1,17 @@
+<section class="stack">
+  <p class="breadcrumbs">
+    <%= link_to "Events", events_path %> /
+    <%= link_to @event.name, event_path(@event) %> /
+    <%= link_to "Settings", event_settings_path(@event) %> /
+    Notifications
+  </p>
+
+  <h1>Notification Settings</h1>
+  <div class="dashboard__empty">
+    <p>TODO: Configure reminders, escalations, and subscriber lists for this event.</p>
+  </div>
+
+  <p>
+    <%= link_to "Back to Settings", event_settings_path(@event) %>
+  </p>
+</section>

@@ -4,5 +4,12 @@ class Event < ApplicationRecord
   has_many :documents, dependent: :destroy
   has_many :attachments, as: :entity, dependent: :destroy
 
+  scope :active, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
+
   validates :name, presence: true
+
+  def archived?
+    archived_at.present?
+  end
 end

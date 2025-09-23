@@ -13,6 +13,7 @@
 
 <p>
   <%= link_to "Edit Event", edit_event_path(@event) %> |
+  <%= link_to "Settings", event_settings_path(@event) %> |
   <%= link_to "All Events", events_path %> |
   <%= button_to "Delete Event", event_path(@event), method: :delete, data: { confirm: "Are you sure?" } %>
 </p>
@@ -26,29 +27,12 @@
       <% @questionnaires.each do |questionnaire| %>
         <li>
           <%= link_to questionnaire.title, event_questionnaire_path(@event, questionnaire) %>
-          <% if questionnaire.template? %>
-            <strong>(Template)</strong>
-          <% end %>
         </li>
       <% end %>
     </ul>
   <% else %>
     <p>No questionnaires yet.</p>
   <% end %>
-</section>
-
-<section>
-  <h2>Available Templates</h2>
-  <% if @templates.any? %>
-    <ul>
-      <% @templates.each do |template| %>
-        <li><%= link_to template.title, event_questionnaire_path(template.event, template) %></li>
-      <% end %>
-    </ul>
-  <% else %>
-    <p>No templates marked yet.</p>
-  <% end %>
-  <p><%= link_to "View all templates", questionnaire_templates_path %></p>
 </section>
 
 <section>

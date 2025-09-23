@@ -1,0 +1,22 @@
+<section class="stack">
+  <p class="breadcrumbs">
+    <%= link_to "Events", events_path %> /
+    <%= link_to @event.name, event_path(@event) %> /
+    Settings
+  </p>
+
+  <h1><%= @event.name %> Settings</h1>
+  <p class="dashboard__meta">
+    Configuration hub for this event. These panels are placeholders until product finalizes the controls.
+  </p>
+
+  <div class="dashboard__empty">
+    <p>TODO: General settings (branding, key contacts, onboarding checklist).</p>
+  </div>
+
+  <h2>Explore Upcoming Areas</h2>
+  <ul>
+    <li><%= link_to "Team Permissions", team_event_settings_path(@event) %></li>
+    <li><%= link_to "Notifications", notifications_event_settings_path(@event) %></li>
+  </ul>
+</section>

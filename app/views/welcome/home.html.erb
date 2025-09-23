@@ -1,39 +1,25 @@
-<section>
-  <h1>Pineapple Portal</h1>
-  <p>Welcome aboard! This landing page confirms the app is wired to PostgreSQL.</p>
+<section class="dashboard">
+  <header class="dashboard__header">
+    <h1>Event Dashboard</h1>
+    <p class="dashboard__lead">Track every active event from one place.</p>
+    <p class="dashboard__meta">
+      Need questionnaire patterns? Visit the
+      <%= link_to "template library", questionnaire_templates_path %>.
+    </p>
+  </header>
 
-  <% if @users.any? %>
-    <h2>Sample Users</h2>
-    <ul>
-      <% @users.each do |user| %>
-        <li>
-          <strong><%= user.name %></strong>
-          <span>&lt;<%= user.email %>&gt;</span>
-        </li>
+  <% if @events.any? %>
+    <div class="event-card-grid">
+      <% @events.each do |event| %>
+        <%= render "events/card", event: event %>
       <% end %>
-    </ul>
+    </div>
   <% else %>
-    <p>No users yet. Use the form below to create the first teammate.</p>
-  <% end %>
-
-  <h2>Add a User</h2>
-  <%= form_with model: @user, url: users_path do |form| %>
-    <p>
-      <%= form.label :name %><br>
-      <%= form.text_field :name, required: true %>
-    </p>
-    <p>
-      <%= form.label :email %><br>
-      <%= form.email_field :email, required: true %>
-    </p>
-    <p>
-      <%= form.label :password %><br>
-      <%= form.password_field :password, required: true %>
-    </p>
-    <p>
-      <%= form.label :password_confirmation %><br>
-      <%= form.password_field :password_confirmation, required: true %>
-    </p>
-    <p><%= form.submit "Create User" %></p>
+    <div class="dashboard__empty">
+      <p>No active events yet.</p>
+      <p>
+        <%= link_to "Create your first event", new_event_path, class: "dashboard__cta" %>
+      </p>
+    </div>
   <% end %>
 </section>
