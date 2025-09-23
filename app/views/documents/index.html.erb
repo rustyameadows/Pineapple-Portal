@@ -1,34 +1,57 @@
-<h1>Documents for <%= @event.name %></h1>
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
 
-<p>
-  <%= link_to "Upload Document", new_event_document_path(@event) %> |
-  <%= link_to "Back to Event", event_path(@event) %>
-</p>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-<% if @documents.any? %>
-  <table>
-    <thead>
-      <tr>
-        <th>Title</th>
-        <th>Version</th>
-        <th>Latest?</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @documents.each do |document| %>
-        <tr>
-          <td><%= document.title %></td>
-          <td><%= document.version %></td>
-          <td><%= document.is_latest? ? "Yes" : "No" %></td>
-          <td>
-            <%= link_to "View", event_document_path(@event, document) %> |
-            <%= link_to "Download", download_event_document_path(@event, document) %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-<% else %>
-  <p>No documents yet.</p>
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Documents</p>
+            <h1 class="event-section__title">Files for <%= @event.name %></h1>
+          </div>
+          <%= link_to "Upload Document", new_event_document_path(@event), class: "event-section__cta" %>
+        </header>
+
+        <% if @documents.any? %>
+          <ul class="event-docs__grid">
+            <% @documents.each do |document| %>
+              <li class="event-docs__card">
+                <header class="event-docs__card-header">
+                  <h2 class="event-docs__title"><%= document.title %></h2>
+                  <% unless document.is_latest? %>
+                    <span class="event-docs__badge">v<%= document.version %></span>
+                  <% end %>
+                </header>
+                <dl class="event-docs__meta">
+                  <div>
+                    <dt>Version</dt>
+                    <dd>v<%= document.version %></dd>
+                  </div>
+                  <div>
+                    <dt>Status</dt>
+                    <dd><%= document.is_latest? ? "Latest" : "Archived" %></dd>
+                  </div>
+                  <div>
+                    <dt>Updated</dt>
+                    <dd><%= l(document.updated_at, format: :long) %></dd>
+                  </div>
+                </dl>
+                <div class="event-docs__actions">
+                  <%= link_to "View", event_document_path(@event, document), class: "event-docs__link" %>
+                  <%= link_to "Download", download_event_document_path(@event, document), class: "event-docs__link" %>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <div class="event-section__empty">
+            <p>No documents yet.</p>
+            <p><%= link_to "Upload the first document", new_event_document_path(@event), class: "event-section__cta" %></p>
+          </div>
+        <% end %>
+      </section>
+    </div>
+  </div>
 <% end %>

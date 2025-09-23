@@ -8,7 +8,9 @@
 
   <div class="event-sidebar__context">
     <span class="event-sidebar__context-label">Currently Viewing</span>
-    <h2 class="event-sidebar__event-name"><%= event.name %></h2>
+    <h2 class="event-sidebar__event-name">
+      <%= link_to event.name, event_path(event), class: "event-sidebar__event-link" %>
+    </h2>
   </div>
 
   <% primary_links = [
@@ -17,7 +19,7 @@
     { label: "Documents", url: event_documents_path(event) },
     { label: "Signatures + Approvals", url: "#" },
     { label: "Payments", url: "#" },
-    { label: "Event Info", url: "#" }
+    { label: "Event Info", url: event_settings_path(event) }
   ] %>
 
   <nav class="event-sidebar__nav">
@@ -32,9 +34,9 @@
 
   <% secondary_links = [
     { label: "Events", url: events_path },
-    { label: "Documents", url: event_documents_path(event) },
+    { label: "Documents", url: "#" },
     { label: "Templates", url: questionnaire_templates_path },
-    { label: "Settings", url: event_settings_path(event) }
+    { label: "Settings", url: "#" }
   ] %>
 
   <nav class="event-sidebar__nav event-sidebar__nav--secondary">

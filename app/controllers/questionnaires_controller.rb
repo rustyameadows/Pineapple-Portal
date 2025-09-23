@@ -2,6 +2,10 @@ class QuestionnairesController < ApplicationController
   before_action :set_event
   before_action :set_questionnaire, only: %i[show edit update destroy]
 
+  def index
+    @questionnaires = @event.questionnaires.order(:title)
+  end
+
   def show
     @questions = @questionnaire.questions.order(:position)
   end

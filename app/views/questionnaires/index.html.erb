@@ -1,0 +1,43 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Questionnaires</p>
+            <h1 class="event-section__title">Forms for <%= @event.name %></h1>
+          </div>
+          <%= link_to "New Questionnaire", new_event_questionnaire_path(@event), class: "event-section__cta" %>
+        </header>
+
+        <% if @questionnaires.any? %>
+          <ul class="event-section__list">
+            <% @questionnaires.each do |questionnaire| %>
+              <li class="event-section__list-item">
+                <div>
+                  <h2 class="event-section__list-title"><%= questionnaire.title %></h2>
+                  <% if questionnaire.description.present? %>
+                    <p class="event-section__list-subtitle"><%= questionnaire.description %></p>
+                  <% end %>
+                </div>
+                <div class="event-section__list-actions">
+                  <%= link_to "Open", event_questionnaire_path(@event, questionnaire), class: "event-section__link" %>
+                  <%= link_to "Edit", edit_event_questionnaire_path(@event, questionnaire), class: "event-section__link" %>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <div class="event-section__empty">
+            <p>No questionnaires yet.</p>
+            <p><%= link_to "Create the first form", new_event_questionnaire_path(@event), class: "event-section__cta" %></p>
+          </div>
+        <% end %>
+      </section>
+    </div>
+  </div>
+<% end %>
