@@ -21,19 +21,19 @@
 <% if @questions.any? %>
   <div class="questions-list" data-question-sort data-reorder-url="<%= reorder_event_questionnaire_questions_path(@event, @questionnaire) %>" data-csrf-token="<%= form_authenticity_token %>">
     <% @questions.each do |question| %>
-      <section class="question-block" data-question-id="<%= question.id %>">
-        <div class="question-content">
-          <div class="question-handle" title="Drag to reorder" aria-hidden="true" draggable="true">⋮⋮</div>
-
-          <p><strong>Prompt:</strong> <%= simple_format(question.prompt) %></p>
-          <% if question.help_text.present? %>
+    <section class="question-block" data-question-id="<%= question.id %>">
+    <div class="question-content">
+        <div class="question-handle" title="Drag to reorder" aria-hidden="true" draggable="true">⋮⋮
+        </div>
+        <p><strong>Prompt:</strong> <%= simple_format(question.prompt) %></p>
+        <% if question.help_text.present? %>
             <p><strong>Help:</strong> <%= simple_format(question.help_text) %></p>
-          <% end %>
+        <% end %>
         <p>
-          <%= link_to "Edit", edit_event_questionnaire_question_path(@event, @questionnaire, question) %> |
-          <%= button_to "Delete", event_questionnaire_question_path(@event, @questionnaire, question), method: :delete, data: { confirm: "Remove this question?" } %>
+        <%= link_to "Edit", edit_event_questionnaire_question_path(@event, @questionnaire, question) %> |
+        <%= button_to "Delete", event_questionnaire_question_path(@event, @questionnaire, question), method: :delete, data: { confirm: "Remove this question?" } %>
         </p>
-      </div>
+    </div>
       <div class="question-answer">
 
         <% if @questionnaire.template? %>
@@ -76,6 +76,7 @@
           </ul>
         <% end %>
         <% end %>
+      </div>
       </section>
     <% end %>
   </div>
