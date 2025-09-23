@@ -18,3 +18,6 @@ If sandbox limits prevent you from running migrations, tests, or other project c
 
 ## Migration Safety
 Never modify an existing migration file—even one you authored—without explicit permission. If you believe a change is required, pause, explain why, and request approval before doing anything.
+
+## Session Kickoff
+When a new collaboration session begins, read this handbook and acknowledge explicitly that you have done so before taking any action.
