@@ -11,7 +11,16 @@
       <li><%= link_to "Events", events_path, class: "event-sidebar__link" %></li>
       <li><%= link_to "Documents", "#", class: "event-sidebar__link event-sidebar__link--stub" %></li>
       <li><%= link_to "Templates", questionnaire_templates_path, class: "event-sidebar__link" %></li>
-      <li><%= link_to "Settings", "#", class: "event-sidebar__link event-sidebar__link--stub" %></li>
+      <li><%= link_to "Settings", settings_path, class: "event-sidebar__link" %></li>
     </ul>
   </nav>
+
+  <div class="event-sidebar__auth">
+    <% if logged_in? %>
+      <span class="event-sidebar__auth-inline">Signed in as <strong><%= current_user.name %></strong></span>
+      <%= button_to "Log out", logout_path, method: :delete, class: "event-sidebar__auth-link" %>
+    <% else %>
+      <%= link_to "Log in", login_path, class: "event-sidebar__auth-link" %>
+    <% end %>
+  </div>
 </aside>

@@ -1,16 +1,45 @@
-<h1>Template Questionnaires</h1>
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
 
-<p><%= link_to "All Events", events_path %></p>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-<% if @questionnaires.any? %>
-  <ul>
-    <% @questionnaires.each do |questionnaire| %>
-      <li>
-        <%= link_to questionnaire.title, event_questionnaire_path(questionnaire.event, questionnaire) %>
-        (<%= questionnaire.event.name %>)
-      </li>
-    <% end %>
-  </ul>
-<% else %>
-  <p>No templates found.</p>
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Templates</p>
+            <h1 class="event-section__title">Template Questionnaires</h1>
+            <p class="event-section__lead">Reuse proven forms to jumpstart new planning workflows.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Back to Events", events_path, class: "event-section__link" %>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <% if @questionnaires.any? %>
+            <ul class="event-section__list">
+              <% @questionnaires.each do |questionnaire| %>
+                <li class="event-section__list-item">
+                  <div>
+                    <h2 class="event-section__list-title"><%= questionnaire.title %></h2>
+                    <% if questionnaire.description.present? %>
+                      <p class="event-section__list-subtitle"><%= questionnaire.description %></p>
+                    <% end %>
+                    <p class="event-section__meta">Event: <%= questionnaire.event.name %></p>
+                  </div>
+                  <div class="event-section__list-actions">
+                    <%= link_to "Open", event_questionnaire_path(questionnaire.event, questionnaire), class: "event-section__link" %>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <div class="event-section__empty">No templates found.</div>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
 <% end %>

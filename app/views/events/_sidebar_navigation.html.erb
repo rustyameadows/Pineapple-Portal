@@ -36,7 +36,7 @@
     { label: "Events", url: events_path },
     { label: "Documents", url: "#" },
     { label: "Templates", url: questionnaire_templates_path },
-    { label: "Settings", url: "#" }
+    { label: "Settings", url: settings_path }
   ] %>
 
   <nav class="event-sidebar__nav event-sidebar__nav--secondary">
@@ -48,4 +48,13 @@
       <% end %>
     </ul>
   </nav>
+
+  <div class="event-sidebar__auth">
+    <% if logged_in? %>
+      <span class="event-sidebar__auth-inline">Signed in as <strong><%= current_user.name %></strong></span>
+      <%= button_to "Log out", logout_path, method: :delete, class: "event-sidebar__auth-link" %>
+    <% else %>
+      <%= link_to "Log in", login_path, class: "event-sidebar__auth-link" %>
+    <% end %>
+  </div>
 </aside>

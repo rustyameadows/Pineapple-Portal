@@ -1,33 +1,47 @@
-<section class="stack">
-  <header>
-    <h1>Team Roster</h1>
-    <p class="dashboard__meta">Invite teammates so they can contribute to every event.</p>
-  </header>
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
 
-  <p>
-    <%= link_to "Add teammate", new_user_path, class: "dashboard__cta" %>
-  </p>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-  <% if @users.any? %>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Joined</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @users.each do |user| %>
-          <tr>
-            <td><%= user.name %></td>
-            <td><%= user.email %></td>
-            <td><%= user.created_at&.strftime("%b %e, %Y") %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-  <% else %>
-    <div class="dashboard__empty">No teammates yet. Be the first to invite someone.</div>
-  <% end %>
-</section>
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Team</p>
+            <h1 class="event-section__title">Team Roster</h1>
+            <p class="event-section__lead">Invite teammates so they can contribute to every event.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Add Teammate", new_user_path, class: "event-section__cta" %>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <% if @users.any? %>
+            <table class="event-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @users.each do |user| %>
+                  <tr>
+                    <td><%= user.name %></td>
+                    <td><%= user.email %></td>
+                    <td><%= user.created_at&.strftime('%b %-d, %Y') %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <div class="event-section__empty">No teammates yet. Be the first to invite someone.</div>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

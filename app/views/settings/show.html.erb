@@ -1,0 +1,34 @@
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Admin</p>
+            <h1 class="event-section__title">Account Settings</h1>
+            <p class="event-section__lead">Manage your workspace and team access.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <ul class="event-section__list">
+            <li class="event-section__list-item">
+              <div>
+                <h2 class="event-section__list-title">Team Roster</h2>
+                <p class="event-section__list-subtitle">Invite and manage teammates with access to Pineapple Portal.</p>
+              </div>
+              <div class="event-section__list-actions">
+                <%= link_to "Open", users_path, class: "event-section__link" %>
+              </div>
+            </li>
+          </ul>
+          <p class="event-section__note">More controls coming soon.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

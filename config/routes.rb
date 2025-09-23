@@ -72,6 +72,7 @@ Rails.application.routes.draw do
   end
 
   get "/questionnaire_templates", to: "questionnaires#templates", as: :questionnaire_templates
+  get "/settings", to: "settings#show", as: :settings
   resources :attachments, only: %i[create destroy]
 
   get "/login", to: "sessions#new"
