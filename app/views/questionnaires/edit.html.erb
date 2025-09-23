@@ -1,5 +1,112 @@
-<h1>Edit Questionnaire</h1>
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
 
-<%= render "form" %>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-<p><%= link_to "Back", event_questionnaire_path(@event, @questionnaire) %></p>
+      <section class="event-section questionnaire-general">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Questionnaire</p>
+            <h1 class="event-section__title">Edit <%= @questionnaire.title %></h1>
+          </div>
+        </header>
+
+        <%= render "form" %>
+      </section>
+
+      <section class="questionnaire-editor"
+               data-questionnaire-editor
+               data-question-reorder-url="<%= reorder_event_questionnaire_questions_path(@event, @questionnaire) %>"
+               data-section-reorder-url="<%= reorder_event_questionnaire_sections_path(@event, @questionnaire) %>"
+               data-csrf-token="<%= form_authenticity_token %>">
+        <header class="questionnaire-editor__header">
+          <h2>Sections</h2>
+          <p>Group related questions. Drag sections or questions to reorder them.</p>
+        </header>
+
+        <div class="questionnaire-editor__sections" data-section-list>
+          <% @sections.each do |section| %>
+            <details class="questionnaire-editor__section" data-question-section data-section-id="<%= section.id %>" draggable="true">
+              <summary class="questionnaire-editor__section-summary" data-section-summary>
+                <span class="questionnaire-editor__handle" data-section-handle title="Drag to reorder" aria-hidden="true">⋮⋮</span>
+                <div class="questionnaire-editor__section-heading">
+                  <span class="questionnaire-editor__section-title"><%= section.title %></span>
+                  <% if section.helper_text.present? %>
+                    <span class="questionnaire-editor__section-helper"><%= section.helper_text %></span>
+                  <% end %>
+                </div>
+                <span class="questionnaire-editor__chevron" aria-hidden="true"></span>
+              </summary>
+
+              <div class="questionnaire-editor__section-body">
+                <div class="questionnaire-editor__section-controls">
+                  <%= link_to "Add Question", new_event_questionnaire_question_path(@event, @questionnaire, section_id: section.id), class: "event-section__link" %>
+                  <%= button_to "Remove Section", event_questionnaire_section_path(@event, @questionnaire, section), method: :delete, form: { data: { turbo_confirm: "Remove this section?" } }, class: "event-section__link" %>
+                </div>
+
+                <%= form_with model: [@event, @questionnaire, section], url: event_questionnaire_section_path(@event, @questionnaire, section), method: :patch, class: "questionnaire-editor__section-form" do |form| %>
+                  <div>
+                    <%= form.label :title %>
+                    <%= form.text_field :title %>
+                  </div>
+                  <div>
+                    <%= form.label :helper_text, "Helper text" %>
+                    <%= form.text_area :helper_text, rows: 3 %>
+                  </div>
+                  <%= form.submit "Save Section", class: "event-section__cta" %>
+                <% end %>
+
+                <% questions = section.questions.order(:position) %>
+                <div class="questionnaire-editor__questions"
+                     data-question-sort
+                     data-section-id="<%= section.id %>">
+                  <% questions.each do |question| %>
+                    <article class="questionnaire-editor__question" data-question-id="<%= question.id %>" draggable="true">
+                      <header class="questionnaire-editor__question-header">
+                        <span class="questionnaire-editor__question-handle" data-question-handle title="Drag to reorder">⋮⋮</span>
+                        <div>
+                          <h3><%= truncate(question.prompt, length: 120) %></h3>
+                          <% if question.help_text.present? %>
+                            <p><%= truncate(question.help_text, length: 140) %></p>
+                          <% end %>
+                        </div>
+                      </header>
+                      <footer class="questionnaire-editor__question-actions">
+                        <%= link_to "Edit", edit_event_questionnaire_question_path(@event, @questionnaire, question) %>
+                        <%= button_to "Delete", event_questionnaire_question_path(@event, @questionnaire, question), method: :delete, data: { confirm: "Remove this question?" } %>
+                      </footer>
+                    </article>
+                  <% end %>
+                  <% if questions.empty? %>
+                    <p class="questionnaire-editor__empty">No questions yet in this section.</p>
+                  <% end %>
+                </div>
+              </div>
+            </details>
+          <% end %>
+        </div>
+
+        <div class="questionnaire-editor__new-section">
+          <%= form_with model: [@event, @questionnaire, QuestionnaireSection.new], url: event_questionnaire_sections_path(@event, @questionnaire), class: "questionnaire-editor__section-form" do |form| %>
+            <h3>Add Section</h3>
+            <div>
+              <%= form.label :title %>
+              <%= form.text_field :title, required: true %>
+            </div>
+            <div>
+              <%= form.label :helper_text, "Helper text" %>
+              <%= form.text_area :helper_text, rows: 3 %>
+            </div>
+            <%= form.submit "Add Section", class: "event-section__cta" %>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>
+
+<% content_for :scripts do %>
+  <%= render "questionnaires/editor_script" %>
+<% end %>

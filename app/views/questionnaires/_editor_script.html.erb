@@ -1,0 +1,250 @@
+<script type="module">
+  document.addEventListener("DOMContentLoaded", () => {
+    const editor = document.querySelector("[data-questionnaire-editor]");
+    if (!editor) return;
+
+    const csrfToken = editor.dataset.csrfToken || document.querySelector("meta[name='csrf-token']")?.content;
+    const questionReorderUrl = editor.dataset.questionReorderUrl;
+    const sectionReorderUrl = editor.dataset.sectionReorderUrl;
+
+    const showFlash = (message, type = "notice") => {
+      const flash = document.createElement("div");
+      flash.className = `flash flash-${type} flash-toast`;
+      flash.textContent = message;
+      document.body.prepend(flash);
+      setTimeout(() => flash.remove(), 2200);
+    };
+
+    const questionLists = Array.from(editor.querySelectorAll("[data-question-sort]"));
+    const sectionList = editor.querySelector("[data-section-list]");
+
+    questionLists.forEach((list) => {
+      list.querySelectorAll("[data-question-id]").forEach((item) => item.setAttribute("draggable", "true"));
+    });
+
+    editor.querySelectorAll("[data-question-section]").forEach((section) => {
+      section.setAttribute("draggable", "true");
+    });
+
+    let draggingQuestion = null;
+    let draggingSection = null;
+    let dragContext = null;
+
+    const resetDragContext = () => {
+      dragContext = null;
+    };
+
+    editor.addEventListener("mousedown", (event) => {
+      if (event.target.closest("[data-question-handle]")) {
+        dragContext = "question";
+      } else if (event.target.closest("[data-section-handle]")) {
+        dragContext = "section";
+      } else {
+        dragContext = null;
+      }
+    });
+
+    editor.addEventListener("mouseup", resetDragContext);
+    editor.addEventListener("mouseleave", resetDragContext);
+
+    editor.addEventListener("click", (event) => {
+      if (event.target.closest("[data-section-handle]")) {
+        event.preventDefault();
+      }
+    });
+
+    const questionAfterElement = (list, y) => {
+      const draggableElements = [...list.querySelectorAll("[data-question-id]:not(.dragging)")];
+
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+
+        if (offset < 0 && offset > closest.offset) {
+          return { offset, element: child };
+        }
+
+        return closest;
+      }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+    };
+
+    const sectionAfterElement = (list, y) => {
+      const sections = [...list.querySelectorAll("[data-question-section]:not(.dragging)")];
+
+      return sections.reduce((closest, section) => {
+        const box = section.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+
+        if (offset < 0 && offset > closest.offset) {
+          return { offset, element: section };
+        }
+
+        return closest;
+      }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+    };
+
+    const collectQuestionOrders = () => {
+      const payload = {};
+      editor.querySelectorAll("[data-question-section]").forEach((section) => {
+        const sectionId = section.dataset.sectionId;
+        const list = section.querySelector("[data-question-sort]");
+        if (!sectionId || !list) return;
+
+        const ids = [...list.querySelectorAll("[data-question-id]")].map((node) => node.dataset.questionId);
+        payload[sectionId] = ids;
+      });
+      return payload;
+    };
+
+    const collectSectionOrder = () => (
+      [...editor.querySelectorAll("[data-question-section]")].map((section) => section.dataset.sectionId)
+    );
+
+    const persistQuestionOrder = () => {
+      if (!questionReorderUrl) return;
+
+      const body = JSON.stringify({ section_orders: collectQuestionOrders() });
+
+      fetch(questionReorderUrl, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-CSRF-Token": csrfToken || ""
+        },
+        body,
+        credentials: "same-origin"
+      }).then((response) => {
+        if (response.ok) {
+          showFlash("Question order saved.");
+        } else {
+          showFlash("Unable to save question order", "alert");
+        }
+      }).catch(() => showFlash("Unable to save question order", "alert"));
+    };
+
+    const persistSectionOrder = () => {
+      if (!sectionReorderUrl) return;
+
+      const body = new URLSearchParams();
+      collectSectionOrder().forEach((id) => body.append("section_ids[]", id));
+
+      fetch(sectionReorderUrl, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+          Accept: "application/json",
+          "X-CSRF-Token": csrfToken || ""
+        },
+        body: body.toString(),
+        credentials: "same-origin"
+      }).then((response) => {
+        if (response.ok) {
+          showFlash("Section order saved.");
+        } else {
+          showFlash("Unable to save section order", "alert");
+        }
+      }).catch(() => showFlash("Unable to save section order", "alert"));
+    };
+
+    editor.addEventListener("dragstart", (event) => {
+      if (dragContext === "question") {
+        const questionNode = event.target.closest("[data-question-id]");
+        if (!questionNode) {
+          event.preventDefault();
+          return;
+        }
+        draggingQuestion = questionNode;
+        draggingQuestion.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", questionNode.dataset.questionId || "");
+        const parentSection = draggingQuestion.closest("[data-question-section]");
+        if (parentSection && !parentSection.open) parentSection.open = true;
+        return;
+      }
+
+      if (dragContext === "section") {
+        const sectionNode = event.target.closest("[data-question-section]");
+        if (!sectionNode) {
+          event.preventDefault();
+          return;
+        }
+        draggingSection = sectionNode;
+        draggingSection.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", sectionNode.dataset.sectionId || "");
+        return;
+      }
+
+      event.preventDefault();
+    });
+
+    editor.addEventListener("dragend", () => {
+      if (draggingQuestion) {
+        draggingQuestion.classList.remove("dragging");
+        draggingQuestion = null;
+        persistQuestionOrder();
+      }
+
+      if (draggingSection) {
+        draggingSection.classList.remove("dragging");
+        draggingSection = null;
+        persistSectionOrder();
+      }
+
+      resetDragContext();
+    });
+
+    editor.addEventListener("drop", (event) => {
+      event.preventDefault();
+      if (draggingQuestion) {
+        draggingQuestion.classList.remove("dragging");
+        draggingQuestion = null;
+        persistQuestionOrder();
+      }
+
+      if (draggingSection) {
+        draggingSection.classList.remove("dragging");
+        draggingSection = null;
+        persistSectionOrder();
+      }
+
+      resetDragContext();
+    });
+
+    editor.addEventListener("dragover", (event) => {
+      if (!draggingQuestion && !draggingSection) return;
+
+      event.preventDefault();
+
+      if (draggingQuestion) {
+        const list = event.target.closest("[data-question-sort]");
+        if (!list) return;
+
+        const afterElement = questionAfterElement(list, event.clientY);
+        if (afterElement == null) {
+          list.appendChild(draggingQuestion);
+        } else {
+          list.insertBefore(draggingQuestion, afterElement);
+        }
+        const section = list.closest("[data-question-section]");
+        if (section && !section.open) section.open = true;
+      } else if (draggingSection && sectionList) {
+        const afterElement = sectionAfterElement(sectionList, event.clientY);
+        if (afterElement == null) {
+          sectionList.appendChild(draggingSection);
+        } else {
+          sectionList.insertBefore(draggingSection, afterElement);
+        }
+      }
+    });
+
+    editor.addEventListener("dragenter", (event) => {
+      if (!draggingQuestion) return;
+      const summary = event.target.closest("[data-section-summary]");
+      if (!summary) return;
+      const details = summary.closest("[data-question-section]");
+      if (details && !details.open) details.open = true;
+    });
+  });
+</script>

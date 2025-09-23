@@ -26,6 +26,11 @@
   </div>
 
   <div>
+    <%= form.label :questionnaire_section_id, "Section" %><br>
+    <%= form.collection_select :questionnaire_section_id, @sections, :id, :title %>
+  </div>
+
+  <div>
     <%= form.submit %>
   </div>
 <% end %>

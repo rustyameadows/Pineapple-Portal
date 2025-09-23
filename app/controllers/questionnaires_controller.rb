@@ -1,17 +1,18 @@
 class QuestionnairesController < ApplicationController
   before_action :set_event
   before_action :set_questionnaire, only: %i[show edit update destroy]
+  before_action :load_sections, only: %i[show edit]
 
   def index
     @questionnaires = @event.questionnaires.order(:title)
   end
 
   def show
-    @questions = @questionnaire.questions.order(:position)
   end
 
   def new
     @questionnaire = @event.questionnaires.new
+    @questionnaire.sections.build(title: "Section 1") if @questionnaire.sections.blank?
   end
 
   def create
@@ -24,8 +25,7 @@ class QuestionnairesController < ApplicationController
     end
   end
 
-  def edit
-  end
+  def edit; end
 
   def update
     if @questionnaire.update(questionnaire_params)
@@ -60,6 +60,11 @@ class QuestionnairesController < ApplicationController
   end
 
   def questionnaire_params
-    params.require(:questionnaire).permit(:title, :description, :is_template)
+    params.require(:questionnaire).permit(:title, :description, :is_template,
+                                          sections_attributes: %i[id title helper_text position _destroy])
+  end
+
+  def load_sections
+    @sections = @questionnaire.sections.includes(questions: :attachments)
   end
 end

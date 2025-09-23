@@ -1,91 +1,88 @@
-<h1><%= @questionnaire.title %></h1>
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
 
-<div class="questionnaire-header">
-  <p><strong>Event:</strong> <%= link_to @event.name, event_path(@event) %></p>
-  <% if @questionnaire.description.present? %>
-    <p><%= simple_format(@questionnaire.description) %></p>
-  <% else %>
-    <p>No description provided.</p>
-  <% end %>
-  <% if @questionnaire.template? %>
-    <p><em>This questionnaire is marked as a template.</em></p>
-  <% end %>
-</div>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-<p>
-  <%= link_to "Add Question", new_event_questionnaire_question_path(@event, @questionnaire) %> |
-  <%= link_to "Edit Questionnaire", edit_event_questionnaire_path(@event, @questionnaire) %> |
-  <%= button_to "Delete Questionnaire", event_questionnaire_path(@event, @questionnaire), method: :delete, data: { confirm: "Delete this questionnaire?" } %>
-</p>
-
-<% if @questions.any? %>
-  <div class="questions-list" data-question-sort data-reorder-url="<%= reorder_event_questionnaire_questions_path(@event, @questionnaire) %>" data-csrf-token="<%= form_authenticity_token %>">
-    <% @questions.each do |question| %>
-    <section class="question-block" data-question-id="<%= question.id %>">
-    <div class="question-content">
-        <div class="question-handle" title="Drag to reorder" aria-hidden="true" draggable="true">⋮⋮
-        </div>
-        <p><strong>Prompt:</strong> <%= simple_format(question.prompt) %></p>
-        <% if question.help_text.present? %>
-            <p><strong>Help:</strong> <%= simple_format(question.help_text) %></p>
-        <% end %>
-        <p>
-        <%= link_to "Edit", edit_event_questionnaire_question_path(@event, @questionnaire, question) %> |
-        <%= button_to "Delete", event_questionnaire_question_path(@event, @questionnaire, question), method: :delete, data: { confirm: "Remove this question?" } %>
-        </p>
-    </div>
-      <div class="question-answer">
-
-        <% if @questionnaire.template? %>
-          <p>Templates do not record answers.</p>
-        <% else %>
-          <%= form_with model: [@event, @questionnaire, question], url: answer_event_questionnaire_question_path(@event, @questionnaire, question), method: :patch, data: { answer_upload_form: true, presign_url: presign_event_documents_path(@event) } do |f| %>
-            <div>
-              <%= f.label :answer_value, "Response" %><br>
-              <%= f.text_area :answer_value, rows: 4 %>
-            </div>
-            <div>
-              <%= f.label :file_title, "File" %><br>
-              <input type="file" data-answer-upload-target="file">
-              <p data-answer-upload-target="status">Optional: attach a file.</p>
-            </div>
-            <%= f.hidden_field :file_storage_uri %>
-            <%= f.hidden_field :file_checksum %>
-            <%= f.hidden_field :file_size_bytes %>
-            <%= f.hidden_field :file_content_type %>
-            <%= f.hidden_field :file_title %>
-            <%= f.hidden_field :file_logical_id %>
-            <div class="answer-actions">
-              <%= f.submit "Save" %>
-            </div>
-          <% end %>
-
-        <% attachments = question.attachments.order(:position) %>
-        <% if attachments.any? %>
-          <h4>Attachments</h4>
-          <ul>
-            <% attachments.each do |attachment| %>
-              <% document = attachment.document || @event.documents.latest.find_by(logical_id: attachment.document_logical_id) %>
-              <% next unless document %>
-              <li>
-                <%= link_to document.title, event_document_path(@event, document) %>
-                (v<%= document.version %>) |
-                <%= link_to "Download", download_event_document_path(@event, document) %>
-              </li>
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Questionnaire</p>
+            <h1 class="event-section__title"><%= @questionnaire.title %></h1>
+            <% if @questionnaire.description.present? %>
+              <p class="event-section__lead"><%= simple_format(@questionnaire.description) %></p>
             <% end %>
-          </ul>
-        <% end %>
-        <% end %>
-      </div>
+            <% if @questionnaire.template? %>
+              <p><em>This questionnaire is marked as a template.</em></p>
+            <% end %>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Edit Questionnaire", edit_event_questionnaire_path(@event, @questionnaire), class: "event-section__cta" %>
+          </div>
+        </header>
       </section>
-    <% end %>
+
+      <% @sections.each do |section| %>
+        <section class="questionnaire-section-view">
+          <div class="questionnaire-section-view__content">
+            <aside class="questionnaire-section-view__intro">
+              <h2><%= section.title %></h2>
+              <% if section.helper_text.present? %>
+                <p class="questionnaire-section-view__helper"><%= simple_format(section.helper_text) %></p>
+              <% end %>
+            </aside>
+
+            <% questions = section.questions.order(:position) %>
+            <div class="questionnaire-section-view__questions">
+              <% if questions.any? %>
+                <% questions.each do |question| %>
+                  <article class="question-card">
+                    <div class="question-card__body">
+                      <p class="question-card__prompt"><strong>Prompt:</strong> <%= simple_format(question.prompt) %></p>
+                      <% if question.help_text.present? %>
+                        <p class="question-card__help"><strong>Help:</strong> <%= simple_format(question.help_text) %></p>
+                      <% end %>
+                    </div>
+
+                    <% unless @questionnaire.template? %>
+                      <div class="question-card__answer">
+                        <% if question.answer_value.present? %>
+                          <p><strong>Response:</strong> <%= simple_format(question.answer_value) %></p>
+                        <% else %>
+                          <p class="question-card__answer-empty">No response recorded.</p>
+                        <% end %>
+
+                        <% attachments = question.attachments.order(:position) %>
+                        <% if attachments.any? %>
+                          <h4>Attachments</h4>
+                          <ul>
+                            <% attachments.each do |attachment| %>
+                              <% document = attachment.document || @event.documents.latest.find_by(logical_id: attachment.document_logical_id) %>
+                              <% next unless document %>
+                              <li>
+                                <%= link_to document.title, event_document_path(@event, document) %>
+                                (v<%= document.version %>) |
+                                <%= link_to "Download", download_event_document_path(@event, document) %>
+                              </li>
+                            <% end %>
+                          </ul>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </article>
+                <% end %>
+              <% else %>
+                <p class="questionnaire-section-view__empty">No questions yet.</p>
+              <% end %>
+            </div>
+          </div>
+        </section>
+      <% end %>
+    </div>
   </div>
-<% else %>
-  <p>No questions yet.</p>
 <% end %>
 
 <% content_for :scripts do %>
-  <%= render "attachments/upload_script" %>
-  <%= render "questionnaires/answer_upload_script" %>
-  <%= render "questionnaires/sort_script" %>
+  <%# No interactive scripts needed for read-only view %>
 <% end %>

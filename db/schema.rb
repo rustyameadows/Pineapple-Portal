@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_16_060000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_16_061000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -63,6 +63,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_16_060000) do
     t.index ["name"], name: "index_events_on_name"
   end
 
+  create_table "questionnaire_sections", force: :cascade do |t|
+    t.bigint "questionnaire_id", null: false
+    t.string "title", null: false
+    t.text "helper_text"
+    t.integer "position", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["questionnaire_id", "position"], name: "index_questionnaire_sections_on_questionnaire_id_and_position"
+    t.index ["questionnaire_id"], name: "index_questionnaire_sections_on_questionnaire_id"
+  end
+
   create_table "questionnaires", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.string "title", null: false
@@ -89,9 +100,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_16_060000) do
     t.datetime "answered_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "questionnaire_section_id", null: false
     t.index ["event_id"], name: "index_questions_on_event_id"
     t.index ["questionnaire_id", "position"], name: "index_questions_on_questionnaire_id_and_position"
     t.index ["questionnaire_id"], name: "index_questions_on_questionnaire_id"
+    t.index ["questionnaire_section_id"], name: "index_questions_on_questionnaire_section_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -105,8 +118,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_16_060000) do
 
   add_foreign_key "attachments", "documents"
   add_foreign_key "documents", "events"
+  add_foreign_key "questionnaire_sections", "questionnaires"
   add_foreign_key "questionnaires", "events"
   add_foreign_key "questionnaires", "questionnaires", column: "template_source_id"
   add_foreign_key "questions", "events"
+  add_foreign_key "questions", "questionnaire_sections"
   add_foreign_key "questions", "questionnaires"
 end

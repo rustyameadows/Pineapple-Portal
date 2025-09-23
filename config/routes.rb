@@ -18,6 +18,9 @@ Rails.application.routes.draw do
     end
 
     resources :questionnaires do
+      resources :sections, controller: "questionnaire_sections", only: %i[create update destroy] do
+        collection { patch :reorder }
+      end
       resources :questions, only: %i[new create edit update destroy] do
         member { patch :answer }
         collection { patch :reorder }

@@ -20,7 +20,10 @@ questionnaire = event.questionnaires.find_or_create_by!(title: "Kickoff Checklis
   form.description = "Confirm initial logistics for the event."
 end
 
+section = questionnaire.sections.first || questionnaire.sections.create!(title: "Planning Details", helper_text: "Track core launch logistics.")
+
 question = questionnaire.questions.find_or_create_by!(prompt: "Confirm venue booking is complete.") do |question|
+  question.questionnaire_section = section
   question.help_text = "Include reservation number and point of contact."
   question.response_type = "text"
 end
@@ -28,6 +31,13 @@ end
 template_questionnaire = event.questionnaires.find_or_create_by!(title: "Post-Event Survey Template") do |form|
   form.description = "Standard questions for attendee follow up."
   form.is_template = true
+end
+
+template_section = template_questionnaire.sections.first || template_questionnaire.sections.create!(title: "Follow Up", helper_text: "Send to the client after the event.")
+
+template_questionnaire.questions.find_or_create_by!(prompt: "How satisfied were you with the event overall?") do |question|
+  question.questionnaire_section = template_section
+  question.response_type = "choice"
 end
 
 document = event.documents.find_or_create_by!(title: "Production Contract", storage_uri: "documents/sample-contract-v1.pdf") do |doc|

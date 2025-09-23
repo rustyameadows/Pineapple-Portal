@@ -2,14 +2,17 @@ class QuestionsController < ApplicationController
   before_action :set_event
   before_action :set_questionnaire, only: %i[new create reorder]
   before_action :set_question, only: %i[edit update destroy answer]
+  before_action :load_sections, only: %i[new create edit update]
 
   def new
-    @question = @questionnaire.questions.new
+    default_section_id = params[:section_id].presence || @questionnaire.sections.first&.id
+    @question = @questionnaire.questions.new(questionnaire_section_id: default_section_id)
   end
 
   def create
     @question = @questionnaire.questions.new(question_params)
-    @question.position = next_position
+    @question.questionnaire_section_id ||= @questionnaire.sections.first&.id
+    @question.position = next_position(@question.questionnaire_section_id)
 
     if @question.save
       redirect_to event_questionnaire_path(@event, @questionnaire), notice: "Question added."
@@ -21,7 +24,14 @@ class QuestionsController < ApplicationController
   def edit; end
 
   def update
+    old_section_id = @question.questionnaire_section_id
     if @question.update(question_params)
+      new_section_id = @question.questionnaire_section_id
+      if @question.previous_changes.key?("questionnaire_section_id")
+        @question.update(position: next_position(new_section_id))
+        normalize_section_positions(old_section_id)
+      end
+      normalize_section_positions(new_section_id)
       redirect_to event_questionnaire_path(@event, @question.questionnaire), notice: "Question updated."
     else
       render :edit, status: :unprocessable_content
@@ -30,7 +40,9 @@ class QuestionsController < ApplicationController
 
   def destroy
     questionnaire = @question.questionnaire
+    section_id = @question.questionnaire_section_id
     @question.destroy
+    normalize_section_positions(section_id)
     redirect_to event_questionnaire_path(@event, questionnaire), notice: "Question removed."
   end
 
@@ -61,15 +73,37 @@ class QuestionsController < ApplicationController
   end
 
   def reorder
-    ids = Array(params[:order])
+    raw_orders = params[:section_orders]
+    section_orders =
+      case raw_orders
+      when ActionController::Parameters
+        raw_orders.to_unsafe_h
+      when Hash
+        raw_orders
+      else
+        {}
+      end
 
     ActiveRecord::Base.transaction do
-      ids.map(&:to_i).each_with_index do |id, index|
-        @questionnaire.questions.where(id: id).update_all(position: index + 1)
+      section_orders.each do |section_id, question_ids|
+        question_ids = Array(question_ids)
+        section = @questionnaire.sections.find(section_id)
+
+        question_ids.map(&:to_i).each_with_index do |id, index|
+          question = @questionnaire.questions.find(id)
+          question.update_columns(
+            questionnaire_section_id: section.id,
+            position: index + 1,
+            updated_at: Time.current
+          )
+        end
+        normalize_section_positions(section.id)
       end
     end
 
     head :ok
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { error: e.record.errors.full_messages.to_sentence }, status: :unprocessable_entity
   end
 
   private
@@ -88,11 +122,31 @@ class QuestionsController < ApplicationController
   end
 
   def question_params
-    params.require(:question).permit(:prompt, :help_text, :response_type)
+    params.require(:question).permit(:prompt, :help_text, :response_type, :questionnaire_section_id)
   end
 
-  def next_position
-    (@questionnaire.questions.maximum(:position) || 0) + 1
+  def next_position(section_id)
+    section_id = section_id.presence || @questionnaire.sections.first&.id
+    return 1 unless section_id
+
+    @questionnaire.questions.where(questionnaire_section_id: section_id).maximum(:position).to_i + 1
+  end
+
+  def load_sections
+    @sections = if @questionnaire
+                  @questionnaire.sections
+                else
+                  @question.questionnaire.sections
+                end
+  end
+
+  def normalize_section_positions(section_id)
+    return unless section_id
+
+    questions = @questionnaire.questions.where(questionnaire_section_id: section_id).order(:position, :updated_at)
+    questions.each_with_index do |question, index|
+      question.update_column(:position, index + 1)
+    end
   end
 
   def answer_params
