@@ -114,15 +114,16 @@
                       <td><%= user.title.presence || "—" %></td>
                       <td><%= user.phone_number.presence || "—" %></td>
                       <td>
-                        <%= form_with model: [@event, team_member], url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do |form| %>
+                        <%= form_with url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do %>
                           <label class="event-settings__toggle">
-                            <%= form.check_box :client_visible, { checked: team_member.client_visible?, onchange: "this.form.submit()" }, true, false %>
+                            <%= hidden_field_tag "event_team_member[client_visible]", 0 %>
+                            <%= check_box_tag "event_team_member[client_visible]", 1, team_member.client_visible?, onchange: "this.form.submit()" %>
                             <span>Visible</span>
                           </label>
                         <% end %>
                       </td>
                       <td class="event-table__actions">
-                        <%= link_to "Remove", event_team_member_path(@event, team_member), data: { turbo_method: :delete, turbo_confirm: "Remove #{user.name} from this event?" }, class: "event-section__link event-section__link--danger" %>
+                        <%= button_to "Remove", event_team_member_path(@event, team_member), method: :delete, data: { turbo_confirm: "Remove #{user.name} from this event?" }, class: "event-section__link event-section__link--danger" %>
                       </td>
                     </tr>
                   <% end %>
