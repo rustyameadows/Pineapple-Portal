@@ -1,4 +1,5 @@
 class EventCalendar < ApplicationRecord
+  DEFAULT_TIMEZONE = "America/New_York".freeze
   KINDS = {
     master: "master",
     derived: "derived"
@@ -51,7 +52,7 @@ class EventCalendar < ApplicationRecord
   end
 
   def set_default_timezone
-    self.timezone = timezone.presence || "UTC"
+    self.timezone = timezone.presence || DEFAULT_TIMEZONE
   end
 
   def single_master_per_event

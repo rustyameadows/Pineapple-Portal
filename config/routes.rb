@@ -18,6 +18,8 @@ Rails.application.routes.draw do
     resources :payments, module: :events
     resources :approvals, module: :events
 
+    resources :calendars, only: :index, module: :events, controller: :calendars
+
     resource :calendar, only: %i[show update], module: :events do
       resources :items,
                 controller: "calendar_items",

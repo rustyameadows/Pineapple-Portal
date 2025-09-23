@@ -36,7 +36,6 @@
         <% @items.each do |item| %>
           <% when_label = calendar_item_time_label(item, @calendar.timezone) %>
           <% anchor_label = calendar_item_relative_label(item) %>
-          <% tags_label = calendar_item_tags_label(item) %>
           <% duration_label = calendar_item_duration_label(item) %>
           <tr>
             <td class="client-calendar__when"><%= when_label %></td>
@@ -54,7 +53,17 @@
                 <div class="client-calendar__notes"><%= simple_format(item.notes) %></div>
               <% end %>
             </td>
-            <td class="client-calendar__tags"><%= tags_label %></td>
+            <td class="client-calendar__tags">
+              <% if item.event_calendar_tags.any? %>
+                <div class="client-calendar__tag-list">
+                  <% item.event_calendar_tags.each do |tag| %>
+                    <span class="client-calendar__tag-pill" style="<%= calendar_tag_style(tag) %>"><%= tag.name %></span>
+                  <% end %>
+                </div>
+              <% else %>
+                <span class="client-calendar__tag-pill client-calendar__tag-pill--empty">—</span>
+              <% end %>
+            </td>
             <td class="client-calendar__duration"><%= duration_label %></td>
           </tr>
         <% end %>

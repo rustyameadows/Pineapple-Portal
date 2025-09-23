@@ -36,7 +36,7 @@ module Events
     def set_calendar
       @calendar = @event.run_of_show_calendar || @event.event_calendars.create!(
         name: "Run of Show",
-        timezone: Time.zone.tzinfo&.identifier || Time.zone.name || "UTC"
+        timezone: EventCalendar::DEFAULT_TIMEZONE
       )
     end
 

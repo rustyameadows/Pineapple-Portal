@@ -10,13 +10,16 @@ module Events
     end
 
     def create
-      @item = @calendar.calendar_items.new(item_params)
+      @item = @calendar.calendar_items.new
+      assign_all_day(@item)
       assign_tags(@item)
+      @item.assign_attributes(item_params)
 
       if @item.save
         run_scheduler
         redirect_to event_calendar_path(@event), notice: "Calendar item added."
       else
+        load_form_support
         flash.now[:alert] = @item.errors.full_messages.to_sentence
         render :new, status: :unprocessable_content
       end
@@ -25,6 +28,7 @@ module Events
     def edit; end
 
     def update
+      assign_all_day(@item)
       assign_tags(@item)
 
       if @item.update(item_params)
@@ -51,7 +55,7 @@ module Events
     def set_calendar
       @calendar = @event.run_of_show_calendar || @event.event_calendars.create!(
         name: "Run of Show",
-        timezone: Time.zone.tzinfo&.identifier || Time.zone.name || "UTC"
+        timezone: EventCalendar::DEFAULT_TIMEZONE
       )
     end
 
@@ -68,11 +72,19 @@ module Events
           [anchor_label(item), item.id]
         end
       ).compact
+      set_all_day_defaults
     end
 
     def anchor_label(item)
       start = item.effective_starts_at&.in_time_zone(@calendar.timezone)
-      time_label = start ? start.strftime("%b %-d %l:%M %p") : "TBD"
+      finish = item.effective_ends_at&.in_time_zone(@calendar.timezone)
+      time_label = if start && finish
+                     "#{start.strftime('%b %-d %l:%M %p')} – #{finish.strftime('%l:%M %p').strip}"
+                   elsif start
+                     start.strftime("%b %-d %l:%M %p")
+                   else
+                     "TBD"
+                   end
       "#{item.title} (#{time_label})"
     end
 
@@ -85,13 +97,31 @@ module Events
         :relative_anchor_id,
         :relative_offset_minutes,
         :relative_before,
-        :locked
+        :locked,
+        :relative_to_anchor_end,
+        :all_day_mode,
+        :all_day_date
       )
     end
 
     def assign_tags(item)
       tag_ids = Array(params.dig(:calendar_item, :event_calendar_tag_ids)).reject(&:blank?).map(&:to_i)
       item.event_calendar_tag_ids = tag_ids
+    end
+
+    def assign_all_day(item)
+      all_day_params = params.fetch(:calendar_item, {}).slice(:all_day_mode, :all_day_date)
+      item.all_day_mode = all_day_params[:all_day_mode]
+      item.all_day_date = all_day_params[:all_day_date]
+    end
+
+    def set_all_day_defaults
+      return unless @item
+
+      timezone = @calendar.timezone
+      local_start = @item.starts_at&.in_time_zone(timezone)
+      @item.all_day_mode = @item.all_day? ? "1" : @item.all_day_mode
+      @item.all_day_date ||= local_start&.to_date&.to_s
     end
 
     def run_scheduler

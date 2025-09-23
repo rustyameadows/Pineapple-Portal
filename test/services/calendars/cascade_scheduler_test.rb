@@ -39,5 +39,28 @@ module Calendars
         CascadeScheduler.new(@calendar).send(:compute_start_time, @reception)
       end
     end
+
+    test "uses anchor end when requested" do
+      setup = @calendar.calendar_items.create!(
+        title: "Setup",
+        starts_at: @ceremony.starts_at - 120.minutes,
+        duration_minutes: 120,
+        position: 3
+      )
+
+      brief = @calendar.calendar_items.create!(
+        title: "Vendor Brief",
+        relative_anchor: setup,
+        relative_offset_minutes: 30,
+        relative_to_anchor_end: true,
+        position: 4
+      )
+
+      CascadeScheduler.new(@calendar).call
+      brief.reload
+
+      expected_start = setup.starts_at + setup.duration_minutes.minutes + 30.minutes
+      assert_in_delta expected_start, brief.starts_at, 1
+    end
   end
 end

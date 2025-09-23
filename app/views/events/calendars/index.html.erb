@@ -1,0 +1,85 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Calendars</p>
+            <h1 class="event-section__title">Timeline Views</h1>
+            <p class="event-section__subtitle">Choose a calendar to review schedules or share filtered views.</p>
+          </div>
+          <%= link_to "New Derived Calendar", new_event_calendar_view_path(@event), class: "event-section__cta" %>
+        </header>
+
+        <div class="calendar-list">
+          <article class="calendar-card">
+            <header class="calendar-card__header">
+              <h2 class="calendar-card__title"><%= @calendar.name %></h2>
+              <span class="calendar-card__badge">Run of Show</span>
+            </header>
+            <p class="calendar-card__description"><%= @calendar.description.presence || "Master schedule shared with your team." %></p>
+            <dl class="calendar-card__meta">
+              <div>
+                <dt>Items</dt>
+                <dd><%= @calendar.calendar_items.count %></dd>
+              </div>
+              <div>
+                <dt>Timezone</dt>
+                <dd><%= ActiveSupport::TimeZone[@calendar.timezone]&.to_s || @calendar.timezone %></dd>
+              </div>
+              <div>
+                <dt>Client Portal</dt>
+                <dd><%= @calendar.client_visible? ? "Visible" : "Hidden" %></dd>
+              </div>
+            </dl>
+            <div class="calendar-card__actions">
+              <%= link_to "View Schedule", event_calendar_path(@event), class: "event-section__link" %>
+            </div>
+          </article>
+
+          <% if @views.any? %>
+            <table class="event-table calendar-card__table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Tags</th>
+                  <th>Client Portal</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @views.each do |view| %>
+                  <tr>
+                    <td><strong><%= view.name %></strong></td>
+                    <td><%= view.description.presence || "Derived view from the run of show." %></td>
+                    <td>
+                      <% if view.tag_filter.present? %>
+                        <%= view.tag_filter.map { |id| @tag_lookup[id]&.name }.compact.join(', ') %>
+                      <% else %>
+                        <span class="event-table__status">All items</span>
+                      <% end %>
+                    </td>
+                    <td><%= view.client_visible? ? "Visible" : "Hidden" %></td>
+                    <td class="event-table__actions">
+                      <%= link_to "View", event_calendar_view_path(@event, view), class: "event-section__link" %>
+                      <%= link_to "Edit", edit_event_calendar_view_path(@event, view), class: "event-section__link" %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <div class="event-section__empty">
+              <p>No derived calendars yet. Create one to tailor the schedule for different audiences.</p>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

@@ -65,15 +65,30 @@ module Calendars
       anchor_start = compute_start_time(anchor, stack)
       return nil unless anchor_start
 
+      base_time = reference_point_for(item, anchor, anchor_start)
+      return nil unless base_time
+
       offset_minutes = item.relative_offset_minutes.to_i
       offset_minutes *= -1 if item.relative_before?
-      new_time = anchor_start + offset_minutes.minutes
+      new_time = base_time + offset_minutes.minutes
 
       memoized_times[cache_key] = new_time
-      stack.delete(cache_key)
       new_time
+    ensure
+      stack.delete(cache_key)
     end
 
     class CircularDependencyError < StandardError; end
+
+    def reference_point_for(item, anchor, anchor_start)
+      return anchor_start unless item.relative_to_anchor_end?
+
+      anchor_end = anchor_start
+      if anchor.duration_minutes.present?
+        anchor_end += anchor.duration_minutes.to_i.minutes
+      end
+
+      anchor_end
+    end
   end
 end

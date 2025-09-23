@@ -1,5 +1,7 @@
 module Events
   class CalendarViewsController < ApplicationController
+    helper CalendarHelper
+
     before_action :set_event
     before_action :set_calendar
     before_action :set_view, only: %i[show edit update destroy]
@@ -18,7 +20,7 @@ module Events
       @view = @calendar.event_calendar_views.new(view_params)
 
       if @view.save
-        redirect_to event_calendar_path(@event), notice: "Derived calendar created."
+        redirect_to event_calendars_path(@event), notice: "Derived calendar created."
       else
         load_tags
         flash.now[:alert] = @view.errors.full_messages.to_sentence
@@ -40,7 +42,7 @@ module Events
 
     def destroy
       @view.destroy
-      redirect_to event_calendar_path(@event), notice: "Derived calendar removed."
+      redirect_to event_calendars_path(@event), notice: "Derived calendar removed."
     end
 
     private
@@ -52,7 +54,7 @@ module Events
     def set_calendar
       @calendar = @event.run_of_show_calendar || @event.event_calendars.create!(
         name: "Run of Show",
-        timezone: Time.zone.tzinfo&.identifier || Time.zone.name || "UTC"
+        timezone: EventCalendar::DEFAULT_TIMEZONE
       )
     end
 

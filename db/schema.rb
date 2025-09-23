@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_24_191000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_24_193000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -73,6 +73,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_191000) do
     t.string "tag_summary", default: [], null: false, array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "relative_to_anchor_end", default: false, null: false
     t.index ["event_calendar_id", "position"], name: "index_calendar_items_on_calendar_and_position"
     t.index ["event_calendar_id"], name: "index_calendar_items_on_event_calendar_id"
     t.index ["relative_anchor_id"], name: "index_calendar_items_on_relative_anchor_id"
@@ -205,7 +206,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_191000) do
     t.string "name", null: false
     t.string "slug", null: false
     t.string "description"
-    t.string "timezone", default: "UTC", null: false
+    t.string "timezone", default: "America/New_York", null: false
     t.string "kind", default: "master", null: false
     t.boolean "client_visible", default: false, null: false
     t.bigint "template_source_id"

@@ -2056,3 +2056,128 @@ nav {
 .client-calendar__duration {
   white-space: nowrap;
 }
+
+.event-breadcrumb {
+  margin-bottom: 1rem;
+}
+
+.calendar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.calendar-card {
+  padding: 1.5rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.calendar-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.calendar-card__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.calendar-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.6rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #312e81;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.calendar-card__description {
+  margin: 0.75rem 0 1rem;
+  color: #4b5563;
+}
+
+.calendar-card__meta {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  margin: 0 0 1rem;
+}
+
+.calendar-card__meta dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+}
+
+.calendar-card__meta dd {
+  margin: 0.25rem 0 0;
+  font-weight: 600;
+  color: #111827;
+}
+
+.calendar-card__actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.calendar-card__table {
+  margin-top: 1.5rem;
+}
+
+.event-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.event-tag-pill,
+.client-calendar__tag-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--tag-color, #f4f4f5);
+  color: var(--tag-text-color, #1f2937);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.client-calendar__tag-pill--empty {
+  background: transparent;
+  border-color: transparent;
+  color: #9ca3af;
+}
+
+.client-calendar__tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.calendar-item__datetime {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.calendar-item__all-day-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.calendar-item__all-day-date label {
+  font-size: 0.85rem;
+  display: block;
+  margin-bottom: 0.25rem;
+}

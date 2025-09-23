@@ -1,8 +1,16 @@
 module Events
   class CalendarsController < ApplicationController
+    helper CalendarHelper
+
     before_action :set_event
-    before_action :ensure_calendar
+    before_action :ensure_calendar, only: %i[show update]
     before_action :load_collections, only: %i[show update]
+
+    def index
+      @calendar = @event.run_of_show_calendar || build_default_calendar
+      @views = @calendar.event_calendar_views.order(:position)
+      @tag_lookup = @calendar.event_calendar_tags.index_by(&:id)
+    end
 
     def show; end
 
@@ -23,12 +31,7 @@ module Events
 
     def ensure_calendar
       @calendar = @event.run_of_show_calendar
-      return if @calendar
-
-      @calendar = @event.event_calendars.create!(
-        name: "Run of Show",
-        timezone: Time.zone.tzinfo&.identifier || Time.zone.name || "UTC"
-      )
+      @calendar ||= build_default_calendar
     end
 
     def load_collections
@@ -36,12 +39,19 @@ module Events
       @tags = @calendar.event_calendar_tags.order(:position)
       @tags_by_id = @tags.index_by(&:id)
       @views = @calendar.event_calendar_views.order(:position)
-      @new_tag = @calendar.event_calendar_tags.new
+      @new_tag = EventCalendarTag.new(event_calendar: @calendar)
       @time_zones = ActiveSupport::TimeZone.all
     end
 
     def calendar_params
       params.require(:event_calendar).permit(:name, :description, :timezone, :client_visible)
+    end
+
+    def build_default_calendar
+      @event.event_calendars.create!(
+        name: "Run of Show",
+        timezone: EventCalendar::DEFAULT_TIMEZONE
+      )
     end
   end
 end
