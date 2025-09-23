@@ -46,12 +46,12 @@ bin/rails db:setup   # creates databases, runs migrations, seeds sample users
 bin/rails server     # or bin/dev for the foreman/dev server
 ```
 
-Visit http://localhost:3000 to see the welcome screen (you’ll be redirected to log in first). The seed data creates two demo accounts with password `password123`, a sample event with questionnaires (including a template), and a placeholder document.
+Visit http://localhost:3000 after boot (you’ll be redirected to log in first). The seed data creates two demo accounts with password `password123`, a sample event with questionnaires (including a template), and a placeholder document.
 
 ### Authentication & First User
 - Log in at http://localhost:3000/login using any seeded account (`ada@example.com` / `password123`).
 - If the database is empty, visit http://localhost:3000/users/new to create the first account; the app automatically signs you in after that.
-- Once signed in, use the “Add a User” form on the home screen to invite teammates.
+- Once signed in, you’ll land on the event dashboard. Head to `/users` (linked in the sidebar) whenever you need to invite more teammates.
 
 ### Tests
 ```bash
@@ -60,12 +60,13 @@ bin/rails test
 
 ## Event Planning Features
 
-- **Events** – create and manage engagements, each with its own questionnaires, documents, and attachments.
+- **Events** – create and manage engagements, each with its own questionnaires, documents, and attachments. Events now support archiving via `archived_at`, letting the dashboard separate active and archived work.
+- **Dashboard** – signed-in users see an event card grid with quick links to settings and documents, plus direct access to the questionnaire template library.
+- **Event View** – each event renders inside the new sidebar layout with a hero panel (dates/location/status), grouped event links, and a recent activity rail. The sidebar navigation doubles as the primary app chrome and includes placeholders for upcoming areas (calendars, payments, signatures, etc.).
 - **Questionnaires** – build checklists for an event and optionally flag them as templates for later reuse. Questions display in a two-column layout with inline answer editing, drag-and-drop reordering, and attachments tied directly to each response. Templates display in `/questionnaires/templates`.
-- **Documents** – upload documents to Cloudflare R2 (by supplying the object key), keep a full version history by reusing a logical ID, and attach them to events, questionnaires, or individual questions.
-- **Documents** – upload documents to Cloudflare R2 directly from the browser (the form fetches a presigned URL, uploads the file, then saves metadata), keep a full version history by reusing a logical ID, and attach them to events, questionnaires, or individual questions.
-- **Attachments** – tie documents to prompts/help/answers with ordered positions so questionnaires can surface supporting files.
-- Answer attachments accept one-off uploads; you don’t need to choose from the library—just drop a file and the app will store a new document for that response.
+- **Documents** – upload documents to Cloudflare R2 (via the presign flow), keep a full version history by reusing a logical ID, and attach them to events, questionnaires, or individual questions.
+- **Attachments** – tie documents to prompts/help/answers with ordered positions so questionnaires can surface supporting files. Answer attachments accept one-off uploads; just drop a file and the app stores a new document for that response.
+- **Settings Stubs** – `/events/:id/settings` and related sub-pages provide placeholders for upcoming configuration flows (team permissions, notifications) while designers iterate.
 
 ## Cloudflare R2 Configuration
 
