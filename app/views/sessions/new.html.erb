@@ -1,28 +1,36 @@
-<section class="prose">
-  <h1>Log In</h1>
-  <p class="lead">Enter your credentials to access the portal.</p>
+<% provide :page_shell do %>
+  <div class="auth-shell">
+    <section class="auth-card">
+      <header class="auth-card__header">
+        <h1>Log In</h1>
+        <p>Enter your credentials to access the portal.</p>
+      </header>
 
-  <% if flash[:alert].present? %>
-    <p class="flash alert"><%= flash[:alert] %></p>
-  <% elsif flash[:notice].present? %>
-    <p class="flash notice"><%= flash[:notice] %></p>
-  <% end %>
+      <% if flash[:alert].present? %>
+        <p class="auth-card__flash auth-card__flash--alert"><%= flash[:alert] %></p>
+      <% elsif flash[:notice].present? %>
+        <p class="auth-card__flash auth-card__flash--notice"><%= flash[:notice] %></p>
+      <% end %>
 
-  <%= form_with url: login_path, method: :post, class: "stack" do |form| %>
-    <div>
-      <%= form.label :email %>
-      <%= form.email_field :email, required: true, autofocus: true %>
-    </div>
+      <%= form_with url: login_path, method: :post, class: "auth-form" do |form| %>
+        <div class="auth-form__group">
+          <%= form.label :email %>
+          <%= form.email_field :email, required: true, autofocus: true %>
+        </div>
 
-    <div>
-      <%= form.label :password %>
-      <%= form.password_field :password, required: true %>
-    </div>
+        <div class="auth-form__group">
+          <%= form.label :password %>
+          <%= form.password_field :password, required: true %>
+        </div>
 
-    <%= form.submit "Log In" %>
-  <% end %>
+        <div class="auth-form__actions">
+          <%= form.submit "Log In", class: "auth-button" %>
+        </div>
+      <% end %>
 
-  <% if User.none? %>
-    <p class="mt">Need an account? <%= link_to "Create the first user", new_user_path %>.</p>
-  <% end %>
-</section>
+      <% if User.none? %>
+        <p class="auth-card__footer">Need an account? <%= link_to "Create the first user", new_user_path %>.</p>
+      <% end %>
+    </section>
+  </div>
+<% end %>
