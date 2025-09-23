@@ -12,32 +12,36 @@
   <section class="client-card client-card--detail">
     <header class="client-card__header">
       <span class="client-pill client-pill--<%= @payment.status %>"><%= @payment.status.humanize %></span>
-      <span class="client-card__meta"><strong>Amount:</strong> <%= number_to_currency(@payment.amount) %></span>
+      <div class="client-card__meta">
+        <p><strong>Amount:</strong> <%= number_to_currency(@payment.amount) %></p>
+        <p><strong>Due:</strong> <%= @payment.due_on ? @payment.due_on.strftime('%B %-d, %Y') : 'Timing TBD' %></p>
+      </div>
     </header>
 
     <% if @payment.description.present? %>
       <div class="client-card__body">
         <h2>Notes from your planner</h2>
-        <p><%= simple_format(@payment.description) %></p>
+        <%= simple_format(@payment.description) %>
       </div>
     <% end %>
 
     <% if @payment.paid? %>
       <div class="client-card__body client-card__body--muted">
-        <h2>Payment Received</h2>
+        <h2>Payment received</h2>
         <p>Marked paid <%= l(@payment.paid_at, format: :long) %>.</p>
         <% if @payment.client_note.present? %>
-          <p><strong>Your note:</strong></p>
+          <p class="client-card__hint"><strong>Your note</strong></p>
           <p><%= simple_format(@payment.client_note) %></p>
         <% end %>
       </div>
     <% else %>
       <div class="client-card__body">
         <h2>Let your planner know it’s paid</h2>
+        <p>Once you’ve sent payment, leave a short note so your planner can reconcile it quickly.</p>
         <%= form_with url: mark_paid_client_event_payment_path(@event, @payment), method: :patch, class: "client-form" do |form| %>
           <div class="client-form__group">
-            <%= form.label :client_note, "Optional note" %>
-            <%= form.text_area :client_note, rows: 3, placeholder: "Add a quick note (check number, transfer confirmation, etc.)" %>
+            <%= form.label :client_note, "Add a note (optional)" %>
+            <%= form.text_area :client_note, rows: 3, placeholder: "Include a check number, transfer confirmation, or anything helpful." %>
           </div>
           <div class="client-form__actions">
             <%= form.submit "Mark as Paid", class: "client-button" %>

@@ -20,29 +20,41 @@
           </div>
         </header>
 
-        <div class="event-summary-grid">
-          <div>
-            <h2 class="event-summary-grid__label">Amount</h2>
-            <p class="event-summary-grid__value"><%= number_to_currency(@payment.amount) %></p>
-          </div>
-          <div>
-            <h2 class="event-summary-grid__label">Status</h2>
-            <p class="event-summary-grid__value"><span class="event-pill event-pill--<%= @payment.status %>"><%= @payment.status.humanize %></span></p>
-          </div>
-          <div>
-            <h2 class="event-summary-grid__label">Client Visible</h2>
-            <p class="event-summary-grid__value"><%= @payment.client_visible? ? "Yes" : "No" %></p>
-          </div>
-          <div>
-            <h2 class="event-summary-grid__label">Paid On</h2>
-            <p class="event-summary-grid__value"><%= @payment.paid_at ? l(@payment.paid_at, format: :long) : "—" %></p>
+        <div class="event-detail-block event-detail-block--summary">
+          <div class="event-detail-block__content">
+            <dl class="event-summary-grid">
+              <div>
+                <dt class="event-summary-grid__label">Amount</dt>
+                <dd class="event-summary-grid__value"><%= number_to_currency(@payment.amount) %></dd>
+              </div>
+              <div>
+                <dt class="event-summary-grid__label">Status</dt>
+                <dd class="event-summary-grid__value"><span class="event-pill event-pill--<%= @payment.status %>"><%= @payment.status.humanize %></span></dd>
+              </div>
+              <div>
+                <dt class="event-summary-grid__label">Client Visible</dt>
+                <dd class="event-summary-grid__value"><%= @payment.client_visible? ? "Yes" : "No" %></dd>
+              </div>
+              <div>
+                <dt class="event-summary-grid__label">Due</dt>
+                <dd class="event-summary-grid__value"><%= @payment.due_on ? @payment.due_on.strftime('%B %-d, %Y') : "Timing TBD" %></dd>
+              </div>
+              <div>
+                <dt class="event-summary-grid__label">Paid On</dt>
+                <dd class="event-summary-grid__value"><%= @payment.paid_at ? l(@payment.paid_at, format: :long) : "—" %></dd>
+              </div>
+            </dl>
           </div>
         </div>
 
         <% if @payment.description.present? %>
           <section class="event-detail-block">
-            <h2>Notes</h2>
-            <p><%= simple_format(@payment.description) %></p>
+            <header class="event-detail-block__header">
+              <h2>Planner Notes</h2>
+            </header>
+            <div class="event-detail-block__content">
+              <%= simple_format(@payment.description) %>
+            </div>
           </section>
         <% end %>
 
@@ -57,8 +69,13 @@
           <header class="event-detail-block__header">
             <h2>Attachments</h2>
           </header>
-          <%= render "attachments/list", attachments: @payment.attachments %>
-          <%= render "attachments/form", entity: @payment, documents: @event.documents.latest %>
+          <div class="event-detail-block__content">
+            <%= render "attachments/list", attachments: @payment.attachments %>
+          </div>
+          <div class="event-detail-block__content">
+            <h3>Add Attachment</h3>
+            <%= render "attachments/form", entity: @payment, documents: @event.documents.latest %>
+          </div>
           <%= render "attachments/upload_script" %>
         </section>
       </section>

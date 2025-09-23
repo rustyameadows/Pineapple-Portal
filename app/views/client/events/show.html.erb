@@ -18,19 +18,6 @@
     <h1 class="client-hero__title"><%= @event.name %></h1>
     <p class="client-hero__dates"><%= event_date_range_label %></p>
   </div>
-
-  <div class="client-hero__links">
-    <h2 class="client-hero__links-title">Quick Links</h2>
-    <% if @quick_links.any? %>
-      <ul class="client-hero__links-list">
-        <% @quick_links.each do |link| %>
-          <li><%= link_to link.label, link.url, target: "_blank", rel: "noopener" %></li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="client-hero__links-empty">Your planner hasn’t published any quick links yet.</p>
-    <% end %>
-  </div>
 </section>
 
 <section class="client-dashboard">
@@ -45,6 +32,21 @@
       </article>
     <% end %>
   </div>
+</section>
+
+<section class="client-quick-links">
+  <h2 class="client-quick-links__heading">Useful Event Links</h2>
+  <% if @quick_links.any? %>
+    <ul class="client-quick-links__list" style="display: flex; gap: 1rem; flex-wrap: wrap; padding: 0; margin: 0; list-style: none;">
+      <% @quick_links.each do |link| %>
+        <li class="client-quick-links__item">
+          <%= link_to link.label, link.url, target: "_blank", rel: "noopener", class: "client-quick-links__link" %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="client-quick-links__empty">Your planner hasn’t published any quick links yet.</p>
+  <% end %>
 </section>
 
 <section class="client-team">
