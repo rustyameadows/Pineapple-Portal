@@ -4,18 +4,64 @@
     <p>Preview boards, files, and inspiration shared by your planning team.</p>
   </header>
 
-  <% if @documents.any? %>
-    <ul class="client-list">
-      <% @documents.each do |document| %>
-        <li>
-          <strong><%= document.title %></strong>
-          <span>Version <%= document.version %></span>
-        </li>
+  <div class="client-section">
+    <h2 class="client-section__title">Planner uploads</h2>
+    <%= render "documents/table", event: @event, documents: @planner_documents,
+              columns: %i[title version updated_at size actions],
+              context: :client,
+              paths: { view: nil, replace: nil, edit: nil, download: ->(doc) { download_event_document_path(@event, doc) } },
+              empty_message: "No inspiration files yet. Your planner will add items once they’re ready." %>
+  </div>
+
+  <div class="client-section">
+    <h2 class="client-section__title">Your uploads</h2>
+    <%= render "documents/table", event: @event, documents: @client_documents,
+              columns: %i[title version updated_at size actions],
+              context: :client,
+              paths: { view: nil, replace: nil, edit: nil, download: ->(doc) { download_event_document_path(@event, doc) } },
+              empty_message: "You haven’t shared any inspiration yet." %>
+
+    <div class="client-upload">
+      <h3 class="client-upload__title">Add new inspiration</h3>
+      <%= form_with model: @new_document, url: portal_event_designs_path(@event),
+                    data: { document_upload_form: true, presign_url: presign_event_documents_path(@event) },
+                    html: { class: "client-upload__form" } do |form| %>
+        <% if @new_document.errors.any? %>
+          <div class="client-upload__errors">
+            <h4><%= pluralize(@new_document.errors.count, "error") %> prevented uploading:</h4>
+            <ul>
+              <% @new_document.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="client-upload__field">
+          <%= form.label :title, "Title (optional)" %>
+          <%= form.text_field :title, class: "client-upload__input" %>
+        </div>
+
+        <div class="client-upload__field">
+          <%= form.label :file, "File" %>
+          <input type="file" id="document_file" data-document-upload-target="file" class="client-upload__file">
+          <p class="client-upload__status" data-document-upload-target="status">Select a file to upload to storage.</p>
+        </div>
+
+        <%= form.hidden_field :storage_uri %>
+        <%= form.hidden_field :checksum %>
+        <%= form.hidden_field :size_bytes %>
+        <%= form.hidden_field :content_type %>
+        <%= form.hidden_field :logical_id %>
+
+        <div class="client-upload__actions">
+          <%= form.submit "Submit inspiration", class: "client-upload__submit" %>
+        </div>
       <% end %>
-    </ul>
-  <% else %>
-    <div class="client-placeholder">
-      <p>No inspiration files yet. Your planner will add items once they’re ready.</p>
     </div>
-  <% end %>
+  </div>
 </section>
+
+<% content_for :scripts do %>
+  <%= render "documents/upload_script" %>
+<% end %>

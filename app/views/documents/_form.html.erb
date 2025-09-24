@@ -1,14 +1,17 @@
 <%
   event = @event || @document.event
-  form_options = { model: [event, @document] }
+  form_options = { model: [event, @document], class: "documents-form" }
   if @document.new_record?
     presign_url = presign_event_documents_path(event)
     form_options[:data] = { document_upload_form: true, presign_url: presign_url }
   end
+  existing_versions = defined?(@existing_versions) ? @existing_versions : Document.none
+  reference_document = defined?(@reference_document) ? @reference_document : nil
 %>
+
 <%= form_with(**form_options) do |form| %>
   <% if @document.errors.any? %>
-    <div class="errors">
+    <div class="documents-form__errors">
       <h2><%= pluralize(@document.errors.count, "error") %> prevented saving:</h2>
       <ul>
         <% @document.errors.full_messages.each do |message| %>
@@ -18,49 +21,87 @@
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :title %><br>
-    <%= form.text_field :title %>
-  </div>
+  <div class="documents-form__grid">
+    <div class="documents-form__fields">
+      <div class="documents-form__field">
+        <%= form.label :title %>
+        <%= form.text_field :title, class: "documents-form__input" %>
+      </div>
 
-  <div>
-    <%= form.label :source, "Document Type" %><br>
-    <%= form.select :source, options_for_select(Document.sources.keys.map { |key| [key.humanize, key] }, form.object.source || "staff_upload") %>
-  </div>
+      <div class="documents-form__field">
+        <%= form.label :source, "Document Type" %>
+        <%= form.select :source, options_for_select(Document.sources.keys.map { |key| [key.humanize, key] }, form.object.source || "staff_upload"), {}, class: "documents-form__select" %>
+      </div>
 
-  <% if form.object.new_record? %>
-    <div>
-      <label for="document_file">File</label><br>
-      <input type="file" id="document_file" data-document-upload-target="file">
+      <% if form.object.new_record? %>
+        <div class="documents-form__field">
+          <%= form.label :file, "File" %>
+          <input type="file" id="document_file" data-document-upload-target="file" class="documents-form__file-field">
+          <p class="documents-form__upload-status" data-document-upload-target="status">Select a file to upload to storage.</p>
+        </div>
+
+        <%= form.hidden_field :storage_uri %>
+        <%= form.hidden_field :checksum %>
+        <%= form.hidden_field :size_bytes %>
+        <%= form.hidden_field :content_type %>
+
+        <div class="documents-form__field">
+          <%= form.label :logical_id, "Existing logical ID (optional)" %>
+          <%= form.text_field :logical_id, class: "documents-form__input" %>
+          <p class="documents-form__hint">If provided, this upload becomes the next version of that document.</p>
+        </div>
+      <% else %>
+        <div class="documents-form__field">
+          <%= form.label :content_type %>
+          <%= form.text_field :content_type, class: "documents-form__input" %>
+        </div>
+      <% end %>
+
+      <div class="documents-form__checkbox">
+        <%= form.label :client_visible do %>
+          <%= form.check_box :client_visible %>
+          Share with client portal
+        <% end %>
+      </div>
+
+      <div class="documents-form__actions">
+        <%= form.submit class: "documents-form__submit" %>
+        <% back_path = @document.persisted? ? event_document_path(event, @document) : event_documents_path(event) %>
+        <%= link_to "Cancel", back_path, class: "documents-form__cancel" %>
+      </div>
     </div>
 
-    <p data-document-upload-target="status">Select a file to upload to R2.</p>
+    <aside class="documents-form__context">
+      <% if reference_document.present? %>
+        <h2>Replacing current version</h2>
+        <p class="documents-form__context-title">
+          <strong><%= reference_document.title %></strong>
+          <span class="documents-form__version-indicator"><%= document_version_badge(reference_document) %></span>
+        </p>
+        <p>This upload will become version <strong>v<%= reference_document.version + 1 %></strong> for logical ID <code><%= reference_document.logical_id %></code>.</p>
+      <% elsif @document.persisted? %>
+        <h2>Editing version details</h2>
+        <p>Version: <span class="documents-form__version-indicator"><%= document_version_badge(@document) %></span></p>
+        <p>Logical ID: <code><%= @document.logical_id %></code></p>
+      <% else %>
+        <h2>New document</h2>
+        <p>A new logical ID will be generated once the file is uploaded.</p>
+      <% end %>
 
-    <%= form.hidden_field :storage_uri %>
-    <%= form.hidden_field :checksum %>
-    <%= form.hidden_field :size_bytes %>
-    <%= form.hidden_field :content_type %>
-
-    <div>
-      <%= form.label :logical_id, "Existing logical ID (optional)" %><br>
-      <%= form.text_field :logical_id %>
-      <p>If provided, this upload becomes the next version of that document.</p>
-    </div>
-  <% else %>
-    <div>
-      <%= form.label :content_type %><br>
-      <%= form.text_field :content_type %>
-    </div>
-  <% end %>
-
-  <div>
-    <%= form.label :client_visible do %>
-      <%= form.check_box :client_visible %>
-      Share with client portal
-    <% end %>
-  </div>
-
-  <div>
-    <%= form.submit %>
+      <% if existing_versions.present? %>
+        <h3>Existing versions</h3>
+        <ul class="documents-form__version-list">
+          <% existing_versions.limit(5).each do |version| %>
+            <li>
+              <span class="documents-form__version-indicator"><%= document_version_badge(version) %></span>
+              <span class="documents-form__version-updated"><%= document_updated_timestamp(version) %></span>
+            </li>
+          <% end %>
+          <% if existing_versions.count > 5 %>
+            <li class="documents-form__version-more">and <%= existing_versions.count - 5 %> more…</li>
+          <% end %>
+        </ul>
+      <% end %>
+    </aside>
   </div>
 <% end %>

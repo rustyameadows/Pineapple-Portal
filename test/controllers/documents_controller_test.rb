@@ -11,6 +11,16 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     get event_documents_url(@event)
     assert_response :success
     assert_select "h1", text: "Files for #{@event.name}"
+    assert_select ".documents-table__table"
+    assert_select ".documents-table__row", minimum: 1
+    assert_select ".documents-nav__link", text: /Planner Uploads/
+  end
+
+  test "group view shows version metadata" do
+    get packets_event_documents_url(@event)
+    assert_response :success
+    assert_select "h1", text: "Packets"
+    assert_select ".documents-table__cell--version", text: /v2/i
   end
 
   test "uploads new document" do

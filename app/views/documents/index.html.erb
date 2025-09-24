@@ -6,17 +6,33 @@
       <%= render "shared/flash" %>
 
       <section class="event-section">
-        <header class="event-section__header">
+        <header class="event-section__header event-section__header--document">
           <div>
             <p class="event-section__eyebrow">Documents</p>
             <h1 class="event-section__title">Files for <%= @event.name %></h1>
-            <p class="event-section__lead">Browse by category to jump straight to packets, planner uploads, or client contributions.</p>
+            <p class="event-section__lead">Review every file shared for this event or jump into a specific category below.</p>
           </div>
           <%= link_to "Upload Document", new_event_document_path(@event), class: "event-section__cta" %>
         </header>
 
         <div class="event-section__body">
-          <%= render "documents/summary_table", event: @event, groups: @document_groups %>
+          <nav class="documents-nav" aria-label="Document categories">
+            <%= link_to event_documents_path(@event), class: ["documents-nav__link", (current_page?(event_documents_path(@event)) ? "documents-nav__link--active" : nil)].compact.join(" ") do %>
+              <span>All documents</span>
+              <span class="documents-nav__count"><%= @documents.size %></span>
+            <% end %>
+            <% @document_groups.each do |group| %>
+              <%= link_to document_group_path(@event, group[:key]), class: "documents-nav__link" do %>
+                <span><%= document_source_label_text(group[:key]) %></span>
+                <span class="documents-nav__count"><%= group[:latest_count] %></span>
+              <% end %>
+            <% end %>
+          </nav>
+
+          <%= render "documents/table", event: @event, documents: @documents,
+                    columns: %i[title version updated_at visibility source uploader size actions],
+                    empty_message: "No documents have been uploaded yet. Upload a file to get started.",
+                    context: :planner %>
         </div>
       </section>
     </div>
