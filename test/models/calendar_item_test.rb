@@ -106,4 +106,16 @@ class CalendarItemTest < ActiveSupport::TestCase
 
     assert_includes item.team_members, member
   end
+
+  test "clears tags when none selected" do
+    tag = @calendar.event_calendar_tags.create!(name: "Milestones")
+    item = @calendar.calendar_items.create!(title: "Tag Test", starts_at: Time.current)
+    item.event_calendar_tag_ids = [tag.id]
+    item.save!
+
+    item.event_calendar_tag_ids = []
+    item.save!
+
+    assert_empty item.reload.event_calendar_tag_ids
+  end
 end

@@ -12,7 +12,7 @@ module Events
 
       assert_response :success
       assert_select "h1", text: "Timeline Views"
-      assert_select "strong", text: /Run of Show/
+      assert_select "h2.calendar-card__title", text: /Run of Show/
     end
 
     test "shows run of show detail" do

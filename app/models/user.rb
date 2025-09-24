@@ -11,6 +11,8 @@ class User < ApplicationRecord
 
   has_many :event_team_members, dependent: :destroy
   has_many :events_as_team_member, through: :event_team_members, source: :event
+  has_many :calendar_item_team_members, dependent: :destroy
+  has_many :calendar_items_as_team_member, through: :calendar_item_team_members, source: :calendar_item
 
   attribute :role, :string
   enum :role, ROLES, default: :planner, validate: true

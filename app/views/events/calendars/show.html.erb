@@ -98,7 +98,7 @@
                     <%= form.text_field :color_token, placeholder: "Color", class: "event-calendars__input event-calendars__input--color" %>
                     <div class="event-calendars__tag-actions">
                       <%= form.submit "Save", class: "event-form__submit event-form__submit--small" %>
-                      <%= link_to "Remove", event_calendar_tag_path(@event, tag), data: { turbo_method: :delete, turbo_confirm: "Remove this tag?" }, class: "event-form__cancel" %>
+                      <%= button_to "Remove", event_calendar_tag_path(@event, tag), method: :delete, data: { turbo_confirm: "Remove this tag?" }, class: "event-form__cancel" %>
                     </div>
                   </div>
                 <% end %>

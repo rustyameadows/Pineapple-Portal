@@ -6,8 +6,8 @@
 
 ## 2. Planner Settings View
 - On the event settings page (`events/settings#show`), add an “Event Milestones” section that lists calendar items tagged `milestones`.
-- Table columns: Title (links to the calendar-item edit screen), Schedule snippet, Timing snippet, and Tags for quick context. Include an action to remove the milestone tag or mark as complete without leaving the page.
-- Provide buttons to “Create Milestone” (opens new calendar item form with milestone tag preselected) and “Assign Existing Item” (links to run-of-show view filtered or anchored to milestone tag).
+- Table columns: Title (links to the calendar-item edit screen), Schedule snippet, Timing snippet, and Tags for quick context—mirroring the main run-of-show table styling.
+- Provide buttons to “Create Milestone” (opens new calendar item form with milestone tag preselected) and “Assign Existing Item” (links to the run-of-show view with grouping enabled for easy access).
 
 ## 3. Styling Rules
 - Add CSS classes keyed off tags/status:
