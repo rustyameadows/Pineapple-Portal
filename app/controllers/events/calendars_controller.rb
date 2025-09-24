@@ -41,6 +41,7 @@ module Events
       @views = @calendar.event_calendar_views.order(:position)
       @new_tag = EventCalendarTag.new(event_calendar: @calendar)
       @time_zones = ActiveSupport::TimeZone.all
+      @group_by_date = params[:group_by_date] != "0"
     end
 
     def calendar_params

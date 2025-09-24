@@ -49,7 +49,16 @@
             <h2 class="event-section__title">Scheduled Items</h2>
             <p class="event-section__subtitle">Relative items can anchor to the start or end of another entry.</p>
           </div>
-          <%= link_to "Add Item", new_event_calendar_item_path(@event), class: "event-section__cta" %>
+          <div class="event-calendars__schedule-actions">
+            <%= form_with url: event_calendar_path(@event), method: :get, local: true, class: "event-calendars__toggle-form" do %>
+              <%= hidden_field_tag :group_by_date, "0" %>
+              <label class="event-calendars__toggle">
+                <%= check_box_tag :group_by_date, "1", @group_by_date, onchange: "this.form.submit()" %>
+                <span>Group by date</span>
+              </label>
+            <% end %>
+            <%= link_to "Add Item", new_event_calendar_item_path(@event), class: "event-section__cta" %>
+          </div>
         </header>
 
         <% if @items.any? %>
@@ -67,9 +76,17 @@
                 <th>Locked</th>
               </tr>
             </thead>
-            <tbody>
-              <% @items.each do |item| %>
-                <% start_label = calendar_item_time_label(item, @calendar.timezone) %>
+              <tbody>
+                <% current_bucket = nil %>
+                <% @items.each do |item| %>
+                  <% bucket_label = calendar_item_date_bucket(item, @calendar.timezone) %>
+                  <% if @group_by_date && bucket_label != current_bucket %>
+                    <% current_bucket = bucket_label %>
+                    <tr class="event-calendars__date-row">
+                      <td colspan="9"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
+                    </tr>
+                  <% end %>
+                  <% start_label = calendar_item_time_label(item, @calendar.timezone) %>
                 <tr>
                   <td>
                     <strong><%= link_to item.title, edit_event_calendar_item_path(@event, item), class: "event-calendars__title-link" %></strong>

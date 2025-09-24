@@ -73,6 +73,13 @@ module CalendarHelper
     end
   end
 
+  def calendar_item_date_bucket(item, timezone)
+    start_time = item.effective_starts_at&.in_time_zone(timezone)
+    return "Date TBD" unless start_time
+
+    start_time.strftime("%A, %B %-d")
+  end
+
   def calendar_tag_style(tag)
     color = tag.color_token.to_s.strip
     return nil if color.blank?

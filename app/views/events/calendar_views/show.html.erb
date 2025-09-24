@@ -14,7 +14,16 @@
               <%= @view.description.presence || "Filtered view of the run of show." %>
             </p>
           </div>
-          <%= link_to "Edit View", edit_event_calendar_view_path(@event, @view), class: "event-section__cta" %>
+          <div class="event-calendars__schedule-actions">
+            <%= form_with url: event_calendar_view_path(@event, @view), method: :get, local: true, class: "event-calendars__toggle-form" do %>
+              <%= hidden_field_tag :group_by_date, "0" %>
+              <label class="event-calendars__toggle">
+                <%= check_box_tag :group_by_date, "1", params[:group_by_date] != "0", onchange: "this.form.submit()" %>
+                <span>Group by date</span>
+              </label>
+            <% end %>
+            <%= link_to "Edit View", edit_event_calendar_view_path(@event, @view), class: "event-section__cta" %>
+          </div>
         </header>
 
         <div class="event-section__body">
@@ -32,7 +41,7 @@
           </p>
 
           <% if @items.any? %>
-            <table class="event-table">
+            <table class="event-table event-calendars__table">
               <thead>
                 <tr>
                   <th>Title</th>
@@ -48,7 +57,15 @@
                 </tr>
               </thead>
               <tbody>
+                <% current_bucket = nil %>
                 <% @items.each do |item| %>
+                  <% bucket_label = calendar_item_date_bucket(item, @calendar.timezone) %>
+                  <% if params[:group_by_date] != "0" && bucket_label != current_bucket %>
+                    <% current_bucket = bucket_label %>
+                    <tr class="event-calendars__date-row">
+                      <td colspan="10"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
+                    </tr>
+                  <% end %>
                   <tr>
                     <td><%= link_to item.title, edit_event_calendar_item_path(@event, item) %></td>
                     <td><%= calendar_item_time_label(item, @calendar.timezone) %></td>
