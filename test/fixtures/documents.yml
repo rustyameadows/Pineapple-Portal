@@ -1,12 +1,74 @@
 contract_v1:
   event: one
   title: Production Contract
-  storage_uri: documents/contract-v1.pdf
+  storage_uri: documents/contracts/contract-v1.pdf
   checksum: contract-checksum-v1
   size_bytes: 2048
   logical_id: 11111111-1111-1111-1111-111111111111
   version: 1
   is_latest: true
   content_type: application/pdf
-  created_at: <%= Time.current %>
-  updated_at: <%= Time.current %>
+  client_visible: false
+  source: staff_upload
+  created_at: <%= 5.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+welcome_packet_v1:
+  event: one
+  title: Welcome Packet
+  storage_uri: documents/packets/welcome-v1.pdf
+  checksum: welcome-checksum-v1
+  size_bytes: 3072
+  logical_id: 22222222-2222-2222-2222-222222222222
+  version: 1
+  is_latest: false
+  content_type: application/pdf
+  client_visible: true
+  source: packet
+  created_at: <%= 10.days.ago %>
+  updated_at: <%= 10.days.ago %>
+
+welcome_packet_v2:
+  event: one
+  title: Welcome Packet
+  storage_uri: documents/packets/welcome-v2.pdf
+  checksum: welcome-checksum-v2
+  size_bytes: 3584
+  logical_id: 22222222-2222-2222-2222-222222222222
+  version: 2
+  is_latest: true
+  content_type: application/pdf
+  client_visible: true
+  source: packet
+  created_at: <%= 4.days.ago %>
+  updated_at: <%= 4.days.ago %>
+
+design_board_v1:
+  event: one
+  title: Inspiration Board
+  storage_uri: documents/designs/board-v1.pdf
+  checksum: design-board-v1
+  size_bytes: 4096
+  logical_id: 33333333-3333-3333-3333-333333333333
+  version: 1
+  is_latest: true
+  content_type: application/pdf
+  client_visible: true
+  source: staff_upload
+  created_at: <%= 6.days.ago %>
+  updated_at: <%= 6.days.ago %>
+
+client_moodboard_v1:
+  event: one
+  title: Client Moodboard
+  storage_uri: documents/client/moodboard-v1.png
+  checksum: client-moodboard-v1
+  size_bytes: 5120
+  logical_id: 44444444-4444-4444-4444-444444444444
+  version: 1
+  is_latest: true
+  content_type: image/png
+  client_visible: true
+  source: client_upload
+  created_at: <%= 3.days.ago %>
+  updated_at: <%= 3.days.ago %>

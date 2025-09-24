@@ -6,52 +6,35 @@
       <%= render "shared/flash" %>
 
       <section class="event-section">
-        <header class="event-section__header">
+        <header class="event-section__header event-section__header--document">
           <div>
             <p class="event-section__eyebrow">Documents</p>
             <h1 class="event-section__title"><%= @label %></h1>
-            <p class="event-section__lead">Showing files uploaded as <%= @label.downcase %>. Use the summary to navigate to other categories.</p>
+            <p class="event-section__lead">Showing files uploaded as <%= @label.downcase %>. Use the tabs to switch categories.</p>
           </div>
           <%= link_to "Upload Document", new_event_document_path(@event), class: "event-section__cta" %>
         </header>
 
         <div class="event-section__body">
-          <% if @documents.any? %>
-            <ul class="event-docs__grid">
-              <% @documents.each do |document| %>
-                <li class="event-docs__card">
-                  <header class="event-docs__card-header">
-                    <h2 class="event-docs__title"><%= document.title %></h2>
-                    <% unless document.is_latest? %>
-                      <span class="event-docs__badge">v<%= document.version %></span>
-                    <% end %>
-                  </header>
-                  <dl class="event-docs__meta">
-                    <div>
-                      <dt>Version</dt>
-                      <dd>v<%= document.version %></dd>
-                    </div>
-                    <div>
-                      <dt>Updated</dt>
-                      <dd><%= l(document.updated_at, format: :long) %></dd>
-                    </div>
-                    <div>
-                      <dt>Visibility</dt>
-                      <dd><%= document.client_visible? ? "Shared with client" : "Planner only" %></dd>
-                    </div>
-                  </dl>
-                  <div class="event-docs__actions">
-                    <%= link_to "Open", event_document_path(@event, document), class: "event-docs__link" %>
-                    <%= link_to "Download", download_event_document_path(@event, document), class: "event-docs__link" %>
-                  </div>
-                </li>
+          <nav class="documents-nav" aria-label="Document categories">
+            <%= link_to event_documents_path(@event), class: "documents-nav__link" do %>
+              <span>All documents</span>
+              <span class="documents-nav__count"><%= @event.documents.latest.count %></span>
+            <% end %>
+            <% @document_groups.each do |group| %>
+              <% classes = ["documents-nav__link"] %>
+              <% classes << "documents-nav__link--active" if group[:key].to_s == @source_key %>
+              <%= link_to document_group_path(@event, group[:key]), class: classes.join(" ") do %>
+                <span><%= document_source_label_text(group[:key]) %></span>
+                <span class="documents-nav__count"><%= group[:latest_count] %></span>
               <% end %>
-            </ul>
-          <% else %>
-            <div class="event-section__empty">
-              <p>No documents in this category yet.</p>
-            </div>
-          <% end %>
+            <% end %>
+          </nav>
+
+          <%= render "documents/table", event: @event, documents: @documents,
+                    columns: %i[title version updated_at visibility source uploader size actions],
+                    empty_message: "No documents in this category yet.",
+                    context: :planner %>
         </div>
       </section>
     </div>

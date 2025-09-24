@@ -1,9 +1,10 @@
 class DocumentsController < ApplicationController
   before_action :set_event
   before_action :set_document, only: %i[show edit update destroy download]
+  before_action :load_document_groups, only: %i[index packets staff_uploads client_uploads]
 
   def index
-    @document_groups = build_document_groups
+    @documents = @event.documents.latest.order(updated_at: :desc, title: :asc)
   end
 
   def packets
@@ -21,12 +22,18 @@ class DocumentsController < ApplicationController
   def show
     @attachments = @document.attachments.includes(:entity).order(:context, :position)
     @available_entities = available_entities_for(@event)
-    @versions = Document.where(logical_id: @document.logical_id).order(version: :desc)
+    @versions = versions_for(@document.logical_id)
   end
 
   def new
     @document = @event.documents.new
-    @document.logical_id = params[:logical_id] if params[:logical_id].present?
+    @reference_document = reference_document_for(params[:logical_id])
+    if @reference_document
+      @document.logical_id = @reference_document.logical_id
+    elsif params[:logical_id].present?
+      @document.logical_id = params[:logical_id]
+    end
+    @existing_versions = versions_for(@document.logical_id)
   end
 
   def create
@@ -35,17 +42,21 @@ class DocumentsController < ApplicationController
     if @document.save
       redirect_to event_document_path(@event, @document), notice: "Document saved."
     else
+      @reference_document = reference_document_for(@document.logical_id)
+      @existing_versions = versions_for(@document.logical_id)
       render :new, status: :unprocessable_content
     end
   end
 
   def edit
+    @existing_versions = versions_for(@document.logical_id)
   end
 
   def update
     if @document.update(edit_document_params)
       redirect_to event_document_path(@event, @document), notice: "Document updated."
     else
+      @existing_versions = versions_for(@document.logical_id)
       render :edit, status: :unprocessable_content
     end
   end
@@ -87,9 +98,13 @@ class DocumentsController < ApplicationController
   def render_grouped_documents(source_key)
     @source_key = source_key.to_s
     @label = document_source_label(@source_key)
-    @documents = @event.documents.where(source: @source_key).order(:title)
-    @document_groups = build_document_groups
+    @documents = @event.documents.where(source: @source_key).order(title: :asc, version: :desc)
+    load_document_groups
     render :group
+  end
+
+  def load_document_groups
+    @document_groups = build_document_groups
   end
 
   def build_document_groups
@@ -99,16 +114,22 @@ class DocumentsController < ApplicationController
         key: key,
         label: document_source_label(key),
         documents_count: scope.count,
-        images_count: scope.where("content_type LIKE ?", "image/%").count
+        latest_count: scope.where(is_latest: true).count
       }
     end
   end
 
   def document_source_label(key)
-    {
-      "packet" => "Packets",
-      "staff_upload" => "Uploads",
-      "client_upload" => "Client Uploads"
-    }[key] || key.humanize
+    DocumentsHelper::SOURCE_LABELS[key.to_s] || key.to_s.humanize
+  end
+
+  def versions_for(logical_id)
+    return Document.none if logical_id.blank?
+
+    @event.documents.where(logical_id: logical_id).order(version: :desc)
+  end
+
+  def reference_document_for(logical_id)
+    versions_for(logical_id).first
   end
 end

@@ -1,74 +1,114 @@
-<h1><%= @document.title %> (v<%= @document.version %>)</h1>
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
 
-<p>Event: <%= link_to @event.name, event_path(@event) %></p>
-<p>Logical ID: <%= @document.logical_id %></p>
-<p>Latest version: <%= @document.is_latest? ? "Yes" : "No" %></p>
-<p>Content type: <%= @document.content_type %></p>
-<p>Size: <%= number_to_human_size(@document.size_bytes) %></p>
-<p>Storage key: <code><%= @document.storage_uri %></code></p>
-<p>Checksum: <code><%= @document.checksum %></code></p>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-<p>
-  <%= link_to "Download this version", download_event_document_path(@event, @document) %>
-  <% if @document.is_latest? %>
-    (latest)
-  <% else %>
-    | <%= link_to "Download latest version", download_event_document_path(@event, @versions.first) %>
-  <% end %>
-</p>
+      <section class="event-section documents-show">
+        <header class="event-section__header event-section__header--document">
+          <div>
+            <p class="event-section__eyebrow">Document</p>
+            <h1 class="event-section__title"><%= @document.title %></h1>
+            <p class="event-section__lead"><%= document_latest_explanation(@document) %></p>
+          </div>
+          <%= link_to "Upload new version", new_event_document_path(@event, logical_id: @document.logical_id), class: "event-section__cta" %>
+        </header>
 
-<section>
-  <h2>Version history</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Version</th>
-        <th>Uploaded</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @versions.each do |version| %>
-        <tr>
-          <td>v<%= version.version %></td>
-          <td><%= version.created_at&.to_fs(:long) || "—" %></td>
-          <td>
-            <% if version == @document %>
-              Viewing
+        <div class="event-section__body documents-show__body">
+          <section class="documents-show__summary" aria-labelledby="document-metadata-heading">
+            <h2 id="document-metadata-heading" class="documents-show__heading">File metadata</h2>
+            <dl class="documents-show__meta-grid">
+              <div>
+                <dt>Version</dt>
+                <dd><%= document_version_badge(@document) %></dd>
+              </div>
+              <div>
+                <dt>Logical ID</dt>
+                <dd><code><%= @document.logical_id %></code></dd>
+              </div>
+              <div>
+                <dt>Updated</dt>
+                <dd>
+                  <div><%= document_updated_timestamp(@document) %></div>
+                  <small><%= time_ago_in_words(@document.updated_at) %> ago</small>
+                </dd>
+              </div>
+              <div>
+                <dt>Visibility</dt>
+                <dd>
+                  <div><%= document_visibility_label(@document) %></div>
+                  <small><%= document_visibility_hint(@document) %></small>
+                </dd>
+              </div>
+              <div>
+                <dt>Source</dt>
+                <dd><%= document_source_label_for(@document) %></dd>
+              </div>
+              <div>
+                <dt>Uploader</dt>
+                <dd><%= document_uploader_label(@document) %></dd>
+              </div>
+              <div>
+                <dt>File size</dt>
+                <dd><%= document_size_label(@document) %></dd>
+              </div>
+              <div>
+                <dt>Content type</dt>
+                <dd><%= @document.content_type %></dd>
+              </div>
+              <div>
+                <dt>Storage key</dt>
+                <dd><code><%= @document.storage_uri %></code></dd>
+              </div>
+              <div>
+                <dt>Checksum</dt>
+                <dd><code><%= @document.checksum %></code></dd>
+              </div>
+            </dl>
+
+            <div class="documents-show__primary-actions">
+              <%= link_to "Download this version", download_event_document_path(@event, @document), class: "documents-show__action" %>
+              <% latest_version = @versions.first %>
+              <% if latest_version.present? && latest_version != @document %>
+                <%= link_to "Download latest version", download_event_document_path(@event, latest_version), class: "documents-show__action" %>
+              <% end %>
+              <%= link_to "Edit metadata", edit_event_document_path(@event, @document), class: "documents-show__action" %>
+              <%= button_to "Delete document", event_document_path(@event, @document), method: :delete, data: { confirm: "Delete this document?" }, class: "documents-show__danger" %>
+            </div>
+          </section>
+
+          <section class="documents-show__history" aria-labelledby="document-history-heading">
+            <h2 id="document-history-heading" class="documents-show__heading">Version history</h2>
+            <%= render "documents/table", event: @event, documents: @versions,
+                      columns: %i[version updated_at visibility source uploader actions],
+                      context: :planner,
+                      active_document: @document,
+                      empty_message: "No version history yet."
+            %>
+          </section>
+
+          <section class="documents-show__attachments" aria-labelledby="document-attachments-heading">
+            <h2 id="document-attachments-heading" class="documents-show__heading">Attachments</h2>
+            <%= render "attachments/list", attachments: @attachments %>
+          </section>
+
+          <section class="documents-show__attachments" aria-labelledby="document-attach-heading">
+            <h2 id="document-attach-heading" class="documents-show__heading">Attach to…</h2>
+            <% if @available_entities.any? %>
+              <% @available_entities.each do |entity| %>
+                <h3 class="documents-show__subheading"><%= entity_label(entity) %></h3>
+                <%= render "attachments/form", entity: entity, documents: documents_for_entity(entity) %>
+              <% end %>
             <% else %>
-              <%= link_to "View", event_document_path(@event, version) %>
+              <p>No available entities to attach.</p>
             <% end %>
-            |
-            <%= link_to "Download", download_event_document_path(@event, version) %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-</section>
-
-<p>
-  <%= link_to "Upload new version", new_event_document_path(@event, logical_id: @document.logical_id) %> |
-  <%= link_to "Edit", edit_event_document_path(@event, @document) %> |
-  <%= button_to "Delete", event_document_path(@event, @document), method: :delete, data: { confirm: "Delete this document?" } %>
-</p>
-
-<section>
-  <h2>Attachments</h2>
-  <%= render "attachments/list", attachments: @attachments %>
-</section>
-
-<section>
-  <h2>Attach to…</h2>
-  <% if @available_entities.any? %>
-    <% @available_entities.each do |entity| %>
-      <h3><%= entity_label(entity) %></h3>
-      <%= render "attachments/form", entity: entity, documents: documents_for_entity(entity) %>
-    <% end %>
-  <% else %>
-    <p>No available entities to attach.</p>
-  <% end %>
-</section>
+          </section>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>
 
 <% content_for :scripts do %>
   <%= render "attachments/upload_script" %>

@@ -85,7 +85,7 @@ Rails.application.routes.draw do
           patch :answer, to: "question_answers#update"
         end
       end
-      resources :designs, only: :index
+      resources :designs, only: %i[index create]
       resources :financials, only: :index
       resources :payments, only: :show do
         member do
