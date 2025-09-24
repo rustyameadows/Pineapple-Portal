@@ -25,9 +25,10 @@
     <div class="event-form__group">
       <%= form.label :starts_at, "Absolute Start" %>
       <div class="calendar-item__datetime" data-calendar-all-day data-timezone="<%= @calendar.timezone %>">
+        <% start_value = item.starts_at&.in_time_zone(@calendar.timezone) || @default_start_time %>
         <div class="calendar-item__time-wrapper" style="display: <%= item.all_day? ? 'none' : 'block' %>;">
           <%= form.datetime_local_field :starts_at,
-                value: item.starts_at&.in_time_zone(@calendar.timezone)&.strftime('%Y-%m-%dT%H:%M'),
+                value: start_value&.strftime('%Y-%m-%dT%H:%M'),
                 class: "calendar-item__time-field" %>
         </div>
         <div class="calendar-item__all-day-toggle">

@@ -75,6 +75,7 @@ module Events
           [anchor_label(item), item.id]
         end
       ).compact
+      @default_start_time = default_calendar_start_time
       set_all_day_defaults
     end
 
@@ -134,11 +135,21 @@ module Events
       timezone = @calendar.timezone
       local_start = @item.starts_at&.in_time_zone(timezone)
       @item.all_day_mode = @item.all_day? ? "1" : @item.all_day_mode
-      @item.all_day_date ||= local_start&.to_date&.to_s
+      @item.all_day_date ||= local_start&.to_date&.to_s || @default_start_time&.to_date&.to_s
     end
 
     def run_scheduler
       Calendars::CascadeScheduler.new(@calendar).call
+    end
+
+    def default_calendar_start_time
+      timezone = @calendar.timezone
+      base_date = @event.starts_on || @event.ends_on || Date.current
+      return unless timezone && base_date
+
+      Time.use_zone(timezone) do
+        Time.zone.local(base_date.year, base_date.month, base_date.day, 0, 0)
+      end
     end
   end
 end
