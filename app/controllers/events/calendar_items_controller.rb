@@ -13,6 +13,7 @@ module Events
       @item = @calendar.calendar_items.new
       assign_all_day(@item)
       assign_tags(@item)
+      assign_team_members(@item)
       @item.assign_attributes(item_params)
 
       if @item.save
@@ -30,6 +31,7 @@ module Events
     def update
       assign_all_day(@item)
       assign_tags(@item)
+      assign_team_members(@item)
 
       if @item.update(item_params)
         run_scheduler
@@ -65,6 +67,7 @@ module Events
 
     def load_form_support
       @available_tags = @calendar.event_calendar_tags.order(:position, :name)
+      @available_team_members = @event.team_members.order(:name)
       @anchor_options = (
         @calendar.calendar_items.order(:title).map do |item|
           next if @item && item.id == @item.id
@@ -100,7 +103,12 @@ module Events
         :locked,
         :relative_to_anchor_end,
         :all_day_mode,
-        :all_day_date
+        :all_day_date,
+        :vendor_name,
+        :location_name,
+        :status,
+        :additional_team_members,
+        team_member_ids: []
       )
     end
 
@@ -113,6 +121,11 @@ module Events
       all_day_params = params.fetch(:calendar_item, {}).slice(:all_day_mode, :all_day_date)
       item.all_day_mode = all_day_params[:all_day_mode]
       item.all_day_date = all_day_params[:all_day_date]
+    end
+
+    def assign_team_members(item)
+      member_ids = Array(params.dig(:calendar_item, :team_member_ids)).reject(&:blank?).map(&:to_i)
+      item.team_member_ids = member_ids
     end
 
     def set_all_day_defaults

@@ -89,4 +89,21 @@ class CalendarItemTest < ActiveSupport::TestCase
 
     assert item.all_day?
   end
+
+  test "defaults status to planned" do
+    item = @calendar.calendar_items.create!(title: "Prep", starts_at: Time.current)
+
+    assert_equal "planned", item.status
+  end
+
+  test "can assign team members" do
+    member = users(:one)
+    item = @calendar.calendar_items.create!(
+      title: "Vendor Call",
+      starts_at: Time.current,
+      team_members: [member]
+    )
+
+    assert_includes item.team_members, member
+  end
 end

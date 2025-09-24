@@ -14,6 +14,8 @@ class CalendarItem < ApplicationRecord
 
   has_many :calendar_item_tags, dependent: :destroy
   has_many :event_calendar_tags, through: :calendar_item_tags
+  has_many :calendar_item_team_members, dependent: :destroy
+  has_many :team_members, through: :calendar_item_team_members, source: :user
 
   validates :title, presence: true
   validates :duration_minutes, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
@@ -23,6 +25,14 @@ class CalendarItem < ApplicationRecord
 
   before_validation :default_relative_offset
   before_save :sync_tag_summary
+
+  STATUSES = {
+    planned: "planned",
+    in_progress: "in_progress",
+    completed: "completed"
+  }.freeze
+
+  enum :status, STATUSES, default: :planned, validate: true
 
   scope :ordered, -> { order(:starts_at, :position, :id) }
   scope :with_start, -> { where.not(starts_at: nil) }

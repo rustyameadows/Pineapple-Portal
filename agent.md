@@ -13,6 +13,9 @@ Whenever you present a list (plans, findings, options, etc.), provide every rele
 Before making any change, describe exactly what you intend to do, including every file you plan to touch, and wait for the maintainer’s confirmation. Example phrasing:
 > “Plan: Update `app/assets/stylesheets/style.css` to change the primary button background to red. I’ll stop until you approve.”
 
+## Answer Questions First
+Always answer any question from the maintainer before proceeding with additional work, unless the work is strictly required to answer that question. Explicitly acknowledge the question and your intent in your reply.
+
 ## Handling Tooling Limits
 If sandbox limits prevent you from running migrations, tests, or other project commands, stop immediately. Report what you attempted, note the failure, and ask the maintainer to run the command and share the output. Do not attempt alternative workarounds.
 

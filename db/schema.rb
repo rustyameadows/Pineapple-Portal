@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_24_193000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_24_195000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -59,6 +59,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_193000) do
     t.index ["event_calendar_tag_id"], name: "index_calendar_item_tags_on_event_calendar_tag_id"
   end
 
+  create_table "calendar_item_team_members", force: :cascade do |t|
+    t.bigint "calendar_item_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["calendar_item_id", "user_id"], name: "index_calendar_item_team_members_on_item_and_user", unique: true
+    t.index ["calendar_item_id"], name: "index_calendar_item_team_members_on_calendar_item_id"
+    t.index ["user_id"], name: "index_calendar_item_team_members_on_user_id"
+  end
+
   create_table "calendar_items", force: :cascade do |t|
     t.bigint "event_calendar_id", null: false
     t.string "title", null: false
@@ -74,10 +84,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_193000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "relative_to_anchor_end", default: false, null: false
+    t.string "vendor_name"
+    t.string "location_name"
+    t.string "status", default: "planned", null: false
+    t.string "additional_team_members"
     t.index ["event_calendar_id", "position"], name: "index_calendar_items_on_calendar_and_position"
     t.index ["event_calendar_id"], name: "index_calendar_items_on_event_calendar_id"
     t.index ["relative_anchor_id"], name: "index_calendar_items_on_relative_anchor_id"
     t.index ["starts_at"], name: "index_calendar_items_on_starts_at"
+    t.index ["status"], name: "index_calendar_items_on_status"
     t.check_constraint "duration_minutes IS NULL OR duration_minutes >= 0", name: "calendar_items_duration_non_negative"
     t.check_constraint "relative_offset_minutes IS NOT NULL", name: "calendar_items_relative_offset_present"
   end
@@ -340,6 +355,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_193000) do
   add_foreign_key "attachments", "documents"
   add_foreign_key "calendar_item_tags", "calendar_items", on_delete: :cascade
   add_foreign_key "calendar_item_tags", "event_calendar_tags", on_delete: :cascade
+  add_foreign_key "calendar_item_team_members", "calendar_items"
+  add_foreign_key "calendar_item_team_members", "users"
   add_foreign_key "calendar_items", "calendar_items", column: "relative_anchor_id", on_delete: :nullify
   add_foreign_key "calendar_items", "event_calendars", on_delete: :cascade
   add_foreign_key "calendar_template_item_tags", "calendar_template_items", on_delete: :cascade

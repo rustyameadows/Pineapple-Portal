@@ -2164,6 +2164,12 @@ nav {
   gap: 0.35rem;
 }
 
+.client-calendar__meta-line {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
 .calendar-item__datetime {
   display: flex;
   flex-direction: column;
@@ -2180,6 +2186,12 @@ nav {
   font-size: 0.85rem;
   display: block;
   margin-bottom: 0.25rem;
+}
+
+.event-form__checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.35rem 0.75rem;
 }
 
 .event-calendars__details {
@@ -2227,6 +2239,16 @@ nav {
   margin: 0.35rem 0 0;
   font-size: 0.85rem;
   color: #6b7280;
+}
+
+.event-calendars__title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.event-calendars__title-link:hover,
+.event-calendars__title-link:focus {
+  text-decoration: underline;
 }
 
 .event-calendars__tags {

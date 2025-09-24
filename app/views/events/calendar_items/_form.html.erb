@@ -72,6 +72,46 @@
     <%= form.label :locked, "Lock start time" %>
   </div>
 
+  <div class="event-form__row">
+    <div class="event-form__group">
+      <%= form.label :vendor_name, "Vendor" %>
+      <%= form.text_field :vendor_name %>
+    </div>
+    <div class="event-form__group">
+      <%= form.label :location_name, "Location" %>
+      <%= form.text_field :location_name %>
+    </div>
+  </div>
+
+  <div class="event-form__row">
+    <div class="event-form__group">
+      <%= form.label :status %>
+      <%= form.select :status, CalendarItem.statuses.keys.map { |key| [key.titleize, key] }, {}, class: "event-form__select" %>
+    </div>
+    <div class="event-form__group">
+      <%= form.label :additional_team_members, "Additional contacts" %>
+      <%= form.text_field :additional_team_members, placeholder: "Add external collaborators" %>
+    </div>
+  </div>
+
+  <div class="event-form__group">
+    <%= form.label :team_member_ids, "Assigned PP members" %>
+    <% if @available_team_members.any? %>
+      <div class="event-form__checkbox-grid">
+        <% @available_team_members.each do |member| %>
+          <% field_id = "calendar_item_team_member_#{member.id}" %>
+          <div class="event-form__group event-form__group--checkbox">
+            <%= check_box_tag "calendar_item[team_member_ids][]", member.id, item.team_member_ids.include?(member.id), id: field_id %>
+            <%= label_tag field_id, member.name %>
+          </div>
+        <% end %>
+      </div>
+      <%= hidden_field_tag "calendar_item[team_member_ids][]", "" %>
+    <% else %>
+      <p class="event-section__note">Assign planners from the event team to see them here.</p>
+    <% end %>
+  </div>
+
   <div class="event-form__group">
     <%= form.label :event_calendar_tag_ids, "Tags" %>
     <% if @available_tags.any? %>

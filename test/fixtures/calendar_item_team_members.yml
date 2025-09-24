@@ -1,0 +1,7 @@
+ceremony_planner:
+  calendar_item: ceremony
+  user: one
+
+reception_planner:
+  calendar_item: reception
+  user: two
