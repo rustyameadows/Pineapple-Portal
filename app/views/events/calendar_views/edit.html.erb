@@ -16,6 +16,9 @@
 
         <div class="event-section__body">
           <%= render "form", view: @view %>
+          <div class="event-form__actions event-form__actions--delete">
+            <%= button_to "Delete Derived Calendar", event_calendar_view_path(@event, @view), method: :delete, data: { turbo_confirm: "Remove this derived calendar?" }, class: "event-form__submit event-form__submit--danger" %>
+          </div>
         </div>
       </section>
     </div>

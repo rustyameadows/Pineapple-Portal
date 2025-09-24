@@ -16,6 +16,9 @@
 
         <div class="event-section__body">
           <%= render "form", item: @item %>
+          <div class="event-form__actions event-form__actions--delete">
+            <%= button_to "Delete Item", event_calendar_item_path(@event, @item), method: :delete, data: { turbo_confirm: "Remove this calendar item?" }, class: "event-form__submit event-form__submit--danger" %>
+          </div>
         </div>
       </section>
     </div>

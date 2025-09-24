@@ -2322,6 +2322,21 @@ nav {
   padding: 0.45rem 0.9rem;
 }
 
+.event-form__submit--danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.event-form__submit--danger:hover,
+.event-form__submit--danger:focus {
+  background: #fecaca;
+}
+
+.event-form__actions--delete {
+  margin-top: 1rem;
+  justify-content: flex-start;
+}
+
 .event-calendars__new-tag {
   display: flex;
   justify-content: flex-start;

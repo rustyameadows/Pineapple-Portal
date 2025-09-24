@@ -70,6 +70,7 @@ module Events
     def view_params
       params.require(:event_calendar_view).permit(
         :name,
+        :slug,
         :description,
         :hide_locked,
         :client_visible,
