@@ -1,0 +1,115 @@
+<%
+  documents ||= []
+  columns ||= %i[title version updated_at visibility source uploader size actions]
+  context = local_assigns.fetch(:context, :planner)
+  title_link = local_assigns[:title_link]
+  empty_message = local_assigns.fetch(:empty_message, "No documents available.")
+  active_document = local_assigns[:active_document]
+  paths = {
+    view: ->(doc) { event_document_path(event, doc) },
+    download: ->(doc) { download_event_document_path(event, doc) },
+    replace: ->(doc) { new_event_document_path(event, logical_id: doc.logical_id) },
+    edit: ->(doc) { edit_event_document_path(event, doc) }
+  }.merge(local_assigns[:paths] || {})
+%>
+
+<div class="documents-table">
+  <% if documents.any? %>
+    <table class="documents-table__table">
+      <thead>
+        <tr>
+          <% columns.each do |column| %>
+            <th scope="col" class="documents-table__header documents-table__header--<%= column %>">
+              <%= document_table_header(column) %>
+            </th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% documents.each do |document| %>
+          <% row_classes = ["documents-table__row"] %>
+          <% row_classes << "documents-table__row--outdated" unless document.is_latest? %>
+          <% row_classes << "documents-table__row--active" if active_document&.id == document.id %>
+          <tr class="<%= row_classes.join(' ') %>">
+            <% columns.each do |column| %>
+              <td class="documents-table__cell documents-table__cell--<%= column %>">
+                <% case column %>
+                <% when :title %>
+                  <div class="documents-table__title">
+                    <% link_target = if title_link.respond_to?(:call)
+                                       title_link.call(document)
+                                     elsif title_link
+                                       title_link
+                                     elsif context == :planner && paths[:view]
+                                       paths[:view].call(document)
+                                     end %>
+                    <% if link_target.present? %>
+                      <%= link_to document.title, link_target, class: "documents-table__title-link" %>
+                    <% else %>
+                      <span class="documents-table__title-label"><%= document.title %></span>
+                    <% end %>
+                    <% unless columns.include?(:version) %>
+                      <span class="documents-table__title-badge"><%= document_version_badge(document) %></span>
+                    <% end %>
+                  </div>
+                  <div class="documents-table__meta">
+                    <span class="documents-table__meta-label">Logical ID:</span>
+                    <code class="documents-table__meta-value"><%= document.logical_id %></code>
+                  </div>
+                  <div class="documents-table__hint"><%= document_latest_explanation(document) %></div>
+                <% when :version %>
+                  <%= document_version_badge(document) %>
+                <% when :updated_at %>
+                  <div class="documents-table__stack">
+                    <span><%= document_updated_timestamp(document) %></span>
+                    <small><%= time_ago_in_words(document.updated_at) %> ago</small>
+                  </div>
+                <% when :visibility %>
+                  <div class="documents-table__stack">
+                    <span><%= document_visibility_label(document) %></span>
+                    <small><%= document_visibility_hint(document) %></small>
+                  </div>
+                <% when :source %>
+                  <span><%= document_source_label_for(document) %></span>
+                <% when :uploader %>
+                  <span><%= document_uploader_label(document) %></span>
+                <% when :size %>
+                  <span><%= document_size_label(document) %></span>
+                <% when :actions %>
+                  <div class="documents-table__actions">
+                    <% if context == :planner %>
+                      <% if active_document&.id == document.id %>
+                        <span class="documents-table__action documents-table__action--current">Viewing</span>
+                      <% elsif paths[:view] %>
+                        <%= link_to "View", paths[:view].call(document), class: "documents-table__action" %>
+                      <% end %>
+                      <% if paths[:download] %>
+                        <%= link_to "Download", paths[:download].call(document), class: "documents-table__action" %>
+                      <% end %>
+                      <% if paths[:replace] %>
+                        <%= link_to "New version", paths[:replace].call(document), class: "documents-table__action" %>
+                      <% end %>
+                      <% if paths[:edit] %>
+                        <%= link_to "Edit", paths[:edit].call(document), class: "documents-table__action" %>
+                      <% end %>
+                    <% else %>
+                      <% if paths[:download] %>
+                        <%= link_to "Download", paths[:download].call(document), class: "documents-table__action" %>
+                      <% end %>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <span><%= document.public_send(column) %></span>
+                <% end %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="documents-table__empty">
+      <p><%= empty_message %></p>
+    </div>
+  <% end %>
+</div>
