@@ -1,0 +1,26 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Run of Show</p>
+            <h1 class="event-section__title">Edit Calendar Item</h1>
+            <p class="event-section__subtitle">Update the details for <%= @item.title %>.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <%= render "form", item: @item %>
+          <div class="event-form__actions event-form__actions--delete">
+            <%= button_to "Delete Item", event_calendar_item_path(@event, @item), method: :delete, data: { turbo_confirm: "Remove this calendar item?" }, class: "event-form__submit event-form__submit--danger" %>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

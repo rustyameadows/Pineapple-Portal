@@ -21,7 +21,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     post login_url, params: { email: "missing@example.com", password: "bad" }
 
     assert_response :unprocessable_content
-    assert_select "div.flash.flash-alert", text: /Invalid email or password/
+    assert_select "p.auth-card__flash--alert", text: /Invalid email or password/
   end
 
   test "logs out" do
@@ -32,6 +32,6 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to login_url
     follow_redirect!
-    assert_select "div.flash.flash-notice", text: /Logged out/
+    assert_select "p.auth-card__flash--notice", text: /Logged out/
   end
 end

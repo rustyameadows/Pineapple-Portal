@@ -1,0 +1,18 @@
+run_of_show:
+  event: one
+  name: Run of Show
+  slug: run-of-show
+  description: Master schedule for the event day.
+  timezone: UTC
+  kind: master
+  client_visible: true
+  position: 0
+
+vendor_calendar:
+  event: one
+  name: Vendor Calendar
+  slug: vendor-calendar
+  timezone: UTC
+  kind: derived
+  client_visible: false
+  position: 1

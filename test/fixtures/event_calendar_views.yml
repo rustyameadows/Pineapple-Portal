@@ -1,0 +1,10 @@
+vendor_view:
+  event_calendar: run_of_show
+  name: Vendor Only
+  slug: vendor-only
+  description: Timeline for vendor partners.
+  tag_filter:
+    - <%= ActiveRecord::FixtureSet.identify(:vendor) %>
+  hide_locked: true
+  client_visible: true
+  position: 0

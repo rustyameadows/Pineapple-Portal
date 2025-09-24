@@ -1,0 +1,23 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Derived Calendars</p>
+            <h1 class="event-section__title">New Derived Calendar</h1>
+            <p class="event-section__subtitle">Choose tags to create a focused view from the run of show.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <%= render "form", view: @view %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

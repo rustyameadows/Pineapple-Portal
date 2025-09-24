@@ -1,0 +1,28 @@
+ceremony:
+  event_calendar: run_of_show
+  title: Ceremony
+  notes: Exchange vows and rings.
+  duration_minutes: 45
+  starts_at: 2025-10-01 15:00:00
+  relative_offset_minutes: 0
+  locked: false
+  position: 0
+
+reception:
+  event_calendar: run_of_show
+  title: Reception
+  duration_minutes: 180
+  relative_anchor: ceremony
+  relative_offset_minutes: 120
+  locked: false
+  position: 1
+
+afterparty:
+  event_calendar: run_of_show
+  title: Afterparty
+  duration_minutes: 90
+  relative_anchor: reception
+  relative_offset_minutes: 60
+  locked: true
+  starts_at: 2025-10-01 21:00:00
+  position: 2

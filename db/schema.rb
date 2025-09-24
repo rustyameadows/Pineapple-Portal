@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_24_004100) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_24_195000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -49,6 +49,123 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_004100) do
     t.check_constraint "document_id IS NOT NULL AND document_logical_id IS NULL OR document_id IS NULL AND document_logical_id IS NOT NULL", name: "attachments_exactly_one_document_reference"
   end
 
+  create_table "calendar_item_tags", force: :cascade do |t|
+    t.bigint "calendar_item_id", null: false
+    t.bigint "event_calendar_tag_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["calendar_item_id", "event_calendar_tag_id"], name: "index_calendar_item_tags_on_item_and_tag", unique: true
+    t.index ["calendar_item_id"], name: "index_calendar_item_tags_on_calendar_item_id"
+    t.index ["event_calendar_tag_id"], name: "index_calendar_item_tags_on_event_calendar_tag_id"
+  end
+
+  create_table "calendar_item_team_members", force: :cascade do |t|
+    t.bigint "calendar_item_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["calendar_item_id", "user_id"], name: "index_calendar_item_team_members_on_item_and_user", unique: true
+    t.index ["calendar_item_id"], name: "index_calendar_item_team_members_on_calendar_item_id"
+    t.index ["user_id"], name: "index_calendar_item_team_members_on_user_id"
+  end
+
+  create_table "calendar_items", force: :cascade do |t|
+    t.bigint "event_calendar_id", null: false
+    t.string "title", null: false
+    t.text "notes"
+    t.integer "duration_minutes"
+    t.datetime "starts_at"
+    t.bigint "relative_anchor_id"
+    t.integer "relative_offset_minutes", default: 0, null: false
+    t.boolean "relative_before", default: false, null: false
+    t.boolean "locked", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.string "tag_summary", default: [], null: false, array: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "relative_to_anchor_end", default: false, null: false
+    t.string "vendor_name"
+    t.string "location_name"
+    t.string "status", default: "planned", null: false
+    t.string "additional_team_members"
+    t.index ["event_calendar_id", "position"], name: "index_calendar_items_on_calendar_and_position"
+    t.index ["event_calendar_id"], name: "index_calendar_items_on_event_calendar_id"
+    t.index ["relative_anchor_id"], name: "index_calendar_items_on_relative_anchor_id"
+    t.index ["starts_at"], name: "index_calendar_items_on_starts_at"
+    t.index ["status"], name: "index_calendar_items_on_status"
+    t.check_constraint "duration_minutes IS NULL OR duration_minutes >= 0", name: "calendar_items_duration_non_negative"
+    t.check_constraint "relative_offset_minutes IS NOT NULL", name: "calendar_items_relative_offset_present"
+  end
+
+  create_table "calendar_template_item_tags", force: :cascade do |t|
+    t.bigint "calendar_template_item_id", null: false
+    t.bigint "calendar_template_tag_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["calendar_template_item_id", "calendar_template_tag_id"], name: "index_calendar_template_item_tags_on_item_and_tag", unique: true
+    t.index ["calendar_template_item_id"], name: "index_calendar_template_item_tags_on_calendar_template_item_id"
+    t.index ["calendar_template_tag_id"], name: "index_calendar_template_item_tags_on_calendar_template_tag_id"
+  end
+
+  create_table "calendar_template_items", force: :cascade do |t|
+    t.bigint "calendar_template_id", null: false
+    t.string "title", null: false
+    t.text "notes"
+    t.integer "duration_minutes"
+    t.integer "default_offset_minutes", default: 0, null: false
+    t.boolean "default_before", default: false, null: false
+    t.boolean "locked_by_default", default: false, null: false
+    t.bigint "relative_anchor_template_item_id"
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["calendar_template_id", "position"], name: "index_calendar_template_items_on_template_and_position"
+    t.index ["calendar_template_id"], name: "index_calendar_template_items_on_calendar_template_id"
+    t.check_constraint "duration_minutes IS NULL OR duration_minutes >= 0", name: "calendar_template_items_duration_non_negative"
+  end
+
+  create_table "calendar_template_tags", force: :cascade do |t|
+    t.bigint "calendar_template_id", null: false
+    t.string "name", null: false
+    t.string "color_token"
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["calendar_template_id", "name"], name: "index_calendar_template_tags_on_template_and_name", unique: true
+    t.index ["calendar_template_id"], name: "index_calendar_template_tags_on_calendar_template_id"
+  end
+
+  create_table "calendar_template_views", force: :cascade do |t|
+    t.bigint "calendar_template_id", null: false
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.string "description"
+    t.jsonb "tag_filter", default: [], null: false
+    t.boolean "hide_locked", default: false, null: false
+    t.boolean "client_visible_by_default", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["calendar_template_id", "slug"], name: "index_calendar_template_views_on_template_and_slug", unique: true
+    t.index ["calendar_template_id"], name: "index_calendar_template_views_on_calendar_template_id"
+    t.check_constraint "jsonb_typeof(tag_filter) = 'array'::text", name: "calendar_template_views_tag_filter_array"
+  end
+
+  create_table "calendar_templates", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.string "description"
+    t.string "default_timezone", default: "UTC", null: false
+    t.string "category"
+    t.jsonb "variable_definitions", default: {}, null: false
+    t.integer "version", default: 1, null: false
+    t.boolean "archived", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_calendar_templates_on_slug", unique: true
+    t.check_constraint "jsonb_typeof(variable_definitions) = 'object'::text", name: "calendar_templates_variable_definitions_object"
+  end
+
   create_table "documents", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.string "title", null: false
@@ -70,6 +187,54 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_004100) do
     t.index ["source"], name: "index_documents_on_source"
     t.check_constraint "size_bytes > 0", name: "documents_size_positive"
     t.check_constraint "version > 0", name: "documents_version_positive"
+  end
+
+  create_table "event_calendar_tags", force: :cascade do |t|
+    t.bigint "event_calendar_id", null: false
+    t.string "name", null: false
+    t.string "color_token"
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_calendar_id", "name"], name: "index_event_calendar_tags_on_calendar_and_name", unique: true
+    t.index ["event_calendar_id"], name: "index_event_calendar_tags_on_event_calendar_id"
+  end
+
+  create_table "event_calendar_views", force: :cascade do |t|
+    t.bigint "event_calendar_id", null: false
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.string "description"
+    t.jsonb "tag_filter", default: [], null: false
+    t.boolean "hide_locked", default: false, null: false
+    t.boolean "client_visible", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_calendar_id", "slug"], name: "index_event_calendar_views_on_calendar_and_slug", unique: true
+    t.index ["event_calendar_id"], name: "index_event_calendar_views_on_event_calendar_id"
+    t.check_constraint "jsonb_typeof(tag_filter) = 'array'::text", name: "event_calendar_views_tag_filter_array"
+  end
+
+  create_table "event_calendars", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.string "description"
+    t.string "timezone", default: "America/New_York", null: false
+    t.string "kind", default: "master", null: false
+    t.boolean "client_visible", default: false, null: false
+    t.bigint "template_source_id"
+    t.integer "position", default: 0, null: false
+    t.integer "template_version"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id", "slug"], name: "index_event_calendars_on_event_id_and_slug", unique: true
+    t.index ["event_id"], name: "index_event_calendars_on_event_id"
+    t.index ["event_id"], name: "index_event_calendars_on_event_id_and_master", unique: true, where: "((kind)::text = 'master'::text)"
+    t.index ["kind"], name: "index_event_calendars_on_kind"
+    t.index ["template_source_id"], name: "index_event_calendars_on_template_source_id"
+    t.check_constraint "kind::text = ANY (ARRAY['master'::character varying, 'derived'::character varying]::text[])", name: "event_calendars_kind_check"
   end
 
   create_table "event_links", force: :cascade do |t|
@@ -188,7 +353,23 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_004100) do
 
   add_foreign_key "approvals", "events"
   add_foreign_key "attachments", "documents"
+  add_foreign_key "calendar_item_tags", "calendar_items", on_delete: :cascade
+  add_foreign_key "calendar_item_tags", "event_calendar_tags", on_delete: :cascade
+  add_foreign_key "calendar_item_team_members", "calendar_items"
+  add_foreign_key "calendar_item_team_members", "users"
+  add_foreign_key "calendar_items", "calendar_items", column: "relative_anchor_id", on_delete: :nullify
+  add_foreign_key "calendar_items", "event_calendars", on_delete: :cascade
+  add_foreign_key "calendar_template_item_tags", "calendar_template_items", on_delete: :cascade
+  add_foreign_key "calendar_template_item_tags", "calendar_template_tags", on_delete: :cascade
+  add_foreign_key "calendar_template_items", "calendar_template_items", column: "relative_anchor_template_item_id", on_delete: :nullify
+  add_foreign_key "calendar_template_items", "calendar_templates", on_delete: :cascade
+  add_foreign_key "calendar_template_tags", "calendar_templates", on_delete: :cascade
+  add_foreign_key "calendar_template_views", "calendar_templates", on_delete: :cascade
   add_foreign_key "documents", "events"
+  add_foreign_key "event_calendar_tags", "event_calendars", on_delete: :cascade
+  add_foreign_key "event_calendar_views", "event_calendars", on_delete: :cascade
+  add_foreign_key "event_calendars", "calendar_templates", column: "template_source_id", on_delete: :nullify
+  add_foreign_key "event_calendars", "events"
   add_foreign_key "event_links", "events"
   add_foreign_key "event_team_members", "events"
   add_foreign_key "event_team_members", "users"
