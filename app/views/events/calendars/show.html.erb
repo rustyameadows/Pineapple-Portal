@@ -144,6 +144,7 @@
                 <div class="event-calendars__tag-info">
                   <strong class="event-calendars__tag-name"><%= tag.name %></strong>
                   <span class="event-tag-pill" style="<%= calendar_tag_style(tag) %>"><%= tag.name %></span>
+                  <span class="event-calendars__tag-count"><%= tag.calendar_items.count %> items</span>
                 </div>
                 <%= form_with model: tag, url: event_calendar_tag_path(@event, tag), class: "event-calendars__tag-form", method: :patch do |form| %>
                   <div class="event-calendars__tag-fields">
@@ -192,13 +193,13 @@
                 <th>Name</th>
                 <th>Tags</th>
                 <th>Client Portal</th>
-                <th></th>
+                <th>Items</th>
               </tr>
             </thead>
             <tbody>
               <% @views.each do |view| %>
                 <tr>
-                  <td><%= view.name %></td>
+                  <td><%= link_to view.name, event_calendar_view_path(@event, view), class: "event-calendars__title-link" %></td>
                   <td>
                     <% if view.tag_filter.present? %>
                       <%= view.tag_filter.map { |tag_id| @tags_by_id[tag_id]&.name }.compact.join(', ') %>
@@ -207,10 +208,7 @@
                     <% end %>
                   </td>
                   <td><%= view.client_visible? ? "Visible" : "Hidden" %></td>
-                  <td class="event-table__actions">
-                    <%= link_to "View", event_calendar_view_path(@event, view), class: "event-section__link" %>
-                    <%= link_to "Edit", edit_event_calendar_view_path(@event, view), class: "event-section__link" %>
-                  </td>
+                  <td><%= Calendars::ViewFilter.new(calendar: @calendar, view: view).items.count %></td>
                 </tr>
               <% end %>
             </tbody>

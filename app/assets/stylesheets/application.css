@@ -2327,6 +2327,11 @@ nav {
   text-transform: capitalize;
 }
 
+.event-calendars__tag-count {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
 .event-calendars__tag-form {
   display: flex;
   justify-content: flex-end;
