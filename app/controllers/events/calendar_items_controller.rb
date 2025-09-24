@@ -2,11 +2,15 @@ module Events
   class CalendarItemsController < ApplicationController
     before_action :set_event
     before_action :set_calendar
-    before_action :set_item, only: %i[edit update destroy]
+    before_action :set_item, only: %i[edit update destroy mark_completed mark_planned remove_milestone_tag]
     before_action :load_form_support, only: %i[new edit create update]
 
     def new
       @item = @calendar.calendar_items.new
+      if params[:milestone] == "1"
+        milestone_tag = ensure_milestone_tag
+        @item.event_calendar_tag_ids = [milestone_tag.id] if milestone_tag
+      end
     end
 
     def create
@@ -46,6 +50,32 @@ module Events
       @item.destroy
       run_scheduler
       redirect_to event_calendar_path(@event), notice: "Calendar item removed."
+    end
+
+    def mark_completed
+      if @item.update(status: :completed)
+        redirect_back fallback_location: event_settings_path(@event), notice: "Milestone marked as completed."
+      else
+        redirect_back fallback_location: event_settings_path(@event), alert: @item.errors.full_messages.to_sentence
+      end
+    end
+
+    def mark_planned
+      if @item.update(status: :planned)
+        redirect_back fallback_location: event_settings_path(@event), notice: "Milestone reopened."
+      else
+        redirect_back fallback_location: event_settings_path(@event), alert: @item.errors.full_messages.to_sentence
+      end
+    end
+
+    def remove_milestone_tag
+      milestone_tag = ensure_milestone_tag(create: false)
+      if milestone_tag
+        @item.calendar_item_tags.where(event_calendar_tag: milestone_tag).destroy_all
+        redirect_back fallback_location: event_settings_path(@event), notice: "Milestone tag removed."
+      else
+        redirect_back fallback_location: event_settings_path(@event), alert: "Milestone tag not found."
+      end
     end
 
     private
@@ -150,6 +180,11 @@ module Events
       Time.use_zone(timezone) do
         Time.zone.local(base_date.year, base_date.month, base_date.day, 0, 0)
       end
+    end
+
+    def ensure_milestone_tag(create: true)
+      scope = @calendar.event_calendar_tags.where("LOWER(name) = ?", "milestones")
+      create ? scope.first_or_create(name: "Milestones") : scope.first
     end
   end
 end

@@ -23,7 +23,13 @@ Rails.application.routes.draw do
     resource :calendar, only: %i[show update], module: :events do
       resources :items,
                 controller: "calendar_items",
-                except: :index
+                except: :index do
+        member do
+          patch :mark_completed
+          patch :mark_planned
+          patch :remove_milestone_tag
+        end
+      end
       resources :tags,
                 only: %i[create update destroy],
                 controller: "calendar_tags"

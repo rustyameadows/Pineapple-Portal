@@ -34,6 +34,18 @@ class CalendarItem < ApplicationRecord
 
   enum :status, STATUSES, default: :planned, validate: true
 
+  def tagged_with?(name)
+    event_calendar_tags.any? { |tag| tag.name.present? && tag.name.casecmp?(name.to_s) }
+  end
+
+  def milestone?
+    tagged_with?("milestones")
+  end
+
+  def critical?
+    tagged_with?("critical")
+  end
+
   scope :ordered, -> { order(:starts_at, :position, :id) }
   scope :with_start, -> { where.not(starts_at: nil) }
 

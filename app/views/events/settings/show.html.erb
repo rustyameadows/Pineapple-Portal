@@ -152,6 +152,35 @@
           </div>
         </div>
       </section>
+
+      <section class="event-section event-settings__milestones">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Milestones</p>
+            <h2 class="event-section__title">Event Milestones</h2>
+            <p class="event-section__lead">Key schedule moments tagged as milestones appear here for quick review.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <% if @milestone_items.any? %>
+            <%= render "events/calendars/schedule_table",
+                       items: @milestone_items,
+                       calendar: @calendar,
+                       group_by_date: false,
+                       show_tags: false,
+                       show_locked: false,
+                       item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@event, item)] } %>
+          <% else %>
+            <p class="event-settings__empty">No milestones yet. Use the actions below to designate important schedule moments.</p>
+          <% end %>
+
+          <div class="event-settings__milestone-actions">
+            <%= link_to "Create Milestone", new_event_calendar_item_path(@event, milestone: 1), class: "event-section__cta" %>
+            <%= link_to "Assign Existing Item", event_calendar_path(@event, group_by_date: 1), class: "event-section__link" %>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 <% end %>

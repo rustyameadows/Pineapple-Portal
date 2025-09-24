@@ -80,6 +80,14 @@ module CalendarHelper
     start_time.strftime("%A, %B %-d")
   end
 
+  def calendar_item_row_classes(item)
+    classes = []
+    classes << "calendar-row--completed" if item.completed?
+    classes << "calendar-row--critical" if item.critical?
+    classes << "calendar-row--milestone" if item.milestone?
+    classes.join(" ")
+  end
+
   def calendar_tag_style(tag)
     color = tag.color_token.to_s.strip
     return nil if color.blank?

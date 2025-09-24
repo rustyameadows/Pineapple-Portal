@@ -62,65 +62,11 @@
         </header>
 
         <% if @items.any? %>
-          <table class="event-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Schedule</th>
-                <th>Timing</th>
-                <th>Vendor</th>
-                <th>Location</th>
-                <th>Team</th>
-                <th>Status</th>
-                <th>Tags</th>
-                <th>Locked</th>
-              </tr>
-            </thead>
-              <tbody>
-                <% current_bucket = nil %>
-                <% @items.each do |item| %>
-                  <% bucket_label = calendar_item_date_bucket(item, @calendar.timezone) %>
-                  <% if @group_by_date && bucket_label != current_bucket %>
-                    <% current_bucket = bucket_label %>
-                    <tr class="event-calendars__date-row">
-                      <td colspan="9"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
-                    </tr>
-                  <% end %>
-                  <% start_label = calendar_item_time_label(item, @calendar.timezone) %>
-                <tr>
-                  <td>
-                    <strong><%= link_to item.title, edit_event_calendar_item_path(@event, item), class: "event-calendars__title-link" %></strong>
-                    <% if item.notes.present? %>
-                      <p class="event-calendars__note"><%= simple_format(item.notes) %></p>
-                    <% end %>
-                  </td>
-                  <td><%= start_label %></td>
-                  <td><%= calendar_item_timing_text(item) %></td>
-                  <td><%= item.vendor_name.presence || "—" %></td>
-                  <td><%= item.location_name.presence || "—" %></td>
-                  <td>
-                    <% team_names = item.team_members.order(:name).pluck(:name) %>
-                    <% extras = item.additional_team_members.to_s.strip %>
-                    <% combined_team = [team_names.join(', '), extras].reject(&:blank?).join('; ') %>
-                    <%= combined_team.presence || "—" %>
-                  </td>
-                  <td><%= item.status.titleize %></td>
-                  <td>
-                    <% if item.event_calendar_tags.any? %>
-                      <div class="event-tag-list">
-                        <% item.event_calendar_tags.each do |tag| %>
-                          <span class="event-tag-pill" style="<%= calendar_tag_style(tag) %>"><%= tag.name %></span>
-                        <% end %>
-                      </div>
-                    <% else %>
-                      <span class="event-table__status">None</span>
-                    <% end %>
-                  </td>
-                  <td><%= item.locked? ? "Yes" : "No" %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
+          <%= render "events/calendars/schedule_table",
+                     items: @items,
+                     calendar: @calendar,
+                     group_by_date: @group_by_date,
+                     item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@event, item)] } %>
         <% else %>
           <div class="event-section__empty">
             <p>No items yet — start by adding your ceremony or kickoff milestone.</p>

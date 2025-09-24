@@ -41,52 +41,12 @@
           </p>
 
           <% if @items.any? %>
-            <table class="event-table event-calendars__table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Schedule</th>
-                  <th>Timing</th>
-                  <th>Vendor</th>
-                  <th>Location</th>
-                  <th>Team</th>
-                  <th>Status</th>
-                  <th>Locked</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% current_bucket = nil %>
-                <% @items.each do |item| %>
-                  <% bucket_label = calendar_item_date_bucket(item, @calendar.timezone) %>
-                  <% if params[:group_by_date] != "0" && bucket_label != current_bucket %>
-                    <% current_bucket = bucket_label %>
-                    <tr class="event-calendars__date-row">
-                      <td colspan="9"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
-                    </tr>
-                  <% end %>
-                  <tr>
-                    <td>
-                      <strong><%= link_to item.title, edit_event_calendar_item_path(@event, item), class: "event-calendars__title-link" %></strong>
-                      <% if item.notes.present? %>
-                        <p class="event-calendars__note"><%= simple_format(item.notes) %></p>
-                      <% end %>
-                    </td>
-                    <td><%= calendar_item_time_label(item, @calendar.timezone) %></td>
-                    <td><%= calendar_item_timing_text(item) %></td>
-                    <td><%= item.vendor_name.presence || "—" %></td>
-                    <td><%= item.location_name.presence || "—" %></td>
-                    <td>
-                      <% team_names = item.team_members.order(:name).pluck(:name) %>
-                      <% extras = item.additional_team_members.to_s.strip %>
-                      <% combined_team = [team_names.join(', '), extras].reject(&:blank?).join('; ') %>
-                      <%= combined_team.presence || "—" %>
-                    </td>
-                    <td><%= item.status.titleize %></td>
-                    <td><%= item.locked? ? "Yes" : "No" %></td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
+            <%= render "events/calendars/schedule_table",
+                       items: @items,
+                       calendar: @calendar,
+                       group_by_date: params[:group_by_date] != "0",
+                       show_tags: false,
+                       item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@event, item)] } %>
           <% else %>
             <div class="event-section__empty">
               <p>No items match this view yet.</p>

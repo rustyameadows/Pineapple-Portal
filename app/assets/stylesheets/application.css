@@ -2025,6 +2025,10 @@ nav {
   gap: 0.5rem;
 }
 
+.client-calendar__title strong {
+  font-weight: 500;
+}
+
 .client-calendar__badge {
   display: inline-flex;
   align-items: center;
@@ -2239,6 +2243,7 @@ nav {
   margin: 0.35rem 0 0;
   font-size: 0.85rem;
   color: #6b7280;
+  font-style: italic;
 }
 
 .event-calendars__schedule-actions {
@@ -2280,6 +2285,7 @@ nav {
 .event-calendars__title-link {
   color: inherit;
   text-decoration: none;
+  font-weight: 500;
 }
 
 .event-calendars__title-link:hover,
@@ -2330,6 +2336,106 @@ nav {
 .event-calendars__tag-count {
   font-size: 0.85rem;
   color: #6b7280;
+}
+
+.event-settings__milestone-table {
+  margin-top: 1rem;
+}
+
+.event-settings__milestone-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.event-settings__milestone-actions .event-section__cta {
+  padding: 0.6rem 1.1rem;
+}
+
+.event-settings__milestone-actions .event-section__link {
+  font-size: 0.95rem;
+}
+
+.event-settings__milestone-actions .event-form__submit--small {
+  margin-right: 0.5rem;
+}
+
+.event-settings__milestone-actions .event-form__cancel {
+  margin-left: 0.25rem;
+}
+
+.event-settings__milestone-actions button + .event-form__cancel {
+  margin-left: 0.75rem;
+}
+
+.event-settings__milestone-table td {
+  vertical-align: top;
+}
+
+.event-settings__milestone-actions .event-form__cancel {
+  color: #b91c1c;
+}
+
+.event-settings__milestone-actions .event-form__cancel:hover {
+  color: #991b1b;
+}
+
+.event-settings__milestone-actions form {
+  display: inline;
+}
+
+.event-settings__milestone-actions .event-form__submit--small:not(:last-child) {
+  margin-right: 0.5rem;
+}
+
+.event-settings__milestone-table .event-calendars__note {
+  margin-top: 0.25rem;
+}
+
+.event-settings__milestone-actions .event-form__cancel,
+.event-settings__milestone-actions .event-form__submit--small {
+  font-size: 0.85rem;
+}
+
+.event-settings__milestone-actions .event-form__submit--small {
+  padding: 0.35rem 0.8rem;
+}
+
+.event-settings__milestone-actions .event-form__cancel {
+  text-decoration: none;
+}
+
+.event-settings__milestone-actions .event-form__cancel:hover,
+.event-settings__milestone-actions .event-form__cancel:focus {
+  text-decoration: underline;
+}
+
+.event-settings__milestone-table .event-calendars__title-link {
+  font-weight: 600;
+}
+
+.event-settings__milestone-actions .event-form__cancel {
+  background: none;
+}
+.calendar-row--critical .event-calendars__title-link,
+.calendar-row--critical .client-calendar__title strong {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.calendar-row--milestone .event-calendars__title-link,
+.calendar-row--milestone .client-calendar__title strong {
+  color: #7c3aed;
+  font-weight: 700;
+}
+
+.calendar-row--completed .event-calendars__title-link,
+.calendar-row--completed .event-calendars__note,
+.calendar-row--completed .client-calendar__title strong,
+.calendar-row--completed .client-calendar__notes {
+  text-decoration: line-through;
+  color: #9ca3af;
 }
 
 .event-calendars__tag-form {

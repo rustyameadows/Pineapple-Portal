@@ -27,18 +27,18 @@
           <% detail_lines << "Vendor: #{item.vendor_name}" if item.vendor_name.present? %>
           <% detail_lines << "Location: #{item.location_name}" if item.location_name.present? %>
           <% detail_lines << "Status: #{item.status.titleize}" unless item.status == "planned" %>
-          <tr>
-            <td class="client-calendar__when"><%= when_label %></td>
-            <td class="client-calendar__details">
-              <div class="client-calendar__title">
-                <strong><%= item.title %></strong>
-                <% if item.locked? %>
-                  <span class="client-calendar__badge">Locked</span>
-                <% end %>
-              </div>
-              <% if anchor_label %>
-                <p class="client-calendar__anchor"><%= anchor_label %></p>
+        <tr class="client-calendar__row <%= calendar_item_row_classes(item) %>">
+          <td class="client-calendar__when"><%= when_label %></td>
+          <td class="client-calendar__details">
+            <div class="client-calendar__title">
+              <strong><%= item.title %></strong>
+              <% if item.locked? %>
+                <span class="client-calendar__badge">Locked</span>
               <% end %>
+            </div>
+          <% if anchor_label %>
+            <p class="client-calendar__anchor"><%= anchor_label %></p>
+          <% end %>
               <% detail_lines.each do |line| %>
                 <p class="client-calendar__meta-line"><%= line %></p>
               <% end %>
