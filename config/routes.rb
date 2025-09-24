@@ -68,7 +68,6 @@ Rails.application.routes.draw do
 
   namespace :client, path: "portal" do
     resources :events, only: :show do
-      resource :decision_calendar, only: :show, controller: :decision_calendars
       resources :calendars, only: %i[index show], param: :slug
       resource :guest_list, only: :show, controller: :guest_lists
       resources :questionnaires, only: %i[index show] do

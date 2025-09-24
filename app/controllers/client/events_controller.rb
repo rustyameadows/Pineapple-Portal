@@ -17,22 +17,7 @@ module Client
     end
 
     def build_quick_links
-      calendar = @event.run_of_show_calendar
-      links = @event.event_links.ordered.to_a
-
-      return links unless calendar
-
-      calendar_links = []
-
-      if calendar.client_visible?
-        calendar_links << QuickLink.new("Run of Show", client_event_calendar_path(@event, "run-of-show"))
-      end
-
-      calendar.event_calendar_views.client_visible.order(:position).each do |view|
-        calendar_links << QuickLink.new(view.name, client_event_calendar_path(@event, view.slug))
-      end
-
-      links + calendar_links
+      @event.event_links.ordered.to_a
     end
 
     def build_module_cards
@@ -50,13 +35,16 @@ module Client
         }
       end
 
+      decision_view = visible_views.find { |view| view.slug == "decision-calendar" }
+
       cards.concat(
         [
-          {
-            title: "Decision Calendar",
-            description: "Milestones and approvals at a glance.",
-            path: client_event_decision_calendar_path(@event)
-          },
+          (decision_view && calendar ?
+            {
+              title: "Decision Calendar",
+              description: "Milestones and approvals at a glance.",
+              path: client_event_calendar_path(@event, decision_view.slug)
+            } : nil),
           {
             title: "Guest List",
             description: "Track RSVPs and key contacts.",
@@ -77,7 +65,7 @@ module Client
             description: "Invoices, payments, and budget progress.",
             path: client_event_financials_path(@event)
           }
-        ]
+        ].compact
       )
     end
   end

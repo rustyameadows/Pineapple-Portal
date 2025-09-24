@@ -8,20 +8,6 @@
     <% end %>
   </header>
 
-  <% if @nav_links.size > 1 %>
-    <nav class="client-calendar__nav">
-      <ul class="client-calendar__nav-list">
-        <% @nav_links.each do |nav_view| %>
-          <% link_classes = ["client-calendar__nav-link"] %>
-          <% link_classes << "client-calendar__nav-link--active" if nav_view.slug == @active_view.slug %>
-          <li class="client-calendar__nav-item">
-            <%= link_to nav_view.name, client_event_calendar_path(@event, nav_view.slug), class: link_classes.join(" ") %>
-          </li>
-        <% end %>
-      </ul>
-    </nav>
-  <% end %>
-
   <% if @items.any? %>
     <table class="client-table client-calendar__table">
       <thead>

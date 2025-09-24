@@ -4,7 +4,6 @@ module Client
     before_action :load_calendar
     before_action :load_views
     before_action :ensure_accessible_calendar
-    before_action :build_navigation, only: :show
 
     def index
       return if performed?
@@ -54,14 +53,6 @@ module Client
       return if accessible_run_of_show? || @views.any?
 
       redirect_to client_event_path(@event), alert: "Your planning team hasn’t published calendars yet."
-    end
-
-    def build_navigation
-      @nav_links = []
-      @nav_links << Client::Calendars::SelectedView.run_of_show(@calendar) if accessible_run_of_show?
-      @views.each do |view|
-        @nav_links << wrap_view(view)
-      end
     end
 
     def default_view_slug
