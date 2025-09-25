@@ -1598,30 +1598,35 @@ nav {
   border: 1px solid #eadcc7;
   border-radius: 12px;
   background: #fffaf1;
-  padding: 1.5rem;
-  display: grid;
+  padding: 1.1rem 1.4rem;
+  display: block;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.1rem;
 }
 
 .calendar-grid__bulk-title {
-  margin: 0;
-  font-size: 1.1rem;
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
   color: #3c2e25;
 }
 
 .calendar-grid__bulk-form {
-  display: grid;
-  gap: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
 }
 
 .calendar-grid__bulk-row {
-  display: grid;
-  gap: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 200px;
+  min-width: 180px;
 }
 
 .calendar-grid__bulk-label {
-  font-size: 0.85rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: #8a6d58;
@@ -1641,12 +1646,14 @@ nav {
 .calendar-grid__bulk-actions {
   display: flex;
   justify-content: flex-start;
+  flex: 1 1 100%;
 }
 
 .calendar-grid__bulk-hint {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #8a6d58;
+  flex: 1 1 100%;
 }
 
 .calendar-grid__table-wrapper {
@@ -1668,10 +1675,11 @@ nav {
 
 .calendar-grid__table th,
 .calendar-grid__table td {
-  padding: 0.65rem 0.75rem;
+  padding: 0.45rem 0.55rem;
   text-align: left;
   border-bottom: 1px solid #eadcc7;
   vertical-align: top;
+  font-size: 0.9rem;
 }
 
 .calendar-grid__table tbody tr:last-child th,
@@ -1687,12 +1695,16 @@ nav {
   width: 90px;
 }
 
+.calendar-grid__column--edit {
+  width: 48px;
+}
+
 .calendar-grid__row--locked {
   background: rgba(248, 241, 229, 0.6);
 }
 
 .calendar-grid__cell {
-  min-width: 140px;
+  min-width: 115px;
 }
 
 .calendar-grid__cell--select,
@@ -1704,25 +1716,51 @@ nav {
   text-align: right;
 }
 
+.calendar-grid__cell--edit {
+  text-align: center;
+  min-width: 48px;
+}
+
 .calendar-grid__input,
 .calendar-grid__select,
 .calendar-grid__textarea {
   width: 100%;
   box-sizing: border-box;
-  padding: 0.45rem 0.55rem;
+  padding: 0.35rem 0.45rem;
   border-radius: 6px;
   border: 1px solid #d9cbb9;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
-.calendar-grid__input--short {
-  max-width: 90px;
+.calendar-grid__input--mini {
+  max-width: 72px;
+}
+
+.calendar-grid__input--micro {
+  max-width: 64px;
+}
+
+.calendar-grid__select--mini {
+  max-width: 160px;
+  padding-right: 1.8rem;
+}
+
+.calendar-grid__select--micro {
+  max-width: 110px;
+  padding-right: 1.6rem;
+}
+
+.calendar-grid__select--alignment {
+  max-width: 170px;
+  padding-right: 1.8rem;
 }
 
 .calendar-grid__textarea {
   resize: vertical;
-  min-height: 3rem;
+  min-height: 2.2rem;
+  height: 2.2rem;
+  line-height: 1.2;
 }
 
 .calendar-grid__checkbox {
@@ -1765,7 +1803,169 @@ nav {
 }
 
 .calendar-grid__cell--toggle {
-  min-width: 120px;
+  min-width: 110px;
+}
+
+.calendar-grid__cell--anchor {
+  min-width: 160px;
+}
+
+.calendar-grid__anchor {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.calendar-grid__input--anchor {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.calendar-grid__anchor-clear {
+  border: none;
+  background: #f1d9d9;
+  color: #8f2d2d;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-grid__anchor-clear:hover,
+.calendar-grid__anchor-clear:focus {
+  background: #e7bcbc;
+}
+
+.calendar-grid__cell--relative {
+  min-width: 180px;
+}
+
+.calendar-grid__relative {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.calendar-grid__checkbox--inline {
+  font-size: 0.8rem;
+  gap: 0.25rem;
+}
+
+.calendar-grid__cell--tags {
+  min-width: 220px;
+}
+
+.calendar-grid__cell--location,
+.calendar-grid__cell--vendor {
+  min-width: 150px;
+}
+
+.calendar-grid__cell--notes {
+  min-width: 220px;
+}
+
+.calendar-grid__tags {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+}
+
+.calendar-grid__tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  background: #fff;
+  color: #1f2937;
+  border: 1.5px solid var(--tag-border-color, var(--tag-color, #d1d5db));
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.calendar-grid__tag-color {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--tag-border-color, var(--tag-color, #d1d5db));
+  flex: 0 0 auto;
+  background: #fff;
+}
+
+.calendar-grid__tag-pill--selected {
+  background: color-mix(in srgb, var(--tag-border-color, var(--tag-color, #3b82f6)) 18%, white);
+  border-color: var(--tag-border-color, var(--tag-color, #3b82f6));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tag-border-color, var(--tag-color, #3b82f6)) 22%, transparent);
+}
+
+.calendar-grid__tag-pill--selected .calendar-grid__tag-color {
+  background: var(--tag-border-color, var(--tag-color, #3b82f6));
+  border-color: var(--tag-border-color, var(--tag-color, #3b82f6));
+}
+
+.calendar-grid__tag-pill:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tag-border-color, var(--tag-color, #3b82f6)) 15%, transparent);
+}
+
+.calendar-grid__tag-pill:focus-within {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tag-border-color, var(--tag-color, #3b82f6)) 35%, transparent);
+}
+
+.calendar-grid__tag-checkbox {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.calendar-grid__tag-label {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.calendar-grid__edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #ebefff;
+  color: #1c43c6;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.calendar-grid__edit:hover,
+.calendar-grid__edit:focus {
+  background: #dbe4ff;
+}
+
+.calendar-grid__edit-icon {
+  display: inline-block;
+  line-height: 1;
+}
+
+.visually-hidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
 }
 
 .calendar-grid__select,

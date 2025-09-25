@@ -20,7 +20,7 @@
 
 2. **View Layer**
    - Render a dense `<table>` with sticky headers, grouping rows by date.
-   - Columns: checkbox (selection), start time, end time/duration, title, tags (multi-select from existing event tags), owner/assignee, status, visibility, lock flag, notes preview.
+   - Columns: checkbox (selection), start time, end time/duration, title, anchor summary (with compact type-ahead picker), relation, tags (multi-select from existing event tags), status, lock flag, location, vendor, notes, and quick actions.
    - Include a toolbar for filters (calendar selector, tag filter) and bulk actions (lock/unlock, toggle visibility, assign tags).
    - Provide a paired button that returns to the existing calendar view for the same calendar, showing the identical data in its original layout.
    - Use Turbo Frames to scope updates (each row can be a frame for partial refresh on successful save).

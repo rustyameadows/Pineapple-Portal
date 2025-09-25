@@ -5,7 +5,14 @@ module Events
     before_action :set_event
     before_action :set_calendar
     before_action :set_view, if: -> { params[:id].present? }
-    helper_method :grid_path, :grid_item_path, :grid_bulk_path, :return_path, :calendar_timezone_label
+    helper_method :grid_path,
+                  :grid_item_path,
+                  :grid_bulk_path,
+                  :return_path,
+                  :calendar_timezone_label,
+                  :anchor_options_for,
+                  :anchor_alignment_options,
+                  :anchor_alignment_value
 
     def show
       load_grid
@@ -63,6 +70,8 @@ module Events
       @tags = @calendar.event_calendar_tags.order(:position, :name)
       @statuses = CalendarItem.statuses.keys
       @timezone = ActiveSupport::TimeZone[@calendar.timezone] || ActiveSupport::TimeZone[EventCalendar::DEFAULT_TIMEZONE]
+      @anchor_options = build_anchor_options
+      @anchor_label_map = @anchor_options.to_h { |label, id| [id, label] }
     end
 
     def replace_item_in_collection(updated_item)
@@ -81,7 +90,9 @@ module Events
         :vendor_name,
         :location_name,
         :notes,
-        :additional_team_members,
+        :relative_anchor_id,
+        :relative_offset_minutes,
+        :relative_alignment,
         event_calendar_tag_ids: []
       )
 
@@ -90,6 +101,36 @@ module Events
       permitted[:locked] = ActiveModel::Type::Boolean.new.cast(permitted[:locked])
       tag_ids = Array(permitted.delete(:event_calendar_tag_ids)).reject(&:blank?).map(&:to_i)
       permitted[:event_calendar_tag_ids] = tag_ids
+
+      anchor_id = permitted[:relative_anchor_id].presence
+      permitted[:relative_anchor_id] = anchor_id
+
+      alignment = permitted.delete(:relative_alignment)
+
+      if anchor_id.present?
+        permitted[:relative_offset_minutes] = permitted[:relative_offset_minutes].presence || 0
+        permitted[:relative_offset_minutes] = permitted[:relative_offset_minutes].to_i
+
+        case alignment
+        when "before_start"
+          permitted[:relative_before] = true
+          permitted[:relative_to_anchor_end] = false
+        when "after_end"
+          permitted[:relative_before] = false
+          permitted[:relative_to_anchor_end] = true
+        when "before_end"
+          permitted[:relative_before] = true
+          permitted[:relative_to_anchor_end] = true
+        else # default to after_start
+          permitted[:relative_before] = false
+          permitted[:relative_to_anchor_end] = false
+        end
+      else
+        permitted[:relative_offset_minutes] = 0
+        permitted[:relative_before] = false
+        permitted[:relative_to_anchor_end] = false
+      end
+
       permitted
     end
 
@@ -135,6 +176,45 @@ module Events
 
     def item_id_param
       params[:item_id] || params[:id]
+    end
+
+    def build_anchor_options
+      @calendar.calendar_items.order(:starts_at, :position, :id).map do |item|
+        [anchor_option_label(item), item.id]
+      end
+    end
+
+    def anchor_option_label(item)
+      time = item.starts_at&.in_time_zone(@timezone)
+      time_label = time ? time.strftime("%b %-d %H:%M") : "TBD"
+      "#{item.title} (#{time_label})"
+    end
+
+    def anchor_options_for(item)
+      [["None (absolute)", ""]] + @anchor_options.reject { |(_, id)| id == item.id }
+    end
+
+    def anchor_alignment_options(_item = nil)
+      [
+        ["After anchor start", "after_start"],
+        ["Before anchor start", "before_start"],
+        ["After anchor end", "after_end"],
+        ["Before anchor end", "before_end"]
+      ]
+    end
+
+    def anchor_alignment_value(item)
+      return "after_start" unless item.relative_anchor_id.present?
+
+      if item.relative_before? && item.relative_to_anchor_end?
+        "before_end"
+      elsif item.relative_before?
+        "before_start"
+      elsif item.relative_to_anchor_end?
+        "after_end"
+      else
+        "after_start"
+      end
     end
   end
 end
