@@ -22,6 +22,7 @@
                 <span>Group by date</span>
               </label>
             <% end %>
+            <%= link_to "Edit as Sheet", grid_event_calendar_view_path(@event, @view), class: "event-section__cta event-section__cta--secondary" %>
             <%= link_to "Edit View", edit_event_calendar_view_path(@event, @view), class: "event-section__cta" %>
           </div>
         </header>

@@ -12,6 +12,12 @@ class Document < ApplicationRecord
     client_upload: "client_upload"
   }
 
+  SOURCE_LABELS = {
+    "packet" => "Packets",
+    "staff_upload" => "Uploads",
+    "client_upload" => "Client Uploads"
+  }.freeze
+
   validates :title, :storage_uri, :checksum, :content_type, presence: true
   validates :size_bytes, numericality: { greater_than: 0 }
   validates :version, numericality: { greater_than: 0 }
@@ -21,6 +27,14 @@ class Document < ApplicationRecord
 
   scope :latest, -> { where(is_latest: true) }
   scope :client_visible, -> { where(client_visible: true) }
+
+  def self.source_label(key)
+    SOURCE_LABELS[key.to_s] || key.to_s.humanize
+  end
+
+  def source_label
+    self.class.source_label(source)
+  end
 
   def self.next_version_for(logical_id)
     where(logical_id: logical_id).maximum(:version).to_i + 1

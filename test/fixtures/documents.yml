@@ -10,3 +10,35 @@ contract_v1:
   content_type: application/pdf
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
+  client_visible: true
+  source: staff_upload
+
+packet_brief:
+  event: one
+  title: Design Packet
+  storage_uri: documents/design-packet-v1.pdf
+  checksum: design-packet-checksum-v1
+  size_bytes: 3072
+  logical_id: 22222222-2222-2222-2222-222222222222
+  version: 1
+  is_latest: true
+  content_type: application/pdf
+  client_visible: true
+  source: packet
+  created_at: <%= 2.days.ago %>
+  updated_at: <%= 2.days.ago %>
+
+client_inspo_board:
+  event: one
+  title: Mood Board
+  storage_uri: documents/mood-board-v1.pdf
+  checksum: mood-board-checksum-v1
+  size_bytes: 5120
+  logical_id: 33333333-3333-3333-3333-333333333333
+  version: 1
+  is_latest: true
+  content_type: application/pdf
+  client_visible: true
+  source: client_upload
+  created_at: <%= 1.day.ago %>
+  updated_at: <%= 1.day.ago %>

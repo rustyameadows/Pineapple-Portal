@@ -1,74 +1,120 @@
-<h1><%= @document.title %> (v<%= @document.version %>)</h1>
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
 
-<p>Event: <%= link_to @event.name, event_path(@event) %></p>
-<p>Logical ID: <%= @document.logical_id %></p>
-<p>Latest version: <%= @document.is_latest? ? "Yes" : "No" %></p>
-<p>Content type: <%= @document.content_type %></p>
-<p>Size: <%= number_to_human_size(@document.size_bytes) %></p>
-<p>Storage key: <code><%= @document.storage_uri %></code></p>
-<p>Checksum: <code><%= @document.checksum %></code></p>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-<p>
-  <%= link_to "Download this version", download_event_document_path(@event, @document) %>
-  <% if @document.is_latest? %>
-    (latest)
-  <% else %>
-    | <%= link_to "Download latest version", download_event_document_path(@event, @versions.first) %>
-  <% end %>
-</p>
-
-<section>
-  <h2>Version history</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Version</th>
-        <th>Uploaded</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @versions.each do |version| %>
-        <tr>
-          <td>v<%= version.version %></td>
-          <td><%= version.created_at&.to_fs(:long) || "—" %></td>
-          <td>
-            <% if version == @document %>
-              Viewing
-            <% else %>
-              <%= link_to "View", event_document_path(@event, version) %>
+      <section class="event-section event-section--document">
+        <header class="event-section__header event-section__header--split">
+          <div>
+            <p class="event-section__eyebrow">Document</p>
+            <h1 class="event-section__title"><%= @document.title %></h1>
+            <p class="event-section__lead">
+              Version v<%= @document.version %>
+              <% if @document.is_latest? %>
+                <span class="documents-table__badge documents-table__badge--latest">Latest</span>
+              <% end %>
+            </p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Download this version", download_event_document_path(@event, @document), class: "event-section__cta" %>
+            <% unless @document.is_latest? %>
+              <%= link_to "Download latest", download_event_document_path(@event, @versions.first), class: "event-section__cta event-section__cta--secondary" %>
             <% end %>
-            |
-            <%= link_to "Download", download_event_document_path(@event, version) %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-</section>
+            <%= link_to "Upload new version", new_event_document_path(@event, logical_id: @document.logical_id), class: "event-section__cta event-section__cta--secondary" %>
+            <%= link_to "Edit", edit_event_document_path(@event, @document), class: "event-section__cta event-section__cta--secondary" %>
+          </div>
+        </header>
 
-<p>
-  <%= link_to "Upload new version", new_event_document_path(@event, logical_id: @document.logical_id) %> |
-  <%= link_to "Edit", edit_event_document_path(@event, @document) %> |
-  <%= button_to "Delete", event_document_path(@event, @document), method: :delete, data: { confirm: "Delete this document?" } %>
-</p>
+        <div class="event-section__body">
+          <div class="documents-show__grid">
+            <section class="documents-show__panel">
+              <h2 class="documents-show__heading">File details</h2>
+              <dl class="documents-show__meta">
+                <div>
+                  <dt>Event</dt>
+                  <dd><%= link_to @event.name, event_path(@event) %></dd>
+                </div>
+                <div>
+                  <dt>Logical ID</dt>
+                  <dd><code><%= @document.logical_id %></code></dd>
+                </div>
+                <div>
+                  <dt>Visibility</dt>
+                  <dd><%= document_visibility_label(@document) %></dd>
+                </div>
+                <div>
+                  <dt>Size</dt>
+                  <dd><%= document_size_label(@document) %></dd>
+                </div>
+                <div>
+                  <dt>Content type</dt>
+                  <dd><%= @document.content_type %></dd>
+                </div>
+                <div>
+                  <dt>Storage key</dt>
+                  <dd><code><%= @document.storage_uri %></code></dd>
+                </div>
+                <div>
+                  <dt>Checksum</dt>
+                  <dd><code><%= @document.checksum %></code></dd>
+                </div>
+                <div>
+                  <dt>Updated</dt>
+                  <dd><%= document_updated_label(@document) %></dd>
+                </div>
+              </dl>
+            </section>
 
-<section>
-  <h2>Attachments</h2>
-  <%= render "attachments/list", attachments: @attachments %>
-</section>
+            <section class="documents-show__panel">
+              <h2 class="documents-show__heading">Version history</h2>
+              <%= render "documents/table",
+                        documents: @versions,
+                        title_link: ->(document) { event_document_path(@event, document) },
+                        show_visibility: false,
+                        show_source: false,
+                        show_uploader: false,
+                        empty_message: "No other versions yet." do |document|
+                    if document == @document
+                      content_tag(:span, "Viewing", class: "documents-table__status")
+                    else
+                      safe_join([
+                        link_to("View", event_document_path(@event, document), class: "documents-table__action"),
+                        link_to("Download", download_event_document_path(@event, document), class: "documents-table__action")
+                      ], " ")
+                    end
+                  end %>
+            </section>
+          </div>
 
-<section>
-  <h2>Attach to…</h2>
-  <% if @available_entities.any? %>
-    <% @available_entities.each do |entity| %>
-      <h3><%= entity_label(entity) %></h3>
-      <%= render "attachments/form", entity: entity, documents: documents_for_entity(entity) %>
-    <% end %>
-  <% else %>
-    <p>No available entities to attach.</p>
-  <% end %>
-</section>
+          <section class="documents-show__panel">
+            <h2 class="documents-show__heading">Attachments</h2>
+            <%= render "attachments/list", attachments: @attachments %>
+          </section>
+
+          <section class="documents-show__panel">
+            <h2 class="documents-show__heading">Attach to…</h2>
+            <% if @available_entities.any? %>
+              <% @available_entities.each do |entity| %>
+                <h3 class="documents-show__subheading"><%= entity_label(entity) %></h3>
+                <%= render "attachments/form", entity: entity, documents: documents_for_entity(entity) %>
+              <% end %>
+            <% else %>
+              <p>No available entities to attach.</p>
+            <% end %>
+          </section>
+
+          <section class="documents-show__panel documents-show__panel--danger">
+            <h2 class="documents-show__heading">Remove document</h2>
+            <p>Deleting removes this version and all prior versions from the event.</p>
+            <%= button_to "Delete document", event_document_path(@event, @document), method: :delete, data: { confirm: "Delete this document?" }, class: "documents-show__delete" %>
+          </section>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>
 
 <% content_for :scripts do %>
   <%= render "attachments/upload_script" %>

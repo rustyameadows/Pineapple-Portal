@@ -21,6 +21,9 @@ Rails.application.routes.draw do
     resources :calendars, only: :index, module: :events, controller: :calendars
 
     resource :calendar, only: %i[show update], module: :events do
+      get :grid, to: "calendar_grids#show"
+      patch "grid/items/:item_id", to: "calendar_grids#update", as: :grid_item
+      patch "grid/bulk", to: "calendar_grids#bulk_update", as: :grid_bulk
       resources :items,
                 controller: "calendar_items",
                 except: :index do
@@ -35,7 +38,13 @@ Rails.application.routes.draw do
                 controller: "calendar_tags"
       resources :views,
                 controller: "calendar_views",
-                except: :index
+                except: :index do
+        member do
+          get :grid, to: "calendar_grids#show"
+          patch "grid/items/:item_id", to: "calendar_grids#update", as: :grid_item
+          patch "grid/bulk", to: "calendar_grids#bulk_update", as: :grid_bulk
+        end
+      end
     end
 
     resources :event_links, only: %i[create update destroy], module: :events do
@@ -85,7 +94,7 @@ Rails.application.routes.draw do
           patch :answer, to: "question_answers#update"
         end
       end
-      resources :designs, only: :index
+      resources :designs, only: %i[index create]
       resources :financials, only: :index
       resources :payments, only: :show do
         member do

@@ -1,124 +1,47 @@
-<h1>Upload Document</h1>
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
 
-<%= render "form" %>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-<p><%= link_to "Back", event_documents_path(@event) %></p>
+      <section class="event-section">
+        <header class="event-section__header event-section__header--split">
+          <div>
+            <p class="event-section__eyebrow">Documents</p>
+            <h1 class="event-section__title">Upload document</h1>
+            <% if @existing_versions.any? %>
+              <p class="event-section__lead">This will be saved as version v<%= @next_version_number %> of the existing file (<code><%= @existing_versions.first.logical_id %></code>).</p>
+            <% else %>
+              <p class="event-section__lead">Select a file, upload it to storage, and share it with your planners or clients.</p>
+            <% end %>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Back", event_documents_path(@event), class: "event-section__cta event-section__cta--secondary" %>
+          </div>
+        </header>
 
-<% content_for :scripts do %>
-  <script type="module">
-    document.addEventListener("DOMContentLoaded", () => {
-      const form = document.querySelector("[data-document-upload-form]");
-      if (!form) return;
+        <div class="event-section__body documents-form">
+          <section class="documents-form__panel">
+            <%= render "form" %>
+          </section>
 
-      const fileInput = form.querySelector("#document_file");
-      const statusEl = form.querySelector("[data-document-upload-target='status']");
-      const submitButton = form.querySelector("input[type=submit], button[type=submit]");
-      const titleInput = form.querySelector("#document_title");
-      const storageUriInput = form.querySelector("#document_storage_uri");
-      const checksumInput = form.querySelector("#document_checksum");
-      const sizeInput = form.querySelector("#document_size_bytes");
-      const contentTypeInput = form.querySelector("#document_content_type");
-      const logicalIdInput = form.querySelector("#document_logical_id");
-
-      const csrfToken = document.querySelector("meta[name='csrf-token']")?.content;
-
-      if (submitButton) {
-        submitButton.disabled = true;
-      }
-
-      const resetStatus = () => {
-        if (statusEl) {
-          statusEl.textContent = "Select a file to upload to R2.";
-        }
-      };
-
-      const setError = (message) => {
-        if (statusEl) {
-          statusEl.textContent = message;
-        }
-        if (submitButton) {
-          submitButton.disabled = true;
-        }
-      };
-
-      const hexDigest = async (file) => {
-        const buffer = await file.arrayBuffer();
-        const digest = await crypto.subtle.digest("SHA-256", buffer);
-        return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
-      };
-
-      fileInput?.addEventListener("change", async () => {
-        const file = fileInput.files?.[0];
-        if (!file) {
-          resetStatus();
-          return;
-        }
-
-        if (submitButton) {
-          submitButton.disabled = true;
-        }
-        if (statusEl) {
-          statusEl.textContent = "Preparing upload...";
-        }
-
-        try {
-          const body = {
-            filename: file.name,
-            content_type: file.type || "application/octet-stream",
-            logical_id: logicalIdInput?.value || null
-          };
-
-          const presignResponse = await fetch(form.dataset.presignUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRF-Token": csrfToken || ""
-            },
-            body: JSON.stringify(body)
-          });
-
-          if (!presignResponse.ok) {
-            throw new Error("Unable to get upload URL");
-          }
-
-          const presignData = await presignResponse.json();
-
-          if (statusEl) {
-            statusEl.textContent = "Uploading to storage...";
-          }
-
-          const uploadResponse = await fetch(presignData.upload_url, {
-            method: "PUT",
-            headers: {
-              "Content-Type": presignData.content_type
-            },
-            body: file
-          });
-
-          if (!uploadResponse.ok) {
-            throw new Error("Upload to storage failed");
-          }
-
-          const checksum = await hexDigest(file);
-
-          if (titleInput && !titleInput.value) titleInput.value = file.name;
-          if (storageUriInput) storageUriInput.value = presignData.storage_uri;
-          if (checksumInput) checksumInput.value = checksum;
-          if (sizeInput) sizeInput.value = file.size;
-          if (contentTypeInput) contentTypeInput.value = presignData.content_type;
-          if (logicalIdInput) logicalIdInput.value = presignData.logical_id;
-
-          if (statusEl) {
-            statusEl.textContent = "Upload ready. Click Save to store document metadata.";
-          }
-          if (submitButton) {
-            submitButton.disabled = false;
-          }
-        } catch (error) {
-          console.error(error);
-          setError("Upload failed. Please try again.");
-        }
-      });
-    });
-  </script>
+          <% if @existing_versions.any? %>
+            <section class="documents-form__panel">
+              <h2 class="documents-form__heading">Existing versions</h2>
+              <%= render "documents/table",
+                        documents: @existing_versions,
+                        title_link: ->(document) { event_document_path(@event, document) },
+                        show_visibility: false,
+                        show_source: false,
+                        show_uploader: false,
+                        empty_message: "No previous versions found." %>
+            </section>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
 <% end %>
+
+<%= render "documents/upload_script" %>

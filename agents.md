@@ -19,6 +19,8 @@ Always answer any question from the maintainer before proceeding with additional
 ## Handling Tooling Limits
 If sandbox limits prevent you from running migrations, tests, or other project commands, stop immediately. Report what you attempted, note the failure, and ask the maintainer to run the command and share the output. Do not attempt alternative workarounds.
 
+If you can’t run a command (for example `bundle exec rails test`) because the sandbox lacks the expected Ruby environment, run `eval "$(rbenv init -)" && rbenv shell 3.3.6` before retrying. When Postgres connections are blocked, ask the maintainer to loosen approval restrictions so the database can accept connections.
+
 ## Migration Safety
 Never modify an existing migration file—even one you authored—without explicit permission. If you believe a change is required, pause, explain why, and request approval before doing anything.
 

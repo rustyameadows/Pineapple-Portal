@@ -1,9 +1,11 @@
 class DocumentsController < ApplicationController
   before_action :set_event
   before_action :set_document, only: %i[show edit update destroy download]
+  before_action :load_versions, only: %i[show edit update]
 
   def index
     @document_groups = build_document_groups
+    @latest_documents = @event.documents.latest.order(updated_at: :desc, title: :asc)
   end
 
   def packets
@@ -21,12 +23,13 @@ class DocumentsController < ApplicationController
   def show
     @attachments = @document.attachments.includes(:entity).order(:context, :position)
     @available_entities = available_entities_for(@event)
-    @versions = Document.where(logical_id: @document.logical_id).order(version: :desc)
   end
 
   def new
     @document = @event.documents.new
     @document.logical_id = params[:logical_id] if params[:logical_id].present?
+    @existing_versions = versions_for(@document.logical_id)
+    @next_version_number = (@existing_versions.first&.version || 0) + 1
   end
 
   def create
@@ -35,6 +38,8 @@ class DocumentsController < ApplicationController
     if @document.save
       redirect_to event_document_path(@event, @document), notice: "Document saved."
     else
+      @existing_versions = versions_for(@document.logical_id)
+      @next_version_number = (@existing_versions.first&.version || 0) + 1
       render :new, status: :unprocessable_content
     end
   end
@@ -86,8 +91,8 @@ class DocumentsController < ApplicationController
 
   def render_grouped_documents(source_key)
     @source_key = source_key.to_s
-    @label = document_source_label(@source_key)
-    @documents = @event.documents.where(source: @source_key).order(:title)
+    @label = Document.source_label(@source_key)
+    @documents = @event.documents.where(source: @source_key).latest.order(updated_at: :desc, title: :asc)
     @document_groups = build_document_groups
     render :group
   end
@@ -97,18 +102,20 @@ class DocumentsController < ApplicationController
       scope = @event.documents.where(source: key)
       {
         key: key,
-        label: document_source_label(key),
+        label: Document.source_label(key),
         documents_count: scope.count,
         images_count: scope.where("content_type LIKE ?", "image/%").count
       }
     end
   end
 
-  def document_source_label(key)
-    {
-      "packet" => "Packets",
-      "staff_upload" => "Uploads",
-      "client_upload" => "Client Uploads"
-    }[key] || key.humanize
+  def load_versions
+    @versions = versions_for(@document.logical_id)
+  end
+
+  def versions_for(logical_id)
+    return Document.none if logical_id.blank?
+
+    @event.documents.where(logical_id: logical_id).order(version: :desc)
   end
 end

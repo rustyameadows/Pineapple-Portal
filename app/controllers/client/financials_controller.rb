@@ -1,5 +1,5 @@
 module Client
-  class FinancialsController < EventScopedController
+  class FinancialsController < PortalController
     def index
       @payments = @event.payments.client_visible.ordered
     end

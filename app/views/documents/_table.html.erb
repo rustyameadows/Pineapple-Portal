@@ -1,0 +1,99 @@
+<%
+  documents = Array.wrap(local_assigns.fetch(:documents))
+  empty_message = local_assigns.fetch(:empty_message, "No documents available yet.")
+  title_link = local_assigns[:title_link]
+  show_version = local_assigns.fetch(:show_version, true)
+  show_visibility = local_assigns.fetch(:show_visibility, true)
+  show_source = local_assigns.fetch(:show_source, true)
+  show_size = local_assigns.fetch(:show_size, true)
+  show_updated = local_assigns.fetch(:show_updated, true)
+  show_uploader = local_assigns.fetch(:show_uploader, true)
+  actions_block = block_given?
+  show_actions = local_assigns.fetch(:show_actions, true)
+%>
+<div class="documents-table">
+  <% if documents.any? %>
+    <table class="documents-table__table">
+      <thead>
+        <tr>
+          <th scope="col">Document</th>
+          <% if show_version %>
+            <th scope="col">Version</th>
+          <% end %>
+          <% if show_visibility %>
+            <th scope="col">Visibility</th>
+          <% end %>
+          <% if show_source %>
+            <th scope="col">Source</th>
+          <% end %>
+          <% if show_uploader %>
+            <th scope="col">Uploaded by</th>
+          <% end %>
+          <% if show_size %>
+            <th scope="col">Size</th>
+          <% end %>
+          <% if show_updated %>
+            <th scope="col">Updated</th>
+          <% end %>
+          <% if show_actions %>
+            <th scope="col" class="documents-table__actions-header"></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% documents.each do |document| %>
+          <tr>
+            <td class="documents-table__title">
+              <% if title_link.respond_to?(:call) %>
+                <%= link_to document.title, title_link.call(document), class: "documents-table__title-link" %>
+              <% else %>
+                <span class="documents-table__title-text"><%= document.title %></span>
+              <% end %>
+            </td>
+            <% if show_version %>
+              <td class="documents-table__cell documents-table__cell--version">
+                <span class="documents-table__badge">v<%= document.version %></span>
+                <% if document.is_latest? %>
+                  <span class="documents-table__badge documents-table__badge--latest">Latest</span>
+                <% end %>
+              </td>
+            <% end %>
+            <% if show_visibility %>
+              <td class="documents-table__cell">
+                <span class="documents-table__badge <%= document_visibility_badge_class(document) %>">
+                  <%= document_visibility_label(document) %>
+                </span>
+              </td>
+            <% end %>
+            <% if show_source %>
+              <td class="documents-table__cell"><%= document_source_label(document) %></td>
+            <% end %>
+            <% if show_uploader %>
+              <td class="documents-table__cell"><%= document_uploader_label(document) %></td>
+            <% end %>
+            <% if show_size %>
+              <td class="documents-table__cell"><%= document_size_label(document) %></td>
+            <% end %>
+            <% if show_updated %>
+              <td class="documents-table__cell"><%= document_updated_label(document) %></td>
+            <% end %>
+            <% if show_actions %>
+              <td class="documents-table__actions">
+                <% if actions_block %>
+                  <%= yield document %>
+                <% else %>
+                  <%= link_to "View", event_document_path(document.event, document), class: "documents-table__action" %>
+                  <%= link_to "Download", download_event_document_path(document.event, document), class: "documents-table__action" %>
+                <% end %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="documents-table__empty">
+      <p><%= empty_message %></p>
+    </div>
+  <% end %>
+</div>

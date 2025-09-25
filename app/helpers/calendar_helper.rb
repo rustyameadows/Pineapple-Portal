@@ -92,8 +92,13 @@ module CalendarHelper
     color = tag.color_token.to_s.strip
     return nil if color.blank?
 
-    styles = ["--tag-color: #{color}"]
+    styles = [
+      "--tag-color: #{color}",
+      "--tag-border-color: #{color}"
+    ]
+
     styles << "--tag-text-color: #{contrasting_text_color(color)}" if hex_color?(color)
+
     styles.join('; ')
   end
 
@@ -103,13 +108,19 @@ module CalendarHelper
     value.match?(/\A#(?:[0-9a-fA-F]{3}){1,2}\z/)
   end
 
-  def contrasting_text_color(hex)
+  def hex_components(hex)
     rgb = hex.delete('#')
     rgb = rgb.chars.map { |c| c * 2 }.join if rgb.length == 3
     r = rgb[0..1].to_i(16)
     g = rgb[2..3].to_i(16)
     b = rgb[4..5].to_i(16)
+    [r, g, b]
+  end
 
+  def contrasting_text_color(color)
+    return '#1f2937' unless hex_color?(color)
+
+    r, g, b = hex_components(color)
     luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
     luminance > 0.6 ? '#111827' : '#ffffff'
   end
