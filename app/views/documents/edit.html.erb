@@ -1,5 +1,47 @@
-<h1>Edit Document</h1>
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
 
-<%= render "form" %>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-<p><%= link_to "Back", document_path(@document) %></p>
+      <section class="event-section">
+        <header class="event-section__header event-section__header--split">
+          <div>
+            <p class="event-section__eyebrow">Documents</p>
+            <h1 class="event-section__title">Edit <%= @document.title %></h1>
+            <p class="event-section__lead">Update metadata for version v<%= @document.version %>. File details such as size and checksum are locked once uploaded.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Back to document", event_document_path(@event, @document), class: "event-section__cta event-section__cta--secondary" %>
+          </div>
+        </header>
+
+        <div class="event-section__body documents-form">
+          <section class="documents-form__panel">
+            <%= render "form" %>
+          </section>
+
+          <section class="documents-form__panel">
+            <h2 class="documents-form__heading">Version history</h2>
+            <%= render "documents/table",
+                      documents: @versions,
+                      title_link: ->(document) { event_document_path(@event, document) },
+                      show_visibility: false,
+                      show_source: false,
+                      show_uploader: false do |document|
+                  if document == @document
+                    content_tag(:span, "Editing", class: "documents-table__status")
+                  else
+                    safe_join([
+                      link_to("View", event_document_path(@event, document), class: "documents-table__action"),
+                      link_to("Download", download_event_document_path(@event, document), class: "documents-table__action")
+                    ], " ")
+                  end
+                end %>
+          </section>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

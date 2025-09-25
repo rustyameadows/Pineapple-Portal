@@ -1,5 +1,5 @@
 module Client
-  class QuestionnairesController < EventScopedController
+  class QuestionnairesController < PortalController
     before_action :set_questionnaire, only: %i[show mark_finished mark_in_progress]
     before_action :load_sections, only: :show
 

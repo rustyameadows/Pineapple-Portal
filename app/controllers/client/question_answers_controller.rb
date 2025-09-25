@@ -1,5 +1,5 @@
 module Client
-  class QuestionAnswersController < EventScopedController
+  class QuestionAnswersController < PortalController
     before_action :set_questionnaire
     before_action :set_question
 

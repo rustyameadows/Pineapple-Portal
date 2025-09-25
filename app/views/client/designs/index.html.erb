@@ -1,21 +1,77 @@
-<section class="client-page">
+<section class="client-page client-designs">
   <header class="client-page__header">
     <h1>Design &amp; Inspiration</h1>
-    <p>Preview boards, files, and inspiration shared by your planning team.</p>
+    <p>Preview boards, files, and inspiration shared by your planning team, and add your own uploads for quick reference.</p>
   </header>
 
-  <% if @documents.any? %>
-    <ul class="client-list">
-      <% @documents.each do |document| %>
-        <li>
-          <strong><%= document.title %></strong>
-          <span>Version <%= document.version %></span>
-        </li>
-      <% end %>
-    </ul>
-  <% else %>
-    <div class="client-placeholder">
-      <p>No inspiration files yet. Your planner will add items once they’re ready.</p>
+  <section class="client-designs__panel">
+    <header class="client-designs__panel-header">
+      <h2>From your planner</h2>
+    </header>
+    <div class="client-designs__panel-body">
+      <%= render "documents/table",
+                documents: @planner_documents,
+                title_link: ->(document) { download_event_document_path(@event, document) },
+                show_visibility: false,
+                show_actions: false %>
     </div>
-  <% end %>
+  </section>
+
+  <section class="client-designs__panel">
+    <header class="client-designs__panel-header">
+      <h2>Your uploads</h2>
+    </header>
+    <div class="client-designs__panel-body">
+      <%= render "documents/table",
+                documents: @client_documents,
+                title_link: ->(document) { download_event_document_path(@event, document) },
+                show_visibility: false,
+                show_source: false,
+                show_actions: false %>
+    </div>
+  </section>
+
+  <section class="client-designs__panel">
+    <header class="client-designs__panel-header">
+      <h2>Upload inspiration</h2>
+      <p class="client-designs__hint">Upload PDFs, images, or boards to share back with your planner. Files are visible to everyone on the project.</p>
+    </header>
+    <div class="client-designs__panel-body">
+      <%= form_with model: @document, url: client_event_designs_path(@event), data: { document_upload_form: true, presign_url: presign_event_documents_path(@event) }, html: { class: "client-designs__form" } do |form| %>
+        <% if @document.errors.any? %>
+          <div class="client-designs__form-errors">
+            <h3><%= pluralize(@document.errors.count, "error") %> prevented saving:</h3>
+            <ul>
+              <% @document.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="client-designs__form-group">
+          <%= form.label :title, "Title" %>
+          <%= form.text_field :title, placeholder: "Eg. Reception inspiration", class: "client-designs__input" %>
+        </div>
+
+        <div class="client-designs__form-group">
+          <label for="document_file">File</label>
+          <input type="file" id="document_file" data-document-upload-target="file" class="client-designs__input" accept="application/pdf,image/*">
+          <p class="client-designs__hint" data-document-upload-target="status">Select a file to upload to R2.</p>
+        </div>
+
+        <%= form.hidden_field :storage_uri %>
+        <%= form.hidden_field :checksum %>
+        <%= form.hidden_field :size_bytes %>
+        <%= form.hidden_field :content_type %>
+        <%= form.hidden_field :logical_id %>
+
+        <div class="client-designs__form-actions">
+          <%= form.submit "Save upload", class: "client-designs__submit" %>
+        </div>
+      <% end %>
+    </div>
+  </section>
 </section>
+
+<%= render "documents/upload_script" %>

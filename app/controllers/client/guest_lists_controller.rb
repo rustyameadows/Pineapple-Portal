@@ -1,5 +1,5 @@
 module Client
-  class GuestListsController < EventScopedController
+  class GuestListsController < PortalController
     def show
       @guest_summary = []
     end

@@ -1,5 +1,5 @@
 module Client
-  class PaymentsController < EventScopedController
+  class PaymentsController < PortalController
     before_action :set_payment, only: %i[show mark_paid]
 
     def show

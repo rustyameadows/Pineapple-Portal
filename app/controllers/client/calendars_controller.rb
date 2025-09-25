@@ -1,5 +1,5 @@
 module Client
-  class CalendarsController < EventScopedController
+  class CalendarsController < PortalController
     helper CalendarHelper
     before_action :load_calendar
     before_action :load_views

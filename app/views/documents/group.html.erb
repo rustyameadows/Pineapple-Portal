@@ -16,42 +16,14 @@
         </header>
 
         <div class="event-section__body">
-          <% if @documents.any? %>
-            <ul class="event-docs__grid">
-              <% @documents.each do |document| %>
-                <li class="event-docs__card">
-                  <header class="event-docs__card-header">
-                    <h2 class="event-docs__title"><%= document.title %></h2>
-                    <% unless document.is_latest? %>
-                      <span class="event-docs__badge">v<%= document.version %></span>
-                    <% end %>
-                  </header>
-                  <dl class="event-docs__meta">
-                    <div>
-                      <dt>Version</dt>
-                      <dd>v<%= document.version %></dd>
-                    </div>
-                    <div>
-                      <dt>Updated</dt>
-                      <dd><%= l(document.updated_at, format: :long) %></dd>
-                    </div>
-                    <div>
-                      <dt>Visibility</dt>
-                      <dd><%= document.client_visible? ? "Shared with client" : "Planner only" %></dd>
-                    </div>
-                  </dl>
-                  <div class="event-docs__actions">
-                    <%= link_to "Open", event_document_path(@event, document), class: "event-docs__link" %>
-                    <%= link_to "Download", download_event_document_path(@event, document), class: "event-docs__link" %>
-                  </div>
-                </li>
-              <% end %>
-            </ul>
-          <% else %>
-            <div class="event-section__empty">
-              <p>No documents in this category yet.</p>
-            </div>
-          <% end %>
+          <div class="event-docs__panel">
+            <%= render "documents/summary_table", event: @event, groups: @document_groups, active_key: @source_key %>
+          </div>
+
+          <%= render "documents/table",
+                    documents: @documents,
+                    title_link: ->(document) { event_document_path(@event, document) },
+                    empty_message: "No documents in this category yet." %>
         </div>
       </section>
     </div>

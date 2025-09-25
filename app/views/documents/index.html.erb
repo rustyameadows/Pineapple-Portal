@@ -16,7 +16,17 @@
         </header>
 
         <div class="event-section__body">
-          <%= render "documents/summary_table", event: @event, groups: @document_groups %>
+          <div class="event-docs__panel">
+            <%= render "documents/summary_table", event: @event, groups: @document_groups %>
+          </div>
+
+          <div class="event-docs__panel">
+            <h2 class="event-section__subheading">Latest documents</h2>
+            <%= render "documents/table",
+                      documents: @latest_documents,
+                      title_link: ->(document) { event_document_path(@event, document) },
+                      empty_message: "No documents uploaded yet." %>
+          </div>
         </div>
       </section>
     </div>
