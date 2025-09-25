@@ -1,5 +1,3 @@
-@import "../base/tokens.css";
-
 .flash {
   padding: var(--space-2);
   margin-block-end: var(--space-3);

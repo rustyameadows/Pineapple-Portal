@@ -1,0 +1,25 @@
+.event-form__checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.35rem 0.75rem;
+}
+
+.event-form__submit--small {
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-pill);
+}
+
+.event-form__submit--danger {
+  background: var(--color-red-100);
+  color: var(--color-red-600);
+}
+
+.event-form__submit--danger:hover,
+.event-form__submit--danger:focus {
+  background: var(--color-red-200);
+}
+
+.event-form__actions--delete {
+  margin-top: var(--space-4);
+  justify-content: flex-start;
+}

@@ -1,0 +1,114 @@
+.client-questionnaire__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.client-questionnaire__header-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.client-questionnaire__header-actions form {
+  margin: 0;
+}
+
+.client-questionnaire__status {
+  margin: 0.5rem 0;
+}
+
+.client-questionnaire__status-action {
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-white);
+  font-size: var(--font-size-200);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  padding: 0.55rem 1.4rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.client-questionnaire__status-action:hover,
+.client-questionnaire__status-action:focus {
+  background: var(--color-accent-strong);
+}
+
+.client-questionnaire__section {
+  border: 1px solid var(--color-sand-300);
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.25rem;
+  background: var(--color-white);
+}
+
+.client-questionnaire__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.client-questionnaire__intro h2 {
+  margin: 0 0 0.5rem;
+}
+
+.client-questionnaire__questions {
+  display: grid;
+  gap: 1rem;
+}
+
+.client-questionnaire__question {
+  background: var(--color-white);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-sand-300);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.client-questionnaire__prompt {
+  margin: 0 0 0.5rem;
+}
+
+.client-questionnaire__helper,
+.client-questionnaire__empty {
+  margin: 0;
+  color: var(--color-clay-400);
+  font-style: italic;
+}
+
+.client-questionnaire__control {
+  margin: 0.75rem 0 1rem;
+}
+
+.client-questionnaire__control textarea,
+.client-questionnaire__control select {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-sand-400);
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.client-questionnaire__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 700px) {
+  .client-questionnaire__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .client-questionnaire__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}

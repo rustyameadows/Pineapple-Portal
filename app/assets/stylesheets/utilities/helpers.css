@@ -1,0 +1,9 @@
+.stack {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.breadcrumbs {
+  font-size: var(--font-size-200);
+  color: var(--color-neutral-500);
+}

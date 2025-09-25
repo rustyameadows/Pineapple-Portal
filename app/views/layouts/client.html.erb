@@ -5,7 +5,33 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <% client_stylesheets = %w[
+      base/tokens
+      base/reset
+      base/elements
+      utilities/helpers
+      utilities/responsive
+      layout/client-shell
+      components/flash
+      components/cards
+      components/buttons
+      components/forms
+      components/tables
+      components/pills
+      components/tags
+      components/modal
+      components/event-links
+      components/timeline
+      components/calendar-grid
+      components/documents-table
+      pages/client-portal
+      pages/client-designs
+      pages/client-financials
+      pages/client-questionnaires
+    ] %>
+    <% client_stylesheets.each do |logical_path| %>
+      <%= stylesheet_link_tag logical_path, "data-turbo-track": "reload" %>
+    <% end %>
     <%= javascript_importmap_tags %>
   </head>
   <body class="client-shell">

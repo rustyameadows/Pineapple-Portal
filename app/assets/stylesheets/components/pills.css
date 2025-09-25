@@ -1,0 +1,45 @@
+.event-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-100);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-surface-accent);
+  color: var(--color-clay-500);
+}
+
+.event-status-tag--finished {
+  border-color: var(--color-green-500);
+  background: color-mix(in srgb, var(--color-green-500) 20%, white);
+  color: var(--color-green-500);
+}
+
+.event-status-tag--in-progress {
+  border-color: var(--color-blue-500);
+  background: var(--color-blue-100);
+  color: var(--color-blue-600);
+}
+
+.client-financials__status {
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-clay-400) 12%, white);
+  color: var(--color-clay-400);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.client-financials__status--completed {
+  background: color-mix(in srgb, var(--color-green-500) 16%, white);
+  color: var(--color-green-500);
+}
+
+.client-financials__status--upcoming {
+  background: var(--color-blue-100);
+  color: var(--color-blue-700);
+}

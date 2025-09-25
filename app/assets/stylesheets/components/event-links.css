@@ -1,5 +1,3 @@
-@import "../base/tokens.css";
-
 .event-links {
   display: grid;
   gap: var(--space-5);

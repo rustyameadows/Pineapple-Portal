@@ -8,6 +8,24 @@ Minimal Rails 8 skeleton for the Pineapple Productions portal. Ships with Postgr
 - PostgreSQL 16
 - Node.js 24 (runtime for Rails asset tooling)
 
+## CSS Architecture
+
+Rails 8 uses Propshaft, which serves whatever lives in `app/assets` exactly as-is. To stay modular without introducing a build step, we organise styles into partials inside `app/assets/stylesheets/{base,layout,components,pages,utilities}` and then list the ones we need explicitly in each layout.
+
+### Layout load order
+- `app/views/layouts/application.html.erb` (planner UI) loops over a curated list of base tokens/resets, layout chrome, shared components, and planner page styles and emits one `stylesheet_link_tag` for each file.
+- `app/views/layouts/client.html.erb` does the same but with the slimmer client portal set.
+- Auth screens use the planner layout as-is; you can trim that list or create a dedicated layout later if you need a lighter bundle.
+
+Because every file referenced in the layout corresponds directly to a physical file (e.g. `components/buttons.css`), Propshaft can fingerprint and cache them without chasing CSS `@import` statements. HTTP/2 handles the parallel requests, and you get predictable cascade ordering by arranging the lists.
+
+### Working with styles
+1. Drop new rules into the appropriate partial, or create a new file under `components/` or `pages/` if it doesn’t exist yet. Avoid using CSS `@import`; the layout handles inclusion.
+2. Add the logical path (without the `.css` extension) to the relevant layout list so it loads on the right surface.
+3. Reload the page. In development Propshaft reads straight from disk, so no server restart or build step is required.
+
+If you find yourself reusing a partial in both planner and client layouts, just add it to both lists. Keeping the inclusion explicit makes it easy to see which surfaces depend on which styles, and you can reorganise the order in one place.
+
 ## Local Environment
 
 ### Prerequisites

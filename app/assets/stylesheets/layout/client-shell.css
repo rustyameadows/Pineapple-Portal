@@ -1,5 +1,3 @@
-@import "../base/tokens.css";
-
 .client-shell {
   min-height: 100vh;
   background: var(--color-surface-muted);
@@ -48,4 +46,15 @@
   padding: 2.5rem 1.5rem 3rem;
   display: grid;
   gap: 2rem;
+}
+
+@media (max-width: 760px) {
+  .client-shell__header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .client-hero {
+    padding: 1.5rem;
+  }
 }

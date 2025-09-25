@@ -1,0 +1,323 @@
+.client-hero {
+  background: var(--color-sand-100);
+  border: 1px solid var(--color-sand-300);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.client-hero__meta {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.client-hero__eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-clay-400);
+}
+
+.client-hero__title {
+  margin: 0;
+  font-size: 2.1rem;
+}
+
+.client-hero__dates {
+  margin: 0;
+  color: var(--color-clay-500);
+}
+
+.client-hero__links {
+  border-top: 1px solid var(--color-sand-300);
+  padding-top: 1.25rem;
+}
+
+.client-hero__links-title {
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  color: var(--color-clay-400);
+}
+
+.client-hero__links-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.client-hero__links-list a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.client-hero__links-list a:hover,
+.client-hero__links-list a:focus {
+  text-decoration: underline;
+}
+
+.client-hero__links-empty {
+  margin: 0;
+  color: var(--color-clay-400);
+  font-style: italic;
+}
+
+.client-dashboard {
+  display: grid;
+  gap: 1rem;
+}
+
+.client-dashboard__heading {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.client-dashboard__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.client-dashboard__grid--three {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.client-dashboard__card {
+  background: var(--color-sand-100);
+  border: 1px solid var(--color-sand-300);
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.client-dashboard__card h3 {
+  margin: 0;
+}
+
+.client-dashboard__card p {
+  margin: 0;
+  color: var(--color-clay-500);
+}
+
+.client-dashboard__cta {
+  text-decoration: none;
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-clay-600);
+}
+
+.client-dashboard__cta:hover,
+.client-dashboard__cta:focus {
+  text-decoration: underline;
+}
+
+.client-page {
+  background: var(--color-sand-100);
+  border: 1px solid var(--color-sand-300);
+  border-radius: 10px;
+  padding: 2rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.client-page__header h1 {
+  margin: 0 0 0.5rem;
+}
+
+.client-page__header p {
+  margin: 0;
+  color: var(--color-clay-500);
+}
+
+.client-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.client-list li {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-sand-300);
+  background: var(--color-white);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.client-list li strong {
+  color: var(--color-clay-600);
+}
+
+.client-list__title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.client-list__title a {
+  text-decoration: none;
+  color: var(--color-clay-600);
+  font-weight: var(--font-weight-semibold);
+}
+
+.client-list__title a:hover,
+.client-list__title a:focus {
+  text-decoration: underline;
+}
+
+.client-placeholder {
+  padding: 1.25rem;
+  border: 1px dashed var(--color-sand-400);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--color-clay-400);
+  background: rgba(255, 250, 241, 0.6);
+}
+
+.client-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--font-size-100);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--color-sand-300);
+  background: var(--color-sand-100);
+  color: var(--color-clay-500);
+}
+
+.client-status-tag--finished {
+  border-color: var(--color-green-500);
+  background: color-mix(in srgb, var(--color-green-500) 18%, white);
+  color: var(--color-green-500);
+}
+
+.client-status-tag--in-progress {
+  border-color: var(--color-blue-500);
+  background: var(--color-blue-100);
+  color: var(--color-blue-600);
+}
+
+.client-calendar__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.client-calendar__table td {
+  vertical-align: top;
+}
+
+.client-calendar__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: var(--font-weight-semibold);
+}
+
+.client-calendar__title strong {
+  font-weight: var(--font-weight-medium);
+}
+
+.client-calendar__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.6rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.client-calendar__meta {
+  margin-top: 0.5rem;
+}
+
+.client-calendar__meta-line {
+  margin: 0.35rem 0 0;
+  font-size: var(--font-size-200);
+  color: var(--color-neutral-500);
+}
+
+.client-calendar__note,
+.client-calendar__notes {
+  margin-top: 0.5rem;
+  color: var(--color-neutral-600);
+}
+
+.client-calendar__notes p {
+  margin: 0 0 0.5rem;
+}
+
+.client-calendar__details {
+  margin: 0.75rem 0 0;
+  color: var(--color-neutral-600);
+  max-width: 36rem;
+}
+
+.client-calendar__duration {
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.client-calendar__when {
+  margin: 0.25rem 0 0;
+  color: var(--color-neutral-500);
+  white-space: nowrap;
+}
+
+.client-calendar__nav {
+  margin: 1.5rem 0;
+}
+
+.client-calendar__nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.client-calendar__nav-link {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  color: var(--color-clay-600);
+}
+
+.client-calendar__nav-link:hover,
+.client-calendar__nav-link:focus {
+  text-decoration: underline;
+}
+
+.client-calendar__nav-link--active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.client-calendar__anchor {
+  margin: 0.35rem 0 0;
+  font-size: var(--font-size-200);
+}
+
+.client-calendar__tags {
+  max-width: 16rem;
+}

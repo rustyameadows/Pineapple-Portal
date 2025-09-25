@@ -75,16 +75,16 @@ app/assets/stylesheets/
    - When legacy shrinks to zero, remove the file and its import.
 
 ## Execution Checklist
-- [ ] Create empty partials for all target files and update manifest imports.
-- [ ] Migrate layout rules (`event-layout`, `event-sidebar`, etc.) to `layout/app-shell.css` & friends.
-- [ ] Extract shared button/form/table styles to token-based components.
-- [ ] Move documents-specific styles to `components/documents-table.css` and `pages/documents.css`.
-- [ ] Move calendar and grid styles to `components/calendar-grid.css` and `pages/events-calendar.css`.
-- [ ] Move payments/approvals styling to `components/payments-list.css`, `components/approvals-list.css`, and `pages/events-payments.css`, `pages/events-approvals.css`.
-- [ ] Migrate client portal pages (designs, financials, questionnaires) to `pages/client-*.css`.
-- [ ] Centralize tag/pill styling in `components/tags.css` and update tag helper usage if needed.
-- [ ] Extract utilities into `utilities/helpers.css` and replace scattered helper classes.
-- [ ] Remove duplicate/residual rules from `legacy/legacy.css` until empty.
+- [x] Create empty partials for all target files and update manifest imports.
+- [x] Migrate layout rules (`event-layout`, `event-sidebar`, etc.) to `layout/app-shell.css` & friends.
+- [x] Extract shared button/form/table styles to token-based components.
+- [x] Move documents-specific styles to `components/documents-table.css` and `pages/documents.css`.
+- [x] Move calendar and grid styles to `components/calendar-grid.css` and `pages/events-calendar.css`.
+- [x] Move payments/approvals styling to `components/payments-list.css`, `components/approvals-list.css`, and `pages/events-payments.css`, `pages/events-approvals.css`.
+- [x] Migrate client portal pages (designs, financials, questionnaires) to `pages/client-*.css`.
+- [x] Centralize tag/pill styling in `components/tags.css` and update tag helper usage if needed.
+- [x] Extract utilities into `utilities/helpers.css` and replace scattered helper classes.
+- [x] Remove duplicate/residual rules from `legacy/legacy.css` until empty.
 
 ## Testing Plan
 - After each migration chunk, smoke test key flows: planner events show, documents index, payments index/show, approvals index/show, calendar grid, client designs/financials/questionnaires.
