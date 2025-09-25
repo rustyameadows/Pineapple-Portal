@@ -1,0 +1,72 @@
+:root {
+  /* Typography */
+  --font-family-sans: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-serif: "Georgia", serif;
+  --font-family-mono: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --font-size-100: 0.75rem;
+  --font-size-200: 0.875rem;
+  --font-size-300: 1rem;
+  --font-size-400: 1.125rem;
+  --font-size-500: 1.25rem;
+  --font-size-600: 1.5rem;
+  --font-size-700: 1.875rem;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Spacing */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 4px 10px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 12px 24px rgba(15, 23, 42, 0.12);
+
+  /* Palette */
+  --color-white: #ffffff;
+  --color-ink: #1f2937;
+  --color-ink-subtle: #4b5563;
+  --color-ink-muted: #6b7280;
+  --color-surface: #ffffff;
+  --color-surface-muted: #fdfbf6;
+  --color-border: #d1d5db;
+  --color-border-strong: #a8adb4;
+  --color-focus: #2455f5;
+  --color-success: #2f6847;
+  --color-danger: #8f2d2d;
+  --color-warning: #b45309;
+
+  /* Accents */
+  --color-accent: #2455f5;
+  --color-accent-muted: #dbe4ff;
+  --color-accent-strong: #1c43c6;
+
+  /* Layering */
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-modal: 1100;
+  --z-toast: 1200;
+}
+
+[data-theme="client"] {
+  --color-accent: #8a5a2b;
+  --color-accent-muted: #f5e6d3;
+  --color-accent-strong: #6d431e;
+}

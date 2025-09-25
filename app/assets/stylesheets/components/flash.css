@@ -1,0 +1,25 @@
+@import "../base/tokens.css";
+
+.flash {
+  padding: var(--space-2);
+  margin-block-end: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #f5f5f5;
+}
+
+.flash-notice {
+  border-color: var(--color-success);
+}
+
+.flash-alert {
+  border-color: var(--color-danger);
+}
+
+.flash-toast {
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: var(--z-toast);
+  min-width: 200px;
+}
