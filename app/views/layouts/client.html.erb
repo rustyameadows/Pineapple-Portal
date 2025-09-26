@@ -5,6 +5,17 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <% [
+      ["/fonts/ufonts.com_baskervilleno2bt-roman-opentype-webfont.woff", "font/woff"],
+      ["/fonts/Didot.woff2", "font/woff2"],
+      ["/fonts/SackersGothicStd-Medium.woff", "font/woff"],
+      ["/fonts/mrseavessmallcaps_regular-webfont.woff2", "font/woff2"],
+      ["/fonts/DidotLTStd-Italic.woff", "font/woff"]
+    ].each do |path, mime|
+    %>
+      <link rel="preload" href="<%= path %>" as="font" type="<%= mime %>" crossorigin>
+    <% end %>
+
     <% client_stylesheets = %w[
       base/fonts
       base/tokens

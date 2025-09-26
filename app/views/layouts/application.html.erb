@@ -10,6 +10,19 @@
 
     <%= yield :head %>
 
+    <%# Preload key typography assets to avoid layout shifts %>
+    <%# Preload fonts to reduce layout shift %>
+    <% [
+      ["/fonts/ufonts.com_baskervilleno2bt-roman-opentype-webfont.woff", "font/woff"],
+      ["/fonts/Didot.woff2", "font/woff2"],
+      ["/fonts/SackersGothicStd-Medium.woff", "font/woff"],
+      ["/fonts/mrseavessmallcaps_regular-webfont.woff2", "font/woff2"],
+      ["/fonts/DidotLTStd-Italic.woff", "font/woff"]
+    ].each do |path, mime|
+    %>
+      <link rel="preload" href="<%= path %>" as="font" type="<%= mime %>" crossorigin>
+    <% end %>
+
     <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
     <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
