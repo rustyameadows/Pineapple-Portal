@@ -11,13 +11,37 @@
                             else
                               "Dates TBD"
                             end %>
+<% event_reference_date = @event.starts_on || @event.ends_on %>
+<% event_days_until_label = if event_reference_date.present?
+                              days = (event_reference_date.to_date - Time.zone.today).to_i
+                              if days.positive?
+                                "#{pluralize(days, 'day')} away"
+                              elsif days.zero?
+                                "Today"
+                              else
+                                "#{pluralize(days.abs, 'day')} ago"
+                              end
+                            else
+                              "TBD"
+                            end %>
+<% event_venue_label = @event.location.presence || "Venue TBD" %>
 
 <section class="client-header" id="portal-header">
   <div class="client-container">
-    <div class="client-header__meta">
-      <p class="client-header__eyebrow"><%= @event.location.presence || "Location TBD" %></p>
-      <h1 class="client-header__title"><%= @event.name %></h1>
-      <p class="client-header__dates"><%= event_date_range_label %></p>
+    <div class="client-header__grid">
+      <div class="client-header__column">
+        <p class="client-header__value"><%= event_date_range_label %></p>
+        <%= image_tag "hero-divider-line.png", alt: "", class: "client-header__divider" %>
+        <p class="client-header__value"><%= event_days_until_label %></p>
+      </div>
+      <div class="client-header__center">
+        <h1 class="client-header__title"><%= @event.name %></h1>
+      </div>
+      <div class="client-header__column">
+        <p class="client-header__value"><%= event_venue_label %></p>
+        <%= image_tag "hero-divider-line.png", alt: "", class: "client-header__divider" %>
+        <p class="client-header__value">TBD</p>
+      </div>
     </div>
   </div>
 </section>
@@ -25,13 +49,10 @@
 <section class="client-planning-grid" id="planning-grid">
   <div class="client-container">
     <div class="client-planning-grid__grid">
-      <% @module_cards.each do |card|
-           link_label = card.fetch(:link_label, "Open") %>
-        <article class="client-planning-grid__card">
+      <% @module_cards.each do |card| %>
+        <%= link_to card[:path], class: "client-planning-grid__card" do %>
           <h3><%= card[:title] %></h3>
-          <p><%= card[:description] %></p>
-          <%= link_to link_label, card[:path], class: "client-planning-grid__cta" %>
-        </article>
+        <% end %>
       <% end %>
     </div>
   </div>

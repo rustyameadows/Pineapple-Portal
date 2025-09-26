@@ -55,6 +55,7 @@
   --color-dark-green: #43554a;
   --color-light-green: #9daf9d;
   --color-gold: #be9c72;
+  --color-sand: #f3e4d2;
 
   /* Neutral aliases */
   --color-neutral-50: var(--color-light-cream);

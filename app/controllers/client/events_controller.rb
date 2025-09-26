@@ -26,15 +26,6 @@ module Client
 
       cards = []
 
-      if calendar&.client_visible? || visible_views.any?
-        default_slug = calendar&.client_visible? ? "run-of-show" : visible_views.first.slug
-        cards << {
-          title: "Event Schedule",
-          description: "See the master run of show and shared timelines.",
-          path: client_event_calendar_path(@event, default_slug)
-        }
-      end
-
       decision_view = visible_views.find { |view| view.slug == "decision-calendar" }
 
       cards.concat(
