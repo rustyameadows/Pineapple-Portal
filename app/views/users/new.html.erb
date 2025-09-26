@@ -10,7 +10,14 @@
     <p class="flash alert"><%= flash[:alert] %></p>
   <% end %>
 
-  <%= render "form", user: @user, first_account: first_account, allow_role_select: (current_user&.admin? || first_account), submit_label: (first_account ? "Create Account" : "Invite Teammate"), require_password: true %>
+  <%= render "form",
+            user: @user,
+            first_account: first_account,
+            allow_role_select: (@allow_role_select || first_account),
+            role_options: @role_options,
+            submit_label: (first_account ? "Create Account" : "Invite Teammate"),
+            require_password: true,
+            return_to: @return_to %>
 
   <% unless first_account %>
     <p>

@@ -15,7 +15,13 @@
         </header>
 
         <div class="event-section__body">
-          <%= render "form", user: @user, allow_role_select: current_user&.admin?, submit_label: "Save Changes", require_password: false %>
+          <%= render "form",
+                    user: @user,
+                    allow_role_select: @allow_role_select,
+                    role_options: @role_options,
+                    submit_label: "Save Changes",
+                    require_password: false,
+                    return_to: @return_to %>
         </div>
       </section>
     </div>

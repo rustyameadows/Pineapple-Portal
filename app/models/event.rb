@@ -8,6 +8,15 @@ class Event < ApplicationRecord
   has_many :approvals, dependent: :destroy
   has_many :event_team_members, dependent: :destroy
   has_many :team_members, through: :event_team_members, source: :user
+  has_many :planner_team_members,
+           -> { where(member_role: EventTeamMember::TEAM_ROLES[:planner]) },
+           class_name: "EventTeamMember",
+           inverse_of: :event
+  has_many :client_team_members,
+           -> { where(member_role: EventTeamMember::TEAM_ROLES[:client]) },
+           class_name: "EventTeamMember",
+           inverse_of: :event
+  has_many :client_users, through: :client_team_members, source: :user
   has_many :event_calendars, dependent: :destroy
   has_many :calendar_items, through: :event_calendars
   has_many :event_calendar_views, through: :event_calendars

@@ -10,9 +10,12 @@
           <div>
             <p class="event-section__eyebrow">Team</p>
             <h1 class="event-section__title">Team Roster</h1>
-            <p class="event-section__lead">Invite teammates so they can contribute to every event.</p>
+            <p class="event-section__lead">Invite planners and manage client accounts for portal access.</p>
           </div>
           <div class="event-section__actions">
+            <%= link_to(@show_clients ? "Hide clients" : "Show clients",
+                        users_path(@show_clients ? {} : { show_clients: 1 }),
+                        class: "event-section__link") %>
             <%= link_to "Add Teammate", new_user_path, class: "event-section__cta" %>
           </div>
         </header>

@@ -20,19 +20,21 @@ module Events
       team_member = EventTeamMember.find_by(event: @event, user: users(:planner_two))
       assert team_member.client_visible?
       assert_equal EventTeamMember.where(event: @event).maximum(:position), team_member.position
+      assert_equal "planner", team_member.member_role
     end
 
-    test "cannot add non planner" do
+    test "cannot add client as planner" do
       assert_no_difference("EventTeamMember.count") do
         post event_team_members_url(@event), params: {
           event_team_member: {
-            user_id: users(:client_contact).id
+            user_id: users(:client_contact).id,
+            member_role: "planner"
           }
         }
       end
 
       assert_redirected_to event_settings_url(@event)
-      assert_match "must be a planner", flash[:alert]
+      assert_match "must be a planner or admin", flash[:alert]
     end
 
     test "updates visibility" do
@@ -44,6 +46,22 @@ module Events
 
       assert_redirected_to event_settings_url(@event)
       assert member.reload.client_visible?
+    end
+
+    test "adds client to event" do
+      assert_difference("EventTeamMember.count") do
+        post event_team_members_url(@event), params: {
+          event_team_member: {
+            user_id: users(:client_two).id,
+            member_role: "client"
+          }
+        }
+      end
+
+      assert_redirected_to event_settings_url(@event)
+      team_member = EventTeamMember.find_by(event: @event, user: users(:client_two))
+      assert_equal "client", team_member.member_role
+      assert team_member.client_visible?
     end
 
     test "updates lead planner" do
@@ -68,6 +86,18 @@ module Events
 
       assert_redirected_to event_settings_url(@event)
       assert_equal 5, member.reload.position
+    end
+
+    test "deactivates client access" do
+      member = event_team_members(:client_one)
+      assert member.client_visible?
+
+      patch event_team_member_url(@event, member), params: {
+        event_team_member: { client_visible: "0" }
+      }
+
+      assert_redirected_to event_settings_url(@event)
+      refute member.reload.client_visible?
     end
 
     test "removes team member" do

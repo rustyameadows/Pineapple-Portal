@@ -25,6 +25,11 @@ class User < ApplicationRecord
   validates :phone_number, length: { maximum: 32 }, allow_blank: true
 
   scope :planners, -> { where(role: ROLES[:planner]) }
+  scope :clients, -> { where(role: ROLES[:client]) }
+
+  def planner_or_admin?
+    planner? || admin?
+  end
 
   private
 

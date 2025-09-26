@@ -95,24 +95,25 @@
 
         <div class="event-section__body">
           <div class="event-settings__team">
-            <% if @team_members.any? %>
+            <h3>Planning Team</h3>
+            <% if @planner_team_members.any? %>
               <table class="event-table">
                 <thead>
                   <tr>
                     <th>Planner</th>
                     <th>Title</th>
                     <th>Phone</th>
-                    <th>Client Visible</th>
+                    <th>Visible to Clients</th>
                     <th>Lead Planner</th>
                     <th>Order</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  <% @team_members.each do |team_member| %>
+                  <% @planner_team_members.each do |team_member| %>
                     <% user = team_member.user %>
                     <tr>
-                      <td><%= user.name %></td>
+                      <td><%= link_to user.name, edit_user_path(user, return_to: event_settings_path(@event)), class: "event-section__link" %></td>
                       <td><%= user.title.presence || "—" %></td>
                       <td><%= user.phone_number.presence || "—" %></td>
                       <td>
@@ -152,17 +153,110 @@
             <div class="event-settings__new-link">
               <h3>Add Planner</h3>
               <% if @available_planners.any? %>
-                <%= form_with model: [@event, @team_member], url: event_team_members_path(@event), local: true, class: "event-settings__form" do |form| %>
+                <%= form_with model: [@event, @planner_team_member], url: event_team_members_path(@event), local: true, class: "event-settings__form" do |form| %>
                   <div class="event-settings__field">
                     <%= form.label :user_id, "Planner" %>
                     <%= form.collection_select :user_id, @available_planners, :id, ->(user) { "#{user.name}#{user.title.present? ? " – #{user.title}" : ""}" }, include_blank: "Select planner" %>
                   </div>
+                  <%= form.hidden_field :member_role, value: EventTeamMember::TEAM_ROLES[:planner] %>
                   <div class="event-settings__form-actions">
                     <%= form.submit "Add to event" %>
                   </div>
                 <% end %>
               <% else %>
                 <p class="event-settings__empty">All planners are already assigned to this event.</p>
+              <% end %>
+            </div>
+
+            <hr class="event-settings__divider">
+
+            <h3>Client Access</h3>
+            <% if @client_team_members.any? %>
+              <table class="event-table event-table--clients">
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Portal Access</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @client_team_members.each do |team_member| %>
+                    <% user = team_member.user %>
+                    <tr>
+                      <td><%= user.name %></td>
+                      <td><%= user.email %></td>
+                      <td><%= user.phone_number.presence || "—" %></td>
+                      <td>
+                        <%= form_with url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do %>
+                          <label class="event-settings__toggle">
+                            <%= hidden_field_tag "event_team_member[client_visible]", 0 %>
+                            <%= check_box_tag "event_team_member[client_visible]", 1, team_member.client_visible?, onchange: "this.form.submit()", aria: { label: "Toggle portal access for #{user.name}" } %>
+                            <span><%= team_member.client_visible? ? "Active" : "Disabled" %></span>
+                          </label>
+                        <% end %>
+                      </td>
+                      <td class="event-table__actions">
+                        <%= link_to "Edit", edit_user_path(user, return_to: event_settings_path(@event)), class: "event-section__link" %>
+                        <%= button_to "Remove", event_team_member_path(@event, team_member), method: :delete, data: { turbo_confirm: "Remove #{user.name}'s portal access?" }, class: "event-section__link event-section__link--danger" %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% else %>
+              <p class="event-settings__empty">No client accounts are linked yet.</p>
+            <% end %>
+
+            <div class="event-settings__client-actions">
+              <div class="event-settings__client-action">
+                <h4>Invite a Client</h4>
+                <%= form_with model: [@event, @client_team_member], url: event_team_members_path(@event), local: true, class: "event-settings__form event-settings__form--stack" do |form| %>
+                  <%= form.hidden_field :member_role, value: EventTeamMember::TEAM_ROLES[:client] %>
+                  <%= form.hidden_field :client_visible, value: 1 %>
+
+                  <%= form.fields_for :client_user_attributes do |client_fields| %>
+                    <div class="event-settings__details-grid">
+                      <div class="event-settings__field">
+                        <%= client_fields.label :name, "Name" %>
+                        <%= client_fields.text_field :name, required: true %>
+                      </div>
+                      <div class="event-settings__field">
+                        <%= client_fields.label :email, "Email" %>
+                        <%= client_fields.email_field :email, required: true, autocomplete: "email" %>
+                      </div>
+                      <div class="event-settings__field">
+                        <%= client_fields.label :phone_number, "Phone" %>
+                        <%= client_fields.telephone_field :phone_number, placeholder: "555-123-4567" %>
+                      </div>
+                    </div>
+                  <% end %>
+
+                  <p class="event-settings__hint">A temporary password will be generated and shown after saving so you can share it with the client.</p>
+
+                  <div class="event-settings__form-actions">
+                    <%= form.submit "Invite client" %>
+                  </div>
+                <% end %>
+              </div>
+
+              <% if @available_clients.any? %>
+                <div class="event-settings__client-action">
+                  <h4>Grant Existing Client Access</h4>
+                  <%= form_with model: [@event, @client_link_member], url: event_team_members_path(@event), local: true, class: "event-settings__form event-settings__form--inline" do |form| %>
+                    <div class="event-settings__field">
+                      <%= form.label :user_id, "Client" %>
+                      <%= form.collection_select :user_id, @available_clients, :id, ->(user) { "#{user.name} (#{user.email})" }, include_blank: "Select client" %>
+                    </div>
+                    <%= form.hidden_field :member_role, value: EventTeamMember::TEAM_ROLES[:client] %>
+                    <%= form.hidden_field :client_visible, value: 1 %>
+                    <div class="event-settings__form-actions">
+                      <%= form.submit "Grant access" %>
+                    </div>
+                  <% end %>
+                </div>
               <% end %>
             </div>
           </div>

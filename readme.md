@@ -70,6 +70,7 @@ Visit http://localhost:3000 after boot (you’ll be redirected to log in first).
 - Log in at http://localhost:3000/login using any seeded account (`ada@example.com` / `password123`).
 - If the database is empty, visit http://localhost:3000/users/new to create the first account; the app automatically signs you in after that.
 - Once signed in, you’ll land on the event dashboard. Head to `/users` (linked in the sidebar) whenever you need to invite more teammates.
+- Client users sign in at http://localhost:3000/portal/login. Create a client user via `/users` (set the role to “client”), then grant event access from **Event → Settings → Planning Team → Client Access**.
 
 ### Tests
 ```bash

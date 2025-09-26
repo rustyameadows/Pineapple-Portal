@@ -4,10 +4,42 @@ module Events
     before_action :set_team_member, only: %i[update destroy]
 
     def create
-      @team_member = @event.event_team_members.new(team_member_params)
+      attributes = team_member_params
+      client_user_data = attributes.delete(:client_user_attributes)
+      if client_user_data.is_a?(ActionController::Parameters)
+        client_user_data = client_user_data.permit(:name, :email, :phone_number).to_h
+      end
+      generated_password = nil
+
+      if attributes[:member_role] == EventTeamMember::TEAM_ROLES[:client]
+        attributes[:client_visible] = true unless attributes.key?(:client_visible)
+
+        if attributes[:user_id].blank?
+          if client_user_data.present?
+            user, generated_password = build_client_user(client_user_data)
+            unless user.save
+              redirect_to event_settings_path(@event), alert: user.errors.full_messages.to_sentence and return
+            end
+            attributes[:user_id] = user.id
+          else
+            redirect_to event_settings_path(@event), alert: "Select an existing client or enter details to invite one." and return
+          end
+        end
+      end
+
+      @team_member = @event.event_team_members.new(attributes)
 
       if @team_member.save
-        redirect_to event_settings_path(@event), notice: "Planner added to the event."
+        notice = if @team_member.client?
+                   if generated_password
+                     "Client invited. Temporary password: #{generated_password}"
+                   else
+                     "Client access granted."
+                   end
+                 else
+                   "Planner added to the event."
+                 end
+        redirect_to event_settings_path(@event), notice: notice
       else
         redirect_to event_settings_path(@event), alert: @team_member.errors.full_messages.to_sentence
       end
@@ -15,7 +47,8 @@ module Events
 
     def update
       if @team_member.update(team_member_update_params)
-        redirect_to event_settings_path(@event), notice: "Visibility updated."
+        message = @team_member.client? ? "Client access updated." : "Team member updated."
+        redirect_to event_settings_path(@event), notice: message
       else
         redirect_to event_settings_path(@event), alert: @team_member.errors.full_messages.to_sentence
       end
@@ -23,7 +56,7 @@ module Events
 
     def destroy
       @team_member.destroy
-      redirect_to event_settings_path(@event), notice: "Planner removed from the event."
+      redirect_to event_settings_path(@event), notice: "Team member removed from the event."
     end
 
     private
@@ -38,19 +71,44 @@ module Events
 
     def team_member_params
       normalize_team_member_attributes(
-        params.require(:event_team_member).permit(:user_id, :client_visible, :lead_planner, :position)
+        params.require(:event_team_member).permit(:user_id, :client_visible, :lead_planner, :position, :member_role,
+                                                  client_user_attributes: %i[name email phone_number])
       )
     end
 
     def team_member_update_params
       normalize_team_member_attributes(
-        params.require(:event_team_member).permit(:client_visible, :lead_planner, :position)
+        params.require(:event_team_member).permit(:client_visible, :lead_planner, :position, :member_role)
       )
     end
 
     def normalize_team_member_attributes(permitted_params)
       permitted_params[:position] = permitted_params[:position].presence&.to_i if permitted_params.key?(:position)
+      if permitted_params.key?(:member_role)
+        permitted_params[:member_role] = permitted_params[:member_role].presence&.to_s
+      end
+      if permitted_params[:client_user_attributes].is_a?(ActionController::Parameters)
+        permitted_params[:client_user_attributes] = permitted_params[:client_user_attributes]
+                                                .permit(:name, :email, :phone_number)
+                                                .to_h
+      end
       permitted_params
+    end
+
+    def build_client_user(attrs)
+      attrs = attrs.to_h.symbolize_keys
+      password = SecureRandom.alphanumeric(12)
+
+      user = User.new(
+        name: attrs[:name],
+        email: attrs[:email],
+        phone_number: attrs[:phone_number],
+        role: User::ROLES[:client],
+        password: password,
+        password_confirmation: password
+      )
+
+      [user, password]
     end
   end
 end

@@ -1,0 +1,34 @@
+<% provide :page_shell do %>
+  <div class="auth-shell">
+    <section class="auth-card">
+      <header class="auth-card__header">
+        <h1>Client Portal Login</h1>
+        <p>Enter the credentials provided by your planner to access your event.</p>
+      </header>
+
+      <% if flash[:alert].present? %>
+        <p class="auth-card__flash auth-card__flash--alert"><%= flash[:alert] %></p>
+      <% elsif flash[:notice].present? %>
+        <p class="auth-card__flash auth-card__flash--notice"><%= flash[:notice] %></p>
+      <% end %>
+
+      <%= form_with url: client_login_path, method: :post, class: "auth-form" do |form| %>
+        <div class="auth-form__group">
+          <%= form.label :email %>
+          <%= form.email_field :email, required: true, autofocus: true, autocomplete: "email" %>
+        </div>
+
+        <div class="auth-form__group">
+          <%= form.label :password %>
+          <%= form.password_field :password, required: true, autocomplete: "current-password" %>
+        </div>
+
+        <div class="auth-form__actions">
+          <%= form.submit "Sign In", class: "auth-button" %>
+        </div>
+      <% end %>
+
+      <p class="auth-card__footer">Need access? Contact your planner for help.</p>
+    </section>
+  </div>
+<% end %>

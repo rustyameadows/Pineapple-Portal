@@ -82,6 +82,10 @@ Rails.application.routes.draw do
   end
 
   namespace :client, path: "portal" do
+    get "login", to: "sessions#new"
+    post "login", to: "sessions#create"
+    delete "logout", to: "sessions#destroy"
+
     resources :events, only: :show do
       resources :calendars, only: %i[index show], param: :slug
       resource :guest_list, only: :show, controller: :guest_lists

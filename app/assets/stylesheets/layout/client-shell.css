@@ -73,6 +73,24 @@
   text-align: right;
 }
 
+.client-nav__logout {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid rgba(250, 249, 245, 0.4);
+  color: var(--color-light-cream);
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.client-nav__logout:hover,
+.client-nav__logout:focus {
+  border-color: rgba(250, 249, 245, 0.7);
+}
+
 .client-nav__spacer {
   display: block;
   width: 40px;
