@@ -1,60 +1,59 @@
+
 .client-shell {
   min-height: 100vh;
-  background: var(--color-surface-muted);
-  color: #3c2e25;
+  background: var(--color-light-cream);
+  color: var(--color-dark-brown);
 }
 
-.client-shell__header {
+.client-nav {
   position: sticky;
   top: 0;
   z-index: var(--z-dropdown);
-  background: #fffaf1;
-  border-bottom: 1px solid #eadcc7;
+  background: rgba(63, 34, 17, 0.85);
+  backdrop-filter: blur(8px);
+  color: var(--color-light-cream);
+  box-shadow: 0 8px 16px rgba(63, 34, 17, 0.18);
 }
 
-.client-shell__header-inner {
+.client-nav__inner {
   max-width: 1100px;
   margin: 0 auto;
-  padding: var(--space-4) 1.5rem;
+  padding: var(--space-3) 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
 }
 
-.client-shell__branding {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.1em;
-}
-
-.client-shell__brand {
+.client-nav__brand {
   text-decoration: none;
-  color: inherit;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-light-cream);
 }
 
-.client-shell__event-name {
-  font-size: 0.9rem;
-  color: #8a6d58;
+.client-nav__brand:hover,
+.client-nav__brand:focus {
+  text-decoration: underline;
+}
+
+.client-nav__event {
+  font-size: var(--font-size-200);
+  color: rgba(250, 249, 245, 0.75);
 }
 
 .client-shell__main {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 3rem;
+  padding: 3.5rem 1.5rem 3rem;
   display: grid;
   gap: 2rem;
 }
 
 @media (max-width: 760px) {
-  .client-shell__header-inner {
+  .client-nav__inner {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .client-hero {
-    padding: 1.5rem;
   }
 }

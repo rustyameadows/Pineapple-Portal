@@ -68,9 +68,9 @@
 }
 
 .documents-table__badge--client {
-  border-color: var(--color-light-green0);
-  background: color-mix(in srgb, var(--color-light-green0) 20%, white);
-  color: var(--color-light-green0);
+  border-color: var(--color-light-green);
+  background: color-mix(in srgb, var(--color-light-green) 20%, white);
+  color: var(--color-light-green);
 }
 
 .documents-table__badge--internal {

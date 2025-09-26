@@ -35,14 +35,15 @@
     <%= javascript_importmap_tags %>
   </head>
   <body class="client-shell">
-    <header class="client-shell__header">
-      <div class="client-shell__header-inner">
-        <div class="client-shell__branding">
-          <% portal_home = defined?(@event) && @event.present? ? client_event_path(@event) : root_path %>
-          <%= link_to "Pineapple Productions", portal_home, class: "client-shell__brand" %>
-        </div>
+    <% portal_home = defined?(@event) && @event.present? ? client_event_path(@event) : root_path %>
+    <nav class="client-nav">
+      <div class="client-nav__inner">
+        <%= link_to "Pineapple Productions", portal_home, class: "client-nav__brand" %>
+        <% if defined?(@event) && @event.present? %>
+          <span class="client-nav__event"><%= @event.name %></span>
+        <% end %>
       </div>
-    </header>
+    </nav>
 
     <main class="client-shell__main">
       <%= render "shared/flash" %>

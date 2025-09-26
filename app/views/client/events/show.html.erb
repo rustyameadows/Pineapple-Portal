@@ -12,32 +12,32 @@
                               "Dates TBD"
                             end %>
 
-<section class="client-hero">
-  <div class="client-hero__meta">
-    <p class="client-hero__eyebrow"><%= @event.location.presence || "Location TBD" %></p>
-    <h1 class="client-hero__title"><%= @event.name %></h1>
-    <p class="client-hero__dates"><%= event_date_range_label %></p>
+<section class="client-header" id="portal-header">
+  <div class="client-header__meta">
+    <p class="client-header__eyebrow"><%= @event.location.presence || "Location TBD" %></p>
+    <h1 class="client-header__title"><%= @event.name %></h1>
+    <p class="client-header__dates"><%= event_date_range_label %></p>
   </div>
 </section>
 
-<section class="client-dashboard">
-  <h2 class="client-dashboard__heading">Explore Your Planning Tools</h2>
-  <div class="client-dashboard__grid client-dashboard__grid--three">
+<section class="client-planning-grid" id="planning-grid">
+  <h2 class="client-planning-grid__heading">Explore Your Planning Tools</h2>
+  <div class="client-planning-grid__grid">
     <% @module_cards.each do |card|
          link_label = card.fetch(:link_label, "Open") %>
-      <article class="client-dashboard__card">
+      <article class="client-planning-grid__card">
         <h3><%= card[:title] %></h3>
         <p><%= card[:description] %></p>
-        <%= link_to link_label, card[:path], class: "client-dashboard__cta" %>
+        <%= link_to link_label, card[:path], class: "client-planning-grid__cta" %>
       </article>
     <% end %>
   </div>
 </section>
 
-<section class="client-quick-links">
+<section class="client-quick-links" id="quick-links">
   <h2 class="client-quick-links__heading">Useful Event Links</h2>
   <% if @quick_links.any? %>
-    <ul class="client-quick-links__list" style="display: flex; gap: 1rem; flex-wrap: wrap; padding: 0; margin: 0; list-style: none;">
+    <ul class="client-quick-links__list">
       <% @quick_links.each do |link| %>
         <li class="client-quick-links__item">
           <%= link_to link.label, link.url, target: "_blank", rel: "noopener", class: "client-quick-links__link" %>
@@ -49,18 +49,18 @@
   <% end %>
 </section>
 
-<section class="client-team">
-  <h2 class="client-team__heading">My Planning Team</h2>
+<section class="client-planning-team" id="planning-team">
+  <h2 class="client-planning-team__heading">My Planning Team</h2>
   <% if @planning_team_members.any? %>
-    <ul class="client-team__list">
+    <ul class="client-planning-team__list">
       <% @planning_team_members.each do |team_member| %>
         <% user = team_member.user %>
-        <li class="client-team__item">
-          <h3 class="client-team__name"><%= user.name %></h3>
+        <li class="client-planning-team__item">
+          <h3 class="client-planning-team__name"><%= user.name %></h3>
           <% if user.title.present? %>
-            <p class="client-team__title"><%= user.title %></p>
+            <p class="client-planning-team__title"><%= user.title %></p>
           <% end %>
-          <ul class="client-team__contact">
+          <ul class="client-planning-team__contact">
             <% if user.phone_number.present? %>
               <li><strong>Phone:</strong> <%= user.phone_number %></li>
             <% end %>
@@ -70,6 +70,10 @@
       <% end %>
     </ul>
   <% else %>
-    <p class="client-team__empty">Your planning team will appear here once your planner publishes their contact details.</p>
+    <p class="client-planning-team__empty">Your planning team will appear here once your planner publishes their contact details.</p>
   <% end %>
 </section>
+
+<footer class="client-footer" id="portal-footer">
+  <%= yield :client_portal_footer %>
+</footer>

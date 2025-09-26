@@ -50,6 +50,18 @@
   --color-light-green: #9daf9d;
   --color-gold: #be9c72;
 
+  /* Neutral aliases */
+  --color-neutral-50: var(--color-light-cream);
+  --color-neutral-100: var(--color-light-cream);
+  --color-neutral-200: var(--color-sea-foam);
+  --color-neutral-300: var(--color-sea-foam);
+  --color-neutral-400: var(--color-light-green);
+  --color-neutral-500: var(--color-brown);
+  --color-neutral-600: var(--color-dark-brown);
+  --color-neutral-700: var(--color-dark-brown);
+  --color-neutral-800: var(--color-dark-brown);
+  --color-neutral-900: var(--color-dark-brown);
+
   /* Semantic tokens */
   --color-ink: var(--color-black);
   --color-ink-subtle: var(--color-brown);

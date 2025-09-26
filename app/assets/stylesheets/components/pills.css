@@ -13,13 +13,13 @@
 }
 
 .event-status-tag--finished {
-  border-color: var(--color-light-green0);
-  background: color-mix(in srgb, var(--color-light-green0) 20%, white);
-  color: var(--color-light-green0);
+  border-color: var(--color-light-green);
+  background: color-mix(in srgb, var(--color-light-green) 20%, white);
+  color: var(--color-light-green);
 }
 
 .event-status-tag--in-progress {
-  border-color: var(--color-light-green0);
+  border-color: var(--color-light-green);
   background: var(--color-sea-foam);
   color: var(--color-dark-green);
 }
@@ -35,8 +35,8 @@
 }
 
 .client-financials__status--completed {
-  background: color-mix(in srgb, var(--color-light-green0) 16%, white);
-  color: var(--color-light-green0);
+  background: color-mix(in srgb, var(--color-light-green) 16%, white);
+  color: var(--color-light-green);
 }
 
 .client-financials__status--upcoming {
