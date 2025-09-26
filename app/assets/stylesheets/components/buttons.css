@@ -45,7 +45,7 @@
   background: var(--color-accent);
   color: var(--color-white);
   padding: 0.6rem 1.4rem;
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   cursor: pointer;
   letter-spacing: 0.12em;
   text-transform: uppercase;

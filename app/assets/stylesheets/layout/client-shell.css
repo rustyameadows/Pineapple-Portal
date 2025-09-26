@@ -17,7 +17,7 @@
   background: rgba(63, 34, 17, 0.85);
   backdrop-filter: blur(8px);
   color: var(--color-light-cream);
-  box-shadow: 0 8px 16px rgba(63, 34, 17, 0.18);
+  border-bottom: 1px solid rgba(250, 249, 245, 0.15);
   margin: 0;
 }
 

@@ -28,7 +28,6 @@ a {
 a:hover,
 a:focus {
   color: var(--color-accent-strong);
-  text-decoration: underline;
 }
 
 img,

@@ -26,8 +26,8 @@
   font-size: var(--font-size-200);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  border-radius: var(--radius-pill);
-  padding: 0.55rem 1.4rem;
+  border-radius: 0;
+  padding: 0.65rem 1.5rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
@@ -38,12 +38,13 @@
 }
 
 .client-questionnaire__section {
-  border: 1px solid var(--color-sea-foam);
-  border-radius: 10px;
-  padding: 1.25rem;
+  border: none;
+  border-radius: 0;
+  padding: 2rem;
   display: grid;
-  gap: 1.25rem;
-  background: var(--color-white);
+  gap: 1.5rem;
+  background: var(--color-light-cream);
+  border: 1px solid var(--color-sea-foam);
 }
 
 .client-questionnaire__layout {
@@ -63,10 +64,10 @@
 }
 
 .client-questionnaire__question {
-  background: var(--color-white);
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  border: 1px solid var(--color-sea-foam);
+  background: var(--color-sand);
+  border-radius: 0;
+  padding: 1.25rem;
+  border: none;
   display: grid;
   gap: 0.75rem;
 }
@@ -89,11 +90,13 @@
 .client-questionnaire__control textarea,
 .client-questionnaire__control select {
   width: 100%;
-  padding: 0.5rem;
-  border-radius: 6px;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0;
   border: 1px solid var(--color-sea-foam);
   font-family: inherit;
   box-sizing: border-box;
+  background: var(--color-light-cream);
+  color: var(--color-dark-brown);
 }
 
 .client-questionnaire__actions {
