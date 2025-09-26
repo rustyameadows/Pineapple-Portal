@@ -21,14 +21,32 @@ export default class extends Controller {
   fetchItem(itemId) {
     const url = this.basePathValue.replace("__ITEM__", itemId) + ".json";
 
+    console.debug("DecisionModalController: fetching decision item", { itemId, url });
+
     fetch(url)
       .then((response) => {
-        if (!response.ok) throw new Error("Network response was not ok");
+        console.debug("DecisionModalController: fetch completed", {
+          itemId,
+          url,
+          status: response.status,
+          ok: response.ok
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
         return response.json();
       })
-      .then((data) => this.populateForm(data))
-      .then(() => this.showModal())
-      .catch(() => alert("Unable to load decision. Please try again."));
+      .then((data) => {
+        console.debug("DecisionModalController: received payload", { itemId, data });
+        this.populateForm(data);
+        this.showModal();
+      })
+      .catch((error) => {
+        console.error("DecisionModalController: unable to load decision", { itemId, url, error });
+        alert(`Unable to load decision (${error.message}). Please try again.`);
+      });
   }
 
   populateForm(data) {

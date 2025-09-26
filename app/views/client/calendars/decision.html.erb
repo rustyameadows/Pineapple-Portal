@@ -1,48 +1,50 @@
-<section class="decision-calendar" data-controller="decision-modal" data-decision-modal-base-path-value="<%= client_event_decision_calendar_item_path(@event, '__ITEM__') %>">
-  <header class="decision-calendar__hero">
-    <div class="client-container">
-      <h1 class="decision-calendar__title"><%= @decision_title %></h1>
-      <% if @decision_description.present? %>
-        <p class="decision-calendar__subtitle"><%= @decision_description %></p>
-      <% end %>
+<div data-controller="decision-modal" data-decision-modal-base-path-value="<%= client_event_decision_calendar_item_path(@event, '__ITEM__') %>">
+  <section class="decision-calendar">
+    <header class="decision-calendar__hero">
+      <div class="client-container">
+        <h1 class="decision-calendar__title"><%= @decision_title %></h1>
+        <% if @decision_description.present? %>
+          <p class="decision-calendar__subtitle"><%= @decision_description %></p>
+        <% end %>
+      </div>
+    </header>
+
+    <div class="decision-calendar__sticky-label">Decision Calendar</div>
+
+    <% if @decision_items.any? %>
+      <div class="decision-calendar__segments">
+        <% @decision_items.each do |segment| %>
+          <section class="decision-calendar__segment">
+            <h2 class="decision-calendar__segment-label"><%= segment[:label] %></h2>
+            <div class="decision-calendar__segment-body client-container">
+              <% segment[:items].each do |item| %>
+                <article class="decision-calendar__row decision-calendar__row--<%= item.status %>">
+                  <div class="decision-calendar__cell decision-calendar__cell--title">
+                    <button class="decision-calendar__title-button" data-action="decision-modal#open" data-decision-modal-item-id-value="<%= item.id %>" type="button">
+                      <strong><%= item.title %></strong>
+                    </button>
+                  </div>
+                  <div class="decision-calendar__cell decision-calendar__cell--status"><%= item.status.titleize %></div>
+                  <div class="decision-calendar__cell decision-calendar__cell--vendor"><%= item.vendor_name.presence || "—" %></div>
+                  <div class="decision-calendar__cell decision-calendar__cell--notes"><%= item.notes.presence || "—" %></div>
+                </article>
+              <% end %>
+            </div>
+          </section>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="client-placeholder client-container">
+        <p>No decisions are published yet. Check back soon!</p>
+      </div>
+    <% end %>
+
+    <div class="decision-calendar__actions client-container">
+      <%= link_to "Back to Portal", client_event_path(@event), class: "client-button client-button--secondary" %>
     </div>
-  </header>
 
-  <div class="decision-calendar__sticky-label">Decision Calendar</div>
+    <%= render "client/shared/footer" %>
+  </section>
 
-  <% if @decision_items.any? %>
-    <div class="decision-calendar__segments">
-      <% @decision_items.each do |segment| %>
-        <section class="decision-calendar__segment">
-          <h2 class="decision-calendar__segment-label"><%= segment[:label] %></h2>
-          <div class="decision-calendar__segment-body client-container">
-            <% segment[:items].each do |item| %>
-              <article class="decision-calendar__row decision-calendar__row--<%= item.status %>">
-                <div class="decision-calendar__cell decision-calendar__cell--title">
-                  <button class="decision-calendar__title-button" data-action="decision-modal#open" data-decision-modal-item-id-value="<%= item.id %>" type="button">
-                    <strong><%= item.title %></strong>
-                  </button>
-                </div>
-                <div class="decision-calendar__cell decision-calendar__cell--status"><%= item.status.titleize %></div>
-                <div class="decision-calendar__cell decision-calendar__cell--vendor"><%= item.vendor_name.presence || "—" %></div>
-                <div class="decision-calendar__cell decision-calendar__cell--notes"><%= item.notes.presence || "—" %></div>
-              </article>
-            <% end %>
-          </div>
-        </section>
-      <% end %>
-    </div>
-  <% else %>
-    <div class="client-placeholder client-container">
-      <p>No decisions are published yet. Check back soon!</p>
-    </div>
-  <% end %>
-
-  <div class="decision-calendar__actions client-container">
-    <%= link_to "Back to Portal", client_event_path(@event), class: "client-button client-button--secondary" %>
-  </div>
-
-  <%= render "client/shared/footer" %>
-</section>
-
-<%= render "client/calendars/decision_modal", calendar: @calendar, event: @event %>
+  <%= render "client/calendars/decision_modal", calendar: @calendar, event: @event %>
+</div>

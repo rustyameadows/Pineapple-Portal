@@ -70,7 +70,6 @@
 .decision-calendar__row:hover,
 .decision-calendar__row:focus-within {
   border-color: var(--color-dark-green);
-  box-shadow: 0 6px 18px rgba(67, 85, 74, 0.08);
 }
 
 .decision-calendar__row--completed {

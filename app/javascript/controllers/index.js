@@ -1,5 +1,5 @@
-import { application } from "./application"
+import { application } from "controllers/application"
 
-import DecisionModalController from "./decision_modal_controller"
+import DecisionModalController from "controllers/decision_modal_controller"
 
 application.register("decision-modal", DecisionModalController)
