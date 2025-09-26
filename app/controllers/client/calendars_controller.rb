@@ -27,9 +27,14 @@ module Client
         return
       end
 
-      @timezone_label = display_timezone
-      @filter = ::Calendars::ViewFilter.new(calendar: @calendar, view: @active_view)
-      @items = @filter.items
+      if decision_calendar_view?(@active_view)
+        build_decision_calendar_payload
+        render :decision
+      else
+        @timezone_label = display_timezone
+        @filter = ::Calendars::ViewFilter.new(calendar: @calendar, view: @active_view)
+        @items = @filter.items
+      end
     end
 
     private
@@ -92,6 +97,38 @@ module Client
     def display_timezone
       zone = ActiveSupport::TimeZone[@calendar.timezone]
       zone ? zone.to_s : @calendar.timezone
+    end
+
+    def decision_calendar_view?(selected_view)
+      selected_view.slug == "decision-calendar"
+    end
+
+    def build_decision_calendar_payload
+      @decision_title = @active_view.name.presence || "Decision Calendar"
+      @decision_description = @active_view.description
+      @decision_items = decision_calendar_segments
+    end
+
+    def decision_calendar_segments
+      raw_items = ::Calendars::ViewFilter.new(calendar: @calendar, view: @active_view).items
+      grouped = raw_items.group_by { |item| segment_label_for(item) }
+
+      grouped.map do |segment, items|
+        {
+          label: segment,
+          items: items.sort_by { |it| it.title.to_s.downcase },
+          sort_key: items.map { |it| it.effective_starts_at || it.created_at }.compact.min
+        }
+      end
+        .sort_by { |segment| [segment[:sort_key] || Time.zone.at(0), segment[:label]] }
+        .map { |segment| segment.except(:sort_key) }
+    end
+
+    def segment_label_for(item)
+      start_time = item.effective_starts_at&.in_time_zone(@calendar.timezone)
+      return "Upcoming Decisions" unless start_time
+
+      start_time.strftime("%A, %B %-d")
     end
   end
 end

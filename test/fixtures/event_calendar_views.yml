@@ -8,3 +8,12 @@ vendor_view:
   hide_locked: true
   client_visible: true
   position: 0
+
+decision_view:
+  event_calendar: run_of_show
+  name: Decision Calendar
+  slug: decision-calendar
+  description: Key decisions and approvals.
+  hide_locked: false
+  client_visible: true
+  position: 1

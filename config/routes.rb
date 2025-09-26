@@ -94,6 +94,7 @@ Rails.application.routes.draw do
 
     resources :events, only: :show do
       resources :calendars, only: %i[index show], param: :slug
+      resources :decision_calendar_items, only: %i[show update]
       resource :guest_list, only: :show, controller: :guest_lists
       resources :questionnaires, only: %i[index show] do
         member do

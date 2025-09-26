@@ -31,6 +31,15 @@ module Client
       assert_includes response.body, "Run of Show"
     end
 
+    test "decision calendar renders segmented list" do
+      get client_event_calendar_path(@event, "decision-calendar")
+
+      assert_response :success
+      assert_select "section.decision-calendar h1", text: "Decision Calendar"
+      assert_select ".decision-calendar__row", minimum: 1
+      assert_select ".decision-calendar__actions .client-button", text: "Back to Portal"
+    end
+
     test "show redirects when nothing published" do
       @calendar.update!(client_visible: false)
       @view.update!(client_visible: false)

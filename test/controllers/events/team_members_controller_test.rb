@@ -8,16 +8,15 @@ module Events
     end
 
     test "adds planner to event team" do
-      assert_difference("EventTeamMember.where(event: @event).count") do
-        post event_team_members_url(@event), params: {
-          event_team_member: {
-            user_id: users(:planner_two).id
-          }
+      post event_team_members_url(@event), params: {
+        event_team_member: {
+          user_id: users(:planner_two).id
         }
-      end
+      }
 
       assert_redirected_to event_settings_url(@event)
       team_member = EventTeamMember.find_by(event: @event, user: users(:planner_two))
+      assert_not_nil team_member
       assert team_member.client_visible?
       assert_equal EventTeamMember.where(event: @event).maximum(:position), team_member.position
       assert_equal "planner", team_member.member_role

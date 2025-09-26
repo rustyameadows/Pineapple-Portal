@@ -5,16 +5,13 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <% [
-      ["/fonts/ufonts.com_baskervilleno2bt-roman-opentype-webfont.woff", "font/woff"],
-      ["/fonts/Didot.woff2", "font/woff2"],
-      ["/fonts/SackersGothicStd-Medium.woff", "font/woff"],
-      ["/fonts/mrseavessmallcaps_regular-webfont.woff2", "font/woff2"],
-      ["/fonts/DidotLTStd-Italic.woff", "font/woff"]
-    ].each do |path, mime|
-    %>
-      <link rel="preload" href="<%= path %>" as="font" type="<%= mime %>" crossorigin>
-    <% end %>
+    <link rel="preload" href="<%= asset_path('Didot.woff2') %>" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="<%= asset_path('Didot.woff') %>" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="<%= asset_path('DidotLTStd-Italic.woff') %>" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="<%= asset_path('mrseavessmallcaps_regular-webfont.woff2') %>" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="<%= asset_path('mrseavessmallcaps_regular-webfont.woff') %>" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="<%= asset_path('SackersGothicStd-Medium.woff') %>" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="<%= asset_path('ufonts.com_baskervilleno2bt-roman-opentype-webfont.woff') %>" as="font" type="font/woff" crossorigin>
 
     <% client_stylesheets = %w[
       base/fonts
@@ -37,9 +34,10 @@
       components/calendar-grid
       components/documents-table
       pages/client-portal
-      pages/client-designs
-      pages/client-financials
-      pages/client-questionnaires
+    pages/client-designs
+    pages/client-financials
+    pages/client-questionnaires
+    pages/client-decision-calendar
     ] %>
     <% client_stylesheets.each do |logical_path| %>
       <%= stylesheet_link_tag logical_path, "data-turbo-track": "reload" %>

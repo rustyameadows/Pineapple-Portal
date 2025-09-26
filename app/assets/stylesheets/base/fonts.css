@@ -1,8 +1,8 @@
 @font-face {
   font-family: "MrsEavesSmallCaps";
-  src: url("/fonts/mrseavessmallcaps_regular-webfont.woff2") format("woff2"),
-       url("/fonts/mrseavessmallcaps_regular-webfont.woff") format("woff"),
-       url("/fonts/mrseavessmallcaps_regular-webfont.ttf") format("truetype");
+  src: url("../fonts/mrseavessmallcaps_regular-webfont.woff2") format("woff2"),
+       url("../fonts/mrseavessmallcaps_regular-webfont.woff") format("woff"),
+       url("../fonts/mrseavessmallcaps_regular-webfont.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: block;
@@ -10,9 +10,9 @@
 
 @font-face {
   font-family: "Didot";
-  src: url("/fonts/Didot.woff2") format("woff2"),
-       url("/fonts/Didot.woff") format("woff"),
-       url("/fonts/Didot.ttf") format("truetype");
+  src: url("../fonts/Didot.woff2") format("woff2"),
+       url("../fonts/Didot.woff") format("woff"),
+       url("../fonts/Didot.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: block;
@@ -20,8 +20,8 @@
 
 @font-face {
   font-family: "Didot";
-  src: url("/fonts/DidotLTStd-Italic.woff") format("woff"),
-       url("/fonts/DidotLTStd-Italic.ttf") format("truetype");
+  src: url("../fonts/DidotLTStd-Italic.woff") format("woff"),
+       url("../fonts/DidotLTStd-Italic.ttf") format("truetype");
   font-weight: 400;
   font-style: italic;
   font-display: block;
@@ -29,8 +29,8 @@
 
 @font-face {
   font-family: "BaskervilleNo2";
-  src: url("/fonts/ufonts.com_baskervilleno2bt-roman-opentype-webfont.woff") format("woff"),
-       url("/fonts/ufonts.com_baskervilleno2bt-roman-opentype-webfont.ttf") format("truetype");
+  src: url("../fonts/ufonts.com_baskervilleno2bt-roman-opentype-webfont.woff") format("woff"),
+       url("../fonts/ufonts.com_baskervilleno2bt-roman-opentype-webfont.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: block;
@@ -38,8 +38,8 @@
 
 @font-face {
   font-family: "SackersGothic";
-  src: url("/fonts/SackersGothicStd-Medium.woff") format("woff"),
-       url("/fonts/SackersGothicStd-Medium.ttf") format("truetype");
+  src: url("../fonts/SackersGothicStd-Medium.woff") format("woff"),
+       url("../fonts/SackersGothicStd-Medium.ttf") format("truetype");
   font-weight: 500;
   font-style: normal;
   font-display: block;
