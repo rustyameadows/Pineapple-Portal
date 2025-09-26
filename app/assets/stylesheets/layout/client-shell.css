@@ -1,8 +1,13 @@
-
 .client-shell {
   min-height: 100vh;
   background: var(--color-light-cream);
   color: var(--color-dark-brown);
+}
+
+.client-container {
+  width: min(100%, var(--layout-content-max));
+  margin: 0 auto;
+  padding-inline: clamp(1rem, 4vw, 1.5rem);
 }
 
 .client-nav {
@@ -13,16 +18,19 @@
   backdrop-filter: blur(8px);
   color: var(--color-light-cream);
   box-shadow: 0 8px 16px rgba(63, 34, 17, 0.18);
+  margin: 0;
 }
 
 .client-nav__inner {
-  max-width: 1100px;
+  width: min(100%, var(--layout-content-max));
   margin: 0 auto;
   padding: var(--space-3) 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
 }
 
 .client-nav__brand {
@@ -44,16 +52,7 @@
 }
 
 .client-shell__main {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 3.5rem 1.5rem 3rem;
+  padding: 0;
   display: grid;
-  gap: 2rem;
-}
-
-@media (max-width: 760px) {
-  .client-nav__inner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+  gap: 3rem;
 }

@@ -27,6 +27,9 @@
   --space-6: 2rem;
   --space-7: 3rem;
 
+  /* Layout */
+  --layout-content-max: 1200px;
+
   /* Radii */
   --radius-xs: 4px;
   --radius-sm: 6px;

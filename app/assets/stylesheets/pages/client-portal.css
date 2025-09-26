@@ -1,397 +1,420 @@
 .client-header {
-  background: var(--color-sea-foam);
-  border-radius: var(--radius-lg);
-  padding: 2.5rem;
-  display: grid;
-  gap: 1.5rem;
+    background: var(--color-sea-foam);
+    min-height: 400px;
+    display: grid;
+    align-items: center;
+    padding: 0;
+}
+
+.client-header > .client-container {
+    width: min(100%, var(--layout-content-max));
+    margin: 0 auto;
+    padding: 2rem clamp(1rem, 4vw, 1.5rem) 2.75rem;
 }
 
 .client-header__meta {
-  display: grid;
-  gap: 0.75rem;
+    display: grid;
+    gap: 0.75rem;
 }
 
 .client-header__eyebrow {
-  margin: 0;
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-dark-brown);
+    margin: 0;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-dark-brown);
 }
 
 .client-header__title {
-  margin: 0;
-  font-size: 2.25rem;
+    margin: 0;
+    font-size: 2.25rem;
 }
 
 .client-header__dates {
-  margin: 0;
-  color: var(--color-brown);
+    margin: 0;
+    color: var(--color-brown);
 }
 
 .client-planning-grid {
-  display: grid;
-  gap: 1.5rem;
+    display: grid;
+    gap: 0;
+    padding: 3rem 0;
 }
 
 .client-planning-grid__heading {
-  margin: 0;
-  font-size: 1.35rem;
+    margin: 0;
+    font-size: 1.35rem;
 }
 
 .client-planning-grid__grid {
-  display: grid;
-  gap: 1.25rem;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .client-planning-grid__card {
-  background: var(--color-light-cream);
-  border: 1px solid var(--color-sea-foam);
-  border-radius: var(--radius-md);
-  padding: 1.5rem;
-  display: grid;
-  gap: 0.75rem;
-  box-shadow: var(--shadow-xs);
+    background: var(--color-light-cream);
+    border: 1px solid var(--color-sea-foam);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: grid;
+    gap: 0.75rem;
+    box-shadow: var(--shadow-xs);
 }
 
 .client-planning-grid__card h3 {
-  margin: 0;
+    margin: 0;
 }
 
 .client-planning-grid__card p {
-  margin: 0;
-  color: var(--color-brown);
+    margin: 0;
+    color: var(--color-brown);
 }
 
 .client-planning-grid__cta {
-  text-decoration: none;
-  font-size: 0.85rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-dark-green);
+    text-decoration: none;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-dark-green);
 }
 
 .client-planning-grid__cta:hover,
 .client-planning-grid__cta:focus {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 .client-quick-links {
-  background: var(--color-dark-green);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
-  display: grid;
-  gap: 1.25rem;
-  color: var(--color-light-cream);
+    background: var(--color-dark-green);
+    padding: 2.75rem 0;
+    color: var(--color-light-cream);
 }
 
 .client-quick-links__heading {
-  margin: 0;
-  font-size: 1.3rem;
+    margin: 0;
+    font-size: 1.3rem;
 }
 
 .client-quick-links__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
 }
 
 .client-quick-links__item {
-  flex: 0 1 auto;
+    flex: 0 1 auto;
 }
 
 .client-quick-links__link {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.65rem 1rem;
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--color-light-cream) 20%, transparent);
-  color: var(--color-light-cream);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
+    display: inline-flex;
+    align-items: center;
+    padding: 0.65rem 1rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--color-light-cream) 20%, transparent);
+    color: var(--color-light-cream);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
 }
 
 .client-quick-links__link:hover,
 .client-quick-links__link:focus {
-  background: color-mix(in srgb, var(--color-light-cream) 30%, transparent);
-  text-decoration: underline;
+    background: color-mix(in srgb, var(--color-light-cream) 30%, transparent);
+    text-decoration: underline;
 }
 
 .client-quick-links__empty {
-  margin: 0;
-  color: color-mix(in srgb, var(--color-light-cream) 70%, transparent);
-  font-style: italic;
+    margin: 0;
+    color: color-mix(in srgb, var(--color-light-cream) 70%, transparent);
+    font-style: italic;
 }
 
 .client-planning-team {
-  background: var(--color-light-cream);
-  border: 1px solid var(--color-sea-foam);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
-  display: grid;
-  gap: 1.5rem;
+    position: relative;
+    background: var(--color-light-cream);
+    border-top: 1px solid var(--color-sea-foam);
+    padding: 2.75rem 0;
+    min-height: 800px;
+    overflow: hidden;
+}
+
+.client-planning-team::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/portal-pineapple-illo.png");
+    background-image: image-set(
+        url("/portal-pineapple-illo.webp") type("image/webp"),
+        url("/portal-pineapple-illo.png") type("image/png")
+    );
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: auto 80%;
+    pointer-events: none;
+    opacity: 0.9;
 }
 
 .client-planning-team__heading {
-  margin: 0;
-  font-size: 1.35rem;
+    margin: 0;
+    font-size: 1.35rem;
 }
 
+.client-planning-team .client-container {
+    position: relative;
+    z-index: 1;
+}
 .client-planning-team__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 1rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
 }
 
 .client-planning-team__item {
-  border: 1px solid var(--color-sea-foam);
-  border-radius: var(--radius-md);
-  padding: 1.25rem;
-  background: var(--color-white);
-  display: grid;
-  gap: 0.75rem;
+    border: 1px solid var(--color-sea-foam);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    background: var(--color-white);
+    display: grid;
+    gap: 0.75rem;
 }
 
 .client-planning-team__name {
-  margin: 0;
+    margin: 0;
 }
 
 .client-planning-team__title {
-  margin: 0;
-  color: var(--color-brown);
-  font-style: italic;
+    margin: 0;
+    color: var(--color-brown);
+    font-style: italic;
 }
 
 .client-planning-team__contact {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 0.35rem;
-  color: var(--color-dark-brown);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.35rem;
+    color: var(--color-dark-brown);
 }
 
 .client-planning-team__empty {
-  margin: 0;
-  color: var(--color-brown);
-  font-style: italic;
+    margin: 0;
+    color: var(--color-brown);
+    font-style: italic;
 }
 
 .client-footer {
-  background: var(--color-light-green);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  text-align: center;
-  color: var(--color-dark-brown);
-  min-height: 1px;
+    background: var(--color-light-green);
+    padding: 2.5rem 0;
+    text-align: center;
+    color: var(--color-dark-brown);
+    min-height: 1px;
 }
 
 .client-page {
-  background: var(--color-light-cream);
-  border: 1px solid var(--color-sea-foam);
-  border-radius: 10px;
-  padding: 2rem;
-  display: grid;
-  gap: 1.25rem;
+    background: var(--color-light-cream);
+    border: 1px solid var(--color-sea-foam);
+    border-radius: 10px;
+    padding: 2rem;
+    display: grid;
+    gap: 1.25rem;
 }
 
 .client-page__header h1 {
-  margin: 0 0 0.5rem;
+    margin: 0 0 0.5rem;
 }
 
 .client-page__header p {
-  margin: 0;
-  color: var(--color-brown);
+    margin: 0;
+    color: var(--color-brown);
 }
 
 .client-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
 }
 
 .client-list li {
-  padding: 1rem 1.25rem;
-  border-radius: 8px;
-  border: 1px solid var(--color-sea-foam);
-  background: var(--color-white);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: baseline;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--color-sea-foam);
+    background: var(--color-white);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: baseline;
 }
 
 .client-list li strong {
-  color: var(--color-dark-brown);
+    color: var(--color-dark-brown);
 }
 
 .client-list__title {
-  flex: 1 1 auto;
-  min-width: 0;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .client-list__title a {
-  text-decoration: none;
-  color: var(--color-dark-brown);
-  font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+    color: var(--color-dark-brown);
+    font-weight: var(--font-weight-semibold);
 }
 
 .client-list__title a:hover,
 .client-list__title a:focus {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 .client-placeholder {
-  padding: 1.25rem;
-  border: 1px dashed var(--color-sea-foam);
-  border-radius: 8px;
-  text-align: center;
-  color: var(--color-brown);
-  background: rgba(255, 250, 241, 0.6);
+    padding: 1.25rem;
+    border: 1px dashed var(--color-sea-foam);
+    border-radius: 8px;
+    text-align: center;
+    color: var(--color-brown);
+    background: rgba(255, 250, 241, 0.6);
 }
 
 .client-status-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: var(--font-size-100);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  border-radius: var(--radius-pill);
-  padding: 0.25rem 0.75rem;
-  border: 1px solid var(--color-sea-foam);
-  background: var(--color-light-cream);
-  color: var(--color-brown);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: var(--font-size-100);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    border-radius: var(--radius-pill);
+    padding: 0.25rem 0.75rem;
+    border: 1px solid var(--color-sea-foam);
+    background: var(--color-light-cream);
+    color: var(--color-brown);
 }
 
 .client-status-tag--finished {
-  border-color: var(--color-light-green);
-  background: color-mix(in srgb, var(--color-light-green) 18%, white);
-  color: var(--color-light-green);
+    border-color: var(--color-light-green);
+    background: color-mix(in srgb, var(--color-light-green) 18%, white);
+    color: var(--color-light-green);
 }
 
 .client-status-tag--in-progress {
-  border-color: var(--color-light-green);
-  background: var(--color-sea-foam);
-  color: var(--color-dark-green);
+    border-color: var(--color-light-green);
+    background: var(--color-sea-foam);
+    color: var(--color-dark-green);
 }
 
 .client-calendar__table {
-  width: 100%;
-  border-collapse: collapse;
+    width: 100%;
+    border-collapse: collapse;
 }
 
 .client-calendar__table td {
-  vertical-align: top;
+    vertical-align: top;
 }
 
 .client-calendar__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: var(--font-weight-semibold);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: var(--font-weight-semibold);
 }
 
 .client-calendar__title strong {
-  font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
 }
 
 .client-calendar__badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.1rem 0.6rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid currentColor;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.6rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid currentColor;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 .client-calendar__meta {
-  margin-top: 0.5rem;
+    margin-top: 0.5rem;
 }
 
 .client-calendar__meta-line {
-  margin: 0.35rem 0 0;
-  font-size: var(--font-size-200);
-  color: var(--color-neutral-500);
+    margin: 0.35rem 0 0;
+    font-size: var(--font-size-200);
+    color: var(--color-neutral-500);
 }
 
 .client-calendar__note,
 .client-calendar__notes {
-  margin-top: 0.5rem;
-  color: var(--color-neutral-600);
+    margin-top: 0.5rem;
+    color: var(--color-neutral-600);
 }
 
 .client-calendar__notes p {
-  margin: 0 0 0.5rem;
+    margin: 0 0 0.5rem;
 }
 
 .client-calendar__details {
-  margin: 0.75rem 0 0;
-  color: var(--color-neutral-600);
-  max-width: 36rem;
+    margin: 0.75rem 0 0;
+    color: var(--color-neutral-600);
+    max-width: 36rem;
 }
 
 .client-calendar__duration {
-  font-weight: var(--font-weight-semibold);
-  white-space: nowrap;
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
 }
 
 .client-calendar__when {
-  margin: 0.25rem 0 0;
-  color: var(--color-neutral-500);
-  white-space: nowrap;
+    margin: 0.25rem 0 0;
+    color: var(--color-neutral-500);
+    white-space: nowrap;
 }
 
 .client-calendar__nav {
-  margin: 1.5rem 0;
+    margin: 1.5rem 0;
 }
 
 .client-calendar__nav-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
 }
 
 .client-calendar__nav-link {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid transparent;
-  font-weight: var(--font-weight-semibold);
-  text-decoration: none;
-  color: var(--color-dark-brown);
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+    color: var(--color-dark-brown);
 }
 
 .client-calendar__nav-link:hover,
 .client-calendar__nav-link:focus {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 .client-calendar__nav-link--active {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
 }
 
 .client-calendar__anchor {
-  margin: 0.35rem 0 0;
-  font-size: var(--font-size-200);
+    margin: 0.35rem 0 0;
+    font-size: var(--font-size-200);
 }
 
 .client-calendar__tags {
-  max-width: 16rem;
+    max-width: 16rem;
 }
