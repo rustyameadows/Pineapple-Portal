@@ -31,3 +31,11 @@ client_contact:
   title: CEO
   phone_number: 555-888-9999
   password_digest: <%= BCrypt::Password.create("password123") %>
+
+client_two:
+  name: Second Client
+  email: second_client@example.com
+  role: client
+  title: COO
+  phone_number: 555-000-1111
+  password_digest: <%= BCrypt::Password.create("password123") %>

@@ -1,0 +1,46 @@
+@font-face {
+  font-family: "MrsEavesSmallCaps";
+  src: url("../mrseavessmallcaps_regular-webfont.woff2") format("woff2"),
+       url("../mrseavessmallcaps_regular-webfont.woff") format("woff"),
+       url("../mrseavessmallcaps_regular-webfont.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Didot";
+  src: url("../Didot.woff2") format("woff2"),
+       url("../Didot.woff") format("woff"),
+       url("../Didot.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Didot";
+  src: url("../DidotLTStd-Italic.woff") format("woff"),
+       url("../DidotLTStd-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "BaskervilleNo2";
+  src: url("../ufonts.com_baskervilleno2bt-roman-opentype-webfont.woff") format("woff"),
+       url("../ufonts.com_baskervilleno2bt-roman-opentype-webfont.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "SackersGothic";
+  src: url("../SackersGothicStd-Medium.woff") format("woff"),
+       url("../SackersGothicStd-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+}

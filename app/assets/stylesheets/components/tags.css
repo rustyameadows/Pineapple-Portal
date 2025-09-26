@@ -1,0 +1,33 @@
+.event-tag-list,
+.client-calendar__tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.event-tag-pill,
+.client-calendar__tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.125rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-100);
+  font-weight: var(--font-weight-semibold);
+  background: var(--tag-color, var(--color-neutral-100));
+  color: var(--tag-text-color, var(--color-neutral-800));
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  line-height: 1.2;
+}
+
+.client-calendar__tag-pill--empty {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-neutral-400);
+}
+
+.client-calendar__meta-line {
+  margin: 0.35rem 0 0;
+  font-size: var(--font-size-200);
+  color: var(--color-neutral-500);
+}

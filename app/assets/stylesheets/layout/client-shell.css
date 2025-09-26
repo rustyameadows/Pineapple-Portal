@@ -1,0 +1,105 @@
+.client-shell {
+  min-height: 100vh;
+  background: var(--color-light-cream);
+  color: var(--color-dark-brown);
+}
+
+.client-container {
+  width: min(100%, var(--layout-content-max));
+  margin: 0 auto;
+  padding-inline: clamp(1rem, 4vw, 1.5rem);
+}
+
+.client-nav {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-dropdown);
+  background: rgba(63, 34, 17, 0.85);
+  backdrop-filter: blur(8px);
+  color: var(--color-light-cream);
+  border-bottom: 1px solid rgba(250, 249, 245, 0.15);
+  margin: 0;
+}
+
+.client-nav__inner {
+  position: relative;
+  width: min(100%, var(--layout-content-max));
+  margin: 0 auto;
+  padding: var(--space-3) 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-3);
+}
+
+.client-nav__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.client-nav__icon img {
+  display: block;
+  height: 40px;
+  width: auto;
+}
+
+.client-nav__logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+}
+
+.client-nav__logo img {
+  display: block;
+  height: 32px;
+  width: auto;
+}
+
+.client-nav__identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+.client-nav__event {
+  font-size: var(--font-size-200);
+  color: rgba(250, 249, 245, 0.75);
+  text-align: right;
+}
+
+.client-nav__logout {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid rgba(250, 249, 245, 0.4);
+  color: var(--color-light-cream);
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.client-nav__logout:hover,
+.client-nav__logout:focus {
+  border-color: rgba(250, 249, 245, 0.7);
+}
+
+.client-nav__spacer {
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+}
+
+.client-shell__main {
+  padding: 0;
+  display: grid;
+  gap: 3rem;
+}

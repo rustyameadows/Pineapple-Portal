@@ -1,0 +1,80 @@
+.client-questionnaire__actions input[type="submit"] {
+  font-size: var(--font-size-200);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--color-accent);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) calc(var(--space-4) + var(--space-1));
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.client-questionnaire__actions input[type="submit"]:hover,
+.client-questionnaire__actions input[type="submit"]:focus {
+  background: var(--color-accent-strong);
+}
+
+.event-section__actions form input[type="submit"] {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: var(--font-size-200);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: var(--color-dark-brown);
+  color: var(--color-light-cream);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.event-section__actions form input[type="submit"]:hover,
+.event-section__actions form input[type="submit"]:focus {
+  background: var(--color-dark-brown);
+}
+
+.documents-form__panel input[type="submit"],
+.documents-form__panel button {
+  border-radius: var(--radius-pill);
+  padding: 0.6rem 1.4rem;
+}
+
+.client-designs__submit {
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-white);
+  padding: 0.6rem 1.4rem;
+  border-radius: 0;
+  cursor: pointer;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: var(--font-size-200);
+  transition: background-color 0.2s ease;
+}
+
+.client-designs__submit:hover,
+.client-designs__submit:focus {
+  background: var(--color-accent-strong);
+}
+
+.documents-show__delete {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: none;
+  background: var(--color-light-cream0);
+  color: var(--color-light-cream);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: var(--font-size-200);
+  transition: background-color 0.2s ease;
+}
+
+.documents-show__delete:hover,
+.documents-show__delete:focus {
+  background: var(--color-dark-brown);
+}

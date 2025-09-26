@@ -1,43 +1,90 @@
 <section class="client-page client-designs">
   <header class="client-page__header">
     <h1>Design &amp; Inspiration</h1>
-    <p>Preview boards, files, and inspiration shared by your planning team, and add your own uploads for quick reference.</p>
+    <p>Explore inspiration curated by your planner and share your own vision boards and imagery.</p>
   </header>
 
-  <section class="client-designs__panel">
-    <header class="client-designs__panel-header">
-      <h2>From your planner</h2>
+  <section class="client-designs__gallery">
+    <header class="client-designs__section-heading">
+      <div>
+        <p class="client-designs__eyebrow">Your inspiration</p>
+        <h2>Client Gallery</h2>
+      </div>
+      <p class="client-designs__hint">Add new images and organize ideas. Larger uploads may take a moment to process.</p>
     </header>
-    <div class="client-designs__panel-body">
-      <%= render "documents/table",
-                documents: @planner_documents,
-                title_link: ->(document) { download_event_document_path(@event, document) },
-                show_visibility: false,
-                show_actions: false %>
+
+    <div class="client-designs__masonry" data-designs-masonry>
+      <button type="button" class="client-designs__tile client-designs__tile--upload" data-designs-upload-open>
+        <span class="client-designs__upload-icon" aria-hidden="true">＋</span>
+        <span class="client-designs__upload-label">Upload Inspiration</span>
+      </button>
+
+      <% if @gallery_documents.any? %>
+        <% @gallery_documents.each do |document| %>
+          <figure class="client-designs__tile" data-designs-masonry-item>
+            <%= link_to download_event_document_path(@event, document), target: "_blank", rel: "noopener", class: "client-designs__tile-link" do %>
+              <%= image_tag download_event_document_path(@event, document), alt: document.title, class: "client-designs__tile-image" %>
+            <% end %>
+            <figcaption class="client-designs__tile-caption">
+              <strong><%= document.title %></strong>
+              <span><%= document.updated_at.strftime('%b %-d, %Y') %></span>
+            </figcaption>
+          </figure>
+        <% end %>
+      <% else %>
+        <div class="client-designs__empty" data-designs-masonry-item>
+          <p>No inspiration uploads yet. Use the upload tile to add your first image.</p>
+        </div>
+      <% end %>
     </div>
   </section>
 
-  <section class="client-designs__panel">
-    <header class="client-designs__panel-header">
-      <h2>Your uploads</h2>
+  <section class="client-designs__planner-docs">
+    <header class="client-designs__section-heading">
+      <div>
+        <p class="client-designs__eyebrow">From your planner</p>
+        <h2>Shared Inspiration</h2>
+      </div>
+      <p class="client-designs__hint">Files and boards your planner has highlighted for quick reference.</p>
     </header>
-    <div class="client-designs__panel-body">
-      <%= render "documents/table",
-                documents: @client_documents,
-                title_link: ->(document) { download_event_document_path(@event, document) },
-                show_visibility: false,
-                show_source: false,
-                show_actions: false %>
-    </div>
-  </section>
 
-  <section class="client-designs__panel">
-    <header class="client-designs__panel-header">
-      <h2>Upload inspiration</h2>
-      <p class="client-designs__hint">Upload PDFs, images, or boards to share back with your planner. Files are visible to everyone on the project.</p>
+    <% if @display_documents.any? %>
+      <ul class="client-designs__document-list">
+        <% @display_documents.each do |document| %>
+          <li class="client-designs__document-item">
+            <div class="client-designs__document-meta">
+              <strong><%= link_to document.title, download_event_document_path(@event, document), target: "_blank", rel: "noopener" %></strong>
+              <span>Updated <%= document.updated_at.strftime('%b %-d, %Y') %></span>
+            </div>
+            <div class="client-designs__document-actions">
+              <%= link_to "View", event_document_path(@event, document), class: "client-button client-button--secondary" %>
+              <%= link_to "Download", download_event_document_path(@event, document), class: "client-button" %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="client-placeholder">
+        <p>Your planner hasn’t published any shared inspiration yet.</p>
+      </div>
+    <% end %>
+  </section>
+</section>
+
+<dialog class="client-designs__modal" id="design-upload-modal" data-open-on-load="<%= @document.errors.any? %>">
+  <div class="client-designs__modal-content">
+    <button type="button" class="client-designs__modal-close" data-designs-upload-close aria-label="Close upload form">×</button>
+    <header class="client-designs__modal-header">
+      <p class="client-designs__eyebrow">Upload</p>
+      <h2>Share Inspiration</h2>
+      <p class="client-designs__hint">Upload JPG, PNG, or WebP files up to 20MB. Larger files may take additional time.</p>
     </header>
-    <div class="client-designs__panel-body">
-      <%= form_with model: @document, url: client_event_designs_path(@event), data: { document_upload_form: true, presign_url: presign_event_documents_path(@event) }, html: { class: "client-designs__form" } do |form| %>
+
+    <div class="client-designs__modal-body">
+      <%= form_with model: @document,
+                    url: client_event_designs_path(@event),
+                    data: { document_upload_form: true, presign_url: presign_event_documents_path(@event) },
+                    html: { class: "client-designs__form" } do |form| %>
         <% if @document.errors.any? %>
           <div class="client-designs__form-errors">
             <h3><%= pluralize(@document.errors.count, "error") %> prevented saving:</h3>
@@ -51,27 +98,70 @@
 
         <div class="client-designs__form-group">
           <%= form.label :title, "Title" %>
-          <%= form.text_field :title, placeholder: "Eg. Reception inspiration", class: "client-designs__input" %>
+          <%= form.text_field :title, id: "document_title", placeholder: "Eg. Reception inspiration" %>
         </div>
 
         <div class="client-designs__form-group">
-          <label for="document_file">File</label>
-          <input type="file" id="document_file" data-document-upload-target="file" class="client-designs__input" accept="application/pdf,image/*">
+          <label for="document_file">Upload image</label>
+          <input type="file" id="document_file" data-document-upload-target="file" accept="image/*">
           <p class="client-designs__hint" data-document-upload-target="status">Select a file to upload to R2.</p>
         </div>
 
-        <%= form.hidden_field :storage_uri %>
-        <%= form.hidden_field :checksum %>
-        <%= form.hidden_field :size_bytes %>
-        <%= form.hidden_field :content_type %>
-        <%= form.hidden_field :logical_id %>
+        <%= form.hidden_field :storage_uri, id: "document_storage_uri" %>
+        <%= form.hidden_field :checksum, id: "document_checksum" %>
+        <%= form.hidden_field :size_bytes, id: "document_size_bytes" %>
+        <%= form.hidden_field :content_type, id: "document_content_type" %>
+        <%= form.hidden_field :logical_id, id: "document_logical_id" %>
 
         <div class="client-designs__form-actions">
-          <%= form.submit "Save upload", class: "client-designs__submit" %>
+          <button type="button" class="client-button client-button--secondary" data-designs-upload-close>Cancel</button>
+          <%= form.submit "Save Upload", class: "client-button", disabled: true %>
         </div>
       <% end %>
     </div>
-  </section>
-</section>
+  </div>
+</dialog>
 
 <%= render "documents/upload_script" %>
+
+<% content_for :scripts do %>
+  <script type="module">
+    document.addEventListener("DOMContentLoaded", () => {
+      const modal = document.getElementById("design-upload-modal");
+      if (!modal) return;
+
+      const openButton = document.querySelector("[data-designs-upload-open]");
+      const closeButtons = modal.querySelectorAll("[data-designs-upload-close]");
+
+      const openModal = () => {
+        if (typeof modal.showModal === "function") {
+          modal.showModal();
+        } else {
+          modal.setAttribute("open", "open");
+        }
+      };
+
+      const closeModal = () => {
+        if (typeof modal.close === "function") {
+          modal.close();
+        } else {
+          modal.removeAttribute("open");
+        }
+      };
+
+      openButton?.addEventListener("click", openModal);
+      closeButtons.forEach((button) => button.addEventListener("click", closeModal));
+      modal.addEventListener("click", (event) => {
+        if (event.target === modal) closeModal();
+      });
+      modal.addEventListener("cancel", (event) => {
+        event.preventDefault();
+        closeModal();
+      });
+
+      if (modal.dataset.openOnLoad === "true") {
+        openModal();
+      }
+    });
+  </script>
+<% end %>

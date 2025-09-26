@@ -6,7 +6,7 @@ module Client
       @event = events(:one)
       @calendar = event_calendars(:run_of_show)
       @view = event_calendar_views(:vendor_view)
-      log_in_as(users(:client_contact))
+      log_in_client_portal(users(:client_contact))
     end
 
     test "index redirects to run of show when visible" do
@@ -29,6 +29,15 @@ module Client
       assert_response :success
       assert_includes response.body, "Ceremony"
       assert_includes response.body, "Run of Show"
+    end
+
+    test "decision calendar renders segmented list" do
+      get client_event_calendar_path(@event, "decision-calendar")
+
+      assert_response :success
+      assert_select "section.decision-calendar h1", text: "Decision Calendar"
+      assert_select ".decision-calendar__row", minimum: 1
+      assert_select ".decision-calendar__actions .client-button", text: "Back to Portal"
     end
 
     test "show redirects when nothing published" do

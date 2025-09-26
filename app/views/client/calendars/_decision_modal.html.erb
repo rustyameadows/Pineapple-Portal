@@ -1,0 +1,39 @@
+<dialog class="decision-modal" data-decision-modal-target="dialog">
+  <div class="decision-modal__content" data-decision-modal-target="content">
+    <button type="button" class="decision-modal__close" data-action="decision-modal#close">×</button>
+    <header class="decision-modal__header">
+      <h2>Edit Decision</h2>
+      <p>Update the status, vendor, or notes for this calendar item.</p>
+    </header>
+    <%= form_with url: "#", method: :patch, local: true, data: { decision_modal_target: "form" }, html: { class: "decision-modal__form" } do |form| %>
+      <div class="decision-modal__field">
+        <%= form.label :title, "Decision" %>
+        <input type="text" name="calendar_item[title]" data-decision-modal-target="titleInput" required>
+      </div>
+
+      <div class="decision-modal__field">
+        <%= form.label :status %>
+        <select name="calendar_item[status]" data-decision-modal-target="statusInput">
+          <% CalendarItem.statuses.keys.each do |status| %>
+            <option value="<%= status %>"><%= status.titleize %></option>
+          <% end %>
+        </select>
+      </div>
+
+      <div class="decision-modal__field">
+        <%= form.label :vendor_name, "Vendor" %>
+        <input type="text" name="calendar_item[vendor_name]" data-decision-modal-target="vendorInput">
+      </div>
+
+      <div class="decision-modal__field">
+        <%= form.label :notes %>
+        <textarea name="calendar_item[notes]" rows="4" data-decision-modal-target="notesInput"></textarea>
+      </div>
+
+      <div class="decision-modal__actions">
+        <button type="button" class="client-button client-button--secondary" data-action="decision-modal#close">Cancel</button>
+        <button type="submit" class="client-button">Save Changes</button>
+      </div>
+    <% end %>
+  </div>
+</dialog>

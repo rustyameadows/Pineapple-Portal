@@ -7,7 +7,12 @@ module Client
     def show
       @quick_links = build_quick_links
       @module_cards = build_module_cards
-      @planning_team_members = @event.event_team_members.includes(:user).client_visible.references(:users).order("users.name")
+      @planning_team_members = @event.planner_team_members
+                                      .includes(:user)
+                                      .client_visible
+                                      .left_joins(:user)
+                                      .ordered_for_display
+                                      .order("users.name")
     end
 
     private
@@ -25,15 +30,6 @@ module Client
       visible_views = calendar&.event_calendar_views&.client_visible&.order(:position) || EventCalendarView.none
 
       cards = []
-
-      if calendar&.client_visible? || visible_views.any?
-        default_slug = calendar&.client_visible? ? "run-of-show" : visible_views.first.slug
-        cards << {
-          title: "Event Schedule",
-          description: "See the master run of show and shared timelines.",
-          path: client_event_calendar_path(@event, default_slug)
-        }
-      end
 
       decision_view = visible_views.find { |view| view.slug == "decision-calendar" }
 

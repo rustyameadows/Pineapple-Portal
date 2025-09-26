@@ -1,0 +1,11 @@
+<footer class="client-footer" id="portal-footer">
+  <div class="client-container client-footer__inner">
+    <%= image_tag "portal-footer-logo.png", alt: "Pineapple Productions", class: "client-footer__logo" %>
+    <% if content_for?(:client_portal_footer) %>
+      <div class="client-footer__slot">
+        <%= yield :client_portal_footer %>
+      </div>
+    <% end %>
+    <p class="client-footer__copyright">© <%= Time.current.year %> Pineapple Productions</p>
+  </div>
+</footer>

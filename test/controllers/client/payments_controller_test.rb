@@ -5,7 +5,7 @@ module Client
     setup do
       @event = events(:one)
       @payment = payments(:visible_payment)
-      log_in_as(users(:one))
+      log_in_client_portal(users(:client_contact))
     end
 
     test "shows payment detail" do

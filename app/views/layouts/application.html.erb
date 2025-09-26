@@ -10,6 +10,14 @@
 
     <%= yield :head %>
 
+    <link rel="preload" href="<%= asset_path('Didot.woff2') %>" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="<%= asset_path('Didot.woff') %>" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="<%= asset_path('DidotLTStd-Italic.woff') %>" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="<%= asset_path('mrseavessmallcaps_regular-webfont.woff2') %>" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="<%= asset_path('mrseavessmallcaps_regular-webfont.woff') %>" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="<%= asset_path('SackersGothicStd-Medium.woff') %>" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="<%= asset_path('ufonts.com_baskervilleno2bt-roman-opentype-webfont.woff') %>" as="font" type="font/woff" crossorigin>
+
     <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
     <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
@@ -17,8 +25,45 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <% planner_stylesheets = %w[
+      base/fonts
+      base/tokens
+      base/reset
+      base/elements
+      utilities/helpers
+      utilities/responsive
+      layout/app-shell
+      layout/planner-shell
+      layout/sidebar
+      components/flash
+      components/cards
+      components/buttons
+      components/forms
+      components/tables
+      components/pills
+      components/tags
+      components/modal
+      components/event-links
+      components/timeline
+      components/calendar-grid
+      components/documents-table
+      components/payments-list
+      components/approvals-list
+      pages/auth
+      pages/events-index
+      pages/events-show
+      pages/events-calendar
+      pages/events-payments
+      pages/events-approvals
+      pages/events-settings
+      pages/questionnaires
+      pages/documents
+      pages/payments
+      pages/approvals
+    ] %>
+    <% planner_stylesheets.each do |logical_path| %>
+      <%= stylesheet_link_tag logical_path, "data-turbo-track": "reload" %>
+    <% end %>
   </head>
 
   <body>

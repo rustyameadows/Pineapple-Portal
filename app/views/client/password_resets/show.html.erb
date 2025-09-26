@@ -1,0 +1,42 @@
+<% provide :page_shell do %>
+  <div class="auth-shell">
+    <section class="auth-card">
+      <header class="auth-card__header">
+        <h1>Reset Portal Password</h1>
+        <% if @client_user.present? %>
+          <p>Set a new password for <strong><%= @client_user.name %></strong>'s client portal account.</p>
+        <% else %>
+          <p>Set a new password for your client portal account.</p>
+        <% end %>
+      </header>
+
+      <% if flash[:alert].present? %>
+        <p class="auth-card__flash auth-card__flash--alert"><%= flash[:alert] %></p>
+      <% elsif flash[:notice].present? %>
+        <p class="auth-card__flash auth-card__flash--notice"><%= flash[:notice] %></p>
+      <% end %>
+
+      <% if @token_invalid %>
+        <p class="auth-card__footer">This reset link has expired or was already used. Ask your planner for a fresh link.</p>
+      <% else %>
+        <%= form_with scope: :password_reset, url: client_password_reset_path(@reset_token.token), method: :patch, class: "auth-form" do |form| %>
+          <div class="auth-form__group">
+            <%= form.label :password, "New password" %>
+            <%= form.password_field :password, required: true, autofocus: true, autocomplete: "new-password" %>
+          </div>
+
+          <div class="auth-form__group">
+            <%= form.label :password_confirmation, "Confirm new password" %>
+            <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password" %>
+          </div>
+
+          <div class="auth-form__actions">
+            <%= form.submit "Save Password", class: "auth-button" %>
+          </div>
+        <% end %>
+
+        <p class="auth-card__footer">Need help? Reach out to your planner and share this page.</p>
+      <% end %>
+    </section>
+  </div>
+<% end %>

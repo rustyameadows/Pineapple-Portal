@@ -1,8 +1,8 @@
 module Client
   class DesignsController < PortalController
     def index
-      @planner_documents = planner_documents
-      @client_documents = client_documents
+      @gallery_documents = client_gallery_documents
+      @display_documents = planner_documents
       @document = build_document
     end
 
@@ -14,8 +14,8 @@ module Client
       if @document.save
         redirect_to client_event_designs_path(@event), notice: "Upload received."
       else
-        @planner_documents = planner_documents
-        @client_documents = client_documents
+        @display_documents = planner_documents
+        @gallery_documents = client_gallery_documents
         render :index, status: :unprocessable_content
       end
     end
@@ -30,11 +30,12 @@ module Client
                                    .order(:title)
     end
 
-    def client_documents
-      @client_documents ||= @event.documents
-                                   .latest
-                                   .where(source: "client_upload")
-                                   .order(updated_at: :desc)
+    def client_gallery_documents
+      @client_gallery_documents ||= @event.documents
+                                           .latest
+                                           .where(source: "client_upload")
+                                           .where("content_type LIKE ?", "image/%")
+                                           .order(updated_at: :desc)
     end
 
     def build_document

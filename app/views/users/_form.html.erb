@@ -3,6 +3,8 @@
 <% allow_role_select = local_assigns.fetch(:allow_role_select, false) %>
 <% submit_label = local_assigns.fetch(:submit_label, user.new_record? ? (first_account ? "Create Account" : "Invite Teammate") : "Save Changes") %>
 <% require_password = local_assigns.fetch(:require_password, user.new_record?) %>
+<% role_options = Array(local_assigns[:role_options]).presence || User.roles.keys %>
+<% role_option_pairs = role_options.map { |role| [role.to_s.humanize, role.to_s] } %>
 
 <%= form_with model: user, local: true, class: "stack" do |form| %>
   <div>
@@ -28,8 +30,10 @@
   <% if allow_role_select %>
     <div>
       <%= form.label :role %>
-      <%= form.select :role, User.roles.keys.map { |role| [role.humanize, role] } %>
+      <%= form.select :role, role_option_pairs, {}, {} %>
     </div>
+  <% elsif user.role.present? %>
+    <%= form.hidden_field :role, value: user.role %>
   <% end %>
 
   <div>
@@ -48,6 +52,11 @@
     <% confirmation_options[:required] = true if require_password %>
     <%= form.password_field :password_confirmation, **confirmation_options %>
   </div>
+
+  <% return_to_value = local_assigns[:return_to].presence || (defined?(@return_to) && @return_to.present? ? @return_to : nil) %>
+  <% if return_to_value.present? %>
+    <%= hidden_field_tag :return_to, return_to_value %>
+  <% end %>
 
   <%= form.submit submit_label %>
 <% end %>

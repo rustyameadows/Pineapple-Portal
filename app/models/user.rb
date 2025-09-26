@@ -13,6 +13,7 @@ class User < ApplicationRecord
   has_many :events_as_team_member, through: :event_team_members, source: :event
   has_many :calendar_item_team_members, dependent: :destroy
   has_many :calendar_items_as_team_member, through: :calendar_item_team_members, source: :calendar_item
+  has_many :password_reset_tokens, dependent: :delete_all
 
   attribute :role, :string
   enum :role, ROLES, default: :planner, validate: true
@@ -25,6 +26,15 @@ class User < ApplicationRecord
   validates :phone_number, length: { maximum: 32 }, allow_blank: true
 
   scope :planners, -> { where(role: ROLES[:planner]) }
+  scope :clients, -> { where(role: ROLES[:client]) }
+
+  def planner_or_admin?
+    planner? || admin?
+  end
+
+  def latest_active_password_reset_token
+    password_reset_tokens.active.most_recent_first.first
+  end
 
   private
 

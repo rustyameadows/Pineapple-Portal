@@ -5,18 +5,70 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <link rel="preload" href="<%= asset_path('Didot.woff2') %>" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="<%= asset_path('Didot.woff') %>" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="<%= asset_path('DidotLTStd-Italic.woff') %>" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="<%= asset_path('mrseavessmallcaps_regular-webfont.woff2') %>" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="<%= asset_path('mrseavessmallcaps_regular-webfont.woff') %>" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="<%= asset_path('SackersGothicStd-Medium.woff') %>" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="<%= asset_path('ufonts.com_baskervilleno2bt-roman-opentype-webfont.woff') %>" as="font" type="font/woff" crossorigin>
+
+    <% client_stylesheets = %w[
+      base/fonts
+      base/tokens
+      base/reset
+      base/elements
+      utilities/helpers
+      utilities/responsive
+      layout/client-shell
+      components/flash
+      components/cards
+      components/buttons
+      components/forms
+      components/tables
+      components/pills
+      components/tags
+      components/modal
+      components/event-links
+      components/timeline
+      components/calendar-grid
+      components/documents-table
+      pages/client-portal
+    pages/client-designs
+    pages/client-financials
+    pages/client-questionnaires
+    pages/client-decision-calendar
+    ] %>
+    <% client_stylesheets.each do |logical_path| %>
+      <%= stylesheet_link_tag logical_path, "data-turbo-track": "reload" %>
+    <% end %>
     <%= javascript_importmap_tags %>
   </head>
   <body class="client-shell">
-    <header class="client-shell__header">
-      <div class="client-shell__header-inner">
-        <div class="client-shell__branding">
-          <% portal_home = defined?(@event) && @event.present? ? client_event_path(@event) : root_path %>
-          <%= link_to "Pineapple Productions", portal_home, class: "client-shell__brand" %>
-        </div>
+    <% portal_home = defined?(@event) && @event.present? ? client_event_path(@event) : root_path %>
+    <nav class="client-nav">
+      <div class="client-nav__inner client-container">
+        <%= link_to portal_home, class: "client-nav__icon", aria: { label: "Portal home" } do %>
+          <%= image_tag "pineapple-icon.png", alt: "" %>
+        <% end %>
+        <%= link_to portal_home, class: "client-nav__logo", aria: { label: "Pineapple Productions" } do %>
+          <%= image_tag "portal-bar-logo.svg", alt: "Pineapple Productions" %>
+        <% end %>
+        <% if defined?(@event) && @event.present? %>
+          <div class="client-nav__identity">
+            <span class="client-nav__event"><%= @event.name %></span>
+            <% if client_logged_in? %>
+              <%= link_to "Sign out", client_logout_path,
+                          method: :delete,
+                          data: { turbo_method: :delete, turbo_confirm: "Sign out of the portal?" },
+                          class: "client-nav__logout" %>
+            <% end %>
+          </div>
+        <% else %>
+          <span class="client-nav__spacer" aria-hidden="true"></span>
+        <% end %>
       </div>
-    </header>
+    </nav>
 
     <main class="client-shell__main">
       <%= render "shared/flash" %>

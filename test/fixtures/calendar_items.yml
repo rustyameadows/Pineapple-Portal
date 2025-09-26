@@ -26,3 +26,23 @@ afterparty:
   locked: true
   starts_at: 2025-10-01 21:00:00
   position: 2
+
+decision_flowers:
+  event_calendar: run_of_show
+  title: Select Florist
+  vendor_name: Bloom & Co.
+  notes: Reviewing proposals
+  status: in_progress
+  duration_minutes: 0
+  starts_at: 2025-09-15 12:00:00
+  position: 3
+
+decision_catering:
+  event_calendar: run_of_show
+  title: Approve Catering Menu
+  vendor_name: Feast Co.
+  notes: Final tasting scheduled
+  status: planned
+  duration_minutes: 0
+  starts_at: 2025-09-20 14:00:00
+  position: 4
