@@ -50,7 +50,6 @@
 
 .client-header__divider {
     width: auto;
-    height: 48px;
     opacity: 0.8;
 }
 
@@ -99,7 +98,9 @@
     height: 225px;
     color: var(--color-dark-brown);
     text-decoration: none;
-    transition: transform 150ms ease, box-shadow 150ms ease;
+    transition:
+        transform 150ms ease,
+        box-shadow 150ms ease;
 }
 
 .client-planning-grid__card h3 {
