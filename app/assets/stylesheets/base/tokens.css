@@ -1,7 +1,10 @@
 :root {
   /* Typography */
-  --font-family-sans: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-family-serif: "Georgia", serif;
+  --font-family-body: "BaskervilleNo2", "Baskerville", "Times New Roman", serif;
+  --font-family-sans: "SackersGothic", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-serif: "BaskervilleNo2", "Baskerville", "Times New Roman", serif;
+  --font-family-display: "Didot", "Times New Roman", serif;
+  --font-family-smallcaps: "MrsEavesSmallCaps", "SackersGothic", "Inter", sans-serif;
   --font-family-mono: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
 
   --font-size-100: 0.75rem;
