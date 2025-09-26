@@ -1,7 +1,7 @@
 module Events
   class TeamMembersController < ApplicationController
     before_action :set_event
-    before_action :set_team_member, only: %i[update destroy]
+    before_action :set_team_member, only: %i[update destroy issue_reset]
 
     def create
       attributes = team_member_params
@@ -57,6 +57,21 @@ module Events
     def destroy
       @team_member.destroy
       redirect_to event_settings_path(@event), notice: "Team member removed from the event."
+    end
+
+    def issue_reset
+      unless @team_member.client?
+        redirect_to event_settings_path(@event), alert: "Password resets are only available for client accounts." and return
+      end
+
+      token = PasswordResetToken.generate_for!(
+        user: @team_member.user,
+        issued_by: current_user
+      )
+
+      flash[:notice] = "Reset link generated. Share the link shown below with your client."
+      flash[:highlight_reset_token_id] = token.id
+      redirect_to event_settings_path(@event)
     end
 
     private

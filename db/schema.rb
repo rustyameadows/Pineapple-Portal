@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_24_195000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -254,9 +254,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_195000) do
     t.boolean "client_visible", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "lead_planner", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.string "member_role", default: "planner", null: false
     t.index ["client_visible"], name: "index_event_team_members_on_client_visible"
+    t.index ["event_id", "position"], name: "index_event_team_members_on_event_id_and_position"
     t.index ["event_id", "user_id"], name: "index_event_team_members_on_event_id_and_user_id", unique: true
     t.index ["event_id"], name: "index_event_team_members_on_event_id"
+    t.index ["lead_planner"], name: "index_event_team_members_on_lead_planner"
+    t.index ["member_role"], name: "index_event_team_members_on_member_role"
     t.index ["user_id"], name: "index_event_team_members_on_user_id"
   end
 
@@ -270,6 +276,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_195000) do
     t.datetime "archived_at"
     t.index ["archived_at"], name: "index_events_on_archived_at"
     t.index ["name"], name: "index_events_on_name"
+  end
+
+  create_table "password_reset_tokens", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "issued_by_id"
+    t.string "token", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "redeemed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_password_reset_tokens_on_expires_at"
+    t.index ["issued_by_id"], name: "index_password_reset_tokens_on_issued_by_id"
+    t.index ["token"], name: "index_password_reset_tokens_on_token", unique: true
+    t.index ["user_id"], name: "index_password_reset_tokens_on_user_id"
   end
 
   create_table "payments", force: :cascade do |t|
@@ -373,6 +393,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_24_195000) do
   add_foreign_key "event_links", "events"
   add_foreign_key "event_team_members", "events"
   add_foreign_key "event_team_members", "users"
+  add_foreign_key "password_reset_tokens", "users"
+  add_foreign_key "password_reset_tokens", "users", column: "issued_by_id"
   add_foreign_key "payments", "events"
   add_foreign_key "questionnaire_sections", "questionnaires"
   add_foreign_key "questionnaires", "events"

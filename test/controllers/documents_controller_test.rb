@@ -46,4 +46,31 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to event_document_url(@event, Document.last)
     assert_equal 2, Document.last.version
   end
+
+  test "planner download redirects to storage" do
+    storage = Minitest::Mock.new
+    storage.expect :presigned_download_url, "https://files.example.com/contract.pdf", [{ key: @document.storage_uri }]
+
+    R2::Storage.stub :new, storage do
+      get download_event_document_url(@event, @document)
+      assert_redirected_to "https://files.example.com/contract.pdf"
+    end
+
+    storage.verify
+  end
+
+  test "client download redirects to storage" do
+    delete logout_url
+    log_in_client_portal(users(:client_contact))
+
+    storage = Minitest::Mock.new
+    storage.expect :presigned_download_url, "https://files.example.com/contract.pdf", [{ key: @document.storage_uri }]
+
+    R2::Storage.stub :new, storage do
+      get download_event_document_url(@event, @document)
+      assert_redirected_to "https://files.example.com/contract.pdf"
+    end
+
+    storage.verify
+  end
 end

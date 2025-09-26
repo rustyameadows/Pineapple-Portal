@@ -60,7 +60,10 @@
           <div class="client-nav__identity">
             <span class="client-nav__event"><%= @event.name %></span>
             <% if client_logged_in? %>
-              <%= link_to "Sign out", client_logout_path, data: { turbo_method: :delete, turbo_confirm: "Sign out of the portal?" }, class: "client-nav__logout" %>
+              <%= link_to "Sign out", client_logout_path,
+                          method: :delete,
+                          data: { turbo_method: :delete, turbo_confirm: "Sign out of the portal?" },
+                          class: "client-nav__logout" %>
             <% end %>
           </div>
         <% else %>

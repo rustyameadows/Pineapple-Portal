@@ -54,7 +54,9 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :team_members, only: %i[create update destroy], module: :events
+    resources :team_members, only: %i[create update destroy], module: :events do
+      member { post :issue_reset }
+    end
 
     resources :questionnaires do
       member do
@@ -84,7 +86,11 @@ Rails.application.routes.draw do
   namespace :client, path: "portal" do
     get "login", to: "sessions#new"
     post "login", to: "sessions#create"
-    delete "logout", to: "sessions#destroy"
+    match "logout", to: "sessions#destroy", via: %i[delete get]
+
+    get "reset/:token", to: "password_resets#show", as: :password_reset
+    patch "reset/:token", to: "password_resets#update"
+    put "reset/:token", to: "password_resets#update"
 
     resources :events, only: :show do
       resources :calendars, only: %i[index show], param: :slug

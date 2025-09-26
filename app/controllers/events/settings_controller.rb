@@ -22,7 +22,7 @@ module Events
                                     .order("users.name")
 
       @client_team_members = @event.client_team_members
-                                   .includes(:user)
+                                   .includes(user: :password_reset_tokens)
                                    .left_joins(:user)
                                    .order("users.name")
 

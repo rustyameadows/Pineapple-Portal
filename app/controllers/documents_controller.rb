@@ -2,6 +2,8 @@ class DocumentsController < ApplicationController
   before_action :set_event
   before_action :set_document, only: %i[show edit update destroy download]
   before_action :load_versions, only: %i[show edit update]
+  skip_before_action :require_login, only: :download
+  before_action :authorize_download, only: :download
 
   def index
     @document_groups = build_document_groups
@@ -67,6 +69,18 @@ class DocumentsController < ApplicationController
 
   private
 
+  def authorize_download
+    return if current_user&.planner_or_admin?
+
+    client_user = client_portal_user
+    if client_user && client_has_event_access?(client_user)
+      return
+    end
+
+    session.delete(:client_user_id) if session[:client_user_id].present? && client_user.nil?
+    redirect_to client_login_path, alert: "Please sign in to view this file."
+  end
+
   def set_event
     @event = Event.find(params[:event_id])
   end
@@ -117,5 +131,25 @@ class DocumentsController < ApplicationController
     return Document.none if logical_id.blank?
 
     @event.documents.where(logical_id: logical_id).order(version: :desc)
+  end
+
+  def client_portal_user
+    return @client_portal_user if defined?(@client_portal_user)
+
+    @client_portal_user = if session[:client_user_id].present?
+                             User.clients.find_by(id: session[:client_user_id])
+                           else
+                             nil
+                           end
+  end
+
+  def client_has_event_access?(user)
+    user.events_as_team_member
+        .where(event_team_members: {
+          event_id: @event.id,
+          member_role: EventTeamMember::TEAM_ROLES[:client],
+          client_visible: true
+        })
+        .exists?
   end
 end

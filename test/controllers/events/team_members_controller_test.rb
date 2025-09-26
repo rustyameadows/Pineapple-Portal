@@ -109,5 +109,29 @@ module Events
 
       assert_redirected_to event_settings_url(@event)
     end
+
+    test "generates reset token for client" do
+      member = event_team_members(:client_one)
+
+      assert_difference("PasswordResetToken.count", 1) do
+        post issue_reset_event_team_member_url(@event, member)
+      end
+
+      assert_redirected_to event_settings_url(@event)
+      token = PasswordResetToken.order(:created_at).last
+      assert_equal member.user, token.user
+      assert token.expires_at > Time.current
+    end
+
+    test "rejects reset generation for planner" do
+      member = event_team_members(:two)
+
+      assert_no_difference("PasswordResetToken.count") do
+        post issue_reset_event_team_member_url(@event, member)
+      end
+
+      assert_redirected_to event_settings_url(@event)
+      assert_match "only available for client accounts", flash[:alert]
+    end
   end
 end

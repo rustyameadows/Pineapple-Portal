@@ -179,13 +179,17 @@
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Portal Access</th>
+                    <th>Password Reset Link</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   <% @client_team_members.each do |team_member| %>
                     <% user = team_member.user %>
-                    <tr>
+                    <% reset_token = user.latest_active_password_reset_token %>
+                    <% highlight_reset = flash[:highlight_reset_token_id].present? && reset_token&.id == flash[:highlight_reset_token_id].to_i %>
+                    <% reset_url = reset_token.present? ? "#{request.base_url}#{client_password_reset_path(reset_token.token)}" : nil %>
+                    <tr class="<%= highlight_reset ? "event-settings__reset-row" : nil %>">
                       <td><%= user.name %></td>
                       <td><%= user.email %></td>
                       <td><%= user.phone_number.presence || "—" %></td>
@@ -198,9 +202,21 @@
                           </label>
                         <% end %>
                       </td>
-                      <td class="event-table__actions">
+                      <td>
+                        <% if reset_token.present? %>
+                          <div class="event-settings__reset <%= "event-settings__reset--highlight" if highlight_reset %>">
+                            <label for="reset-link-<%= reset_token.id %>" class="event-settings__reset-label">Share this link</label>
+                            <input id="reset-link-<%= reset_token.id %>" type="text" class="event-settings__reset-input" value="<%= reset_url %>" readonly>
+                            <p class="event-settings__reset-meta">Expires <%= reset_token.expires_at.strftime('%b %-d, %Y %l:%M %p %Z') %></p>
+                          </div>
+                        <% else %>
+                          <span class="event-settings__empty">No reset link yet.</span>
+                        <% end %>
+                      </td>
+                      <td class="event-table__actions event-table__actions--stack">
+                        <%= button_to "Generate Reset Link", issue_reset_event_team_member_path(@event, team_member), method: :post, class: "event-section__link", form: { class: "event-settings__inline-form" } %>
                         <%= link_to "Edit", edit_user_path(user, return_to: event_settings_path(@event)), class: "event-section__link" %>
-                        <%= button_to "Remove", event_team_member_path(@event, team_member), method: :delete, data: { turbo_confirm: "Remove #{user.name}'s portal access?" }, class: "event-section__link event-section__link--danger" %>
+                        <%= button_to "Remove", event_team_member_path(@event, team_member), method: :delete, data: { turbo_confirm: "Remove #{user.name}'s portal access?" }, class: "event-section__link event-section__link--danger", form: { class: "event-settings__inline-form" } %>
                       </td>
                     </tr>
                   <% end %>
