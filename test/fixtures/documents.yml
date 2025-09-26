@@ -31,13 +31,13 @@ packet_brief:
 client_inspo_board:
   event: one
   title: Mood Board
-  storage_uri: documents/mood-board-v1.pdf
+  storage_uri: documents/mood-board-v1.png
   checksum: mood-board-checksum-v1
   size_bytes: 5120
   logical_id: 33333333-3333-3333-3333-333333333333
   version: 1
   is_latest: true
-  content_type: application/pdf
+  content_type: image/png
   client_visible: true
   source: client_upload
   created_at: <%= 1.day.ago %>

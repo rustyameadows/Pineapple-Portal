@@ -68,7 +68,9 @@ class UsersController < ApplicationController
   def user_params
     permitted = %i[name email password password_confirmation title phone_number]
     permitted << :role if allow_role_param?
-    params.require(:user).permit(permitted)
+    attributes = params.require(:user).permit(permitted)
+    sanitize_role_param(attributes)
+    attributes
   end
 
   def allow_role_param?
@@ -91,14 +93,13 @@ class UsersController < ApplicationController
       return
     end
 
-    if current_user&.admin?
-      @user.role = desired_role.presence || @user.role || User::ROLES[:planner]
-    elsif current_user&.planner?
-      allowed_roles = [User::ROLES[:planner], User::ROLES[:client]]
-      @user.role = allowed_roles.include?(desired_role) ? desired_role : (@user.role || User::ROLES[:planner])
-    else
-      @user.role = @user.role || User::ROLES[:planner]
-    end
+    allowed_roles = allowed_roles_for_current_user
+    fallback_role = @user.role || allowed_roles.first || User::ROLES[:planner]
+    @user.role = if desired_role.present? && allowed_roles.include?(desired_role)
+                   desired_role
+                 else
+                   fallback_role
+                 end
   end
 
   def handle_post_create_redirect
@@ -117,8 +118,19 @@ class UsersController < ApplicationController
   end
 
   def role_options_for_current_user
+    allowed_roles_for_current_user
+  end
+
+  def sanitize_role_param(attributes)
+    return unless attributes.key?(:role)
+    value = attributes[:role].presence
+    allowed = allowed_roles_for_current_user
+    attributes[:role] = allowed.include?(value) ? value : allowed.first
+  end
+
+  def allowed_roles_for_current_user
     if User.none? || current_user&.admin?
-      User.roles.keys
+      User.roles.values
     elsif current_user&.planner?
       [User::ROLES[:planner], User::ROLES[:client]]
     else

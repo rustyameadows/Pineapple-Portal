@@ -393,8 +393,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
   add_foreign_key "event_links", "events"
   add_foreign_key "event_team_members", "events"
   add_foreign_key "event_team_members", "users"
-  add_foreign_key "password_reset_tokens", "users"
-  add_foreign_key "password_reset_tokens", "users", column: "issued_by_id"
+  add_foreign_key "password_reset_tokens", "users", on_delete: :cascade
+  add_foreign_key "password_reset_tokens", "users", column: "issued_by_id", on_delete: :nullify
   add_foreign_key "payments", "events"
   add_foreign_key "questionnaire_sections", "questionnaires"
   add_foreign_key "questionnaires", "events"

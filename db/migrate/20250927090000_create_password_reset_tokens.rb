@@ -1,8 +1,8 @@
 class CreatePasswordResetTokens < ActiveRecord::Migration[7.1]
   def change
     create_table :password_reset_tokens do |t|
-      t.references :user, null: false, foreign_key: true
-      t.references :issued_by, null: true, foreign_key: { to_table: :users }
+      t.references :user, null: false, foreign_key: { on_delete: :cascade }
+      t.references :issued_by, null: true, foreign_key: { to_table: :users, on_delete: :nullify }
       t.string :token, null: false
       t.datetime :expires_at, null: false
       t.datetime :redeemed_at

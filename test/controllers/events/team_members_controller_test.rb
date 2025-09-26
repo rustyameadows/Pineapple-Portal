@@ -8,7 +8,7 @@ module Events
     end
 
     test "adds planner to event team" do
-      assert_difference("EventTeamMember.count") do
+      assert_difference("EventTeamMember.where(event: @event).count") do
         post event_team_members_url(@event), params: {
           event_team_member: {
             user_id: users(:planner_two).id

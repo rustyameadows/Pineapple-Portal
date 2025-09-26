@@ -48,29 +48,37 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "planner download redirects to storage" do
-    storage = Minitest::Mock.new
-    storage.expect :presigned_download_url, "https://files.example.com/contract.pdf", [{ key: @document.storage_uri }]
+    captured = nil
+    storage = Object.new
+    storage.define_singleton_method(:presigned_download_url) do |**kwargs|
+      captured = kwargs
+      "https://files.example.com/contract.pdf"
+    end
 
     R2::Storage.stub :new, storage do
       get download_event_document_url(@event, @document)
       assert_redirected_to "https://files.example.com/contract.pdf"
     end
 
-    storage.verify
+    assert_equal({ key: @document.storage_uri }, captured)
   end
 
   test "client download redirects to storage" do
     delete logout_url
     log_in_client_portal(users(:client_contact))
 
-    storage = Minitest::Mock.new
-    storage.expect :presigned_download_url, "https://files.example.com/contract.pdf", [{ key: @document.storage_uri }]
+    captured = nil
+    storage = Object.new
+    storage.define_singleton_method(:presigned_download_url) do |**kwargs|
+      captured = kwargs
+      "https://files.example.com/contract.pdf"
+    end
 
     R2::Storage.stub :new, storage do
       get download_event_document_url(@event, @document)
       assert_redirected_to "https://files.example.com/contract.pdf"
     end
 
-    storage.verify
+    assert_equal({ key: @document.storage_uri }, captured)
   end
 end

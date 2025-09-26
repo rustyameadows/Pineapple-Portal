@@ -6,7 +6,7 @@ module Client
       @event = events(:one)
       @calendar = event_calendars(:run_of_show)
       @view = event_calendar_views(:vendor_view)
-      log_in_as(users(:client_contact))
+      log_in_client_portal(users(:client_contact))
     end
 
     test "index redirects to run of show when visible" do

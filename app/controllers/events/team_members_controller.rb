@@ -4,12 +4,14 @@ module Events
     before_action :set_team_member, only: %i[update destroy issue_reset]
 
     def create
-      attributes = team_member_params
-      client_user_data = attributes.delete(:client_user_attributes)
-      if client_user_data.is_a?(ActionController::Parameters)
-        client_user_data = client_user_data.permit(:name, :email, :phone_number).to_h
-      end
+      attributes = team_member_params.to_h
+      client_user_data = attributes.delete("client_user_attributes")
       generated_password = nil
+
+      attributes = attributes.with_indifferent_access
+
+      attributes[:client_visible] = true unless attributes.key?(:client_visible)
+      attributes[:member_role] = EventTeamMember::TEAM_ROLES[:planner] if attributes[:member_role].blank?
 
       if attributes[:member_role] == EventTeamMember::TEAM_ROLES[:client]
         attributes[:client_visible] = true unless attributes.key?(:client_visible)
