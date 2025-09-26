@@ -5,29 +5,29 @@
 }
 
 .documents-show__panel {
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   border-radius: var(--radius-lg);
-  background: var(--color-sand-100);
+  background: var(--color-light-cream);
   padding: 1.5rem;
   display: grid;
   gap: 1rem;
 }
 
 .documents-show__panel--danger {
-  border-color: var(--color-red-500);
-  background: color-mix(in srgb, var(--color-red-500) 15%, white);
+  border-color: var(--color-light-cream0);
+  background: color-mix(in srgb, var(--color-light-cream0) 15%, white);
 }
 
 .documents-show__heading {
   margin: 0;
   font-size: 1.2rem;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .documents-show__subheading {
   margin: 0 0 0.5rem;
   font-size: 1rem;
-  color: var(--color-clay-500);
+  color: var(--color-brown);
 }
 
 .documents-show__meta {
@@ -46,12 +46,12 @@
   font-size: 0.75rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-clay-400);
+  color: var(--color-brown);
 }
 
 .documents-show__meta dd {
   margin: 0;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .documents-form {
@@ -61,9 +61,9 @@
 }
 
 .documents-form__panel {
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   border-radius: var(--radius-lg);
-  background: var(--color-sand-100);
+  background: var(--color-light-cream);
   padding: 1.5rem;
   display: grid;
   gap: 1rem;
@@ -72,7 +72,7 @@
 .documents-form__heading {
   margin: 0;
   font-size: 1.1rem;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .documents-form__panel form > div {
@@ -81,7 +81,7 @@
 
 .documents-form__panel label {
   font-weight: var(--font-weight-semibold);
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .documents-form__panel input[type="text"],

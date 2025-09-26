@@ -9,37 +9,37 @@
   padding: 0.25rem 0.75rem;
   border: 1px solid var(--color-border-soft);
   background: var(--color-surface-accent);
-  color: var(--color-clay-500);
+  color: var(--color-brown);
 }
 
 .event-status-tag--finished {
-  border-color: var(--color-green-500);
-  background: color-mix(in srgb, var(--color-green-500) 20%, white);
-  color: var(--color-green-500);
+  border-color: var(--color-light-green0);
+  background: color-mix(in srgb, var(--color-light-green0) 20%, white);
+  color: var(--color-light-green0);
 }
 
 .event-status-tag--in-progress {
-  border-color: var(--color-blue-500);
-  background: var(--color-blue-100);
-  color: var(--color-blue-600);
+  border-color: var(--color-light-green0);
+  background: var(--color-sea-foam);
+  color: var(--color-dark-green);
 }
 
 .client-financials__status {
   padding: 0.2rem 0.6rem;
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--color-clay-400) 12%, white);
-  color: var(--color-clay-400);
+  background: color-mix(in srgb, var(--color-brown) 12%, white);
+  color: var(--color-brown);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .client-financials__status--completed {
-  background: color-mix(in srgb, var(--color-green-500) 16%, white);
-  color: var(--color-green-500);
+  background: color-mix(in srgb, var(--color-light-green0) 16%, white);
+  color: var(--color-light-green0);
 }
 
 .client-financials__status--upcoming {
-  background: var(--color-blue-100);
-  color: var(--color-blue-700);
+  background: var(--color-sea-foam);
+  color: var(--color-dark-green);
 }

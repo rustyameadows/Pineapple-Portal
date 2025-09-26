@@ -1,5 +1,5 @@
 .question-card {
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   background: var(--color-white);
@@ -10,11 +10,11 @@
 .question-card__prompt,
 .question-card__help {
   margin: 0;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .question-card__help {
-  color: var(--color-clay-500);
+  color: var(--color-brown);
 }
 
 .question-card__footer {
@@ -23,20 +23,20 @@
 }
 
 .question-card__answer {
-  border-top: 1px solid var(--color-sand-300);
+  border-top: 1px solid var(--color-sea-foam);
   padding-top: 1rem;
 }
 
 .question-card__answer-empty {
-  color: var(--color-clay-400);
+  color: var(--color-brown);
   font-style: italic;
 }
 
 .questionnaire-section-view {
   margin-top: 2rem;
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   border-radius: var(--radius-lg);
-  background: var(--color-sand-100);
+  background: var(--color-light-cream);
   padding: 2rem 2.25rem;
   display: flex;
   flex-direction: column;
@@ -52,12 +52,12 @@
 .questionnaire-section-view__intro h2 {
   margin: 0;
   font-size: 1.4rem;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .questionnaire-section-view__helper {
   margin: 0.75rem 0 0;
-  color: var(--color-clay-500);
+  color: var(--color-brown);
 }
 
 .questionnaire-section-view__questions {
@@ -66,7 +66,7 @@
 }
 
 .questionnaire-section-view__empty {
-  color: var(--color-clay-500);
+  color: var(--color-brown);
 }
 
 .questionnaire-form {
@@ -87,7 +87,7 @@
 
 .questionnaire-editor {
   margin-top: 2.5rem;
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   border-radius: var(--radius-lg);
   background: var(--color-white);
   padding: 2rem 2.5rem;
@@ -99,7 +99,7 @@
 .questionnaire-editor__header h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .questionnaire-editor__sections {
@@ -108,9 +108,9 @@
 }
 
 .questionnaire-editor__section {
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   border-radius: 12px;
-  background: var(--color-sand-100);
+  background: var(--color-light-cream);
   padding: 1.5rem;
   display: block;
   box-shadow: 0 4px 18px rgba(60, 46, 37, 0.06);
@@ -126,12 +126,12 @@
 .questionnaire-editor__section-title {
   margin: 0;
   font-size: 1.2rem;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .questionnaire-editor__section-helper {
   margin: 0.25rem 0 0;
-  color: var(--color-clay-400);
+  color: var(--color-brown);
   font-size: 0.9rem;
 }
 
@@ -165,7 +165,7 @@
 }
 
 .questionnaire-editor__question {
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   border-radius: 10px;
   padding: 1rem 1.25rem;
   background: var(--color-white);
@@ -191,11 +191,11 @@
 }
 
 .questionnaire-editor__empty {
-  color: var(--color-clay-500);
+  color: var(--color-brown);
 }
 
 .questionnaire-editor__new-section {
-  border-top: 1px solid var(--color-sand-300);
+  border-top: 1px solid var(--color-sea-foam);
   padding-top: 1.5rem;
 }
 

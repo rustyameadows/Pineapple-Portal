@@ -1,6 +1,6 @@
 .client-hero {
-  background: var(--color-sand-100);
-  border: 1px solid var(--color-sand-300);
+  background: var(--color-light-cream);
+  border: 1px solid var(--color-sea-foam);
   border-radius: var(--radius-lg);
   padding: 2rem;
   display: grid;
@@ -17,7 +17,7 @@
   font-size: 0.8rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-clay-400);
+  color: var(--color-brown);
 }
 
 .client-hero__title {
@@ -27,11 +27,11 @@
 
 .client-hero__dates {
   margin: 0;
-  color: var(--color-clay-500);
+  color: var(--color-brown);
 }
 
 .client-hero__links {
-  border-top: 1px solid var(--color-sand-300);
+  border-top: 1px solid var(--color-sea-foam);
   padding-top: 1.25rem;
 }
 
@@ -40,7 +40,7 @@
   text-transform: uppercase;
   font-size: 0.8rem;
   letter-spacing: 0.12em;
-  color: var(--color-clay-400);
+  color: var(--color-brown);
 }
 
 .client-hero__links-list {
@@ -63,7 +63,7 @@
 
 .client-hero__links-empty {
   margin: 0;
-  color: var(--color-clay-400);
+  color: var(--color-brown);
   font-style: italic;
 }
 
@@ -88,8 +88,8 @@
 }
 
 .client-dashboard__card {
-  background: var(--color-sand-100);
-  border: 1px solid var(--color-sand-300);
+  background: var(--color-light-cream);
+  border: 1px solid var(--color-sea-foam);
   border-radius: 10px;
   padding: 1.25rem;
   display: grid;
@@ -102,7 +102,7 @@
 
 .client-dashboard__card p {
   margin: 0;
-  color: var(--color-clay-500);
+  color: var(--color-brown);
 }
 
 .client-dashboard__cta {
@@ -110,7 +110,7 @@
   font-size: 0.85rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .client-dashboard__cta:hover,
@@ -119,8 +119,8 @@
 }
 
 .client-page {
-  background: var(--color-sand-100);
-  border: 1px solid var(--color-sand-300);
+  background: var(--color-light-cream);
+  border: 1px solid var(--color-sea-foam);
   border-radius: 10px;
   padding: 2rem;
   display: grid;
@@ -133,7 +133,7 @@
 
 .client-page__header p {
   margin: 0;
-  color: var(--color-clay-500);
+  color: var(--color-brown);
 }
 
 .client-list {
@@ -147,7 +147,7 @@
 .client-list li {
   padding: 1rem 1.25rem;
   border-radius: 8px;
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   background: var(--color-white);
   display: flex;
   flex-wrap: wrap;
@@ -156,7 +156,7 @@
 }
 
 .client-list li strong {
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .client-list__title {
@@ -166,7 +166,7 @@
 
 .client-list__title a {
   text-decoration: none;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -177,10 +177,10 @@
 
 .client-placeholder {
   padding: 1.25rem;
-  border: 1px dashed var(--color-sand-400);
+  border: 1px dashed var(--color-sea-foam);
   border-radius: 8px;
   text-align: center;
-  color: var(--color-clay-400);
+  color: var(--color-brown);
   background: rgba(255, 250, 241, 0.6);
 }
 
@@ -193,21 +193,21 @@
   text-transform: uppercase;
   border-radius: var(--radius-pill);
   padding: 0.25rem 0.75rem;
-  border: 1px solid var(--color-sand-300);
-  background: var(--color-sand-100);
-  color: var(--color-clay-500);
+  border: 1px solid var(--color-sea-foam);
+  background: var(--color-light-cream);
+  color: var(--color-brown);
 }
 
 .client-status-tag--finished {
-  border-color: var(--color-green-500);
-  background: color-mix(in srgb, var(--color-green-500) 18%, white);
-  color: var(--color-green-500);
+  border-color: var(--color-light-green0);
+  background: color-mix(in srgb, var(--color-light-green0) 18%, white);
+  color: var(--color-light-green0);
 }
 
 .client-status-tag--in-progress {
-  border-color: var(--color-blue-500);
-  background: var(--color-blue-100);
-  color: var(--color-blue-600);
+  border-color: var(--color-light-green0);
+  background: var(--color-sea-foam);
+  color: var(--color-dark-green);
 }
 
 .client-calendar__table {
@@ -300,7 +300,7 @@
   border: 1px solid transparent;
   font-weight: var(--font-weight-semibold);
   text-decoration: none;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .client-calendar__nav-link:hover,

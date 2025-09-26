@@ -23,15 +23,15 @@
   padding: 0.6rem 1.2rem;
   border-radius: var(--radius-pill);
   border: none;
-  background: var(--color-clay-600);
-  color: var(--color-sand-100);
+  background: var(--color-dark-brown);
+  color: var(--color-light-cream);
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .event-section__actions form input[type="submit"]:hover,
 .event-section__actions form input[type="submit"]:focus {
-  background: var(--color-clay-700);
+  background: var(--color-dark-brown);
 }
 
 .documents-form__panel input[type="submit"],
@@ -63,8 +63,8 @@
   align-items: center;
   gap: var(--space-2);
   border: none;
-  background: var(--color-red-500);
-  color: var(--color-sand-100);
+  background: var(--color-light-cream0);
+  color: var(--color-light-cream);
   padding: 0.6rem 1.2rem;
   border-radius: var(--radius-pill);
   cursor: pointer;
@@ -76,5 +76,5 @@
 
 .documents-show__delete:hover,
 .documents-show__delete:focus {
-  background: var(--color-red-650);
+  background: var(--color-dark-brown);
 }

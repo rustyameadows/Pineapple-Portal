@@ -12,12 +12,12 @@
 }
 
 .event-settings__link-item {
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   border-radius: 10px;
   padding: 1.25rem;
   display: grid;
   gap: 1rem;
-  background: var(--color-sand-100);
+  background: var(--color-light-cream);
 }
 
 .event-settings__form {
@@ -34,7 +34,7 @@
 .event-settings__field input[type="url"] {
   padding: 0.5rem 0.65rem;
   border-radius: 6px;
-  border: 1px solid var(--color-sand-400);
+  border: 1px solid var(--color-sea-foam);
   font-family: inherit;
 }
 
@@ -61,7 +61,7 @@
 }
 
 .event-settings__form-errors {
-  border: 1px solid var(--color-orange-500);
+  border: 1px solid var(--color-light-cream0);
   border-radius: 8px;
   padding: 1rem 1.25rem;
   background: #fff1ed;
@@ -79,7 +79,7 @@
 
 .event-settings__control {
   text-decoration: none;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
   font-size: 0.8rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -96,24 +96,24 @@
 
 .event-settings__empty {
   font-style: italic;
-  color: var(--color-clay-400);
+  color: var(--color-brown);
 }
 
 .event-settings__new-link {
-  border-top: 1px solid var(--color-sand-300);
+  border-top: 1px solid var(--color-sea-foam);
   padding-top: 1.5rem;
   display: grid;
   gap: 1rem;
 }
 
 .event-settings__summary {
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   border-radius: var(--radius-lg);
   padding: 1.75rem 2rem;
   display: flex;
   justify-content: space-between;
   gap: 2rem;
-  background: var(--color-sand-100);
+  background: var(--color-light-cream);
   flex-wrap: wrap;
 }
 
@@ -122,19 +122,19 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   font-size: 0.75rem;
-  color: var(--color-clay-400);
+  color: var(--color-brown);
 }
 
 .event-settings__summary-title {
   margin: 0;
   font-size: 1.6rem;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .event-settings__summary-location,
 .event-settings__summary-dates {
   margin: 0.5rem 0 0;
-  color: var(--color-clay-500);
+  color: var(--color-brown);
 }
 
 .event-settings__summary-meta {
@@ -154,20 +154,20 @@
   font-size: 0.75rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-clay-400);
+  color: var(--color-brown);
 }
 
 .event-settings__summary-date-value {
   font-size: 1.1rem;
   font-weight: var(--font-weight-semibold);
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
 }
 
 .event-settings__summary-countdown {
   font-size: 0.75rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-clay-400);
+  color: var(--color-brown);
 }
 
 .event-settings__summary-actions {
@@ -177,7 +177,7 @@
 
 .event-settings__summary-link {
   text-decoration: none;
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
   font-size: 0.8rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -214,7 +214,7 @@
 
 .event-settings__milestone-actions .event-form__cancel {
   margin-left: 0.25rem;
-  color: var(--color-red-600);
+  color: var(--color-dark-brown);
   text-decoration: none;
 }
 
@@ -228,7 +228,7 @@
 
 .event-settings__milestone-actions .event-form__cancel:hover,
 .event-settings__milestone-actions .event-form__cancel:focus {
-  color: var(--color-red-650);
+  color: var(--color-dark-brown);
   text-decoration: underline;
 }
 

@@ -39,86 +39,40 @@
   --shadow-sm: 0 4px 10px rgba(15, 23, 42, 0.08);
   --shadow-md: 0 12px 24px rgba(15, 23, 42, 0.12);
 
-  /* Neutral palette */
+  /* Core palette */
   --color-white: #ffffff;
-  --color-black: #111111;
-  --color-neutral-50: #f9fafb;
-  --color-neutral-100: #f4f4f5;
-  --color-neutral-200: #e5e7eb;
-  --color-neutral-300: #d4d4d8;
-  --color-neutral-400: #9ca3af;
-  --color-neutral-500: #6b7280;
-  --color-neutral-600: #4b5563;
-  --color-neutral-700: #374151;
-  --color-neutral-800: #1f2937;
-  --color-neutral-900: #111827;
-
-  /* Sand & clay palette */
-  --color-sand-50: #fffdf9;
-  --color-sand-100: #fffaf1;
-  --color-sand-150: #fff6e8;
-  --color-sand-200: #f8f1e5;
-  --color-sand-250: #f3e8d9;
-  --color-sand-300: #eadcc7;
-  --color-sand-400: #d9cbb9;
-  --color-sand-500: #bfa68b;
-  --color-clay-400: #8a6d58;
-  --color-clay-500: #5b4637;
-  --color-clay-600: #3c2e25;
-  --color-clay-700: #2c211a;
-
-  /* Blues */
-  --color-blue-50: #eef2ff;
-  --color-blue-100: #dbe4ff;
-  --color-blue-200: #ebefff;
-  --color-blue-500: #2455f5;
-  --color-blue-600: #1c43c6;
-  --color-blue-700: #324d9c;
-
-  /* Greens */
-  --color-green-50: #f0fdf4;
-  --color-green-500: #2f6847;
-  --color-green-600: #166534;
-
-  /* Reds */
-  --color-red-50: #fef2f2;
-  --color-red-100: #fee2e2;
-  --color-red-200: #fecaca;
-  --color-red-300: #f1d9d9;
-  --color-red-400: #e7bcbc;
-  --color-red-500: #b95a5a;
-  --color-red-600: #b91c1c;
-  --color-red-650: #991b1b;
-  --color-red-700: #8f2d2d;
-
-  /* Oranges */
-  --color-orange-50: #fff6e8;
-  --color-orange-500: #d77a61;
-  --color-orange-600: #b45309;
+  --color-black: #000000;
+  --color-light-cream: #faf9f5;
+  --color-brown: #5b4639;
+  --color-dark-brown: #3f2211;
+  --color-sea-foam: #d9e2dc;
+  --color-dark-green: #43554a;
+  --color-light-green: #9daf9d;
+  --color-gold: #be9c72;
 
   /* Semantic tokens */
-  --color-ink: var(--color-neutral-800);
-  --color-ink-subtle: var(--color-neutral-600);
-  --color-ink-muted: var(--color-neutral-500);
-  --color-surface: var(--color-white);
-  --color-surface-muted: var(--color-sand-50);
+  --color-ink: var(--color-black);
+  --color-ink-subtle: var(--color-brown);
+  --color-ink-muted: var(--color-light-green);
+  --color-surface: var(--color-light-cream);
+  --color-surface-muted: var(--color-light-cream);
   --color-surface-elevated: var(--color-white);
-  --color-surface-accent: var(--color-sand-100);
-  --color-border: var(--color-neutral-300);
-  --color-border-strong: var(--color-neutral-400);
-  --color-border-soft: var(--color-sand-300);
-  --color-focus: var(--color-blue-500);
-  --color-success: var(--color-green-500);
-  --color-success-strong: var(--color-green-600);
-  --color-danger: var(--color-red-600);
-  --color-danger-soft: var(--color-red-100);
-  --color-warning: var(--color-orange-600);
-  --color-warning-soft: var(--color-orange-50);
+  --color-surface-accent: var(--color-sea-foam);
+  --color-border: var(--color-sea-foam);
+  --color-border-soft: var(--color-sea-foam);
+  --color-border-strong: var(--color-dark-green);
+  --color-focus: var(--color-dark-green);
+  --color-success: var(--color-dark-green);
+  --color-success-strong: var(--color-dark-green);
+  --color-danger: var(--color-dark-brown);
+  --color-danger-soft: rgba(63, 34, 17, 0.16);
+  --color-warning: var(--color-gold);
+  --color-warning-soft: rgba(190, 156, 114, 0.18);
 
   /* Accents */
-  --color-accent: var(--color-blue-500);
-  --color-accent-muted: var(--color-blue-100);
-  --color-accent-strong: var(--color-blue-600);
+  --color-accent: var(--color-dark-green);
+  --color-accent-muted: var(--color-sea-foam);
+  --color-accent-strong: var(--color-light-green);
 
   /* Layering */
   --z-base: 0;
@@ -128,11 +82,11 @@
 }
 
 [data-theme="client"] {
-  --color-accent: #8a5a2b;
-  --color-accent-muted: #f5e6d3;
-  --color-accent-strong: #6d431e;
-  --color-surface: var(--color-sand-100);
-  --color-surface-accent: var(--color-sand-150);
-  --color-ink: var(--color-clay-600);
-  --color-ink-subtle: var(--color-clay-400);
+  --color-accent: var(--color-gold);
+  --color-accent-muted: rgba(190, 156, 114, 0.18);
+  --color-accent-strong: var(--color-gold);
+  --color-surface: var(--color-light-cream);
+  --color-surface-accent: var(--color-sea-foam);
+  --color-ink: var(--color-dark-brown);
+  --color-ink-subtle: var(--color-brown);
 }

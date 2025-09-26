@@ -31,7 +31,7 @@
   align-items: center;
   padding: 0.125rem 0.6rem;
   border-radius: var(--radius-pill);
-  background: var(--color-blue-50);
+  background: var(--color-light-green);
   color: #312e81;
   font-size: 0.75rem;
   font-weight: var(--font-weight-semibold);
@@ -181,7 +181,7 @@
 }
 
 .event-calendars__title-link {
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
   text-decoration: none;
   font-weight: var(--font-weight-semibold);
 }

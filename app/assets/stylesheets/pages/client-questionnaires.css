@@ -38,7 +38,7 @@
 }
 
 .client-questionnaire__section {
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   border-radius: 10px;
   padding: 1.25rem;
   display: grid;
@@ -66,7 +66,7 @@
   background: var(--color-white);
   border-radius: 8px;
   padding: 1rem 1.25rem;
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   display: grid;
   gap: 0.75rem;
 }
@@ -78,7 +78,7 @@
 .client-questionnaire__helper,
 .client-questionnaire__empty {
   margin: 0;
-  color: var(--color-clay-400);
+  color: var(--color-brown);
   font-style: italic;
 }
 
@@ -91,7 +91,7 @@
   width: 100%;
   padding: 0.5rem;
   border-radius: 6px;
-  border: 1px solid var(--color-sand-400);
+  border: 1px solid var(--color-sea-foam);
   font-family: inherit;
   box-sizing: border-box;
 }

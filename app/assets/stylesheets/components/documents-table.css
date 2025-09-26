@@ -1,7 +1,7 @@
 .documents-table {
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   border-radius: var(--radius-lg);
-  background: var(--color-sand-100);
+  background: var(--color-light-cream);
   overflow: hidden;
 }
 
@@ -13,14 +13,14 @@
 }
 
 .documents-table__table thead {
-  background: var(--color-sand-200);
+  background: var(--color-light-cream);
 }
 
 .documents-table__table th,
 .documents-table__table td {
   padding: 0.85rem 1.1rem;
   text-align: left;
-  border-bottom: 1px solid var(--color-sand-300);
+  border-bottom: 1px solid var(--color-sea-foam);
   vertical-align: middle;
 }
 
@@ -31,7 +31,7 @@
 
 .documents-table__title {
   font-weight: var(--font-weight-semibold);
-  color: var(--color-clay-600);
+  color: var(--color-dark-brown);
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -52,35 +52,35 @@
   gap: 0.3rem;
   padding: 0.2rem 0.65rem;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--color-sand-300);
+  border: 1px solid var(--color-sea-foam);
   font-size: var(--font-size-100);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-clay-500);
-  background: var(--color-sand-100);
+  color: var(--color-brown);
+  background: var(--color-light-cream);
   margin-right: 0.35rem;
 }
 
 .documents-table__badge--latest {
   border-color: var(--color-accent);
-  background: var(--color-blue-100);
+  background: var(--color-sea-foam);
   color: var(--color-accent-strong);
 }
 
 .documents-table__badge--client {
-  border-color: var(--color-green-500);
-  background: color-mix(in srgb, var(--color-green-500) 20%, white);
-  color: var(--color-green-500);
+  border-color: var(--color-light-green0);
+  background: color-mix(in srgb, var(--color-light-green0) 20%, white);
+  color: var(--color-light-green0);
 }
 
 .documents-table__badge--internal {
-  border-color: var(--color-sand-500);
-  background: var(--color-sand-200);
-  color: var(--color-clay-500);
+  border-color: var(--color-light-cream0);
+  background: var(--color-light-cream);
+  color: var(--color-brown);
 }
 
 .documents-table__cell {
-  color: var(--color-clay-500);
+  color: var(--color-brown);
   font-size: 0.95rem;
 }
 
@@ -111,14 +111,14 @@
 
 .documents-table__status {
   font-weight: var(--font-weight-semibold);
-  color: var(--color-clay-400);
+  color: var(--color-brown);
 }
 
 .documents-table__empty {
   padding: 2rem;
   text-align: center;
-  color: var(--color-clay-400);
-  border: 1px dashed var(--color-sand-300);
+  color: var(--color-brown);
+  border: 1px dashed var(--color-sea-foam);
   border-radius: var(--radius-lg);
   background: rgba(255, 250, 241, 0.7);
 }

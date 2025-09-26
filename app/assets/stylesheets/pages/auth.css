@@ -33,13 +33,13 @@
 }
 
 .auth-card__flash--alert {
-  background: var(--color-red-50);
-  color: var(--color-red-600);
+  background: var(--color-light-cream);
+  color: var(--color-dark-brown);
 }
 
 .auth-card__flash--notice {
-  background: var(--color-green-50);
-  color: var(--color-green-600);
+  background: var(--color-light-green);
+  color: var(--color-dark-green);
 }
 
 .auth-form {
