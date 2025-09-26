@@ -211,8 +211,34 @@
     background: var(--color-light-green);
     padding: 2.5rem 0;
     text-align: center;
-    color: var(--color-dark-brown);
+    color: var(--color-light-cream);
     min-height: 1px;
+}
+
+.client-footer__inner {
+    display: grid;
+    justify-items: center;
+    gap: 1.25rem;
+}
+
+.client-footer__logo {
+    height: 150px;
+    width: auto;
+    display: block;
+}
+
+.client-footer__slot {
+    color: inherit;
+}
+
+.client-footer__slot a {
+    color: inherit;
+}
+
+.client-footer__copyright {
+    margin: 0;
+    font-size: var(--font-size-200);
+    color: inherit;
 }
 
 .client-page {

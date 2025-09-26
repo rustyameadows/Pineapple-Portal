@@ -39,9 +39,18 @@
     <% portal_home = defined?(@event) && @event.present? ? client_event_path(@event) : root_path %>
     <nav class="client-nav">
       <div class="client-nav__inner client-container">
-        <%= link_to "Pineapple Productions", portal_home, class: "client-nav__brand" %>
+        <%= link_to portal_home, class: "client-nav__icon", aria: { label: "Portal home" } do %>
+          <%= image_tag "pineapple-icon.png", alt: "" %>
+        <% end %>
+        <%= link_to portal_home, class: "client-nav__logo", aria: { label: "Pineapple Productions" } do %>
+          <%= image_tag "portal-bar-logo.svg", alt: "Pineapple Productions" %>
+        <% end %>
         <% if defined?(@event) && @event.present? %>
-          <span class="client-nav__event"><%= @event.name %></span>
+          <div class="client-nav__identity">
+            <span class="client-nav__event"><%= @event.name %></span>
+          </div>
+        <% else %>
+          <span class="client-nav__spacer" aria-hidden="true"></span>
         <% end %>
       </div>
     </nav>
