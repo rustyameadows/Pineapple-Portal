@@ -7,7 +7,11 @@ module Events
       @event_link = @event.event_links.new
       @event_links = @event.event_links.ordered
       @team_member = @event.event_team_members.new
-      @team_members = @event.event_team_members.includes(:user).references(:users).order("users.name")
+      @team_members = @event.event_team_members
+                                  .includes(:user)
+                                  .left_joins(:user)
+                                  .ordered_for_display
+                                  .order("users.name")
       assigned_user_ids = @team_members.map(&:user_id)
       @available_planners = User.where(role: [User::ROLES[:planner], User::ROLES[:admin]]).order(:name)
       @available_planners = @available_planners.where.not(id: assigned_user_ids) if assigned_user_ids.any?

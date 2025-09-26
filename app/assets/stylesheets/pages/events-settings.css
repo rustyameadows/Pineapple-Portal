@@ -43,6 +43,14 @@
   gap: 0.75rem;
 }
 
+.event-settings__position-input {
+  width: 4rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--color-sea-foam);
+  font: inherit;
+  text-align: center;
+}
+
 .event-settings__controls {
   display: flex;
   gap: 0.75rem;

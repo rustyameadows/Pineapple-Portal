@@ -7,7 +7,12 @@ module Client
     def show
       @quick_links = build_quick_links
       @module_cards = build_module_cards
-      @planning_team_members = @event.event_team_members.includes(:user).client_visible.references(:users).order("users.name")
+      @planning_team_members = @event.event_team_members
+                                      .includes(:user)
+                                      .client_visible
+                                      .left_joins(:user)
+                                      .ordered_for_display
+                                      .order("users.name")
     end
 
     private

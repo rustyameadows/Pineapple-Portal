@@ -2,8 +2,12 @@ one:
   event: one
   user: one
   client_visible: true
+  lead_planner: true
+  position: 0
 
 two:
   event: one
   user: two
   client_visible: false
+  lead_planner: false
+  position: 1

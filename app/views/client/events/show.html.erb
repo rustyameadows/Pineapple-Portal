@@ -79,19 +79,22 @@
   <div class="client-container">
     <h2 class="client-planning-team__heading">My Planning Team</h2>
     <% if @planning_team_members.any? %>
+      <% lead_members, supporting_members = @planning_team_members.partition(&:lead_planner?) %>
       <ul class="client-planning-team__list">
-        <% @planning_team_members.each do |team_member| %>
+        <% (lead_members + supporting_members).each do |team_member| %>
           <% user = team_member.user %>
-          <li class="client-planning-team__item">
+          <% item_classes = ["client-planning-team__item"] %>
+          <% item_classes << "client-planning-team__item--lead" if team_member.lead_planner? %>
+          <li class="<%= item_classes.join(' ') %>" data-role="<%= team_member.lead_planner? ? 'lead' : 'planner' %>">
             <h3 class="client-planning-team__name"><%= user.name %></h3>
             <% if user.title.present? %>
               <p class="client-planning-team__title"><%= user.title %></p>
             <% end %>
             <ul class="client-planning-team__contact">
               <% if user.phone_number.present? %>
-                <li><strong>Phone:</strong> <%= user.phone_number %></li>
+                <li><%= user.phone_number %></li>
               <% end %>
-              <li><strong>Email:</strong> <%= mail_to user.email %></li>
+              <li><%= mail_to user.email %></li>
             </ul>
           </li>
         <% end %>

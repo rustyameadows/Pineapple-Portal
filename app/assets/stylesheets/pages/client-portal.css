@@ -173,7 +173,6 @@
 .client-planning-team {
     position: relative;
     background: var(--color-light-cream);
-    border-top: 1px solid var(--color-sea-foam);
     padding: 2.75rem 0;
     min-height: 800px;
     overflow: hidden;
@@ -190,7 +189,7 @@
     );
     background-repeat: no-repeat;
     background-position: left center;
-    background-size: auto 100%;
+    background-size: auto 80%;
     pointer-events: none;
     opacity: 0.9;
 }
@@ -198,27 +197,43 @@
 .client-planning-team__heading {
     margin: 0;
     font-size: 1.35rem;
+    text-align: center;
 }
 
 .client-planning-team .client-container {
     position: relative;
     z-index: 1;
+    width: min(100%, var(--layout-content-max));
+    margin: 0 auto;
+    padding-inline: clamp(1rem, 4vw, 1.5rem);
 }
 .client-planning-team__list {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 1rem;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+@media (min-width: 900px) {
+    .client-planning-team__list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 .client-planning-team__item {
-    border: 1px solid var(--color-sea-foam);
+    border: none;
     border-radius: 0;
     padding: 1.25rem;
-    background: var(--color-white);
+    background: transparent;
     display: grid;
     gap: 0.75rem;
+    text-align: center;
+}
+
+.client-planning-team__item--lead {
+    grid-column: 1 / -1;
 }
 
 .client-planning-team__name {
@@ -238,6 +253,13 @@
     display: grid;
     gap: 0.35rem;
     color: var(--color-dark-brown);
+    justify-items: center;
+}
+
+.client-planning-team__item--lead {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--color-light-green);
+    padding-bottom: 2rem;
 }
 
 .client-planning-team__empty {

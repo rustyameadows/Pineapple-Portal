@@ -103,6 +103,8 @@
                     <th>Title</th>
                     <th>Phone</th>
                     <th>Client Visible</th>
+                    <th>Lead Planner</th>
+                    <th>Order</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -117,9 +119,23 @@
                         <%= form_with url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do %>
                           <label class="event-settings__toggle">
                             <%= hidden_field_tag "event_team_member[client_visible]", 0 %>
-                            <%= check_box_tag "event_team_member[client_visible]", 1, team_member.client_visible?, onchange: "this.form.submit()" %>
+                            <%= check_box_tag "event_team_member[client_visible]", 1, team_member.client_visible?, onchange: "this.form.submit()", aria: { label: "Toggle client visibility for #{user.name}" } %>
                             <span>Visible</span>
                           </label>
+                        <% end %>
+                      </td>
+                      <td>
+                        <%= form_with url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do %>
+                          <label class="event-settings__toggle">
+                            <%= hidden_field_tag "event_team_member[lead_planner]", 0 %>
+                            <%= check_box_tag "event_team_member[lead_planner]", 1, team_member.lead_planner?, onchange: "this.form.submit()", aria: { label: "Toggle lead planner for #{user.name}" } %>
+                            <span>Lead</span>
+                          </label>
+                        <% end %>
+                      </td>
+                      <td>
+                        <%= form_with url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do %>
+                          <%= number_field_tag "event_team_member[position]", team_member.position, min: 0, class: "event-settings__position-input", onchange: "this.form.submit()", aria: { label: "Display order for #{user.name}" } %>
                         <% end %>
                       </td>
                       <td class="event-table__actions">

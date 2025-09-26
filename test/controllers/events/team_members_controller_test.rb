@@ -19,6 +19,7 @@ module Events
       assert_redirected_to event_settings_url(@event)
       team_member = EventTeamMember.find_by(event: @event, user: users(:planner_two))
       assert team_member.client_visible?
+      assert_equal EventTeamMember.where(event: @event).maximum(:position), team_member.position
     end
 
     test "cannot add non planner" do
@@ -43,6 +44,30 @@ module Events
 
       assert_redirected_to event_settings_url(@event)
       assert member.reload.client_visible?
+    end
+
+    test "updates lead planner" do
+      member = event_team_members(:two)
+
+      refute member.lead_planner?
+
+      patch event_team_member_url(@event, member), params: {
+        event_team_member: { lead_planner: "1" }
+      }
+
+      assert_redirected_to event_settings_url(@event)
+      assert member.reload.lead_planner?
+    end
+
+    test "updates position" do
+      member = event_team_members(:two)
+
+      patch event_team_member_url(@event, member), params: {
+        event_team_member: { position: "5" }
+      }
+
+      assert_redirected_to event_settings_url(@event)
+      assert_equal 5, member.reload.position
     end
 
     test "removes team member" do

@@ -37,11 +37,20 @@ module Events
     end
 
     def team_member_params
-      params.require(:event_team_member).permit(:user_id)
+      normalize_team_member_attributes(
+        params.require(:event_team_member).permit(:user_id, :client_visible, :lead_planner, :position)
+      )
     end
 
     def team_member_update_params
-      params.require(:event_team_member).permit(:client_visible)
+      normalize_team_member_attributes(
+        params.require(:event_team_member).permit(:client_visible, :lead_planner, :position)
+      )
+    end
+
+    def normalize_team_member_attributes(permitted_params)
+      permitted_params[:position] = permitted_params[:position].presence&.to_i if permitted_params.key?(:position)
+      permitted_params
     end
   end
 end
