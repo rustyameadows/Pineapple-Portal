@@ -104,6 +104,8 @@ Rails.application.routes.draw do
           end
         end
       end
+
+      resources :templates, only: :index, controller: "templates"
     end
 
     resources :documents do

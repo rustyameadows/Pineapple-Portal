@@ -1,0 +1,73 @@
+<%= render "generated_documents/sections/base_styles" %>
+
+<style>
+  @page {
+    margin: 0;
+  }
+
+  .generated-template--cover {
+    --cover-bg: <%= EventsHelper::COLOR_TOKENS[:sea_foam] rescue '#d9e2dc' %>;
+    --page-bg: var(--cover-bg);
+    --page-padding-vertical: clamp(6vh, 12vh, 4.5rem);
+    --page-padding-horizontal: clamp(5vw, 9vw, 3.75rem);
+    padding: var(--page-padding-vertical) var(--page-padding-horizontal);
+    background: var(--cover-bg);
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: clamp(2rem, 6vh, 3rem);
+  }
+
+  .generated-template--cover__brand {
+    justify-self: flex-end;
+  }
+
+  .generated-template--cover__brand img {
+    display: block;
+    max-width: 220px;
+  }
+
+  .generated-template--cover__hero {
+    align-self: center;
+  }
+
+  .generated-template--cover__title {
+    margin: 0;
+    font-family: 'Didot', 'Times New Roman', serif;
+    font-size: 3.5rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .generated-template--cover__document-name {
+    margin: 1rem 0 0;
+    font-size: 1.35rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #3f2211;
+  }
+
+  .generated-template--cover__meta {
+    align-self: end;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+</style>
+
+<% footer_logo = inline_asset_data_uri('portal-footer-logo.png') %>
+<% document_title = @segment.document.title %>
+
+<section class="generated-template generated-template--cover">
+  <div class="generated-template--cover__brand">
+    <img src="<%= footer_logo %>" alt="Pineapple Productions">
+  </div>
+
+  <div class="generated-template--cover__hero">
+    <h1 class="generated-template--cover__title"><%= @event.name %></h1>
+    <p class="generated-template--cover__document-name"><%= document_title %></p>
+  </div>
+
+  <div class="generated-template--cover__meta">
+    <span><%= Time.current.strftime('%B %d, %Y') %></span>
+  </div>
+</section>

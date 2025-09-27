@@ -1,4 +1,22 @@
-<div class="section">
+<%= render "generated_documents/sections/base_styles" %>
+
+<style>
+  .generated-template--timeline {
+    gap: 1.25rem;
+  }
+
+  .generated-template--timeline table td:nth-child(2) {
+    white-space: nowrap;
+  }
+
+  .generated-template--timeline__note {
+    font-size: 0.9rem;
+    color: #5b4639;
+    font-style: italic;
+  }
+</style>
+
+<div class="generated-template generated-template--timeline">
   <h2>Key Milestones</h2>
   <% calendar = @event.run_of_show_calendar %>
   <% if calendar.present? && calendar.calendar_items.any? %>
@@ -16,16 +34,16 @@
           <tr>
             <td><%= item.title %></td>
             <td><%= item.starts_at&.to_fs(:long) || "TBD" %></td>
-            <td><%= item.vendor_name.presence || "-" %></td>
+            <td><%= item.vendor_name.presence || "—" %></td>
             <td><%= item.status.humanize %></td>
           </tr>
         <% end %>
       </tbody>
     </table>
     <% if calendar.calendar_items.count > 10 %>
-      <p><em>Showing first 10 milestones.</em></p>
+      <p class="generated-template--timeline__note">Showing first 10 milestones.</p>
     <% end %>
   <% else %>
-    <p>No milestones have been added to the run-of-show yet.</p>
+    <p class="generated-template__muted">No milestones have been added to the run-of-show yet.</p>
   <% end %>
 </div>

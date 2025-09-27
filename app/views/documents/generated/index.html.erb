@@ -59,6 +59,10 @@
 
             <div class="generated-doc__templates">
               <h3>Templates</h3>
+              <p class="generated-doc__help">Preview every branded section before inserting it into a packet.</p>
+              <%= link_to "Open template gallery",
+                          event_documents_templates_path(@event),
+                          class: "button button--small" %>
               <% if @templates.any? %>
                 <ul>
                   <% @templates.each do |template| %>

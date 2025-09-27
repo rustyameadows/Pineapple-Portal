@@ -17,6 +17,10 @@
   overflow-x: hidden;
 }
 
+.event-layout__main--flush {
+  padding: 0;
+}
+
 .event-layout__body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);

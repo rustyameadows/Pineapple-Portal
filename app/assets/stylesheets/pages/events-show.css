@@ -300,6 +300,13 @@
   min-width: 0;
 }
 
+.event-docs__panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .event-docs__card {
   padding: 1.75rem;
 }

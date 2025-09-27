@@ -1,0 +1,36 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main event-layout__main--flush">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Branded Sections</p>
+            <h1 class="event-section__title">Template gallery for <%= @event.name %></h1>
+            <p class="event-section__lead">Preview every branded page with this event’s data before adding it to a generated document.</p>
+          </div>
+          <%= link_to "Back to generated docs", event_documents_generated_index_path(@event), class: "event-section__cta" %>
+        </header>
+
+        <div class="template-gallery">
+          <% @templates.each do |template| %>
+            <article class="template-card">
+              <header class="template-card__header">
+                <h2 class="template-card__title"><%= template[:config][:label] %></h2>
+                <p class="template-card__description"><%= template[:config][:description] %></p>
+              </header>
+              <div class="template-card__preview">
+                <div class="template-card__preview-inner">
+                  <%= template[:preview_html].html_safe %>
+                </div>
+              </div>
+            </article>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

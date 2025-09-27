@@ -1,15 +1,41 @@
-<div class="section">
-  <h1><%= @event.name %></h1>
-  <% if @event.starts_on.present? %>
-    <p><strong>Event Dates:</strong>
-      <%= @event.starts_on.to_fs(:long) %>
-      <% if @event.ends_on.present? && @event.ends_on != @event.starts_on %>
-        – <%= @event.ends_on.to_fs(:long) %>
+<%= render "generated_documents/sections/base_styles" %>
+
+<style>
+  .generated-template--event-overview {
+    align-content: start;
+    gap: 1rem;
+  }
+
+  .generated-template--event-overview__meta {
+    display: grid;
+    gap: 0.75rem;
+    font-size: 1.05rem;
+  }
+
+  .generated-template--event-overview__meta strong {
+    font-weight: var(--font-weight-semibold, 600);
+  }
+</style>
+
+<div class="generated-template generated-template--event-overview">
+  <div>
+    <h1><%= @event.name %></h1>
+    <div class="generated-template--event-overview__meta">
+      <% if @event.starts_on.present? %>
+        <p>
+          <strong>Event Dates:</strong>
+          <%= @event.starts_on.to_fs(:long) %>
+          <% if @event.ends_on.present? && @event.ends_on != @event.starts_on %>
+            – <%= @event.ends_on.to_fs(:long) %>
+          <% end %>
+        </p>
       <% end %>
-    </p>
-  <% end %>
-  <% if @event.location.present? %>
-    <p><strong>Location:</strong> <%= @event.location %></p>
-  <% end %>
-  <p>This section will render the hero summary for the compiled document.</p>
+
+      <% if @event.location.present? %>
+        <p><strong>Location:</strong> <%= @event.location %></p>
+      <% end %>
+    </div>
+  </div>
+
+  <p class="generated-template__muted">This overview automatically reflects the event’s key details when compiled.</p>
 </div>

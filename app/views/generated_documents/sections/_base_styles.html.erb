@@ -1,0 +1,67 @@
+<style>
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--page-bg, #ffffff);
+  }
+
+  .generated-template {
+    --page-bg: #ffffff;
+    --page-padding: clamp(1.5rem, 5vw, 2.5rem);
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 100%;
+    padding: var(--page-padding);
+    background: var(--page-bg);
+    color: #2d1c12;
+    font-family: 'BaskervilleNo2', 'Times New Roman', serif;
+    letter-spacing: 0.02em;
+    display: grid;
+    gap: var(--page-padding);
+  }
+
+  .generated-template h1,
+  .generated-template h2,
+  .generated-template h3 {
+    margin: 0 0 0.75rem;
+    font-family: 'Didot', 'Times New Roman', serif;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .generated-template p {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+  }
+
+  .generated-template table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .generated-template table th,
+  .generated-template table td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid #d4c5b6;
+    text-align: left;
+  }
+
+  .generated-template table thead th {
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #5b4639;
+  }
+
+  .generated-template table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .generated-template__muted {
+    color: #5b4639;
+    font-style: italic;
+  }
+</style>

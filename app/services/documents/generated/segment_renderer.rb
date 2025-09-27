@@ -75,7 +75,7 @@ module Documents
         return Result.new(error: "Unknown branded section") unless config
 
         html = render_template(config[:template])
-        pdf_data = Grover.new(html, **grover_options).to_pdf
+        pdf_data = Grover.new(html, **grover_options(config)).to_pdf
         page_count = count_pdf_pages(pdf_data)
         storage_key = storage.upload_segment(hash, pdf_data)
 
@@ -99,8 +99,10 @@ module Documents
         )
       end
 
-      def grover_options
-        GROVER_DEFAULTS
+      def grover_options(config = {})
+        options = GROVER_DEFAULTS.deep_dup
+        custom = config[:options] || {}
+        options.deep_merge(custom)
       end
 
       def find_source_document

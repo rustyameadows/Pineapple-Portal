@@ -1,5 +1,8 @@
 <div class="event-docs__panel">
-  <h2 class="event-section__subheading">Generated packets</h2>
+  <div class="event-docs__panel-head">
+    <h2 class="event-section__subheading">Generated packets</h2>
+    <%= link_to "Open builder", event_documents_generated_index_path(event), class: "button button--tiny button--ghost" %>
+  </div>
   <% if generated_documents.present? %>
     <table class="event-docs__summary">
       <thead>

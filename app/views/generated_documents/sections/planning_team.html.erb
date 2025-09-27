@@ -1,4 +1,21 @@
-<div class="section">
+<%= render "generated_documents/sections/base_styles" %>
+
+<style>
+  .generated-template--planning-team {
+    gap: 1.25rem;
+  }
+
+  .generated-template--planning-team table td:first-child {
+    font-weight: 600;
+  }
+
+  .generated-template--planning-team__empty {
+    font-style: italic;
+    color: #5b4639;
+  }
+</style>
+
+<div class="generated-template generated-template--planning-team">
   <h2>Planning Team</h2>
   <% planners = @event.planner_team_members.includes(:user) %>
   <% if planners.any? %>
@@ -17,12 +34,12 @@
             <td><%= member.user.name %></td>
             <td><%= member.user.title.presence || "Planner" %></td>
             <td><%= member.user.email %></td>
-            <td><%= member.user.phone_number.presence || "-" %></td>
+            <td><%= member.user.phone_number.presence || "—" %></td>
           </tr>
         <% end %>
       </tbody>
     </table>
   <% else %>
-    <p>No planners have been linked to this event yet.</p>
+    <p class="generated-template--planning-team__empty">No planners have been linked to this event yet.</p>
   <% end %>
 </div>

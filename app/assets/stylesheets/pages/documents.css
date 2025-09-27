@@ -507,6 +507,76 @@
   color: var(--color-brown);
 }
 
+.template-gallery {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.template-card {
+  border: 1px solid var(--color-sea-foam);
+  background: var(--color-light-cream);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.template-card__header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.template-card__title {
+  margin: 0;
+  font-size: var(--font-size-500);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.template-card__description {
+  margin: 0;
+  color: var(--color-brown);
+}
+
+.template-card__preview {
+  border: 1px solid var(--color-sea-foam);
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 8.5 / 11;
+}
+
+.template-card__preview-inner {
+  position: absolute;
+  inset: 0;
+  transform: scale(0.55);
+  transform-origin: top left;
+  width: calc(100% / 0.55);
+  height: calc(100% / 0.55);
+  pointer-events: none;
+}
+
+.document-template--preview {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: var(--page-bg, #fff);
+}
+
+.template-card__error {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.document-template--preview {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  color: var(--color-dark-brown);
+  font-family: 'BaskervilleNo2', 'Times New Roman', serif;
+}
+
 @media (max-width: 960px) {
   .generated-builder__header {
     grid-template-columns: 1fr;

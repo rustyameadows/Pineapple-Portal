@@ -28,6 +28,14 @@ class DocumentSegment < ApplicationRecord
       label: "Timeline Snapshot",
       template: "generated_documents/sections/timeline",
       description: "Milestone list pulled from the decision calendar."
+    },
+    "cover_sheet" => {
+      label: "Cover Sheet",
+      template: "generated_documents/sections/cover_sheet",
+      description: "Single-page cover with branding, event title, and document name.",
+      options: {
+        margin: { top: "0", bottom: "0", left: "0", right: "0" }
+      }
     }
   }.freeze
 
