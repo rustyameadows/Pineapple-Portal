@@ -34,7 +34,19 @@
       <input type="file" id="document_file" data-document-upload-target="file">
     </div>
 
-    <p data-document-upload-target="status">Select a file to upload to R2.</p>
+    <div class="document-upload" data-document-upload-target="ui">
+      <div class="document-upload__progress" data-document-upload-target="progress" hidden>
+        <div class="document-upload__progress-track" aria-hidden="true">
+          <div class="document-upload__progress-bar" data-document-upload-target="progressBar"></div>
+        </div>
+        <div class="document-upload__progress-status">
+          <span data-document-upload-target="progressLabel">Uploading…</span>
+          <span class="document-upload__progress-percent" data-document-upload-target="progressPercent">0%</span>
+        </div>
+      </div>
+
+      <p class="document-upload__status" data-document-upload-target="status">Select a file to upload to R2.</p>
+    </div>
 
     <%= form.hidden_field :storage_uri %>
     <%= form.hidden_field :checksum %>

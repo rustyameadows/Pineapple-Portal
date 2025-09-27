@@ -13,6 +13,106 @@
   gap: 1rem;
 }
 
+.attachment-upload {
+  display: grid;
+  gap: 0.5rem;
+  align-items: start;
+  margin-top: 0.75rem;
+}
+
+.attachment-upload.is-uploading .attachment-upload__status {
+  color: var(--color-brown);
+}
+
+.document-upload {
+  display: grid;
+  gap: 0.5rem;
+  align-items: start;
+  margin-top: 0.75rem;
+}
+
+.document-upload.is-uploading .document-upload__status {
+  color: var(--color-brown);
+}
+
+.document-upload__progress {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.document-upload__progress-track {
+  position: relative;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-sea-foam) 25%, white);
+  overflow: hidden;
+}
+
+.document-upload__progress-bar {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: var(--color-sea-foam);
+  transition: width 0.2s ease;
+}
+
+.document-upload__progress-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--color-dark-brown);
+}
+
+.document-upload__progress-percent {
+  font-variant-numeric: tabular-nums;
+}
+
+.document-upload__status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-brown);
+}
+
+.attachment-upload__progress {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.attachment-upload__progress-track {
+  position: relative;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-sea-foam) 20%, white);
+  overflow: hidden;
+}
+
+.attachment-upload__progress-bar {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: var(--color-sea-foam);
+  transition: width 0.2s ease;
+}
+
+.attachment-upload__progress-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--color-dark-brown);
+}
+
+.attachment-upload__progress-percent {
+  font-variant-numeric: tabular-nums;
+}
+
+.attachment-upload__status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-brown);
+}
+
 .documents-show__panel--danger {
   border-color: var(--color-light-cream0);
   background: color-mix(in srgb, var(--color-light-cream0) 15%, white);
