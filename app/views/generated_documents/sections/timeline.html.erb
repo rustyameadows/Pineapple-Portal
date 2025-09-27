@@ -16,7 +16,7 @@
           <tr>
             <td><%= item.title %></td>
             <td><%= item.starts_at&.to_fs(:long) || "TBD" %></td>
-            <td><%= item.vendor_name.presence || "—" %></td>
+            <td><%= item.vendor_name.presence || "-" %></td>
             <td><%= item.status.humanize %></td>
           </tr>
         <% end %>

@@ -17,7 +17,7 @@
             <td><%= member.user.name %></td>
             <td><%= member.user.title.presence || "Planner" %></td>
             <td><%= member.user.email %></td>
-            <td><%= member.user.phone_number.presence || "—" %></td>
+            <td><%= member.user.phone_number.presence || "-" %></td>
           </tr>
         <% end %>
       </tbody>
