@@ -288,6 +288,21 @@
   gap: 0.75rem;
 }
 
+.generated-builder__workspace-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.generated-builder__workspace-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .generated-builder__versions {
   list-style: none;
   margin: 0;
@@ -301,6 +316,136 @@
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
+}
+
+.generated-builder__builds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.generated-builder__build {
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 45%, white);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  display: grid;
+  gap: 0.75rem;
+  background: color-mix(in srgb, white 80%, var(--color-light-cream) 20%);
+}
+
+.generated-builder__build-main {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.generated-builder__build-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.generated-builder__build-status-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.generated-builder__build-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+}
+
+.generated-builder__build-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.generated-builder__build-status-actions form {
+  margin: 0;
+}
+
+.generated-builder__build-status--pending,
+.generated-builder__build-status--running {
+  background: color-mix(in srgb, var(--color-sea-foam) 35%, white);
+  color: var(--color-dark-brown);
+}
+
+.generated-builder__build-status--succeeded {
+  background: color-mix(in srgb, var(--color-success) 35%, white);
+  color: var(--color-dark-brown);
+}
+
+.generated-builder__build-status--failed {
+  background: color-mix(in srgb, var(--color-ruby) 25%, white);
+  color: var(--color-ruby);
+}
+
+.generated-builder__build-status--cancelled {
+  background: color-mix(in srgb, var(--color-warning) 30%, white);
+  color: var(--color-dark-brown);
+}
+
+.generated-builder__build-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin: 0;
+}
+
+.generated-builder__build-details div {
+  min-width: 110px;
+}
+
+.generated-builder__build-details dt {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-brown);
+}
+
+.generated-builder__build-details dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.9rem;
+  color: var(--color-dark-brown);
+}
+
+.generated-builder__build-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-ruby);
+}
+
+.generated-builder__build-progress {
+  font-size: 0.85rem;
+  color: var(--color-brown);
+}
+
+.generated-builder__build-progress--hint {
+  font-size: 0.8rem;
+  color: var(--color-brown);
+  display: inline-flex;
+  align-items: center;
+}
+
+.generated-builder__input-warning {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-ruby);
 }
 
 .generated-builder__version-sub {
@@ -332,6 +477,11 @@
   color: var(--color-ruby);
 }
 
+.generated-builder__status-tag--warning {
+  background: color-mix(in srgb, var(--color-accent) 30%, white);
+  color: var(--color-accent);
+}
+
 .generated-doc__badge {
   display: inline-flex;
   align-items: center;
@@ -347,6 +497,14 @@
 
 .generated-doc__actions {
   text-align: right;
+}
+
+.generated-doc__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+  color: var(--color-brown);
 }
 
 @media (max-width: 960px) {
@@ -365,5 +523,14 @@
 
   .generated-builder__list-right {
     order: 2;
+  }
+
+  .generated-builder__workspace-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .generated-builder__workspace-actions {
+    justify-content: flex-start;
   }
 }

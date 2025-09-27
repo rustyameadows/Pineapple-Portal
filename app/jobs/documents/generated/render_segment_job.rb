@@ -5,7 +5,7 @@ module Documents
 
       def perform(segment_id)
         segment = DocumentSegment.find(segment_id)
-        renderer = SegmentRenderer.new(segment)
+        renderer = SegmentRenderer.new(segment, force: true)
         result = renderer.call
 
         if result.error.present?

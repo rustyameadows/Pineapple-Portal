@@ -24,17 +24,19 @@ module Documents
       def payload
         {
           document_logical_id: segment.document_logical_id,
-          position: segment.position,
           kind: segment.kind,
           title: segment.title,
           source_ref: canonical_source_ref,
-          spec: segment.spec,
-          updated_at: segment.updated_at&.to_i
+          spec: canonical_spec
         }
       end
 
       def canonical_source_ref
         deep_sort(segment.source_ref)
+      end
+
+      def canonical_spec
+        deep_sort(segment.spec)
       end
 
       def deep_sort(value)

@@ -8,20 +8,21 @@ module Documents
       Result = Struct.new(:render_hash, :storage_key, :page_count, :file_size, :generated_at, :error, keyword_init: true)
 
       GROVER_DEFAULTS = {
-        format: "A4",
+        format: "Letter",
         margin: { top: "0.5in", bottom: "0.5in", left: "0.5in", right: "0.5in" },
         print_background: true
       }.freeze
 
-      def initialize(segment, storage: default_storage)
+      def initialize(segment, storage: default_storage, force: false)
         @segment = segment
         @storage = storage
+        @force = force
       end
 
       def call
         hash = SegmentHasher.call(segment)
 
-        if segment.cached? && !segment.cache_stale?(hash)
+        if !force && segment.cached? && !segment.cache_stale?(hash)
           return Result.new(
             render_hash: segment.render_hash,
             storage_key: segment.cached_pdf_key,
@@ -46,14 +47,16 @@ module Documents
 
       private
 
-      attr_reader :segment, :storage
+      attr_reader :segment, :storage, :force
 
       def render_pdf_asset(hash)
         source = find_source_document
         return Result.new(error: "Attached document missing") unless source&.storage_uri.present?
 
         pdf_data = download_source_pdf(source)
-        return Result.new(error: "Unable to download source PDF") if pdf_data.blank?
+        if pdf_data.nil? || pdf_data.empty?
+          return Result.new(error: "Unable to download source PDF")
+        end
 
         page_count = count_pdf_pages(pdf_data)
         storage_key = storage.upload_segment(hash, pdf_data)
@@ -103,11 +106,20 @@ module Documents
       def find_source_document
         return unless segment.pdf_document_id
 
-        segment.document.event.documents.find_by(id: segment.pdf_document_id)
+        segment.document.event.documents.find_by(id: segment.pdf_document_id) ||
+          segment.document.event.documents.where(logical_id: segment.pdf_logical_id)
+                                .order(version: :desc)
+                                .first
       end
 
       def download_source_pdf(document)
-        storage.download(document.storage_uri)
+        data = storage.download(document.storage_uri)
+        return unless data
+
+        buffer = data.respond_to?(:read) ? data.read : data
+        buffer = buffer.to_s
+        buffer.force_encoding(Encoding::BINARY)
+        buffer
       end
 
       def count_pdf_pages(pdf_data)
@@ -119,7 +131,7 @@ module Documents
 
       def default_storage
         R2Storage.new
-end
+      end
+    end
   end
-end
 end

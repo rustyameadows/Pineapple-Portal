@@ -24,7 +24,11 @@
             </th>
             <td>
               <% if latest.present? && latest.storage_uri.present? %>
-                Version <%= latest.version %> · <%= latest.updated_at.to_fs(:short) %>
+                <span class="generated-doc__meta">Version <%= latest.version %></span>
+                <% if latest.compiled_page_count.present? %>
+                  <span class="generated-doc__meta">· <%= pluralize(latest.compiled_page_count, "page") %></span>
+                <% end %>
+                <span class="generated-doc__meta">· <%= latest.updated_at.to_fs(:short) %></span>
               <% else %>
                 <span class="generated-doc__empty">Needs first compile</span>
               <% end %>
@@ -33,6 +37,11 @@
               <%= link_to "Open",
                           event_documents_generated_path(event, entry[:logical_id]),
                           class: "button button--tiny button--ghost" %>
+              <% if latest.present? && latest.storage_uri.present? %>
+                <%= link_to "Download v#{latest.version}",
+                            download_event_document_path(event, latest),
+                            class: "button button--tiny" %>
+              <% end %>
             </td>
           </tr>
         <% end %>

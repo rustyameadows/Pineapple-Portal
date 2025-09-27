@@ -8,6 +8,9 @@ class Document < ApplicationRecord
   belongs_to :built_by_user, class_name: "User", optional: true
 
   has_many :attachments, dependent: :destroy
+  has_many :builds,
+           class_name: "DocumentBuild",
+           dependent: :destroy
   has_many :segments,
            -> { order(:position) },
            class_name: "DocumentSegment",

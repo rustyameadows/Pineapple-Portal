@@ -1,0 +1,80 @@
+<% document ||= builds.first&.document %>
+
+<ul class="generated-builder__builds">
+  <% builds.each do |build| %>
+    <% compiled_version = compiled_versions.find { |doc| doc.build_id == build.build_id } %>
+    <li class="generated-builder__build">
+      <div class="generated-builder__build-main">
+        <div class="generated-builder__build-row">
+          <dl class="generated-builder__build-details">
+            <% if build.started_at.present? %>
+              <div>
+                <dt>Started</dt>
+                <dd><%= build.started_at.to_fs(:short) %></dd>
+              </div>
+            <% end %>
+
+            <% if build.finished_at.present? %>
+              <div>
+                <dt>Finished</dt>
+                <dd><%= build.finished_at.to_fs(:short) %></dd>
+              </div>
+            <% end %>
+
+            <% if build.compiled_page_count.present? %>
+              <div>
+                <dt>Pages</dt>
+                <dd><%= pluralize(build.compiled_page_count, "page") %></dd>
+              </div>
+            <% end %>
+
+            <% if build.file_size.present? %>
+              <div>
+                <dt>Size</dt>
+                <dd><%= number_to_human_size(build.file_size) %></dd>
+              </div>
+            <% end %>
+          </dl>
+
+          <div class="generated-builder__build-status-wrap">
+            <span class="generated-builder__build-status generated-builder__build-status--<%= build.status %>">
+              <%= build.status.humanize %>
+            </span>
+            <div class="generated-builder__build-status-actions">
+              <% if compiled_version.present? %>
+                <%= link_to "Download v#{compiled_version.version}",
+                            download_event_document_path(event, compiled_version),
+                            class: "button button--tiny button--ghost",
+                            target: "_blank",
+                            rel: "noopener" %>
+              <% elsif build.running? %>
+                <span class="generated-builder__build-progress">Rendering…</span>
+              <% elsif build.pending? %>
+                <span class="generated-builder__build-progress">In queue</span>
+              <% end %>
+
+              <% if build.cancelable? %>
+                <%= button_to "Cancel",
+                              cancel_event_documents_generated_build_path(event, document.logical_id, build),
+                              method: :patch,
+                              class: "button button--tiny button--ghost" %>
+              <% end %>
+
+              <% if !build.running? && !build.succeeded? %>
+                <%= button_to "Remove",
+                              event_documents_generated_build_path(event, document.logical_id, build),
+                              method: :delete,
+                              class: "button button--tiny button--ghost",
+                              data: { confirm: "Remove this build record?" } %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <% if build.failed? && build.error_message.present? %>
+          <p class="generated-builder__build-error"><strong>Error:</strong> <%= build.error_message %></p>
+        <% end %>
+      </div>
+    </li>
+  <% end %>
+</ul>

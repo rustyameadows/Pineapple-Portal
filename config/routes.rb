@@ -84,6 +84,14 @@ Rails.application.routes.draw do
           post :create_from_template
         end
 
+        resources :builds,
+                  controller: "generated/builds",
+                  only: [:destroy] do
+          member do
+            patch :cancel
+          end
+        end
+
         resources :segments,
                   controller: "generated/segments",
                   only: %i[create update destroy] do

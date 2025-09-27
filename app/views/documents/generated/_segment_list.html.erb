@@ -1,3 +1,5 @@
+<% segment_warnings ||= {} %>
+
 <div class="generated-builder__sidebar-header">
   <h2>Segments</h2>
   <p class="generated-builder__hint">Attach planner PDFs or branded sections, then arrange them in the order you want to publish.</p>
@@ -25,6 +27,10 @@
             <div class="generated-builder__list-meta">
               <span class="generated-builder__segment-kind"><%= segment.kind.humanize %></span>
               <%= render "documents/generated/render_status", segment: segment %>
+              <% if segment_warnings[segment.id].present? %>
+                <% warning_text = segment_warnings[segment.id].split(":", 2).last&.strip || segment_warnings[segment.id] %>
+                <span class="generated-builder__status-tag generated-builder__status-tag--warning"><%= warning_text %></span>
+              <% end %>
             </div>
           </div>
           <div class="generated-builder__list-actions">
@@ -75,6 +81,10 @@
                 <% else %>
                   <p class="generated-builder__empty">No uploaded documents yet.</p>
                 <% end %>
+                <% if segment_warnings[segment.id].present? %>
+                  <% warning_text = segment_warnings[segment.id].split(":", 2).last&.strip || segment_warnings[segment.id] %>
+                  <p class="generated-builder__input-warning"><%= warning_text %></p>
+                <% end %>
               </div>
             <% elsif segment.html_view? %>
               <div class="generated-builder__form-row">
@@ -82,6 +92,10 @@
                 <%= form.select :view_key,
                                 options_for_select(available_html_views, segment.html_view_key),
                                 include_blank: "Select section" %>
+                <% if segment_warnings[segment.id].present? %>
+                  <% warning_text = segment_warnings[segment.id].split(":", 2).last&.strip || segment_warnings[segment.id] %>
+                  <p class="generated-builder__input-warning"><%= warning_text %></p>
+                <% end %>
               </div>
             <% end %>
 

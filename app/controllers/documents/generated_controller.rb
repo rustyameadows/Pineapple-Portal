@@ -1,7 +1,7 @@
 module Documents
   class GeneratedController < ApplicationController
     before_action :set_event
-    before_action :set_generated_document, only: %i[show update]
+    before_action :set_generated_document, only: %i[show update compile]
 
     def index
       @manifest_entries = build_manifest_entries
@@ -37,6 +37,32 @@ module Documents
       else
         redirect_to event_documents_generated_path(@event, @document.logical_id), alert: @document.errors.full_messages.to_sentence
       end
+    end
+
+    def compile
+      segments = DocumentSegment.where(document_logical_id: @document.logical_id).ordered.to_a
+
+      if segments.empty?
+        redirect_to builder_path, alert: "Add at least one segment before compiling."
+        return
+      end
+
+      blockers = compile_blockers(segments)
+      if blockers.any?
+        redirect_to builder_path, alert: blockers.join("; ")
+        return
+      end
+
+      build = @document.builds.create!(
+        build_id: SecureRandom.uuid,
+        status: DocumentBuild::STATUSES[:pending],
+        built_by_user: current_user
+      )
+
+      Documents::Generated::CompileDocumentJob.perform_later(build.id)
+      redirect_to builder_path, notice: "Compile queued. We'll notify you when the PDF is ready."
+    rescue StandardError => e
+      redirect_to builder_path, alert: "Unable to queue compile: #{e.message}"
     end
 
     private
@@ -100,9 +126,49 @@ module Documents
       @segments = DocumentSegment.where(document_logical_id: @document.logical_id).ordered
       @versions = generated_scope.where(logical_id: @document.logical_id).order(version: :desc).to_a
       @compiled_versions = @versions.select { |record| record.storage_uri.present? }
-      @latest_version = @versions.find { |record| record.is_latest? }
+      @latest_version = @compiled_versions.max_by(&:version)
       @available_pdf_documents = @event.documents.where(doc_kind: Document::DOC_KINDS[:uploaded]).order(:title)
       @available_html_views = DocumentSegment.html_view_options
+      @builds = @document.builds.recent_first.to_a
+      @active_build = @builds.find { |build| build.pending? || build.running? }
+      @segment_warnings = segment_blockers_map(@segments)
+    end
+
+    def builder_path
+      event_documents_generated_path(@event, @document.logical_id)
+    end
+
+    def compile_blockers(segments)
+      segment_blockers_map(segments).values
+    end
+
+    def segment_blockers_map(segments)
+      warnings = {}
+
+      if segments.any?(&:pdf_asset?)
+        pdf_segments = segments.select(&:pdf_asset?)
+        attached_ids = pdf_segments.filter_map(&:pdf_document_id)
+        documents_by_id = @event.documents.where(id: attached_ids).index_by(&:id)
+
+        pdf_segments.each do |segment|
+          document = documents_by_id[segment.pdf_document_id]
+          if document.nil?
+            warnings[segment.id] = "#{segment.display_title}: attach a PDF before compiling"
+          elsif document.storage_uri.blank?
+            warnings[segment.id] = "#{segment.display_title}: attached PDF is missing a stored file"
+          end
+        end
+      end
+
+      segments.each do |segment|
+        next unless segment.html_view?
+
+        if segment.html_view_config.blank?
+          warnings[segment.id] = "#{segment.display_title}: select a branded section"
+        end
+      end
+
+      warnings
     end
   end
 end

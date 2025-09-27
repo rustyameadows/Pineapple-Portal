@@ -18,11 +18,13 @@
           </div>
           <div class="generated-builder__actions">
             <%= link_to "Back to documents", event_documents_path(@event), class: "button button--ghost" %>
-            <%= button_to "Compile (coming soon)",
-                          compile_event_documents_generated_path(@event, @document.logical_id),
-                          method: :post,
-                          class: "button button--primary",
-                          disabled: true %>
+            <% if @latest_version.present? %>
+              <%= link_to "Download latest",
+                          download_event_document_path(@event, @latest_version),
+                          class: "button button--ghost button--small",
+                          target: "_blank",
+                          rel: "noopener" %>
+            <% end %>
           </div>
         </header>
 
@@ -32,28 +34,47 @@
                      document: @document,
                      segments: @segments,
                      available_pdf_documents: @available_pdf_documents,
-                     available_html_views: @available_html_views %>
+                     available_html_views: @available_html_views,
+                     segment_warnings: @segment_warnings %>
 
           <div class="generated-builder__workspace-card">
-            <h2>Compiled versions</h2>
-            <% if @compiled_versions.any? %>
-              <ul class="generated-builder__versions">
-                <% @compiled_versions.each do |version| %>
-                  <li>
-                    <div>
-                      <strong>Version <%= version.version %></strong>
-                      <span class="generated-builder__version-sub">
-                        Compiled <%= version.updated_at.to_fs(:long) %>
-                      </span>
-                    </div>
-                    <%= link_to "Download",
-                                download_event_document_path(@event, version),
-                                class: "button button--ghost button--tiny" %>
-                  </li>
+            <div class="generated-builder__workspace-head">
+              <div>
+                <h2>Build & downloads</h2>
+                <% if @active_build.present? %>
+                  <p class="generated-builder__hint">Latest build kicked off <%= time_ago_in_words(@active_build.created_at) %> ago.</p>
+                <% elsif @compiled_versions.any? %>
+                  <p class="generated-builder__hint">Last compiled <%= @compiled_versions.first.updated_at.to_fs(:long) %>.</p>
+                <% else %>
+                  <p class="generated-builder__hint">Compile to generate a PDF with the segments above.</p>
                 <% end %>
-              </ul>
+              </div>
+              <div class="generated-builder__workspace-actions">
+                <% if @latest_version.present? %>
+                  <%= link_to "Download latest",
+                              download_event_document_path(@event, @latest_version),
+                              class: "button button--ghost button--small",
+                              target: "_blank",
+                              rel: "noopener" %>
+                <% end %>
+                <%= button_to "Compile document",
+                              compile_event_documents_generated_path(@event, @document.logical_id),
+                              method: :post,
+                              class: "button button--primary button--small" %>
+                <% if @active_build.present? %>
+                  <span class="generated-builder__build-progress generated-builder__build-progress--hint">A build is currently running.</span>
+                <% end %>
+              </div>
+            </div>
+
+            <% if @builds.any? %>
+              <%= render "documents/generated/builds",
+                         builds: @builds,
+                         compiled_versions: @compiled_versions,
+                         event: @event,
+                         document: @document %>
             <% else %>
-              <p class="generated-builder__empty">We will list compiled versions here once the first build runs.</p>
+              <p class="generated-builder__empty">Once you run the first compile, we’ll show build details here.</p>
             <% end %>
           </div>
         </div>

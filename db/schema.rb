@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_27_095000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_27_103000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -166,6 +166,24 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_095000) do
     t.check_constraint "jsonb_typeof(variable_definitions) = 'object'::text", name: "calendar_templates_variable_definitions_object"
   end
 
+  create_table "document_builds", force: :cascade do |t|
+    t.bigint "document_id", null: false
+    t.string "status", default: "pending", null: false
+    t.string "build_id", null: false
+    t.integer "compiled_page_count"
+    t.integer "file_size"
+    t.string "checksum_sha256"
+    t.datetime "started_at"
+    t.datetime "finished_at"
+    t.string "error_message"
+    t.bigint "built_by_user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["build_id"], name: "index_document_builds_on_build_id", unique: true
+    t.index ["built_by_user_id"], name: "index_document_builds_on_built_by_user_id"
+    t.index ["document_id"], name: "index_document_builds_on_document_id"
+  end
+
   create_table "document_dependencies", force: :cascade do |t|
     t.uuid "document_logical_id", null: false
     t.bigint "segment_id", null: false
@@ -219,6 +237,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_095000) do
     t.uuid "build_id"
     t.string "manifest_hash"
     t.string "checksum_sha256"
+    t.integer "compiled_page_count"
     t.index ["build_id"], name: "index_documents_on_build_id"
     t.index ["client_visible"], name: "index_documents_on_client_visible"
     t.index ["doc_kind"], name: "index_documents_on_doc_kind"
@@ -427,6 +446,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_095000) do
   add_foreign_key "calendar_template_items", "calendar_templates", on_delete: :cascade
   add_foreign_key "calendar_template_tags", "calendar_templates", on_delete: :cascade
   add_foreign_key "calendar_template_views", "calendar_templates", on_delete: :cascade
+  add_foreign_key "document_builds", "documents"
+  add_foreign_key "document_builds", "users", column: "built_by_user_id"
   add_foreign_key "document_dependencies", "document_segments", column: "segment_id", on_delete: :cascade
   add_foreign_key "documents", "events"
   add_foreign_key "documents", "users", column: "built_by_user_id"

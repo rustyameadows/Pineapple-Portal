@@ -114,6 +114,12 @@ class DocumentsController < ApplicationController
                          .where(source: @source_key, doc_kind: Document::DOC_KINDS[:uploaded])
                          .latest
                          .order(updated_at: :desc, title: :asc)
+
+    if @source_key == "packet"
+      generated_latest = latest_compiled_generated_documents
+      combined_documents = @documents.to_a + generated_latest
+      @documents = combined_documents.uniq { |doc| doc.id }.sort_by { |doc| [doc.updated_at || Time.at(0), doc.title.to_s.downcase] }.reverse
+    end
     @document_groups = build_document_groups
     @generated_documents = @source_key == "packet" ? generated_manifest : []
     render :group
@@ -176,5 +182,11 @@ class DocumentsController < ApplicationController
         latest_version: records.find(&:is_latest?)
       }
     end.sort_by { |entry| entry[:definition].title.to_s.downcase }
+  end
+
+  def latest_compiled_generated_documents
+    generated_scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated]).where.not(storage_uri: nil)
+    grouped = generated_scope.order(version: :desc).group_by(&:logical_id)
+    grouped.values.map { |versions| versions.max_by(&:version) }
   end
 end

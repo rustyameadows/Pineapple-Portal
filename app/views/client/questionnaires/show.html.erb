@@ -1,4 +1,4 @@
-<section class="client-page">
+<section class="client-page client-questionnaire" data-controller="questionnaire">
   <% status_label = @questionnaire.finished? ? "Finished" : "In Progress" %>
 
   <header class="client-page__header client-questionnaire__header">
@@ -13,58 +13,78 @@
         <p><%= simple_format(@questionnaire.description) %></p>
       <% end %>
     </div>
-    <div class="client-questionnaire__header-actions">
-      <% if @questionnaire.finished? %>
-        <%= button_to "Mark as In Progress", mark_in_progress_client_event_questionnaire_path(@event, @questionnaire), method: :patch, class: "client-questionnaire__status-action" %>
-      <% else %>
-        <%= button_to "Mark as Finished", mark_finished_client_event_questionnaire_path(@event, @questionnaire), method: :patch, class: "client-questionnaire__status-action" %>
-      <% end %>
-    </div>
   </header>
 
   <% @sections.each do |section| %>
     <% questions = section.questions.order(:position) %>
     <section class="client-questionnaire__section">
-      <div class="client-questionnaire__layout">
-        <aside class="client-questionnaire__intro">
-          <h2><%= section.title %></h2>
-          <% if section.helper_text.present? %>
-            <p class="client-questionnaire__helper"><%= simple_format(section.helper_text) %></p>
-          <% end %>
-        </aside>
+      <div class="client-container client-questionnaire__section-inner">
+        <div class="client-questionnaire__layout">
+          <aside class="client-questionnaire__intro">
+            <div class="client-questionnaire__intro-inner">
+              <h2><%= section.title %></h2>
+              <% if section.helper_text.present? %>
+                <p><%= simple_format(section.helper_text) %></p>
+              <% end %>
+            </div>
+          </aside>
 
-        <div class="client-questionnaire__questions">
-          <% if questions.any? %>
-            <% questions.each do |question| %>
-              <article class="client-questionnaire__question">
-                <p class="client-questionnaire__prompt"><strong><%= question.prompt %></strong></p>
-                <% if question.help_text.present? %>
-                  <p class="client-questionnaire__helper"><%= simple_format(question.help_text) %></p>
-                <% end %>
-
-                <%= form_with url: client_event_questionnaire_question_answer_path(@event, @questionnaire, question), method: :patch, scope: :question, local: true do |form| %>
-                  <div class="client-questionnaire__control">
-                    <% case question.response_type %>
-                    <% when "boolean" %>
-                      <%= form.label :answer_value, "Your response" %><br>
-                      <%= form.select :answer_value, options_for_select([["Select", ""], ["Yes", "Yes"], ["No", "No"]], question.answer_value), include_blank: false %>
-                    <% else %>
-                      <%= form.label :answer_value, "Your response" %><br>
-                      <%= form.text_area :answer_value, value: question.answer_value, rows: 4 %>
+          <div class="client-questionnaire__questions">
+            <% if questions.any? %>
+              <% questions.each do |question| %>
+                <% tooltip_id = "question-tooltip-#{question.id}" %>
+                <article class="client-questionnaire__question">
+                  <div class="client-questionnaire__prompt">
+                    <strong><%= question.prompt %></strong>
+                    <% if question.help_text.present? %>
+                      <span class="client-questionnaire__tooltip">
+                        <button type="button" class="client-questionnaire__tooltip-trigger" aria-describedby="<%= tooltip_id %>">
+                          <span aria-hidden="true">?</span>
+                          <span class="client-questionnaire__tooltip-text">More info</span>
+                        </button>
+                        <div id="<%= tooltip_id %>" role="tooltip" class="client-questionnaire__tooltip-content">
+                          <%= simple_format(question.help_text) %>
+                        </div>
+                      </span>
                     <% end %>
                   </div>
 
-                  <div class="client-questionnaire__actions">
-                    <%= form.submit "Save response" %>
-                  </div>
-                <% end %>
-              </article>
+                  <%= form_with url: client_event_questionnaire_question_answer_path(@event, @questionnaire, question), method: :patch, scope: :question, local: true, data: { questionnaire_target: "form" } do |form| %>
+                    <div class="client-questionnaire__control">
+                      <%= form.label :answer_value, "Your response", class: "visually-hidden" %>
+                      <% case question.response_type %>
+                      <% when "boolean" %>
+                        <%= form.select :answer_value, options_for_select([["Select", ""], ["Yes", "Yes"], ["No", "No"]], question.answer_value), include_blank: false %>
+                      <% else %>
+                        <%= form.text_area :answer_value, value: question.answer_value, rows: 4 %>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </article>
+              <% end %>
+            <% else %>
+              <p class="client-questionnaire__empty">No questions in this section yet.</p>
             <% end %>
-          <% else %>
-            <p class="client-questionnaire__empty">No questions in this section yet.</p>
-          <% end %>
+          </div>
         </div>
       </div>
     </section>
   <% end %>
+
+  <footer class="client-questionnaire__footer">
+    <div class="client-container">
+      <div class="client-questionnaire__footer-actions">
+        <% if @questionnaire.finished? %>
+          <%= button_to "Mark as In Progress", mark_in_progress_client_event_questionnaire_path(@event, @questionnaire), method: :patch, class: "client-questionnaire__status-action client-questionnaire__status-action--secondary" %>
+        <% else %>
+          <%= button_to "Mark as Finished", mark_finished_client_event_questionnaire_path(@event, @questionnaire), method: :patch, class: "client-questionnaire__status-action" %>
+        <% end %>
+        <button type="button" class="client-questionnaire__save-action" data-action="questionnaire#saveAll" data-questionnaire-target="saveButton">
+          Save all responses
+        </button>
+      </div>
+    </div>
+  </footer>
 </section>
+
+<%= render "client/shared/footer" %>
