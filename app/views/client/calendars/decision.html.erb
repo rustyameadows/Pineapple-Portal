@@ -9,7 +9,14 @@
       </div>
     </header>
 
-    <div class="decision-calendar__sticky-label">Decision Calendar</div>
+    <div class="decision-calendar__sticky-header">
+      <div class="client-container decision-calendar__sticky-grid">
+        <span class="decision-calendar__sticky-cell">Task</span>
+        <span class="decision-calendar__sticky-cell">Status</span>
+        <span class="decision-calendar__sticky-cell">Vendor</span>
+        <span class="decision-calendar__sticky-cell">Notes</span>
+      </div>
+    </div>
 
     <% if @decision_items.any? %>
       <div class="decision-calendar__segments">
