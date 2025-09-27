@@ -1,0 +1,24 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Generated documents</p>
+            <h1 class="event-section__title">Create a generated document</h1>
+            <p class="event-section__lead">Configure the basics now and we will take you to the builder to add segments.</p>
+          </div>
+          <%= link_to "Back", event_documents_generated_index_path(@event), class: "event-section__cta" %>
+        </header>
+
+        <div class="event-section__body generated-doc__single-form">
+          <%= render "form" %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

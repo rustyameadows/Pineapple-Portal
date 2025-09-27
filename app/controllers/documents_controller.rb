@@ -7,7 +7,11 @@ class DocumentsController < ApplicationController
 
   def index
     @document_groups = build_document_groups
-    @latest_documents = @event.documents.latest.order(updated_at: :desc, title: :asc)
+    @latest_documents = @event.documents
+                                  .where(doc_kind: Document::DOC_KINDS[:uploaded])
+                                  .latest
+                                  .order(updated_at: :desc, title: :asc)
+    @generated_documents = generated_manifest
   end
 
   def packets
@@ -106,14 +110,18 @@ class DocumentsController < ApplicationController
   def render_grouped_documents(source_key)
     @source_key = source_key.to_s
     @label = Document.source_label(@source_key)
-    @documents = @event.documents.where(source: @source_key).latest.order(updated_at: :desc, title: :asc)
+    @documents = @event.documents
+                         .where(source: @source_key, doc_kind: Document::DOC_KINDS[:uploaded])
+                         .latest
+                         .order(updated_at: :desc, title: :asc)
     @document_groups = build_document_groups
+    @generated_documents = @source_key == "packet" ? generated_manifest : []
     render :group
   end
 
   def build_document_groups
     Document.sources.keys.map do |key|
-      scope = @event.documents.where(source: key)
+      scope = @event.documents.where(source: key, doc_kind: Document::DOC_KINDS[:uploaded])
       {
         key: key,
         label: Document.source_label(key),
@@ -130,7 +138,7 @@ class DocumentsController < ApplicationController
   def versions_for(logical_id)
     return Document.none if logical_id.blank?
 
-    @event.documents.where(logical_id: logical_id).order(version: :desc)
+    @event.documents.where(logical_id: logical_id, doc_kind: Document::DOC_KINDS[:uploaded]).order(version: :desc)
   end
 
   def client_portal_user
@@ -151,5 +159,22 @@ class DocumentsController < ApplicationController
           client_visible: true
         })
         .exists?
+  end
+
+  def generated_manifest
+    generated_scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated])
+    grouped = generated_scope.order(:logical_id, version: :asc).group_by(&:logical_id)
+
+    grouped.filter_map do |logical_id, records|
+      definition = records.find { |record| record.definition_placeholder? }
+      definition ||= records.find(&:storage_uri).presence || records.first
+      next unless definition
+
+      {
+        logical_id: logical_id,
+        definition: definition,
+        latest_version: records.find(&:is_latest?)
+      }
+    end.sort_by { |entry| entry[:definition].title.to_s.downcase }
   end
 end

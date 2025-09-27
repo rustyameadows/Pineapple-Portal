@@ -1,0 +1,28 @@
+<div class="section">
+  <h2>Planning Team</h2>
+  <% planners = @event.planner_team_members.includes(:user) %>
+  <% if planners.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Title</th>
+          <th>Email</th>
+          <th>Phone</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% planners.each do |member| %>
+          <tr>
+            <td><%= member.user.name %></td>
+            <td><%= member.user.title.presence || "Planner" %></td>
+            <td><%= member.user.email %></td>
+            <td><%= member.user.phone_number.presence || "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p>No planners have been linked to this event yet.</p>
+  <% end %>
+</div>

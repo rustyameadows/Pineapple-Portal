@@ -1,0 +1,83 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Generated documents</p>
+            <h1 class="event-section__title">Assemble branded packets for <%= @event.name %></h1>
+            <p class="event-section__lead">Reuse curated sections and uploaded PDFs to publish polished packets for clients and partners.</p>
+          </div>
+          <%= link_to "Back to documents", event_documents_path(@event), class: "event-section__cta" %>
+        </header>
+
+        <div class="event-section__body generated-doc__grid">
+          <div class="generated-doc__column">
+            <h2 class="event-section__subheading">Active generated documents</h2>
+
+            <% if @manifest_entries.any? %>
+              <table class="generated-doc__table">
+                <thead>
+                  <tr>
+                    <th scope="col">Title</th>
+                    <th scope="col">Last compiled</th>
+                    <th scope="col">Versions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @manifest_entries.each do |entry| %>
+                    <% definition = entry[:definition] %>
+                    <% latest = entry[:latest] %>
+                    <tr>
+                      <th scope="row">
+                        <%= link_to definition.title,
+                                    event_documents_generated_path(@event, entry[:logical_id]),
+                                    class: "generated-doc__link" %>
+                        <% if definition.client_visible? %>
+                          <span class="generated-doc__badge">Client visible</span>
+                        <% end %>
+                      </th>
+                      <td>
+                        <% if latest.present? && latest.storage_uri.present? %>
+                          <%= latest.updated_at.to_fs(:short) %>
+                        <% else %>
+                          <span class="generated-doc__empty">Not yet compiled</span>
+                        <% end %>
+                      </td>
+                      <td><%= entry[:versions].count(&:storage_uri) %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% else %>
+              <p class="generated-doc__empty">No generated documents yet. Create one with the form alongside.</p>
+            <% end %>
+
+            <div class="generated-doc__templates">
+              <h3>Templates</h3>
+              <% if @templates.any? %>
+                <ul>
+                  <% @templates.each do |template| %>
+                    <li><%= template.title %></li>
+                  <% end %>
+                </ul>
+              <% else %>
+                <p class="generated-doc__empty">No templates have been defined yet.</p>
+              <% end %>
+            </div>
+          </div>
+
+          <aside class="generated-doc__column generated-doc__column--sidebar">
+            <h2 class="event-section__subheading">Create a generated document</h2>
+            <p class="generated-doc__help">Define the shell now, then add sections and compile when you are ready.</p>
+            <%= render "form" %>
+          </aside>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

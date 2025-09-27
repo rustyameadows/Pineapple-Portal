@@ -72,6 +72,30 @@ Rails.application.routes.draw do
       end
     end
 
+    namespace :documents do
+      resources :generated, param: :logical_id, controller: :generated do
+        member do
+          post :compile
+          post :duplicate
+          post :mark_template
+          delete :unmark_template
+        end
+        collection do
+          post :create_from_template
+        end
+
+        resources :segments,
+                  controller: "generated/segments",
+                  only: %i[create update destroy] do
+          member do
+            patch :move_up
+            patch :move_down
+            get :preview
+          end
+        end
+      end
+    end
+
     resources :documents do
       collection do
         get :packets

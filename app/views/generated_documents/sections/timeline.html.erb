@@ -1,0 +1,31 @@
+<div class="section">
+  <h2>Key Milestones</h2>
+  <% calendar = @event.run_of_show_calendar %>
+  <% if calendar.present? && calendar.calendar_items.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Starts</th>
+          <th>Vendor</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% calendar.calendar_items.order(:starts_at).limit(10).each do |item| %>
+          <tr>
+            <td><%= item.title %></td>
+            <td><%= item.starts_at&.to_fs(:long) || "TBD" %></td>
+            <td><%= item.vendor_name.presence || "—" %></td>
+            <td><%= item.status.humanize %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <% if calendar.calendar_items.count > 10 %>
+      <p><em>Showing first 10 milestones.</em></p>
+    <% end %>
+  <% else %>
+    <p>No milestones have been added to the run-of-show yet.</p>
+  <% end %>
+</div>

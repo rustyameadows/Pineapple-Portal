@@ -1,0 +1,15 @@
+<div class="section">
+  <h1><%= @event.name %></h1>
+  <% if @event.starts_on.present? %>
+    <p><strong>Event Dates:</strong>
+      <%= @event.starts_on.to_fs(:long) %>
+      <% if @event.ends_on.present? && @event.ends_on != @event.starts_on %>
+        – <%= @event.ends_on.to_fs(:long) %>
+      <% end %>
+    </p>
+  <% end %>
+  <% if @event.location.present? %>
+    <p><strong>Location:</strong> <%= @event.location %></p>
+  <% end %>
+  <p>This section will render the hero summary for the compiled document.</p>
+</div>

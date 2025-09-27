@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_27_094000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -166,25 +166,60 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
     t.check_constraint "jsonb_typeof(variable_definitions) = 'object'::text", name: "calendar_templates_variable_definitions_object"
   end
 
+  create_table "document_dependencies", force: :cascade do |t|
+    t.uuid "document_logical_id", null: false
+    t.bigint "segment_id", null: false
+    t.string "entity_type", null: false
+    t.bigint "entity_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_logical_id"], name: "index_document_dependencies_on_document_logical_id"
+    t.index ["entity_type", "entity_id"], name: "index_document_dependencies_on_entity"
+  end
+
+  create_table "document_segments", force: :cascade do |t|
+    t.uuid "document_logical_id", null: false
+    t.integer "position", null: false
+    t.string "kind", null: false
+    t.string "title", default: "", null: false
+    t.jsonb "source_ref", default: {}, null: false
+    t.jsonb "spec", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_logical_id", "position"], name: "index_document_segments_on_logical_id_and_position", unique: true
+    t.index ["document_logical_id"], name: "index_document_segments_on_document_logical_id"
+    t.check_constraint "\"position\" > 0", name: "document_segments_position_positive"
+  end
+
   create_table "documents", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.string "title", null: false
-    t.string "storage_uri", null: false
-    t.string "checksum", null: false
-    t.bigint "size_bytes", null: false
+    t.string "storage_uri"
+    t.string "checksum"
+    t.bigint "size_bytes"
     t.uuid "logical_id", null: false
     t.integer "version", null: false
     t.boolean "is_latest", default: true, null: false
-    t.string "content_type", null: false
+    t.string "content_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "client_visible", default: false, null: false
     t.string "source", default: "staff_upload", null: false
+    t.string "doc_kind", default: "uploaded", null: false
+    t.boolean "is_template", default: false, null: false
+    t.uuid "template_source_logical_id"
+    t.bigint "built_by_user_id"
+    t.uuid "build_id"
+    t.string "manifest_hash"
+    t.string "checksum_sha256"
+    t.index ["build_id"], name: "index_documents_on_build_id"
     t.index ["client_visible"], name: "index_documents_on_client_visible"
+    t.index ["doc_kind"], name: "index_documents_on_doc_kind"
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["logical_id", "version"], name: "index_documents_on_logical_id_and_version", unique: true
     t.index ["logical_id"], name: "index_documents_on_logical_id_latest", unique: true, where: "(is_latest = true)"
     t.index ["source"], name: "index_documents_on_source"
+    t.index ["template_source_logical_id"], name: "index_documents_on_template_source_logical_id"
     t.check_constraint "size_bytes > 0", name: "documents_size_positive"
     t.check_constraint "version > 0", name: "documents_version_positive"
   end
@@ -385,7 +420,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
   add_foreign_key "calendar_template_items", "calendar_templates", on_delete: :cascade
   add_foreign_key "calendar_template_tags", "calendar_templates", on_delete: :cascade
   add_foreign_key "calendar_template_views", "calendar_templates", on_delete: :cascade
+  add_foreign_key "document_dependencies", "document_segments", column: "segment_id", on_delete: :cascade
   add_foreign_key "documents", "events"
+  add_foreign_key "documents", "users", column: "built_by_user_id"
   add_foreign_key "event_calendar_tags", "event_calendars", on_delete: :cascade
   add_foreign_key "event_calendar_views", "event_calendars", on_delete: :cascade
   add_foreign_key "event_calendars", "calendar_templates", column: "template_source_id", on_delete: :nullify
@@ -393,8 +430,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
   add_foreign_key "event_links", "events"
   add_foreign_key "event_team_members", "events"
   add_foreign_key "event_team_members", "users"
-  add_foreign_key "password_reset_tokens", "users", on_delete: :cascade
-  add_foreign_key "password_reset_tokens", "users", column: "issued_by_id", on_delete: :nullify
+  add_foreign_key "password_reset_tokens", "users"
+  add_foreign_key "password_reset_tokens", "users", column: "issued_by_id"
   add_foreign_key "payments", "events"
   add_foreign_key "questionnaire_sections", "questionnaires"
   add_foreign_key "questionnaires", "events"

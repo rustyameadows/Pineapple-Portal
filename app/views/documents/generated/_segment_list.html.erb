@@ -1,0 +1,144 @@
+<div class="generated-builder__sidebar-header">
+  <h2>Segments</h2>
+  <p class="generated-builder__hint">Attach planner PDFs or branded sections, then arrange them in the order you want to publish.</p>
+</div>
+
+<% if defined?(flash_notice) && flash_notice.present? %>
+  <p class="generated-builder__status generated-builder__status--notice"><%= flash_notice %></p>
+<% end %>
+
+<% if defined?(errors) && errors.present? %>
+  <ul class="generated-builder__status generated-builder__status--error">
+    <% errors.each do |error| %>
+      <li><%= error %></li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if segments.any? %>
+  <ul class="generated-builder__list">
+    <% segments.each_with_index do |segment, index| %>
+      <li class="generated-builder__list-item">
+        <div class="generated-builder__list-main">
+          <strong><%= segment.display_title %></strong>
+          <span class="generated-builder__segment-kind"><%= segment.kind.humanize %></span>
+        </div>
+        <div class="generated-builder__list-actions">
+          <%= button_to "Move up",
+                        move_up_event_documents_generated_segment_path(event, document.logical_id, segment),
+                        method: :patch,
+                        class: "button button--tiny",
+                        disabled: index.zero? %>
+          <%= button_to "Move down",
+                        move_down_event_documents_generated_segment_path(event, document.logical_id, segment),
+                        method: :patch,
+                        class: "button button--tiny",
+                        disabled: index == segments.size - 1 %>
+          <%= link_to "Preview",
+                       preview_event_documents_generated_segment_path(event, document.logical_id, segment),
+                       class: "button button--tiny button--ghost",
+                       target: "_blank",
+                       rel: "noopener" %>
+          <%= button_to "Remove",
+                        event_documents_generated_segment_path(event, document.logical_id, segment),
+                        method: :delete,
+                        class: "button button--tiny button--danger",
+                        data: { confirm: "Remove this segment?" } %>
+        </div>
+        <div class="generated-builder__list-form">
+          <%= form_with model: segment,
+                        url: event_documents_generated_segment_path(event, document.logical_id, segment),
+                        method: :patch,
+                        local: true,
+                        class: "generated-builder__form" do |form| %>
+            <div class="generated-builder__form-row">
+              <%= form.label :title, "Display title" %>
+              <%= form.text_field :title, value: segment.display_title %>
+            </div>
+
+            <% if segment.pdf_asset? %>
+              <div class="generated-builder__form-row">
+                <%= form.label :pdf_document_id, "Attached document" %>
+                <% if available_pdf_documents.any? %>
+                  <%= form.select :pdf_document_id,
+                                  options_from_collection_for_select(available_pdf_documents, :id, :title, segment.pdf_document_id),
+                                  include_blank: "Select document" %>
+                <% else %>
+                  <p class="generated-builder__empty">No uploaded documents yet.</p>
+                <% end %>
+              </div>
+            <% elsif segment.html_view? %>
+              <div class="generated-builder__form-row">
+                <%= form.label :view_key, "Branded section" %>
+                <%= form.select :view_key,
+                                options_for_select(available_html_views, segment.html_view_key),
+                                include_blank: "Select section" %>
+              </div>
+            <% end %>
+
+            <div class="generated-builder__form-actions">
+              <%= form.submit "Save changes", class: "button button--small" %>
+            </div>
+          <% end %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="generated-builder__empty">No segments yet. Add a branded section or attach a PDF to get started.</p>
+<% end %>
+
+<div class="generated-builder__new">
+  <div class="generated-builder__panel">
+    <h3>Attach uploaded PDF</h3>
+    <% if available_pdf_documents.any? %>
+      <%= form_with scope: :segment,
+                    url: event_documents_generated_segments_path(event, document.logical_id),
+                    method: :post,
+                    local: true,
+                    class: "generated-builder__form" do |form| %>
+        <%= form.hidden_field :kind, value: DocumentSegment::KINDS[:pdf_asset] %>
+        <div class="generated-builder__form-row">
+          <%= form.label :pdf_document_id, "Select document" %>
+          <%= form.select :pdf_document_id,
+                          options_from_collection_for_select(available_pdf_documents, :id, :title),
+                          include_blank: "Choose a document" %>
+        </div>
+        <div class="generated-builder__form-row">
+          <%= form.label :title, "Segment title" %>
+          <%= form.text_field :title, placeholder: "Defaults to document title" %>
+        </div>
+        <div class="generated-builder__form-actions">
+          <%= form.submit "Add PDF segment", class: "button button--small" %>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="generated-builder__empty">Upload documents first, then attach them to this packet.</p>
+    <% end %>
+  </div>
+
+  <div class="generated-builder__panel">
+    <h3>Add branded section</h3>
+    <%= form_with scope: :segment,
+                  url: event_documents_generated_segments_path(event, document.logical_id),
+                  method: :post,
+                  local: true,
+                  class: "generated-builder__form" do |form| %>
+      <%= form.hidden_field :kind, value: DocumentSegment::KINDS[:html_view] %>
+      <div class="generated-builder__form-row">
+        <%= form.label :view_key, "Section" %>
+        <%= form.select :view_key,
+                        options_for_select(available_html_views),
+                        include_blank: "Choose a section" %>
+      </div>
+      <div class="generated-builder__form-row">
+        <%= form.label :title, "Segment title" %>
+        <%= form.text_field :title, placeholder: "Defaults to section name" %>
+      </div>
+      <div class="generated-builder__form-actions">
+        <%= form.submit "Add branded section", class: "button button--small" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+</div>
