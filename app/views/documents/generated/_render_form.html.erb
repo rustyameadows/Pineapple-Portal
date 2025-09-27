@@ -1,0 +1,13 @@
+<%= button_to "Render PDF",
+              render_pdf_event_documents_generated_segment_path(event, document.logical_id, segment),
+              method: :post,
+              class: "button button--tiny button--ghost",
+              form: { class: "generated-builder__inline-form" } %>
+
+<% if segment.cached? %>
+  <%= link_to "View cached PDF",
+              cached_pdf_event_documents_generated_segment_path(event, document.logical_id, segment),
+              class: "button button--tiny",
+              target: "_blank",
+              rel: "noopener" %>
+<% end %>

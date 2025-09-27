@@ -61,8 +61,11 @@ Node.js 24.8.0 (or any current LTS) is sufficient—no extra configuration neede
 ```bash
 bundle install
 bin/rails db:setup   # creates databases, runs migrations, seeds sample users
+npm install          # installs Puppeteer dependency for Grover
 bin/rails server     # or bin/dev for the foreman/dev server
 ```
+
+Chromium for Grover/Puppeteer downloads automatically via the `postinstall` script. If you prefer to run it manually, execute `npx puppeteer browsers install chrome` after `npm install`.
 
 Visit http://localhost:3000 after boot (you’ll be redirected to log in first). The seed data creates two demo accounts with password `password123`, a sample event with questionnaires (including a template), and a placeholder document.
 

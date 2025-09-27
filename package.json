@@ -1,0 +1,10 @@
+{
+  "name": "pineapple-portal",
+  "private": true,
+  "devDependencies": {
+    "puppeteer": "^22.11.1"
+  },
+  "scripts": {
+    "postinstall": "puppeteer browsers install chrome"
+  }
+}

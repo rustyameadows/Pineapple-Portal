@@ -19,33 +19,42 @@
   <ul class="generated-builder__list">
     <% segments.each_with_index do |segment, index| %>
       <li class="generated-builder__list-item">
-        <div class="generated-builder__list-main">
-          <strong><%= segment.display_title %></strong>
-          <span class="generated-builder__segment-kind"><%= segment.kind.humanize %></span>
-        </div>
-        <div class="generated-builder__list-actions">
-          <%= button_to "Move up",
-                        move_up_event_documents_generated_segment_path(event, document.logical_id, segment),
-                        method: :patch,
-                        class: "button button--tiny",
-                        disabled: index.zero? %>
-          <%= button_to "Move down",
-                        move_down_event_documents_generated_segment_path(event, document.logical_id, segment),
-                        method: :patch,
-                        class: "button button--tiny",
-                        disabled: index == segments.size - 1 %>
-          <%= link_to "Preview",
+        <div class="generated-builder__list-left">
+          <div>
+            <strong><%= segment.display_title %></strong>
+            <div class="generated-builder__list-meta">
+              <span class="generated-builder__segment-kind"><%= segment.kind.humanize %></span>
+              <%= render "documents/generated/render_status", segment: segment %>
+            </div>
+          </div>
+          <div class="generated-builder__list-actions">
+            <%= button_to "Move up",
+                          move_up_event_documents_generated_segment_path(event, document.logical_id, segment),
+                          method: :patch,
+                          class: "button button--tiny",
+                          disabled: index.zero? %>
+            <%= button_to "Move down",
+                          move_down_event_documents_generated_segment_path(event, document.logical_id, segment),
+                          method: :patch,
+                          class: "button button--tiny",
+                          disabled: index == segments.size - 1 %>
+            <%= link_to "Preview",
                        preview_event_documents_generated_segment_path(event, document.logical_id, segment),
                        class: "button button--tiny button--ghost",
                        target: "_blank",
                        rel: "noopener" %>
-          <%= button_to "Remove",
-                        event_documents_generated_segment_path(event, document.logical_id, segment),
-                        method: :delete,
-                        class: "button button--tiny button--danger",
-                        data: { confirm: "Remove this segment?" } %>
+            <%= render "documents/generated/render_form",
+                       event: event,
+                       document: document,
+                       segment: segment %>
+            <%= button_to "Remove",
+                          event_documents_generated_segment_path(event, document.logical_id, segment),
+                          method: :delete,
+                          class: "button button--tiny button--danger",
+                          data: { confirm: "Remove this segment?" } %>
+          </div>
         </div>
-        <div class="generated-builder__list-form">
+        <div class="generated-builder__list-right">
           <%= form_with model: segment,
                         url: event_documents_generated_segment_path(event, document.logical_id, segment),
                         method: :patch,

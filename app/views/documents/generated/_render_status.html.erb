@@ -1,0 +1,13 @@
+<% if segment.cached? %>
+  <span class="generated-builder__status-tag">Cached <%= segment.cached_pdf_generated_at&.to_fs(:short) || "recently" %>
+    <% if segment.cached_page_count.present? %>
+      · <%= pluralize(segment.cached_page_count, "page") %>
+    <% end %>
+  </span>
+<% elsif segment.last_render_error.present? %>
+  <span class="generated-builder__status-tag generated-builder__status-tag--error">
+    Render failed: <%= segment.last_render_error %>
+  </span>
+<% else %>
+  <span class="generated-builder__status-tag">Not rendered</span>
+<% end %>

@@ -3,7 +3,7 @@ module Documents
     class SegmentsController < ApplicationController
       before_action :set_event
       before_action :set_document
-      before_action :set_segment, only: %i[update destroy move_up move_down preview]
+      before_action :set_segment, only: %i[render_pdf update destroy move_up move_down preview cached_pdf]
 
       def create
         @segment = segments_scope.new
@@ -33,6 +33,13 @@ module Documents
         redirect_to builder_path, notice: "Segment removed."
       end
 
+      def render_pdf
+        RenderSegmentJob.perform_later(@segment.id)
+        redirect_to builder_path, notice: "Segment render queued."
+      rescue StandardError => e
+        redirect_to builder_path, alert: "Unable to render segment: #{e.message}"
+      end
+
       def move_up
         @segment.move_up!
         DocumentSegment.resequence!(@document.logical_id)
@@ -58,6 +65,18 @@ module Documents
         else
           head :not_found
         end
+      end
+
+      def cached_pdf
+        unless @segment.cached?
+          redirect_to builder_path, alert: "Segment has not been rendered yet."
+          return
+        end
+
+        url = storage.presigned_download_url(@segment.cached_pdf_key)
+        redirect_to url, allow_other_host: true
+      rescue StandardError => e
+        redirect_to builder_path, alert: "Unable to fetch cached PDF: #{e.message}"
       end
 
       private
@@ -144,6 +163,10 @@ module Documents
 
       def builder_path
         event_documents_generated_path(@event, @document.logical_id)
+      end
+
+      def storage
+        @storage ||= Documents::Generated::R2Storage.new
       end
     end
   end

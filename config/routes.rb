@@ -88,9 +88,11 @@ Rails.application.routes.draw do
                   controller: "generated/segments",
                   only: %i[create update destroy] do
           member do
+            post :render_pdf
             patch :move_up
             patch :move_down
             get :preview
+            get :cached_pdf
           end
         end
       end

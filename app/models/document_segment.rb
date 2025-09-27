@@ -42,6 +42,7 @@ class DocumentSegment < ApplicationRecord
   validate :validate_source_ref_payload
 
   before_validation :assign_position, on: :create
+  before_save :reset_cached_metadata, if: :content_affecting_change?
 
   class << self
     def html_view?(key)
@@ -97,6 +98,20 @@ class DocumentSegment < ApplicationRecord
     title.presence || spec.fetch("label", kind.humanize)
   end
 
+  def cached?
+    cached_pdf_key.present? && cached_pdf_generated_at.present?
+  end
+
+  def cache_stale?(current_hash)
+    render_hash != current_hash
+  end
+
+  def cache_storage_path(hash = render_hash)
+    return unless hash.present?
+
+    "segments/#{hash}.pdf"
+  end
+
   def assign_pdf_document(document)
     self.source_ref = {
       "document_id" => document.id,
@@ -129,13 +144,32 @@ class DocumentSegment < ApplicationRecord
   end
 
   def move_up!
-    sibling = document.segments.where("position < ?", position).order(position: :desc).first
-    swap_positions_with!(sibling) if sibling
+    return if position <= 1
+
+    old_position = position
+    relation = DocumentSegment.where(document_logical_id: document_logical_id)
+
+    DocumentSegment.transaction do
+      temp_position = relation.maximum(:position).to_i + 1
+      update_columns(position: temp_position)
+      relation.where(position: old_position - 1).update_all(position: old_position)
+      update_columns(position: old_position - 1)
+    end
   end
 
   def move_down!
-    sibling = document.segments.where("position > ?", position).order(position: :asc).first
-    swap_positions_with!(sibling) if sibling
+    relation = DocumentSegment.where(document_logical_id: document_logical_id)
+    max_position = relation.maximum(:position).to_i
+    return if position >= max_position
+
+    old_position = position
+
+    DocumentSegment.transaction do
+      temp_position = max_position + 1
+      update_columns(position: temp_position)
+      relation.where(position: old_position + 1).update_all(position: old_position)
+      update_columns(position: old_position + 1)
+    end
   end
 
   private
@@ -165,13 +199,19 @@ class DocumentSegment < ApplicationRecord
     end
   end
 
-  def swap_positions_with!(other)
-    return unless other
+  def content_affecting_change?
+    new_record? ||
+      will_save_change_to_kind? ||
+      will_save_change_to_title? ||
+      will_save_change_to_source_ref?
+  end
 
-    DocumentSegment.transaction do
-      current_position = position
-      update!(position: other.position)
-      other.update!(position: current_position)
-    end
+  def reset_cached_metadata
+    self.render_hash = nil
+    self.cached_pdf_key = nil
+    self.cached_pdf_generated_at = nil
+    self.cached_page_count = nil
+    self.cached_file_size = nil
+    self.last_render_error = nil
   end
 end

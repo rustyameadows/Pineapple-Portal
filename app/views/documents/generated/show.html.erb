@@ -26,39 +26,35 @@
           </div>
         </header>
 
-        <div class="generated-builder__body">
-          <aside class="generated-builder__sidebar">
-            <%= render "documents/generated/segment_list",
-                       event: @event,
-                       document: @document,
-                       segments: @segments,
-                       available_pdf_documents: @available_pdf_documents,
-                       available_html_views: @available_html_views %>
-          </aside>
+        <div class="generated-builder__body generated-builder__single-column">
+          <%= render "documents/generated/segment_list",
+                     event: @event,
+                     document: @document,
+                     segments: @segments,
+                     available_pdf_documents: @available_pdf_documents,
+                     available_html_views: @available_html_views %>
 
-          <div class="generated-builder__workspace">
-            <div class="generated-builder__workspace-card">
-              <h2>Compiled versions</h2>
-              <% if @compiled_versions.any? %>
-                <ul class="generated-builder__versions">
-                  <% @compiled_versions.each do |version| %>
-                    <li>
-                      <div>
-                        <strong>Version <%= version.version %></strong>
-                        <span class="generated-builder__version-sub">
-                          Compiled <%= version.updated_at.to_fs(:long) %>
-                        </span>
-                      </div>
-                      <%= link_to "Download",
-                                  download_event_document_path(@event, version),
-                                  class: "button button--ghost button--tiny" %>
-                    </li>
-                  <% end %>
-                </ul>
-              <% else %>
-                <p class="generated-builder__empty">We will list compiled versions here once the first build runs.</p>
-              <% end %>
-            </div>
+          <div class="generated-builder__workspace-card">
+            <h2>Compiled versions</h2>
+            <% if @compiled_versions.any? %>
+              <ul class="generated-builder__versions">
+                <% @compiled_versions.each do |version| %>
+                  <li>
+                    <div>
+                      <strong>Version <%= version.version %></strong>
+                      <span class="generated-builder__version-sub">
+                        Compiled <%= version.updated_at.to_fs(:long) %>
+                      </span>
+                    </div>
+                    <%= link_to "Download",
+                                download_event_document_path(@event, version),
+                                class: "button button--ghost button--tiny" %>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="generated-builder__empty">We will list compiled versions here once the first build runs.</p>
+            <% end %>
           </div>
         </div>
       </section>

@@ -1,4 +1,5 @@
 require "aws-sdk-s3"
+require "stringio"
 
 module R2
   class Storage
@@ -18,6 +19,30 @@ module R2
 
     def presigned_download_url(key:, expires_in: DEFAULT_EXPIRY)
       presigner.presigned_url(:get_object, bucket: bucket, key: key, expires_in: expires_in.to_i)
+    end
+
+    def upload_io(key, io, content_type: nil)
+      data = extract_data(io)
+      client.put_object(
+        bucket: bucket,
+        key: key,
+        body: data,
+        content_type: content_type
+      )
+    end
+
+    def download(key)
+      response = client.get_object(bucket: bucket, key: key)
+      StringIO.new(response.body.read)
+    rescue Aws::S3::Errors::NoSuchKey
+      nil
+    end
+
+    def object_exists?(key)
+      client.head_object(bucket: bucket, key: key)
+      true
+    rescue Aws::S3::Errors::NotFound, Aws::S3::Errors::NoSuchKey
+      false
     end
 
     private
@@ -43,6 +68,13 @@ module R2
     def default_endpoint
       account_id = ENV.fetch("R2_ACCOUNT_ID")
       "https://#{account_id}.r2.cloudflarestorage.com"
+    end
+
+    def extract_data(io)
+      return io if io.is_a?(String)
+      return io.read if io.respond_to?(:read)
+
+      io.to_s
     end
   end
 end

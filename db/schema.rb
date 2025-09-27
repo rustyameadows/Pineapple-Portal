@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_27_094000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_27_095000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -186,8 +186,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_094000) do
     t.jsonb "spec", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "render_hash"
+    t.string "cached_pdf_key"
+    t.datetime "cached_pdf_generated_at"
+    t.integer "cached_page_count"
+    t.integer "cached_file_size"
+    t.string "last_render_error"
     t.index ["document_logical_id", "position"], name: "index_document_segments_on_logical_id_and_position", unique: true
     t.index ["document_logical_id"], name: "index_document_segments_on_document_logical_id"
+    t.index ["render_hash"], name: "index_document_segments_on_render_hash"
     t.check_constraint "\"position\" > 0", name: "document_segments_position_positive"
   end
 
