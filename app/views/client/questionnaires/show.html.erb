@@ -33,7 +33,13 @@
             <% if questions.any? %>
               <% questions.each do |question| %>
                 <% tooltip_id = "question-tooltip-#{question.id}" %>
-                <article class="client-questionnaire__question">
+                <% attachments = question.attachments.answer.includes(:document).order(:position) %>
+                <article class="client-questionnaire__question"
+                         data-controller="question-attachment"
+                         data-question-attachment-presign-url-value="<%= presign_event_documents_path(@event) %>"
+                         data-question-attachment-attachments-path-value="<%= attachments_path(format: :json) %>"
+                         data-question-attachment-entity-type-value="Question"
+                         data-question-attachment-entity-id-value="<%= question.id %>">
                   <div class="client-questionnaire__prompt">
                     <strong><%= question.prompt %></strong>
                     <% if question.help_text.present? %>
@@ -49,15 +55,49 @@
                     <% end %>
                   </div>
 
-                  <%= form_with url: client_event_questionnaire_question_answer_path(@event, @questionnaire, question), method: :patch, scope: :question, local: true, data: { questionnaire_target: "form" } do |form| %>
+                  <%= form_with url: client_event_questionnaire_question_answer_path(@event, @questionnaire, question),
+                                method: :patch,
+                                scope: :question,
+                                local: true,
+                                data: { questionnaire_target: "form" } do |form| %>
                     <div class="client-questionnaire__control">
                       <%= form.label :answer_value, "Your response", class: "visually-hidden" %>
-                      <% case question.response_type %>
-                      <% when "boolean" %>
-                        <%= form.select :answer_value, options_for_select([["Select", ""], ["Yes", "Yes"], ["No", "No"]], question.answer_value), include_blank: false %>
-                      <% else %>
-                        <%= form.text_area :answer_value, value: question.answer_value, rows: 4 %>
-                      <% end %>
+                      <div class="client-questionnaire__answer-shell"
+                           data-question-attachment-target="shell"
+                           data-action="dragover->question-attachment#dragOver dragleave->question-attachment#dragLeave drop->question-attachment#drop">
+                        <% case question.response_type %>
+                        <% when "boolean" %>
+                          <%= form.select :answer_value, options_for_select([["Select", ""], ["Yes", "Yes"], ["No", "No"]], question.answer_value), include_blank: false %>
+                        <% else %>
+                          <%= form.text_area :answer_value, value: question.answer_value, rows: 4 %>
+                        <% end %>
+
+                        <div class="client-questionnaire__attachment-zone">
+                          <ul class="client-questionnaire__attachments"
+                              data-question-attachment-target="attachmentList">
+                            <%= render partial: "client/questionnaires/attachment_chip",
+                                       collection: attachments,
+                                       as: :attachment,
+                                       locals: { event: @event } %>
+                          </ul>
+                          <button type="button"
+                                  class="client-questionnaire__dropzone"
+                                  data-question-attachment-target="dropzone"
+                                  data-action="dragover->question-attachment#dragOver dragleave->question-attachment#dragLeave drop->question-attachment#drop click->question-attachment#openFileDialog">
+                            <span aria-hidden="true">＋</span>
+                            <span class="client-questionnaire__dropzone-text">Add file</span>
+                          </button>
+                          <input type="file"
+                                 class="client-questionnaire__file-input"
+                                 data-question-attachment-target="fileInput"
+                                 data-action="change->question-attachment#handleFileSelection">
+                          <p class="client-questionnaire__attachment-status"
+                                 data-question-attachment-target="status"></p>
+                          <p class="client-questionnaire__attachment-empty"
+                                 data-question-attachment-target="emptyState"
+                             <%= "hidden" if attachments.any? %>>No files attached yet.</p>
+                        </div>
+                      </div>
                     </div>
                   <% end %>
                 </article>

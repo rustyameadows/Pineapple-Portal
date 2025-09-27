@@ -4,11 +4,29 @@ export default class extends Controller {
   static targets = ["form", "saveButton"]
 
   isSaving = false
+  pendingUploads = 0
+
+  connect() {
+    this.handleAttachmentStart = this.handleAttachmentStart.bind(this)
+    this.handleAttachmentFinish = this.handleAttachmentFinish.bind(this)
+    this.element.addEventListener("question-attachment:start", this.handleAttachmentStart)
+    this.element.addEventListener("question-attachment:finish", this.handleAttachmentFinish)
+  }
+
+  disconnect() {
+    this.element.removeEventListener("question-attachment:start", this.handleAttachmentStart)
+    this.element.removeEventListener("question-attachment:finish", this.handleAttachmentFinish)
+  }
 
   async saveAll(event) {
     event.preventDefault()
 
-    if (this.isSaving) return
+    if (this.isSaving || this.pendingUploads > 0) {
+      if (this.pendingUploads > 0) {
+        alert("Please wait for file uploads to finish before saving.")
+      }
+      return
+    }
     this.isSaving = true
 
     const button = this.hasSaveButtonTarget ? this.saveButtonTarget : null
@@ -51,6 +69,33 @@ export default class extends Controller {
       alert("We couldn't save all responses. Please try again.")
     } finally {
       this.isSaving = false
+      if (this.pendingUploads === 0) {
+        this.enableSaveButton()
+      }
+    }
+  }
+
+  handleAttachmentStart() {
+    this.pendingUploads += 1
+    this.disableSaveButton()
+  }
+
+  handleAttachmentFinish() {
+    this.pendingUploads = Math.max(0, this.pendingUploads - 1)
+    if (!this.isSaving && this.pendingUploads === 0) {
+      this.enableSaveButton()
+    }
+  }
+
+  disableSaveButton() {
+    if (this.hasSaveButtonTarget) {
+      this.saveButtonTarget.disabled = true
+    }
+  }
+
+  enableSaveButton() {
+    if (this.hasSaveButtonTarget) {
+      this.saveButtonTarget.disabled = false
     }
   }
 }

@@ -25,7 +25,7 @@ class AttachmentsController < ApplicationController
       unless document.save
         attachment = entity.attachments.new(attrs)
         document.errors.full_messages.each { |msg| attachment.errors.add(:base, msg) }
-        return handle_attachment_response(attachment)
+        return respond_with_attachment(attachment, entity, success: false)
       end
 
       attrs[:document] = document
@@ -33,7 +33,7 @@ class AttachmentsController < ApplicationController
     end
 
     attachment = entity.attachments.new(attrs)
-    handle_attachment_response(attachment)
+    respond_with_attachment(attachment, entity, success: attachment.save)
   end
 
   def destroy
@@ -48,7 +48,21 @@ class AttachmentsController < ApplicationController
   end
 
   def attachment_params
-    raw = params.require(:attachment).permit(:entity_type, :entity_id, :document_id, :document_logical_id, :context, :position, :notes)
+    raw = params.require(:attachment).permit(
+      :entity_type,
+      :entity_id,
+      :document_id,
+      :document_logical_id,
+      :context,
+      :position,
+      :notes,
+      :file_upload_title,
+      :file_upload_storage_uri,
+      :file_upload_checksum,
+      :file_upload_size_bytes,
+      :file_upload_content_type,
+      :file_upload_logical_id
+    )
     raw[:entity_type] = safe_entity_type(raw[:entity_type])
     raw[:entity_id] = raw[:entity_id].presence && raw[:entity_id].to_i
     raise ActionController::BadRequest, "Missing entity" unless raw[:entity_id]
@@ -107,11 +121,37 @@ class AttachmentsController < ApplicationController
     entity.attachments.maximum(:position).to_i + 1
   end
 
-  def handle_attachment_response(attachment)
-    if attachment.errors.empty? && attachment.save
-      redirect_back fallback_location: root_path, notice: "Attachment added."
+  def respond_with_attachment(attachment, entity, success:)
+    if success
+      respond_to do |format|
+        format.html do
+          redirect_back fallback_location: root_path, notice: "Attachment added."
+        end
+        format.json { render json: attachment_json(attachment, entity), status: :created }
+      end
     else
-      redirect_back fallback_location: root_path, alert: attachment.errors.full_messages.to_sentence
+      message = attachment.errors.full_messages.to_sentence.presence || "Unable to add attachment."
+
+      respond_to do |format|
+        format.html do
+          redirect_back fallback_location: root_path, alert: message
+        end
+        format.json { render json: { error: message }, status: :unprocessable_entity }
+      end
     end
+  end
+
+  def attachment_json(attachment, entity)
+    payload = { attachment_id: attachment.id }
+
+    if entity.is_a?(Question)
+      payload[:html] = render_to_string(
+        partial: "client/questionnaires/attachment_chip",
+        locals: { attachment: attachment, event: event_for_entity(entity) },
+        formats: [:html]
+      )
+    end
+
+    payload
   end
 end
