@@ -1,0 +1,60 @@
+<style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: #f6f4f1;
+    font-family: "BaskervilleNo2", "Times New Roman", serif;
+    color: #2d1c12;
+  }
+
+  .preview-shell {
+    padding: 2rem 1.5rem;
+  }
+
+  .preview-page {
+    width: 8.5in;
+    height: 11in;
+    margin: 0 auto 2rem;
+    background: #ffffff;
+    box-shadow: 0 8px 28px rgba(26, 15, 9, 0.18);
+    border-radius: 0.35rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .preview-page:last-child {
+    margin-bottom: 0;
+  }
+
+  .preview-page-content {
+    width: 100%;
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .preview-page + .page-break-hint::before {
+    content: "";
+    display: block;
+    width: 60%;
+    max-width: 6in;
+    margin: 0 auto 2rem;
+    border-top: 1px dashed rgba(45, 28, 18, 0.2);
+  }
+
+  .page-break-hint {
+    text-align: center;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(45, 28, 18, 0.55);
+    margin-bottom: 2rem;
+  }
+</style>

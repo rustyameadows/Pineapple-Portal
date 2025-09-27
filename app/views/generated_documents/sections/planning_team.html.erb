@@ -1,8 +1,10 @@
-<%= render "generated_documents/sections/base_styles" %>
+<% if local_assigns.fetch(:render_base_styles, true) %>
+  <%= render "generated_documents/sections/base_styles" %>
+<% end %>
 
 <style>
   .generated-template--planning-team {
-    gap: 1.25rem;
+    gap: 1.6rem;
   }
 
   .generated-template--planning-team table td:first-child {
@@ -16,6 +18,7 @@
 </style>
 
 <div class="generated-template generated-template--planning-team">
+  <%= render "generated_documents/sections/page_header", segment: @segment %>
   <h2>Planning Team</h2>
   <% planners = @event.planner_team_members.includes(:user) %>
   <% if planners.any? %>

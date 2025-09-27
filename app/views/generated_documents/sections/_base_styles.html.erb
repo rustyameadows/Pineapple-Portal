@@ -1,4 +1,10 @@
 <style>
+  :root {
+    --color-dark-brown: #3f2211;
+    --color-light-cream: #f6f1eb;
+    --color-white: #ffffff;
+  }
+
   html,
   body {
     margin: 0;
@@ -7,25 +13,27 @@
   }
 
   .generated-template {
-    --page-bg: #ffffff;
+    --page-bg: var(--color-white, #ffffff);
     --page-padding: clamp(1.5rem, 5vw, 2.5rem);
     box-sizing: border-box;
     width: 100%;
     min-height: 100%;
+    height: 100%;
     padding: var(--page-padding);
     background: var(--page-bg);
-    color: #2d1c12;
-    font-family: 'BaskervilleNo2', 'Times New Roman', serif;
+    color: var(--color-dark-brown, #000000);
+    font-family: var(--font-family-body, 'BaskervilleNo2', 'Times New Roman', serif);
     letter-spacing: 0.02em;
     display: grid;
     gap: var(--page-padding);
+    align-content: start;
   }
 
   .generated-template h1,
   .generated-template h2,
   .generated-template h3 {
     margin: 0 0 0.75rem;
-    font-family: 'Didot', 'Times New Roman', serif;
+    font-family: var(--font-family-display, 'Didot', 'Times New Roman', serif);
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
@@ -45,7 +53,7 @@
   .generated-template table th,
   .generated-template table td {
     padding: 0.5rem 0.6rem;
-    border-bottom: 1px solid #d4c5b6;
+    border-bottom: 1px solid var(--color-border, #000000);
     text-align: left;
   }
 
@@ -53,7 +61,7 @@
     font-size: 0.8rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #5b4639;
+    color: var(--color-ink-subtle, #000000);
   }
 
   .generated-template table tbody tr:last-child td {
@@ -61,7 +69,26 @@
   }
 
   .generated-template__muted {
-    color: #5b4639;
+    color: var(--color-ink-subtle, #000000);
     font-style: italic;
+  }
+
+  .generated-template__page-header {
+    display: grid;
+    gap: 0.6rem;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .generated-template__page-header-logo img {
+    max-width: 120px;
+    display: block;
+  }
+
+  .generated-template__page-header-title {
+    margin: 0;
+    font-size: 1.4rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
   }
 </style>

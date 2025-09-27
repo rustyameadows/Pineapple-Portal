@@ -1,8 +1,10 @@
-<%= render "generated_documents/sections/base_styles" %>
+<% if local_assigns.fetch(:render_base_styles, true) %>
+  <%= render "generated_documents/sections/base_styles" %>
+<% end %>
 
 <style>
   .generated-template--timeline {
-    gap: 1.25rem;
+    gap: 1.5rem;
   }
 
   .generated-template--timeline table td:nth-child(2) {
@@ -17,7 +19,7 @@
 </style>
 
 <div class="generated-template generated-template--timeline">
-  <h2>Key Milestones</h2>
+  <%= render "generated_documents/sections/page_header", segment: @segment %>
   <% calendar = @event.run_of_show_calendar %>
   <% if calendar.present? && calendar.calendar_items.any? %>
     <table>

@@ -3,12 +3,11 @@
   <head>
     <meta charset="utf-8">
     <title>Segment Preview</title>
-    <style>
-      *, *::before, *::after { box-sizing: border-box; }
-      html, body { margin: 0; padding: 0; background: #ffffff; }
-    </style>
+    <%= render "generated_documents/sections/preview_styles" %>
   </head>
   <body>
-    <%= yield %>
+    <%= render "generated_documents/sections/preview_frame" do %>
+      <%= yield %>
+    <% end %>
   </body>
 </html>

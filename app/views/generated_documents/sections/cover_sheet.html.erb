@@ -1,4 +1,6 @@
-<%= render "generated_documents/sections/base_styles" %>
+<% if local_assigns.fetch(:render_base_styles, true) %>
+  <%= render "generated_documents/sections/base_styles" %>
+<% end %>
 
 <style>
   @page {
@@ -6,68 +8,92 @@
   }
 
   .generated-template--cover {
-    --cover-bg: <%= EventsHelper::COLOR_TOKENS[:sea_foam] rescue '#d9e2dc' %>;
+    --cover-bg: #e9ede8;
+    --cover-accent: #2f2a26;
     --page-bg: var(--cover-bg);
-    --page-padding-vertical: clamp(6vh, 12vh, 4.5rem);
-    --page-padding-horizontal: clamp(5vw, 9vw, 3.75rem);
+    --page-padding-vertical: clamp(5vh, 10vh, 4rem);
+    --page-padding-horizontal: clamp(4vw, 8vw, 3rem);
     padding: var(--page-padding-vertical) var(--page-padding-horizontal);
     background: var(--cover-bg);
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    gap: clamp(2rem, 6vh, 3rem);
-  }
-
-  .generated-template--cover__brand {
-    justify-self: flex-end;
+    color: var(--cover-accent);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    gap: clamp(1.75rem, 6vh, 3rem);
+    min-height: 100%;
   }
 
   .generated-template--cover__brand img {
     display: block;
-    max-width: 220px;
+    max-width: 200px;
+    margin: 0 auto;
   }
 
-  .generated-template--cover__hero {
-    align-self: center;
-  }
-
-  .generated-template--cover__title {
-    margin: 0;
-    font-family: 'Didot', 'Times New Roman', serif;
-    font-size: 3.5rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+  .generated-template--cover__content {
+    display: grid;
+    gap: 0.85rem;
   }
 
   .generated-template--cover__document-name {
-    margin: 1rem 0 0;
-    font-size: 1.35rem;
-    letter-spacing: 0.18em;
+    margin: 0;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 2rem;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: #3f2211;
+  }
+
+  .generated-template--cover__event-title {
+    margin: 0;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 2.6rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
   }
 
   .generated-template--cover__meta {
-    align-self: end;
-    font-size: 0.9rem;
-    letter-spacing: 0.1em;
+    font-size: 0.95rem;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .generated-template--cover__meta span {
+    display: block;
   }
 </style>
 
 <% footer_logo = inline_asset_data_uri('portal-footer-logo.png') %>
 <% document_title = @segment.document.title %>
+<% start_on = @event.starts_on %>
+<% end_on = @event.ends_on %>
+<% location = @event.location.presence %>
+<% event_dates = if start_on.present?
+                   if end_on.present? && end_on != start_on
+                     "#{start_on.to_fs(:long)} - #{end_on.to_fs(:long)}"
+                   else
+                     start_on.to_fs(:long)
+                   end
+                 end %>
 
 <section class="generated-template generated-template--cover">
   <div class="generated-template--cover__brand">
     <img src="<%= footer_logo %>" alt="Pineapple Productions">
   </div>
 
-  <div class="generated-template--cover__hero">
-    <h1 class="generated-template--cover__title"><%= @event.name %></h1>
+  <div class="generated-template--cover__content">
     <p class="generated-template--cover__document-name"><%= document_title %></p>
+    <h1 class="generated-template--cover__event-title"><%= @event.name %></h1>
   </div>
 
   <div class="generated-template--cover__meta">
-    <span><%= Time.current.strftime('%B %d, %Y') %></span>
+    <% if event_dates.present? %>
+      <span><%= event_dates %></span>
+    <% end %>
+    <% if location.present? %>
+      <span><%= location %></span>
+    <% end %>
   </div>
 </section>

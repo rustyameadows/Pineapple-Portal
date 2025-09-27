@@ -29,6 +29,11 @@ class DocumentSegment < ApplicationRecord
       template: "generated_documents/sections/timeline",
       description: "Milestone list pulled from the decision calendar."
     },
+    "section_break" => {
+      label: "Section Break",
+      template: "generated_documents/sections/section_break",
+      description: "Full-bleed divider page with centered title."
+    },
     "cover_sheet" => {
       label: "Cover Sheet",
       template: "generated_documents/sections/cover_sheet",

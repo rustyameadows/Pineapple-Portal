@@ -16,6 +16,8 @@
         </header>
 
         <div class="template-gallery">
+          <%= render "generated_documents/sections/preview_styles" %>
+          <%= render "generated_documents/sections/base_styles" %>
           <% @templates.each do |template| %>
             <article class="template-card">
               <header class="template-card__header">
@@ -24,7 +26,11 @@
               </header>
               <div class="template-card__preview">
                 <div class="template-card__preview-inner">
-                  <%= template[:preview_html].html_safe %>
+                  <div class="template-card__preview-frame">
+                    <%= render "generated_documents/sections/preview_frame" do %>
+                      <%= template[:preview_html].html_safe %>
+                    <% end %>
+                  </div>
                 </div>
               </div>
             </article>

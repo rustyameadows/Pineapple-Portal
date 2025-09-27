@@ -1,0 +1,30 @@
+<% if local_assigns.fetch(:render_base_styles, true) %>
+  <%= render "generated_documents/sections/base_styles" %>
+<% end %>
+
+<style>
+  .generated-template--section-break {
+    --section-break-bg: var(--color-dark-brown, #000000);
+    --page-bg: var(--section-break-bg);
+    --page-padding: 0;
+    --color-ink: var(--color-light-cream, #ffffff);
+    color: var(--color-ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: var(--section-break-bg);
+  }
+
+  .generated-template--section-break__title {
+    font-size: 3rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin: 0;
+    padding: 0 2.5rem;
+  }
+</style>
+
+<div class="generated-template generated-template--section-break">
+  <h1 class="generated-template--section-break__title"><%= @segment.display_title %></h1>
+</div>

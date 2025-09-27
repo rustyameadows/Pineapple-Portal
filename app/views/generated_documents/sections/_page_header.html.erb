@@ -1,0 +1,23 @@
+<% footer_logo = inline_asset_data_uri('portal-footer-logo.png') %>
+<% header_title = if segment.respond_to?(:display_title)
+                    segment.display_title.presence
+                  end %>
+<% header_title ||= segment.respond_to?(:title) ? segment.title.presence : nil %>
+<% if header_title.blank? && segment.respond_to?(:spec)
+     spec_label = segment.spec.is_a?(Hash) ? segment.spec["label"] : nil
+     header_title = spec_label.presence
+   end %>
+<% if header_title.blank? && segment.respond_to?(:source_ref)
+     view_key = segment.source_ref.is_a?(Hash) ? segment.source_ref["view_key"] : nil
+     if view_key.present?
+       header_title = DocumentSegment.html_view(view_key)&.dig(:label) || view_key.to_s.humanize
+     end
+   end %>
+<% header_title ||= "Branded Section" %>
+
+<header class="generated-template__page-header">
+  <div class="generated-template__page-header-logo">
+    <img src="<%= footer_logo %>" alt="Pineapple Productions">
+  </div>
+  <p class="generated-template__page-header-title"><%= header_title %></p>
+</header>

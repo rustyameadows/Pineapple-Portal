@@ -1,4 +1,6 @@
-<%= render "generated_documents/sections/base_styles" %>
+<% if local_assigns.fetch(:render_base_styles, true) %>
+  <%= render "generated_documents/sections/base_styles" %>
+<% end %>
 
 <style>
   .generated-template--event-overview {
