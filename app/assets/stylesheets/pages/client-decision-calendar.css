@@ -2,6 +2,7 @@
   display: grid;
   gap: 0;
   --decision-calendar-columns: 2fr 1fr 1fr 1.5fr;
+  --decision-calendar-header-height: calc(var(--space-2) * 2 + var(--font-size-200) * 1.5);
 }
 
 .decision-calendar__hero {
@@ -25,11 +26,11 @@
 
 .decision-calendar__sticky-header {
   position: sticky;
-  top: calc(var(--space-6));
+  top: var(--client-nav-offset, 0px);
   z-index: var(--z-dropdown);
-  background: var(--color-dark-brown);
-  color: var(--color-light-cream);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+  background: var(--color-light-cream);
+  color: var(--color-dark-brown);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
 }
 
 .decision-calendar__sticky-grid {
@@ -63,6 +64,9 @@
   text-transform: uppercase;
   font-size: 0.9rem;
   text-align: center;
+  position: sticky;
+  top: calc(var(--client-nav-offset, 0px) + var(--decision-calendar-header-height));
+  z-index: 999;
 }
 
 .decision-calendar__segment-body {
@@ -89,6 +93,13 @@
 
 .decision-calendar__row--completed {
   opacity: 0.75;
+}
+
+.decision-calendar__row--completed .decision-calendar__cell,
+.decision-calendar__row--completed .decision-calendar__title-button,
+.decision-calendar__row--completed .decision-calendar__title-button strong {
+  text-decoration: line-through;
+  text-decoration-color: var(--color-dark-brown);
 }
 
 .decision-calendar__row--in_progress {
@@ -200,5 +211,9 @@
 
   .decision-calendar__sticky-grid {
     display: none;
+  }
+
+  .decision-calendar__segment-label {
+    position: static;
   }
 }
