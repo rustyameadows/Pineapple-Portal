@@ -57,6 +57,10 @@ Every segment may opt-in to the shared base styles by rendering the partial at t
 
 Events may reference one of their uploaded image documents as a hero photo (`event.event_photo_document`). Branded templates can reuse it via helpers—e.g., the cover page calls `inline_document_image_data_uri(event.event_photo_document)` to embed the image when present.
 
+### Global assets & user avatars
+
+Not every asset lives on an event. The `global_assets` table stores event-agnostic uploads (currently used for user avatars). Uploads go through the same R2 presign flow, then `user.avatar_global_asset` points at the stored record. UI layers can fetch the bytes with `inline_global_asset_data_uri(user.avatar_global_asset)` and fall back to initials/placeholders when absent.
+
 ## Local Environment
 
 ### Prerequisites

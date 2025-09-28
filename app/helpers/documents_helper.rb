@@ -121,4 +121,23 @@ module DocumentsHelper
     Rails.logger.warn("[inline_document_image_data_uri] #{e.class}: #{e.message}")
     nil
   end
+
+  def inline_global_asset_data_uri(asset)
+    return unless asset&.content_type.to_s.start_with?("image/")
+    return if asset.storage_uri.blank?
+
+    storage = R2::Storage.new
+    data = storage.download(asset.storage_uri)
+    if data.present?
+      buffer = data.respond_to?(:read) ? data.read : data.to_s
+      buffer = buffer.to_s
+      buffer.force_encoding(Encoding::BINARY)
+      return "data:#{asset.content_type};base64,#{Base64.strict_encode64(buffer)}" if buffer.present?
+    end
+
+    storage.presigned_download_url(key: asset.storage_uri)
+  rescue StandardError => e
+    Rails.logger.warn("[inline_global_asset_data_uri] #{e.class}: #{e.message}")
+    nil
+  end
 end

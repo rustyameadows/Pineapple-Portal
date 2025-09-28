@@ -58,5 +58,66 @@
     <%= hidden_field_tag :return_to, return_to_value %>
   <% end %>
 
-  <%= form.submit submit_label %>
+<%= form.submit submit_label %>
+<% end %>
+
+<% if user.persisted? %>
+  <section class="user-avatar-section">
+    <div class="user-avatar-section__preview">
+      <h3 class="user-avatar-section__heading">Current Photo</h3>
+      <% if user.avatar_global_asset.present? %>
+        <% avatar_uri = inline_global_asset_data_uri(user.avatar_global_asset) %>
+        <% if avatar_uri.present? %>
+          <img src="<%= avatar_uri %>" alt="<%= user.name %> avatar" class="user-avatar-section__image">
+        <% else %>
+          <div class="user-avatar-section__placeholder">Image unavailable. Re-upload below.</div>
+        <% end %>
+      <% else %>
+        <div class="user-avatar-section__placeholder">No photo yet.</div>
+      <% end %>
+    </div>
+
+    <div class="user-avatar-section__upload">
+      <h3 class="user-avatar-section__heading">Upload New Photo</h3>
+      <%= form_with scope: :document,
+                    url: user_avatar_assets_path(user),
+                    method: :post,
+                    local: true,
+                    data: { document_upload_form: true, presign_url: global_assets_presign_path },
+                    html: { class: "user-avatar-upload" } do |upload_form| %>
+        <div class="user-avatar-upload__picker">
+          <label class="user-avatar-upload__label" for="document_file">Choose image</label>
+          <input type="file" id="document_file" accept="image/*" data-document-upload-target="file">
+        </div>
+
+        <div class="document-upload" data-document-upload-target="ui">
+          <div class="document-upload__progress" data-document-upload-target="progress" hidden>
+            <div class="document-upload__progress-track" aria-hidden="true">
+              <div class="document-upload__progress-bar" data-document-upload-target="progressBar"></div>
+            </div>
+            <div class="document-upload__progress-status">
+              <span data-document-upload-target="progressLabel">Uploading…</span>
+              <span class="document-upload__progress-percent" data-document-upload-target="progressPercent">0%</span>
+            </div>
+          </div>
+
+          <p class="document-upload__status" data-document-upload-target="status">Select a file to upload to R2.</p>
+        </div>
+
+        <%= upload_form.hidden_field :title %>
+        <%= upload_form.hidden_field :storage_uri %>
+        <%= upload_form.hidden_field :checksum %>
+        <%= upload_form.hidden_field :size_bytes %>
+        <%= upload_form.hidden_field :content_type %>
+        <%= upload_form.hidden_field :logical_id %>
+
+        <div class="user-avatar-upload__actions">
+          <%= upload_form.submit "Upload image", class: "button button--small", disabled: true %>
+        </div>
+      <% end %>
+      <p class="user-avatar-upload__hint">Uploading a new image will replace the current photo.</p>
+    </div>
+  </section>
+
+  <%= render "documents/upload_script" %>
 <% end %>

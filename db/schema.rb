@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_28_002000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_28_007000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -341,6 +341,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_002000) do
     t.index ["name"], name: "index_events_on_name"
   end
 
+  create_table "global_assets", force: :cascade do |t|
+    t.string "storage_uri", null: false
+    t.string "filename", null: false
+    t.string "content_type", null: false
+    t.bigint "size_bytes"
+    t.string "checksum"
+    t.string "label"
+    t.bigint "uploaded_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["storage_uri"], name: "index_global_assets_on_storage_uri", unique: true
+    t.index ["uploaded_by_id"], name: "index_global_assets_on_uploaded_by_id"
+  end
+
   create_table "password_reset_tokens", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "issued_by_id"
@@ -430,6 +444,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_002000) do
     t.string "role", default: "planner", null: false
     t.string "title"
     t.string "phone_number"
+    t.bigint "avatar_global_asset_id"
+    t.index ["avatar_global_asset_id"], name: "index_users_on_avatar_global_asset_id"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["role"], name: "index_users_on_role"
   end
@@ -461,6 +477,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_002000) do
   add_foreign_key "event_team_members", "events"
   add_foreign_key "event_team_members", "users"
   add_foreign_key "events", "documents", column: "event_photo_document_id"
+  add_foreign_key "global_assets", "users", column: "uploaded_by_id"
   add_foreign_key "password_reset_tokens", "users"
   add_foreign_key "password_reset_tokens", "users", column: "issued_by_id"
   add_foreign_key "payments", "events"
@@ -470,4 +487,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_002000) do
   add_foreign_key "questions", "events"
   add_foreign_key "questions", "questionnaire_sections"
   add_foreign_key "questions", "questionnaires"
+  add_foreign_key "users", "global_assets", column: "avatar_global_asset_id"
 end
