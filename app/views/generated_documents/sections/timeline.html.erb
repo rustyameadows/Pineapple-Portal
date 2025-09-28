@@ -20,32 +20,92 @@
 
 <div class="generated-template generated-template--timeline">
   <%= render "generated_documents/sections/page_header", segment: @segment %>
-  <% calendar = @event.run_of_show_calendar %>
-  <% if calendar.present? && calendar.calendar_items.any? %>
+  <% options = @segment.html_options %>
+  <% boolean_cast = ActiveModel::Type::Boolean.new %>
+  <% show_location = boolean_cast.cast(options.fetch("show_location", true)) %>
+  <% show_vendor = boolean_cast.cast(options.fetch("show_vendor", true)) %>
+  <% show_team_members = boolean_cast.cast(options.fetch("show_team_members", true)) %>
+
+  <% columns = [
+    { key: :title, label: "Title" },
+    { key: :starts, label: "Starts" }
+  ] %>
+  <% columns << { key: :location, label: "Location" } if show_location %>
+  <% columns << { key: :vendor, label: "Vendor" } if show_vendor %>
+  <% columns << { key: :team, label: "Team members" } if show_team_members %>
+
+  <% items = [] %>
+  <% total_count = 0 %>
+  <% error_message = nil %>
+
+  <% case @segment.html_view_key %>
+  <% when DocumentSegment::RUN_OF_SHOW_VIEW_KEY %>
+    <% calendar = @event.run_of_show_calendar %>
+    <% if calendar.present? %>
+      <% items_scope = calendar.calendar_items.includes(:team_members).ordered %>
+      <% items = items_scope.limit(20).to_a %>
+      <% total_count = items_scope.count %>
+    <% else %>
+      <% error_message = "Run-of-show calendar is not available." %>
+    <% end %>
+  <% when DocumentSegment::TIMELINE_VIEW_KEY %>
+    <% calendar = @event.run_of_show_calendar %>
+    <% view_ref = options["view_ref"].presence %>
+    <% if calendar.present? && view_ref.present? %>
+      <% view = calendar.event_calendar_views.find_by(id: view_ref) %>
+      <% if view.present? %>
+        <% filter = Calendars::ViewFilter.new(calendar:, view:) %>
+        <% filtered_items = filter.items %>
+        <% total_count = filtered_items.length %>
+        <% items = filtered_items.first(20) %>
+      <% else %>
+        <% error_message = "Selected timeline view is no longer available." %>
+      <% end %>
+    <% else %>
+      <% error_message = "Select a timeline view to show milestones." %>
+    <% end %>
+  <% else %>
+    <% error_message = "Timeline configuration is incomplete." %>
+  <% end %>
+
+  <% if items.any? %>
     <table>
       <thead>
         <tr>
-          <th>Title</th>
-          <th>Starts</th>
-          <th>Vendor</th>
-          <th>Status</th>
+          <% columns.each do |column| %>
+            <th><%= column[:label] %></th>
+          <% end %>
         </tr>
       </thead>
       <tbody>
-        <% calendar.calendar_items.order(:starts_at).limit(10).each do |item| %>
+        <% items.each do |item| %>
           <tr>
-            <td><%= item.title %></td>
-            <td><%= item.starts_at&.to_fs(:long) || "TBD" %></td>
-            <td><%= item.vendor_name.presence || "—" %></td>
-            <td><%= item.status.humanize %></td>
+            <% columns.each do |column| %>
+              <td>
+                <% case column[:key]
+                   when :title
+                     concat(item.title)
+                   when :starts
+                     concat(item.starts_at&.to_fs(:long) || "TBD")
+                   when :location
+                     concat(item.location_name.presence || "—")
+                   when :vendor
+                     concat(item.vendor_name.presence || "—")
+                   when :team
+                     team_names = item.team_members.map(&:name).compact
+                     team_names << item.additional_team_members if item.additional_team_members.present?
+                     concat(team_names.reject(&:blank?).join(", ").presence || "—")
+                   end %>
+              </td>
+            <% end %>
           </tr>
         <% end %>
       </tbody>
     </table>
-    <% if calendar.calendar_items.count > 10 %>
-      <p class="generated-template--timeline__note">Showing first 10 milestones.</p>
+    <% if total_count > items.length %>
+      <p class="generated-template--timeline__note">Showing first <%= items.length %> milestones.</p>
     <% end %>
   <% else %>
-    <p class="generated-template__muted">No milestones have been added to the run-of-show yet.</p>
+    <p class="generated-template__muted"><%= error_message.presence || "No timeline items found for this selection." %></p>
   <% end %>
 </div>

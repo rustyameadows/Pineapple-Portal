@@ -244,6 +244,33 @@
   min-width: 0;
 }
 
+.generated-builder__form-row--checkbox-group {
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 35%, white);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.generated-builder__form-row--checkbox-group legend {
+  font-weight: var(--font-weight-semibold);
+  font-size: 0.9rem;
+  color: var(--color-dark-brown);
+}
+
+.generated-builder__checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--color-dark-brown);
+}
+
+.generated-builder__checkbox input[type="checkbox"] {
+  width: auto;
+  height: auto;
+}
+
 .generated-builder__form input[type="text"],
 .generated-builder__form select {
   width: 100%;

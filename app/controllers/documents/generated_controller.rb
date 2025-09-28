@@ -129,6 +129,7 @@ module Documents
       @latest_version = @compiled_versions.max_by(&:version)
       @available_pdf_documents = @event.documents.where(doc_kind: Document::DOC_KINDS[:uploaded]).order(:title)
       @available_html_views = DocumentSegment.html_view_options
+      @available_timeline_views = timeline_view_options
       @builds = @document.builds.recent_first.to_a
       @active_build = @builds.find { |build| build.pending? || build.running? }
       @segment_warnings = segment_blockers_map(@segments)
@@ -169,6 +170,13 @@ module Documents
       end
 
       warnings
+    end
+
+    def timeline_view_options
+      calendar = @event.run_of_show_calendar
+      return [] unless calendar
+
+      calendar.event_calendar_views.order(:name).map { |view| [view.name, view.id.to_s] }
     end
   end
 end

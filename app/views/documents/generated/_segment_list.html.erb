@@ -1,6 +1,7 @@
 <% segment_warnings ||= {} %>
 <% reorder_url ||= nil %>
 <% csrf_token ||= form_authenticity_token %>
+<% available_timeline_views ||= [] %>
 
 <div class="generated-builder__segments"
      data-controller="generated-segments"
@@ -130,6 +131,79 @@
                   <p class="generated-builder__input-warning"><%= warning_text %></p>
                 <% end %>
               </div>
+
+              <% boolean_cast = ActiveModel::Type::Boolean.new %>
+
+              <% if segment.html_view_key == DocumentSegment::TIMELINE_VIEW_KEY %>
+                <% timeline_options = segment.html_options.stringify_keys %>
+                <% selected_view = timeline_options["view_ref"].presence || available_timeline_views.dig(0, 1) %>
+                <% show_location = boolean_cast.cast(timeline_options.fetch("show_location", true)) %>
+                <% show_vendor = boolean_cast.cast(timeline_options.fetch("show_vendor", true)) %>
+                <% show_team_members = boolean_cast.cast(timeline_options.fetch("show_team_members", true)) %>
+                <% timeline_options = timeline_options.merge(
+                  "view_ref" => selected_view,
+                  "show_location" => show_location,
+                  "show_vendor" => show_vendor,
+                  "show_team_members" => show_team_members
+                ) %>
+
+                <%= form.fields_for :options, timeline_options do |options_fields| %>
+                  <div class="generated-builder__form-row">
+                    <%= options_fields.label :view_ref, "Timeline view" %>
+                    <% if available_timeline_views.any? %>
+                      <%= options_fields.select :view_ref,
+                                               options_for_select(available_timeline_views, selected_view) %>
+                    <% else %>
+                      <p class="generated-builder__empty">No timeline views available yet.</p>
+                      <%= options_fields.hidden_field :view_ref, value: selected_view %>
+                    <% end %>
+                  </div>
+
+                  <fieldset class="generated-builder__form-row generated-builder__form-row--checkbox-group">
+                    <legend>Show columns</legend>
+                    <label class="generated-builder__checkbox">
+                      <%= options_fields.check_box :show_location, { checked: show_location }, "1", "0" %>
+                      <span>Location</span>
+                    </label>
+                    <label class="generated-builder__checkbox">
+                      <%= options_fields.check_box :show_vendor, { checked: show_vendor }, "1", "0" %>
+                      <span>Vendor</span>
+                    </label>
+                    <label class="generated-builder__checkbox">
+                      <%= options_fields.check_box :show_team_members, { checked: show_team_members }, "1", "0" %>
+                      <span>Team members</span>
+                    </label>
+                  </fieldset>
+                <% end %>
+              <% elsif segment.html_view_key == DocumentSegment::RUN_OF_SHOW_VIEW_KEY %>
+                <% run_options = segment.html_options.stringify_keys %>
+                <% show_location = boolean_cast.cast(run_options.fetch("show_location", true)) %>
+                <% show_vendor = boolean_cast.cast(run_options.fetch("show_vendor", true)) %>
+                <% show_team_members = boolean_cast.cast(run_options.fetch("show_team_members", true)) %>
+                <% run_options = run_options.merge(
+                  "show_location" => show_location,
+                  "show_vendor" => show_vendor,
+                  "show_team_members" => show_team_members
+                ) %>
+
+                <%= form.fields_for :options, run_options do |options_fields| %>
+                  <fieldset class="generated-builder__form-row generated-builder__form-row--checkbox-group">
+                    <legend>Show columns</legend>
+                    <label class="generated-builder__checkbox">
+                      <%= options_fields.check_box :show_location, { checked: show_location }, "1", "0" %>
+                      <span>Location</span>
+                    </label>
+                    <label class="generated-builder__checkbox">
+                      <%= options_fields.check_box :show_vendor, { checked: show_vendor }, "1", "0" %>
+                      <span>Vendor</span>
+                    </label>
+                    <label class="generated-builder__checkbox">
+                      <%= options_fields.check_box :show_team_members, { checked: show_team_members }, "1", "0" %>
+                      <span>Team members</span>
+                    </label>
+                  </fieldset>
+                <% end %>
+              <% end %>
             <% end %>
 
             <div class="generated-builder__form-actions">

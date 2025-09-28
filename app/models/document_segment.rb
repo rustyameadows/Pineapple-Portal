@@ -4,6 +4,9 @@ class DocumentSegment < ApplicationRecord
     html_view: "html_view"
   }.freeze
 
+  TIMELINE_VIEW_KEY = "timeline".freeze
+  RUN_OF_SHOW_VIEW_KEY = "run_of_show_timeline".freeze
+
   belongs_to :document,
              foreign_key: :document_logical_id,
              primary_key: :logical_id
@@ -24,10 +27,15 @@ class DocumentSegment < ApplicationRecord
       template: "generated_documents/sections/planning_team",
       description: "Roster of planners with contact details."
     },
-    "timeline" => {
+    TIMELINE_VIEW_KEY => {
       label: "Timeline Snapshot",
       template: "generated_documents/sections/timeline",
-      description: "Milestone list pulled from the decision calendar."
+      description: "Filtered milestone list pulled from a run-of-show view."
+    },
+    RUN_OF_SHOW_VIEW_KEY => {
+      label: "Run of Show",
+      template: "generated_documents/sections/timeline",
+      description: "Full run-of-show schedule from the master calendar."
     },
     "section_break" => {
       label: "Section Break",
@@ -96,6 +104,13 @@ class DocumentSegment < ApplicationRecord
 
   def view_key
     html_view_key
+  end
+
+  def html_options
+    return {} unless html_view?
+
+    options = source_ref.is_a?(Hash) ? source_ref["options"] : nil
+    options.is_a?(Hash) ? options.deep_dup : {}
   end
 
   def pdf_document_id

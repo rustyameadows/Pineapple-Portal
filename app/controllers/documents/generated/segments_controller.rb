@@ -158,6 +158,7 @@ module Documents
         options = options.to_unsafe_h if options.respond_to?(:to_unsafe_h)
         options = options.to_h if options.respond_to?(:to_h) && !options.is_a?(Hash)
         options = options.presence || {}
+        options = sanitize_html_view_options(view_key, options)
         segment.assign_html_view(view_key, options: options)
       end
 
@@ -187,6 +188,67 @@ module Documents
         raw_ids = params[:segment_ids]
         raw_ids = params[:order] if raw_ids.blank?
         Array(raw_ids).map(&:to_i).reject(&:zero?)
+      end
+
+      def sanitize_html_view_options(view_key, options)
+        case view_key.to_s
+        when DocumentSegment::TIMELINE_VIEW_KEY
+          sanitize_timeline_options(options)
+        when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
+          sanitize_run_of_show_options(options)
+        else
+          options
+        end
+      end
+
+      def sanitize_timeline_options(options)
+        source = options.to_h.stringify_keys
+        sanitized = {}
+
+        sanitized["view_ref"] = sanitize_timeline_view_ref(source["view_ref"])
+        sanitized["show_location"] = boolean_option(source.fetch("show_location", true), default: true)
+        sanitized["show_vendor"] = boolean_option(source.fetch("show_vendor", true), default: true)
+        sanitized["show_team_members"] = boolean_option(source.fetch("show_team_members", true), default: true)
+
+        sanitized
+      end
+
+      def sanitize_run_of_show_options(options)
+        source = options.to_h.stringify_keys
+        {
+          "show_location" => boolean_option(source.fetch("show_location", true), default: true),
+          "show_vendor" => boolean_option(source.fetch("show_vendor", true), default: true),
+          "show_team_members" => boolean_option(source.fetch("show_team_members", true), default: true)
+        }
+      end
+
+      def sanitize_timeline_view_ref(value)
+        allowed_refs = timeline_view_refs
+        fallback = allowed_refs.first
+
+        candidate = value.to_s
+        candidate = fallback if candidate.blank?
+
+        return candidate if candidate.present? && allowed_refs.include?(candidate)
+
+        fallback
+      end
+
+      def boolean_option(value, default: false)
+        return default if value.nil?
+
+        ActiveModel::Type::Boolean.new.cast(value)
+      end
+
+      def timeline_view_refs
+        return @timeline_view_refs if defined?(@timeline_view_refs)
+
+        calendar = @event.run_of_show_calendar
+        @timeline_view_refs = if calendar
+                                calendar.event_calendar_views.order(:name).pluck(:id).map(&:to_s)
+                              else
+                                []
+                              end
       end
     end
   end
