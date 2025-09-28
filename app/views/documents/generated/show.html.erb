@@ -35,7 +35,9 @@
                      segments: @segments,
                      available_pdf_documents: @available_pdf_documents,
                      available_html_views: @available_html_views,
-                     segment_warnings: @segment_warnings %>
+                     segment_warnings: @segment_warnings,
+                     reorder_url: reorder_event_documents_generated_segments_path(@event, @document.logical_id),
+                     csrf_token: form_authenticity_token %>
 
           <div class="generated-builder__workspace-card">
             <div class="generated-builder__workspace-head">

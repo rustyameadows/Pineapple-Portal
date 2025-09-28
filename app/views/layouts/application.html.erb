@@ -65,6 +65,7 @@
     <% planner_stylesheets.each do |logical_path| %>
       <%= stylesheet_link_tag logical_path, "data-turbo-track": "reload" %>
     <% end %>
+    <%= javascript_importmap_tags %>
   </head>
 
   <body>

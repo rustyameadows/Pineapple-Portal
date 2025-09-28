@@ -7,6 +7,22 @@
     margin: 0;
   }
 
+  .generated-template h1,
+  .generated-template h2,
+  .generated-template h3 {
+    margin: 0 0 2rem;
+    font-family: var(--font-family-display, 'Didot', 'Times New Roman', serif);
+    letter-spacing: 0px;
+    text-transform: uppercase;
+    line-height: 44px;
+    font-size: 45px;
+  }
+
+  .generated-template p {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+  }
+
   .generated-template--cover {
     --cover-bg: #e9ede8;
     --cover-accent: #2f2a26;
@@ -49,7 +65,7 @@
     margin: 0;
     font-family: 'Georgia', 'Times New Roman', serif;
     font-size: 2.2rem;
-    letter-spacing: 0.16em;
+    letter-spacing: 2px;
     text-transform: uppercase;
   }
 
@@ -107,8 +123,8 @@
 
   <div class="generated-template--cover__middle">
     <div class="generated-template--cover__titles">
-      <p class="generated-template--cover__document-name"><%= document_title %></p>
-      <h1 class="generated-template--cover__event-title"><%= @event.name %></h1>
+      <p class="generated-template--cover__document-name"><%= @event.name %></p>
+      <h1 class="generated-template--cover__event-title"><%= document_title %></h1>
     </div>
     <% if event_photo_uri.present? %>
       <div class="generated-template--cover__photo">

@@ -3,7 +3,7 @@ module Documents
     class SegmentsController < ApplicationController
       before_action :set_event
       before_action :set_document
-      before_action :set_segment, only: %i[render_pdf update destroy move_up move_down preview cached_pdf]
+      before_action :set_segment, only: %i[render_pdf update destroy preview cached_pdf]
 
       def create
         @segment = segments_scope.new
@@ -40,16 +40,30 @@ module Documents
         redirect_to builder_path, alert: "Unable to render segment: #{e.message}"
       end
 
-      def move_up
-        @segment.move_up!
-        DocumentSegment.resequence!(@document.logical_id)
-        redirect_to builder_path, notice: "Segment moved."
-      end
+      def reorder
+        ordered_ids = extract_order_ids
 
-      def move_down
-        @segment.move_down!
-        DocumentSegment.resequence!(@document.logical_id)
-        redirect_to builder_path, notice: "Segment moved."
+        if ordered_ids.empty?
+          head :unprocessable_entity
+          return
+        end
+
+        DocumentSegment.transaction do
+          temp_position = segments_scope.maximum(:position).to_i + ordered_ids.length + 5
+
+          ordered_ids.each do |segment_id|
+            segments_scope.where(id: segment_id).update_all(position: temp_position)
+            temp_position += 1
+          end
+
+          ordered_ids.each_with_index do |segment_id, index|
+            segments_scope.where(id: segment_id).update_all(position: index + 1)
+          end
+
+          DocumentSegment.resequence!(@document.logical_id)
+        end
+
+        head :ok
       end
 
       def preview
@@ -167,6 +181,12 @@ module Documents
 
       def storage
         @storage ||= Documents::Generated::R2Storage.new
+      end
+
+      def extract_order_ids
+        raw_ids = params[:segment_ids]
+        raw_ids = params[:order] if raw_ids.blank?
+        Array(raw_ids).map(&:to_i).reject(&:zero?)
       end
     end
   end

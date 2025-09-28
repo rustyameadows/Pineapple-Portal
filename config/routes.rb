@@ -102,10 +102,12 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
         resources :segments,
                   controller: "generated/segments",
                   only: %i[create update destroy] do
+          collection do
+            patch :reorder
+          end
+
           member do
             post :render_pdf
-            patch :move_up
-            patch :move_down
             get :preview
             get :cached_pdf
           end

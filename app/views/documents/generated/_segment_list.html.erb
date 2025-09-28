@@ -18,32 +18,42 @@
 <% end %>
 
 <% if segments.any? %>
-  <ul class="generated-builder__list">
-    <% segments.each_with_index do |segment, index| %>
-      <li class="generated-builder__list-item">
+  <% reorder_url ||= nil %>
+  <% csrf_token ||= form_authenticity_token %>
+
+  <ul class="generated-builder__list"
+      data-controller="generated-segments"
+      data-generated-segments-reorder-url-value="<%= reorder_url %>"
+      data-generated-segments-csrf-token-value="<%= csrf_token %>">
+    <% segments.each do |segment| %>
+      <li class="generated-builder__list-item"
+          data-generated-segments-target="item"
+          data-segment-id="<%= segment.id %>"
+          draggable="true">
         <div class="generated-builder__list-left">
-          <div>
-            <strong><%= segment.display_title %></strong>
-            <div class="generated-builder__list-meta">
-              <span class="generated-builder__segment-kind"><%= segment.kind.humanize %></span>
-              <%= render "documents/generated/render_status", segment: segment %>
-              <% if segment_warnings[segment.id].present? %>
-                <% warning_text = segment_warnings[segment.id].split(":", 2).last&.strip || segment_warnings[segment.id] %>
-                <span class="generated-builder__status-tag generated-builder__status-tag--warning"><%= warning_text %></span>
-              <% end %>
+          <div class="generated-builder__list-main">
+            <button type="button"
+                    class="generated-builder__drag-handle"
+                    data-generated-segments-target="handle"
+                    aria-label="Drag to reorder segment">
+              <span aria-hidden="true">⋮⋮</span>
+            </button>
+            <div class="generated-builder__list-content">
+              <strong><%= segment.display_title %></strong>
+              <div class="generated-builder__list-meta">
+                <span class="generated-builder__segment-kind"><%= segment.kind.humanize %></span>
+                <%= render "documents/generated/render_status",
+                           segment: segment,
+                           event: event,
+                           document: document %>
+                <% if segment_warnings[segment.id].present? %>
+                  <% warning_text = segment_warnings[segment.id].split(":", 2).last&.strip || segment_warnings[segment.id] %>
+                  <span class="generated-builder__status-tag generated-builder__status-tag--warning"><%= warning_text %></span>
+                <% end %>
+              </div>
             </div>
           </div>
           <div class="generated-builder__list-actions">
-            <%= button_to "Move up",
-                          move_up_event_documents_generated_segment_path(event, document.logical_id, segment),
-                          method: :patch,
-                          class: "button button--tiny",
-                          disabled: index.zero? %>
-            <%= button_to "Move down",
-                          move_down_event_documents_generated_segment_path(event, document.logical_id, segment),
-                          method: :patch,
-                          class: "button button--tiny",
-                          disabled: index == segments.size - 1 %>
             <%= link_to "Preview",
                        preview_event_documents_generated_segment_path(event, document.logical_id, segment),
                        class: "button button--tiny button--ghost",
