@@ -1,9 +1,36 @@
 <% segment_warnings ||= {} %>
+<% reorder_url ||= nil %>
+<% csrf_token ||= form_authenticity_token %>
 
-<div class="generated-builder__sidebar-header">
-  <h2>Segments</h2>
-  <p class="generated-builder__hint">Attach planner PDFs or branded sections, then arrange them in the order you want to publish.</p>
-</div>
+<div class="generated-builder__segments"
+     data-controller="generated-segments"
+     data-generated-segments-reorder-url-value="<%= reorder_url %>"
+     data-generated-segments-csrf-token-value="<%= csrf_token %>"
+     data-generated-segments-view-mode-value="grid">
+  <div class="generated-builder__sidebar-header">
+    <div class="generated-builder__sidebar-header-main">
+      <h2>Segments</h2>
+      <p class="generated-builder__hint">Attach planner PDFs or branded sections, then arrange them in the order you want to publish.</p>
+    </div>
+    <div class="generated-builder__view-toggle" role="group" aria-label="Segment layout view">
+      <button type="button"
+              class="generated-builder__view-button"
+              data-generated-segments-target="viewButton"
+              data-view="list"
+              aria-pressed="false"
+              data-action="generated-segments#changeView">
+        List
+      </button>
+      <button type="button"
+              class="generated-builder__view-button generated-builder__view-button--active"
+              data-generated-segments-target="viewButton"
+              data-view="grid"
+              aria-pressed="true"
+              data-action="generated-segments#changeView">
+        Grid
+      </button>
+    </div>
+  </div>
 
 <% if defined?(flash_notice) && flash_notice.present? %>
   <p class="generated-builder__status generated-builder__status--notice"><%= flash_notice %></p>
@@ -18,13 +45,8 @@
 <% end %>
 
 <% if segments.any? %>
-  <% reorder_url ||= nil %>
-  <% csrf_token ||= form_authenticity_token %>
-
   <ul class="generated-builder__list"
-      data-controller="generated-segments"
-      data-generated-segments-reorder-url-value="<%= reorder_url %>"
-      data-generated-segments-csrf-token-value="<%= csrf_token %>">
+      data-generated-segments-target="list">
     <% segments.each do |segment| %>
       <li class="generated-builder__list-item"
           data-generated-segments-target="item"

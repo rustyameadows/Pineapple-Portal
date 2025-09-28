@@ -279,9 +279,57 @@
   gap: 1.25rem;
 }
 
+.generated-builder__segments {
+  display: grid;
+  gap: 1.25rem;
+}
+
 .generated-builder__sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.generated-builder__sidebar-header-main {
   display: grid;
   gap: 0.35rem;
+  min-width: 0;
+}
+
+.generated-builder__view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.generated-builder__view-button {
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 50%, white);
+  background: color-mix(in srgb, var(--color-sea-foam) 12%, white);
+  color: var(--color-dark-brown);
+  font-size: 0.85rem;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.generated-builder__view-button:hover {
+  background: color-mix(in srgb, var(--color-sea-foam) 20%, white);
+}
+
+.generated-builder__view-button:focus-visible {
+  outline: 2px solid var(--color-sea-foam);
+  outline-offset: 2px;
+}
+
+.generated-builder__view-button--active {
+  background: color-mix(in srgb, var(--color-sea-foam) 35%, white);
+  border-color: var(--color-sea-foam);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-sea-foam) 25%, transparent);
 }
 
 .generated-builder__hint {
@@ -305,6 +353,11 @@
   gap: 1rem;
 }
 
+.generated-builder__list--grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
 
 .generated-builder__list-item {
   border: 1px solid var(--color-sea-foam);
@@ -318,10 +371,20 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.generated-builder__list--grid .generated-builder__list-item {
+  grid-template-columns: 1fr;
+  padding: 1.1rem 1.2rem;
+  gap: 1.1rem;
+}
+
 .generated-builder__list-left {
   display: grid;
   gap: 0.75rem;
   align-content: start;
+}
+
+.generated-builder__list--grid .generated-builder__list-left {
+  gap: 1rem;
 }
 
 .generated-builder__list-right {
@@ -332,11 +395,19 @@
   min-width: 0;
 }
 
+.generated-builder__list--grid .generated-builder__list-right {
+  width: 100%;
+}
+
 .generated-builder__list-main {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.75rem;
   align-items: start;
+}
+
+.generated-builder__list--grid .generated-builder__list-main {
+  align-items: center;
 }
 
 .generated-builder__list-content {
@@ -385,6 +456,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.generated-builder__list--grid .generated-builder__list-actions {
+  justify-content: flex-start;
 }
 
 .generated-builder__list-actions form {

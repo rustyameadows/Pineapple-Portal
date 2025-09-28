@@ -1,10 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["item", "handle"]
+  static targets = ["list", "item", "handle", "viewButton"]
   static values = {
     reorderUrl: String,
-    csrfToken: String
+    csrfToken: String,
+    viewMode: String
   }
 
   connect() {
@@ -17,31 +18,39 @@ export default class extends Controller {
     this.dropHandler = this.handleDrop.bind(this)
     this.dragEndHandler = this.handleDragEnd.bind(this)
 
-    this.element.addEventListener("mousedown", this.pressStartHandler)
-    this.element.addEventListener("touchstart", this.pressStartHandler)
-    this.element.addEventListener("mouseup", this.pressEndHandler)
-    this.element.addEventListener("touchend", this.pressEndHandler)
-    this.element.addEventListener("touchcancel", this.pressEndHandler)
-    this.element.addEventListener("dragstart", this.dragStartHandler)
-    this.element.addEventListener("dragover", this.dragOverHandler)
-    this.element.addEventListener("drop", this.dropHandler)
-    this.element.addEventListener("dragend", this.dragEndHandler)
+    if (this.hasListTarget) {
+      this.listTarget.addEventListener("mousedown", this.pressStartHandler)
+      this.listTarget.addEventListener("touchstart", this.pressStartHandler)
+      this.listTarget.addEventListener("mouseup", this.pressEndHandler)
+      this.listTarget.addEventListener("touchend", this.pressEndHandler)
+      this.listTarget.addEventListener("touchcancel", this.pressEndHandler)
+      this.listTarget.addEventListener("dragstart", this.dragStartHandler)
+      this.listTarget.addEventListener("dragover", this.dragOverHandler)
+      this.listTarget.addEventListener("drop", this.dropHandler)
+      this.listTarget.addEventListener("dragend", this.dragEndHandler)
+    }
 
     this.itemTargets.forEach((item) => {
       item.setAttribute("draggable", "true")
     })
+
+    const storedMode = this.loadViewModePreference()
+    const initialMode = this.viewModeValue || storedMode || "grid"
+    this.setViewMode(initialMode, { persist: false })
   }
 
   disconnect() {
-    this.element.removeEventListener("mousedown", this.pressStartHandler)
-    this.element.removeEventListener("touchstart", this.pressStartHandler)
-    this.element.removeEventListener("mouseup", this.pressEndHandler)
-    this.element.removeEventListener("touchend", this.pressEndHandler)
-    this.element.removeEventListener("touchcancel", this.pressEndHandler)
-    this.element.removeEventListener("dragstart", this.dragStartHandler)
-    this.element.removeEventListener("dragover", this.dragOverHandler)
-    this.element.removeEventListener("drop", this.dropHandler)
-    this.element.removeEventListener("dragend", this.dragEndHandler)
+    if (this.hasListTarget) {
+      this.listTarget.removeEventListener("mousedown", this.pressStartHandler)
+      this.listTarget.removeEventListener("touchstart", this.pressStartHandler)
+      this.listTarget.removeEventListener("mouseup", this.pressEndHandler)
+      this.listTarget.removeEventListener("touchend", this.pressEndHandler)
+      this.listTarget.removeEventListener("touchcancel", this.pressEndHandler)
+      this.listTarget.removeEventListener("dragstart", this.dragStartHandler)
+      this.listTarget.removeEventListener("dragover", this.dragOverHandler)
+      this.listTarget.removeEventListener("drop", this.dropHandler)
+      this.listTarget.removeEventListener("dragend", this.dragEndHandler)
+    }
   }
 
   itemTargetConnected(element) {
@@ -113,8 +122,9 @@ export default class extends Controller {
   persistOrder() {
     if (!this.hasReorderUrlValue || !this.reorderUrlValue) return
 
+    const source = this.hasListTarget ? this.listTarget : this.element
     const ids = Array.from(
-      this.element.querySelectorAll("[data-segment-id]")
+      source.querySelectorAll("[data-segment-id]")
     )
       .map((item) => item.dataset.segmentId)
       .filter(Boolean)
@@ -141,6 +151,57 @@ export default class extends Controller {
         }
       })
       .catch(() => this.showToast("Unable to save segment order", "alert"))
+  }
+
+  changeView(event) {
+    const view = event.currentTarget?.dataset?.view
+    if (!view) return
+    this.setViewMode(view)
+  }
+
+  viewModeValueChanged(value) {
+    this.applyViewMode(value)
+  }
+
+  setViewMode(value, { persist = true } = {}) {
+    const mode = value === "grid" ? "grid" : "list"
+    if (this.viewModeValue === mode) {
+      this.applyViewMode(mode)
+      if (persist) this.storeViewModePreference(mode)
+      return
+    }
+
+    this.viewModeValue = mode
+    if (persist) this.storeViewModePreference(mode)
+  }
+
+  applyViewMode(mode) {
+    const view = mode === "grid" ? "grid" : "list"
+    if (this.hasListTarget) {
+      this.listTarget.classList.toggle("generated-builder__list--grid", view === "grid")
+    }
+
+    this.viewButtonTargets.forEach((button) => {
+      const isActive = button.dataset.view === view
+      button.classList.toggle("generated-builder__view-button--active", isActive)
+      button.setAttribute("aria-pressed", isActive ? "true" : "false")
+    })
+  }
+
+  loadViewModePreference() {
+    try {
+      return window.localStorage.getItem("generatedSegmentsViewMode")
+    } catch (error) {
+      return null
+    }
+  }
+
+  storeViewModePreference(mode) {
+    try {
+      window.localStorage.setItem("generatedSegmentsViewMode", mode)
+    } catch (error) {
+      // ignore persistence errors (e.g., private mode)
+    }
   }
 
   showToast(message, type = "notice") {
