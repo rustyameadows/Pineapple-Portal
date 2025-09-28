@@ -62,6 +62,7 @@
         </div>
         <div class="generated-builder__list-right">
           <%= form_with model: segment,
+                        scope: :segment,
                         url: event_documents_generated_segment_path(event, document.logical_id, segment),
                         method: :patch,
                         local: true,
