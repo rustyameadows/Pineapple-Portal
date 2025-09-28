@@ -64,6 +64,11 @@
                               compile_event_documents_generated_path(@event, @document.logical_id),
                               method: :post,
                               class: "button button--primary button--small" %>
+                <%= button_to "Compile document with page numbers",
+                              compile_event_documents_generated_path(@event, @document.logical_id),
+                              method: :post,
+                              params: { page_numbers: true },
+                              class: "button button--ghost button--small" %>
                 <% if @active_build.present? %>
                   <span class="generated-builder__build-progress generated-builder__build-progress--hint">A build is currently running.</span>
                 <% end %>

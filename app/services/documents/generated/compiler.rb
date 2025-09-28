@@ -14,12 +14,13 @@ module Documents
         keyword_init: true
       )
 
-      def initialize(definition_document:, build:, built_by_user: nil, segment_storage: R2Storage.new, document_storage: R2::Storage.new)
+      def initialize(definition_document:, build:, built_by_user: nil, segment_storage: R2Storage.new, document_storage: R2::Storage.new, page_numbers: false)
         @definition_document = definition_document
         @build = build
         @built_by_user = built_by_user
         @segment_storage = segment_storage
         @document_storage = document_storage
+        @page_numbers = !!page_numbers
       end
 
       def call
@@ -45,6 +46,7 @@ module Documents
         manifest_hash = Digest::SHA256.hexdigest(JSON.dump(manifest))
 
         compiled_pdf = stitch_segments(rendered_segments)
+        compiled_pdf = apply_page_numbers(compiled_pdf) if page_numbers
 
         totals = derive_totals(compiled_pdf)
         storage_key = persist_compiled_pdf(compiled_pdf, totals[:version], totals[:filename])
@@ -86,7 +88,7 @@ module Documents
 
       private
 
-      attr_reader :definition_document, :build, :built_by_user, :segment_storage, :document_storage
+      attr_reader :definition_document, :build, :built_by_user, :segment_storage, :document_storage, :page_numbers
 
       def ensure_cached(segment)
         hash = SegmentHasher.call(segment)
@@ -149,6 +151,24 @@ module Documents
         end
 
         combined_pdf.to_pdf
+      end
+
+      def apply_page_numbers(compiled_pdf)
+        pdf = CombinePDF.parse(compiled_pdf)
+        pdf.number_pages(**page_number_options)
+        pdf.to_pdf
+      end
+
+      def page_number_options
+        {
+          start_at: 1,
+          number_format: "pg. %s",
+          location: :bottom_right,
+          font_size: 10,
+          margin_from_side: 10,
+          y: 12,
+          text_align: :right
+        }
       end
 
       def derive_totals(compiled_pdf)

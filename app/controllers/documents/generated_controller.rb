@@ -53,13 +53,16 @@ module Documents
         return
       end
 
+      page_numbers = ActiveModel::Type::Boolean.new.cast(params[:page_numbers])
+
       build = @document.builds.create!(
         build_id: SecureRandom.uuid,
         status: DocumentBuild::STATUSES[:pending],
         built_by_user: current_user
       )
 
-      Documents::Generated::CompileDocumentJob.perform_later(build.id)
+      job_options = { page_numbers: page_numbers }
+      Documents::Generated::CompileDocumentJob.perform_later(build.id, job_options)
       redirect_to builder_path, notice: "Compile queued. We'll notify you when the PDF is ready."
     rescue StandardError => e
       redirect_to builder_path, alert: "Unable to queue compile: #{e.message}"
