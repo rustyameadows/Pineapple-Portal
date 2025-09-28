@@ -102,4 +102,23 @@ module DocumentsHelper
     content_type = Marcel::MimeType.for(StringIO.new(blob), name: path)
     "data:#{content_type};base64,#{base64}"
   end
+
+  def inline_document_image_data_uri(document)
+    return unless document&.content_type.to_s.start_with?("image/")
+    return if document.storage_uri.blank?
+
+    storage = R2::Storage.new
+    data = storage.download(document.storage_uri)
+    if data.present?
+      buffer = data.respond_to?(:read) ? data.read : data.to_s
+      buffer = buffer.to_s
+      buffer.force_encoding(Encoding::BINARY)
+      return "data:#{document.content_type};base64,#{Base64.strict_encode64(buffer)}" if buffer.present?
+    end
+
+    storage.presigned_download_url(key: document.storage_uri)
+  rescue StandardError => e
+    Rails.logger.warn("[inline_document_image_data_uri] #{e.class}: #{e.message}")
+    nil
+  end
 end

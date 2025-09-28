@@ -15,6 +15,8 @@ Rails.application.routes.draw do
     resource :settings, only: :show, module: :events do
     end
 
+    resources :event_photo_documents, only: :create, module: :events
+
     resources :payments, module: :events
     resources :approvals, module: :events
 

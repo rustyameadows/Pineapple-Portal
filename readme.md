@@ -53,6 +53,10 @@ Every segment may opt-in to the shared base styles by rendering the partial at t
 3. Define any template-specific `<style>` blocks inside the view. Scope selectors to the template, use tokens (`--page-bg`, `--color-ink`, brand colours) instead of literals, and set additional tokens if needed.
 4. Preview the segment from the builder and the template gallery—both paths now rely on the same preview frame, so what you see should match the compiled PDF.
 
+### Event photo hook
+
+Events may reference one of their uploaded image documents as a hero photo (`event.event_photo_document`). Branded templates can reuse it via helpers—e.g., the cover page calls `inline_document_image_data_uri(event.event_photo_document)` to embed the image when present.
+
 ## Local Environment
 
 ### Prerequisites

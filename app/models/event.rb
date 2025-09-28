@@ -26,6 +26,12 @@ class Event < ApplicationRecord
           class_name: "EventCalendar",
           dependent: :destroy
 
+  belongs_to :event_photo_document,
+             class_name: "Document",
+             optional: true
+
+  validate :event_photo_document_must_be_image
+
   scope :active, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }
 
@@ -33,5 +39,21 @@ class Event < ApplicationRecord
 
   def archived?
     archived_at.present?
+  end
+
+  private
+
+  def event_photo_document_must_be_image
+    return if event_photo_document_id.blank?
+
+    unless event_photo_document && event_photo_document.event_id == id
+      errors.add(:event_photo_document, "must belong to this event")
+      return
+    end
+
+    content_type = event_photo_document.content_type.to_s
+    unless content_type.start_with?("image/")
+      errors.add(:event_photo_document, "must be an image file")
+    end
   end
 end

@@ -32,7 +32,10 @@ class DocumentSegment < ApplicationRecord
     "section_break" => {
       label: "Section Break",
       template: "generated_documents/sections/section_break",
-      description: "Full-bleed divider page with centered title."
+      description: "Full-bleed divider page with centered title.",
+      options: {
+        margin: { top: "0", bottom: "0", left: "0", right: "0" }
+      }
     },
     "cover_sheet" => {
       label: "Cover Sheet",
