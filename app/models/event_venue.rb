@@ -33,9 +33,11 @@ class EventVenue < ApplicationRecord
   end
 
   def assign_position
-    return if position.present? || event.nil?
+    return if event.nil?
+    return unless new_record? || position.nil?
 
-    self.position = event.event_venues.maximum(:position).to_i + 1
+    max_position = EventVenue.where(event_id: event_id).where.not(id: id).maximum(:position)
+    self.position = max_position.to_i + 1
   end
 
   def apply_contacts_attributes
@@ -53,12 +55,17 @@ class EventVenue < ApplicationRecord
     sanitized_contacts = raw_contacts.filter_map do |contact|
       contact_hash = contact.to_h.transform_keys(&:to_s).slice(*CONTACT_ATTRIBUTE_KEYS)
       contact_hash.transform_values! do |value|
-        value.is_a?(String) ? value.strip : value
+        if value.is_a?(String)
+          stripped = value.strip
+          stripped.presence
+        else
+          value
+        end
       end
 
       next if CONTACT_ATTRIBUTE_KEYS.all? { |key| contact_hash[key].blank? }
 
-      contact_hash
+      CONTACT_ATTRIBUTE_KEYS.index_with { |key| contact_hash[key] }
     end
 
     self.contacts_jsonb = sanitized_contacts

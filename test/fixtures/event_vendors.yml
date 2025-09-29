@@ -16,7 +16,7 @@ lighting:
   event: one
   name: Bright Lights Production
   vendor_type: Lighting
-  social_handle: @brightlights
+  social_handle: "@brightlights"
   contacts_jsonb:
     - name: Leo Light
       email: leo@bright.test

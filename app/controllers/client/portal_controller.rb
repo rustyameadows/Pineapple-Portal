@@ -18,8 +18,10 @@ module Client
     def authorize_event_access!
       return if current_user&.planner_or_admin?
 
-      if current_client_user.present?
-        membership = @event.client_team_members.find_by(user_id: current_client_user.id, client_visible: true)
+      event = current_event
+
+      if current_client_user.present? && event
+        membership = event.client_team_members.find_by(user_id: current_client_user.id, client_visible: true)
         return if membership.present?
       end
 

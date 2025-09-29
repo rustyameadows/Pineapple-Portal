@@ -93,26 +93,47 @@
   ] %>
 
   <%
-    vendor_rows = @event.event_vendors.ordered.flat_map do |vendor|
-      contacts = vendor.contacts.presence || [{}]
+    venue_rows = @event.event_venues.ordered.flat_map do |venue|
+      contacts = venue.contacts.presence || [{}]
       contacts.map do |contact|
+        contact_hash = contact.to_h
+
         {
-          type: vendor.vendor_type.presence || "Vendor",
-          vendor_name: vendor.name,
-          contact_name: contact.to_h["name"].presence,
-          social_handle: vendor.social_handle.presence,
-          contact_email: contact.to_h["email"].presence,
-          contact_phone: contact.to_h["phone"].presence
+          type: "Venue",
+          vendor_name: venue.name,
+          contact_name: contact_hash["name"].presence,
+          social_handle: nil,
+          contact_email: contact_hash["email"].presence,
+          contact_phone: contact_hash["phone"].presence
         }
       end
     end
+
+    vendor_rows = @event.event_vendors.ordered.flat_map do |vendor|
+      contacts = vendor.contacts.presence || [{}]
+      contacts.map do |contact|
+        contact_hash = contact.to_h
+        social_handle = vendor.social_handle.to_s.strip.presence
+
+        {
+          type: vendor.vendor_type.presence || "Vendor",
+          vendor_name: vendor.name,
+          contact_name: contact_hash["name"].presence,
+          social_handle: social_handle,
+          contact_email: contact_hash["email"].presence,
+          contact_phone: contact_hash["phone"].presence
+        }
+      end
+    end
+
+    all_vendor_rows = venue_rows + vendor_rows
   %>
 
   <% sections.each do |title| %>
     <section class="generated-template--event-overview__section">
       <h2 class="generated-template--event-overview__section-label"><%= title %></h2>
       <% if title == "Vendor Contacts" %>
-        <% if vendor_rows.any? %>
+        <% if all_vendor_rows.any? %>
           <table class="generated-template--event-overview__vendor-table">
             <thead>
               <tr>
@@ -122,7 +143,7 @@
               </tr>
             </thead>
             <tbody>
-              <% vendor_rows.each do |row| %>
+              <% all_vendor_rows.each do |row| %>
                 <tr>
                   <td class="generated-template--event-overview__vendor-type"><%= row[:type] %></td>
                   <td>
@@ -137,7 +158,7 @@
                   </td>
                   <td>
                     <% if row[:social_handle].present? %>
-                      <span class="generated-template--event-overview__vendor-social">@<%= row[:social_handle] %></span>
+                      <span class="generated-template--event-overview__vendor-social"><%= row[:social_handle] %></span>
                     <% else %>
                       <span>—</span>
                     <% end %>

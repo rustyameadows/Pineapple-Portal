@@ -61,10 +61,10 @@ class EventVendorTest < ActiveSupport::TestCase
     vendor = @event.event_vendors.create!(
       name: "DJ Collective",
       vendor_type: "  Entertainment  ",
-      social_handle: " @djcollective  "
+      social_handle: "  @djcollective  "
     )
 
     assert_equal "Entertainment", vendor.vendor_type
-    assert_equal "djcollective", vendor.social_handle
+    assert_equal "@djcollective", vendor.social_handle
   end
 end

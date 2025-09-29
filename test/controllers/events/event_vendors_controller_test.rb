@@ -32,7 +32,7 @@ module Events
       refute_nil vendor
       refute vendor.client_visible?
       assert_equal "Floral", vendor.vendor_type
-      assert_equal "floristcollective", vendor.social_handle
+      assert_equal "@floristcollective", vendor.social_handle
       assert_equal [{
         "name" => "Fiona Florist",
         "title" => nil,
@@ -50,7 +50,7 @@ module Events
           name: "Bright Lights Co",
           vendor_type: " Lighting & Production ",
           client_visible: "1",
-          social_handle: "bright.co",
+          social_handle: "@bright.co",
           contacts_attributes: {
             "0" => { name: "Leo Light", phone: "999-000-0000" }
           }
@@ -62,7 +62,7 @@ module Events
       assert_equal "Bright Lights Co", vendor.name
       assert vendor.client_visible?
       assert_equal "Lighting & Production", vendor.vendor_type
-      assert_equal "bright.co", vendor.social_handle
+      assert_equal "@bright.co", vendor.social_handle
       assert_equal "999-000-0000", vendor.contacts.first["phone"]
     end
 

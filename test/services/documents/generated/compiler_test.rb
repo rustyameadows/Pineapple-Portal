@@ -67,7 +67,10 @@ module Documents
           position: 1,
           kind: DocumentSegment::KINDS[:pdf_asset],
           title: "Segment",
-          source_ref: { "document_id" => documents(:contract_v1).id },
+          source_ref: {
+            "document_id" => documents(:contract_v1).id,
+            "logical_id" => documents(:contract_v1).logical_id
+          },
           spec: { "kind" => DocumentSegment::KINDS[:pdf_asset] }
         )
 

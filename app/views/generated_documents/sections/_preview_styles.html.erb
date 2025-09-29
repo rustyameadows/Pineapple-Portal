@@ -12,11 +12,10 @@
     color: #2d1c12;
   }
 
-  .preview-shell {
-    padding: 2rem 1.5rem;
-  }
-
   .preview-page {
+    --generated-document-content-padding-x: 0.5in;
+    --generated-document-content-padding-top: 0.75in;
+    --generated-document-content-padding-bottom: 0.5in;
     width: 8.5in;
     height: 11in;
     margin: 0 auto 2rem;
@@ -38,6 +37,12 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow-y: auto;
+    padding-top: var(--page-content-padding-top);
+    padding-right: var(--page-content-padding-x);
+    padding-bottom: var(--page-content-padding-bottom);
+    padding-left: var(--page-content-padding-x);
+    -webkit-overflow-scrolling: touch;
   }
 
   .preview-page + .page-break-hint::before {

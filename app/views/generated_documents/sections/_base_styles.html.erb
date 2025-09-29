@@ -15,18 +15,23 @@
 
   .generated-template {
     --page-bg: var(--color-white, #ffffff);
-    --page-padding: clamp(1.5rem, 5vw, 2.5rem);
+    --page-content-padding-x: var(--generated-document-content-padding-x, 0.5in);
+    --page-content-padding-top: var(--generated-document-content-padding-top, 0.75in);
+    --page-content-padding-bottom: var(--generated-document-content-padding-bottom, 0.5in);
     box-sizing: border-box;
     width: 100%;
     min-height: 100%;
     height: 100%;
-    padding: var(--page-padding);
+    padding:
+      var(--page-content-padding-top)
+      var(--page-content-padding-x)
+      var(--page-content-padding-bottom);
     background: var(--page-bg);
     color: var(--color-dark-brown, #000000);
     font-family: var(--font-family-body, 'BaskervilleNo2', 'Times New Roman', serif);
     letter-spacing: 0.02em;
     display: grid;
-    gap: var(--page-padding);
+    gap: clamp(1.25rem, 4vh, 2rem);
     align-content: start;
   }
 
