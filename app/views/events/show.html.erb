@@ -104,79 +104,55 @@
         { title: "Approvals", items: approval_links }
       ] %>
 
-      <% activity_items = [
-        { pre: "Your client added 28 entries in the", link_text: "Guest List", post: "." },
-        { pre: "Your client", link_text: "Booked the Wedding Photographer", post: "." },
-        { pre: "Your client completed the", link_text: "Design Q+A questionnaire", post: "." },
-        { pre: "Your client added 6 items in the", link_text: "Inspiration Folder", post: "." },
-        { pre: "Your client is in the process of", link_text: "Booking the Band", post: "." },
-        { pre: "Your client paid the", link_text: "Deposit Invoice", post: "." },
-        { pre: "Your client completed the", link_text: "Contact Information questionnaire", post: "." }
-      ] %>
-
       <section class="event-hero">
-        <div class="event-hero__top">
-          <div class="event-hero__meta">
-            <p class="event-hero__location">
-              <%= @event.location.presence || "Location TBD" %>
-            </p>
-            <h1 class="event-hero__title"><%= @event.name %></h1>
-            <p class="event-hero__dates"><%= event_date_range_label %></p>
-          </div>
-          <div class="event-hero__date">
-            <p class="event-hero__date-primary"><%= formatted_event_date || "Date TBD" %></p>
-            <% if countdown_label %>
-              <p class="event-hero__date-secondary"><%= countdown_label.upcase %></p>
-            <% end %>
-          </div>
+        <div class="event-hero__corner event-hero__corner--top-left">
+          <p class="event-hero__location"><%= @event.location.presence || "Location TBD" %></p>
         </div>
-        <div class="event-hero__actions">
-          <%= link_to "Event Settings", event_settings_path(@event), class: "event-hero__action" %>
-          <%= link_to "Portal", client_event_path(@event), class: "event-hero__action event-hero__action--portal" %>
+
+        <div class="event-hero__corner event-hero__corner--top-right">
+          <p class="event-hero__date-primary"><%= formatted_event_date || "Date TBD" %></p>
+          <% if countdown_label.present? %>
+            <p class="event-hero__date-secondary"><%= countdown_label.upcase %></p>
+          <% end %>
+        </div>
+
+        <div class="event-hero__center">
+          <h1 class="event-hero__title"><%= @event.name %></h1>
+        </div>
+
+        <div class="event-hero__corner event-hero__corner--bottom-left">
+          <%= link_to "Event Settings", event_settings_path(@event), class: "event-hero__link" %>
+        </div>
+
+        <div class="event-hero__corner event-hero__corner--bottom-right">
+          <%= link_to "Client Portal", client_event_path(@event), class: "event-hero__link" %>
         </div>
       </section>
 
-      <div class="event-layout__body">
-        <section class="event-links">
-          <h2 class="event-links__title">Event Links</h2>
-          <div class="event-links__panel">
-            <% event_link_groups.each_slice(3) do |group_row| %>
-              <div class="event-links__row">
-                <% group_row.each do |group| %>
-                  <section class="event-links__group">
-                    <h3 class="event-links__group-title"><%= group[:title] %></h3>
-                    <ul class="event-links__list">
-                      <% group[:items].each do |item| %>
-                        <% item_classes = ["event-links__list-item"] %>
-                        <% item_classes << "event-links__list-item--completed" if item[:state] == :completed %>
-                        <% item_classes << "event-links__list-item--highlight" if item[:state] == :highlight %>
-                        <li class="<%= item_classes.join(' ') %>">
-                          <%= link_to item[:label], item[:url], class: "event-links__link" %>
-                        </li>
-                      <% end %>
-                    </ul>
-                  </section>
-                <% end %>
-              </div>
-            <% end %>
-          </div>
-        </section>
-
-        <aside class="event-layout__activity event-activity">
-          <h2 class="event-activity__title">Recent Activity</h2>
-          <div class="event-activity__items">
-            <% activity_items.each do |activity| %>
-              <article class="event-activity__item">
-                <p>
-                  <span><%= activity[:pre] %></span>
-                  <%= link_to activity[:link_text], "#", class: "event-activity__link" %>
-                  <span><%= activity[:post] %></span>
-                </p>
-              </article>
-            <% end %>
-          </div>
-        </aside>
-      </div>
+      <section class="event-links">
+        <h2 class="event-links__title">Event Links</h2>
+        <div class="event-links__panel">
+          <% event_link_groups.each_slice(3) do |group_row| %>
+            <div class="event-links__row">
+              <% group_row.each do |group| %>
+                <section class="event-links__group">
+                  <h3 class="event-links__group-title"><%= group[:title] %></h3>
+                  <ul class="event-links__list">
+                    <% group[:items].each do |item| %>
+                      <% item_classes = ["event-links__list-item"] %>
+                      <% item_classes << "event-links__list-item--completed" if item[:state] == :completed %>
+                      <% item_classes << "event-links__list-item--highlight" if item[:state] == :highlight %>
+                      <li class="<%= item_classes.join(' ') %>">
+                        <%= link_to item[:label], item[:url], class: "event-links__link" %>
+                      </li>
+                    <% end %>
+                  </ul>
+                </section>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </section>
     </div>
   </div>
 <% end %>
