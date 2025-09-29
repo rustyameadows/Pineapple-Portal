@@ -18,6 +18,7 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
 
   resources :events do
     resource :settings, only: [:show], module: :events, controller: :settings do
+      get :client_portal
       get :clients
       get :vendors
       get :locations

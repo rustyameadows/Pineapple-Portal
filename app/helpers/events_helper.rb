@@ -15,6 +15,7 @@ module EventsHelper
       path: event_settings_path(event),
       sub_links: [
         { label: "General Info", path: event_settings_path(event) },
+        { label: "Client Portal", path: client_portal_event_settings_path(event) },
         { label: "Clients", path: clients_event_settings_path(event) },
         { label: "Vendors", path: vendors_event_settings_path(event) },
         { label: "Locations", path: locations_event_settings_path(event) },
@@ -22,6 +23,7 @@ module EventsHelper
       ],
       match_paths: [
         event_settings_path(event),
+        client_portal_event_settings_path(event),
         clients_event_settings_path(event),
         vendors_event_settings_path(event),
         locations_event_settings_path(event),

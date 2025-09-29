@@ -7,23 +7,23 @@ module Events
       @event_link = @event.event_links.new(event_link_params)
 
       if @event_link.save
-        redirect_back fallback_location: event_settings_path(@event), notice: "Quick link added."
+        redirect_back fallback_location: client_portal_event_settings_path(@event), notice: "Quick link added."
       else
-        redirect_back fallback_location: event_settings_path(@event), alert: @event_link.errors.full_messages.to_sentence
+        redirect_back fallback_location: client_portal_event_settings_path(@event), alert: @event_link.errors.full_messages.to_sentence
       end
     end
 
     def update
       if @event_link.update(event_link_params)
-        redirect_back fallback_location: event_settings_path(@event), notice: "Quick link updated."
+        redirect_back fallback_location: client_portal_event_settings_path(@event), notice: "Quick link updated."
       else
-        redirect_back fallback_location: event_settings_path(@event), alert: @event_link.errors.full_messages.to_sentence
+        redirect_back fallback_location: client_portal_event_settings_path(@event), alert: @event_link.errors.full_messages.to_sentence
       end
     end
 
     def destroy
       @event_link.destroy
-      redirect_back fallback_location: event_settings_path(@event), notice: "Quick link removed."
+      redirect_back fallback_location: client_portal_event_settings_path(@event), notice: "Quick link removed."
     end
 
     def move_up
@@ -61,7 +61,7 @@ module Events
         end
       end
 
-      redirect_back fallback_location: event_settings_path(@event)
+      redirect_back fallback_location: client_portal_event_settings_path(@event)
     end
   end
 end
