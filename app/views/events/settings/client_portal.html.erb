@@ -9,18 +9,150 @@
         <header class="event-section__header">
           <div>
             <p class="event-section__eyebrow">Client Portal</p>
+            <h1 class="event-section__title">Planning Links</h1>
+            <p class="event-section__lead">Decide which planning shortcuts appear in the client portal grid. Disable built-in cards or add custom planning links tailored to each client.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__planning-links">
+            <div class="event-settings__planning-ordered">
+              <h2 class="event-settings__subheading">Planner links in portal</h2>
+              <p class="event-settings__description">Reorder published cards and manage their visibility.</p>
+
+              <% if @planning_link_entries.any? %>
+                <ul class="event-settings__link-list">
+                  <% @planning_link_entries.each_with_index do |entry, index| %>
+                    <% is_first = index.zero? %>
+                    <% is_last = index == @planning_link_entries.length - 1 %>
+                    <li class="event-settings__link-item">
+                      <% if entry.kind == :built_in %>
+                        <% link = entry.record %>
+                        <div class="event-settings__link-content">
+                          <h3><%= link.title %></h3>
+                          <% if link.description.present? %>
+                            <p class="event-settings__link-description"><%= link.description %></p>
+                          <% end %>
+                          <p class="event-settings__link-status"><strong>Status:</strong> Visible to clients</p>
+                        </div>
+                        <div class="event-settings__controls">
+                          <% unless is_first %>
+                            <%= link_to "Move up", move_up_event_planning_link_path(@event, entry.token), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                          <% end %>
+                          <% unless is_last %>
+                            <%= link_to "Move down", move_down_event_planning_link_path(@event, entry.token), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                          <% end %>
+                          <%= button_to "Hide from portal",
+                                        toggle_event_planning_link_path(@event, link.key),
+                                        method: :patch,
+                                        class: "event-settings__control event-settings__control--danger" %>
+                        </div>
+                      <% else %>
+                        <% planning_link = entry.record %>
+                        <%= form_with model: [@event, planning_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                          <%= form.hidden_field :link_type, value: "planning" %>
+                          <div class="event-settings__field">
+                            <%= form.label :label, "Label" %>
+                            <%= form.text_field :label, required: true %>
+                          </div>
+                          <div class="event-settings__field">
+                            <%= form.label :url, "URL" %>
+                            <%= form.url_field :url, required: true %>
+                          </div>
+                          <div class="event-settings__form-actions">
+                            <%= form.submit "Save changes" %>
+                          </div>
+                        <% end %>
+
+                        <div class="event-settings__controls">
+                          <% unless is_first %>
+                            <%= link_to "Move up", move_up_event_planning_link_path(@event, entry.token), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                          <% end %>
+                          <% unless is_last %>
+                            <%= link_to "Move down", move_down_event_planning_link_path(@event, entry.token), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                          <% end %>
+                          <%= link_to "Remove", event_event_link_path(@event, planning_link), data: { turbo_method: :delete, turbo_confirm: "Remove this planning link?" }, class: "event-settings__control event-settings__control--danger" %>
+                        </div>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% else %>
+                <p class="event-settings__empty">No planner links published yet.</p>
+              <% end %>
+            </div>
+
+            <div class="event-settings__planning-hidden">
+              <h2 class="event-settings__subheading">Hidden planner links</h2>
+              <p class="event-settings__description">Toggle built-in cards back on whenever you need them.</p>
+
+              <% if @hidden_planning_links.any? %>
+                <ul class="event-settings__link-list">
+                  <% @hidden_planning_links.each do |link| %>
+                    <li class="event-settings__link-item">
+                      <div class="event-settings__link-content">
+                        <h3><%= link.title %></h3>
+                        <% if link.description.present? %>
+                          <p class="event-settings__link-description"><%= link.description %></p>
+                        <% end %>
+                        <p class="event-settings__link-status"><strong>Status:</strong> Hidden from clients</p>
+                      </div>
+                      <div class="event-settings__controls">
+                        <%= button_to "Show in portal",
+                                      toggle_event_planning_link_path(@event, link.key),
+                                      method: :patch,
+                                      class: "event-settings__control" %>
+                      </div>
+                    </li>
+                  <% end %>
+                </ul>
+              <% else %>
+                <p class="event-settings__empty">No planner links are hidden.</p>
+              <% end %>
+            </div>
+
+            <div class="event-settings__planning-custom">
+              <h2 class="event-settings__subheading">Add Planning Link</h2>
+              <p class="event-settings__description">Create a custom planning shortcut for this event.</p>
+
+              <div class="event-settings__new-link">
+                <%= form_with model: [@event, @planning_event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                  <%= form.hidden_field :link_type, value: "planning" %>
+                  <div class="event-settings__field">
+                    <%= form.label :label, "Label" %>
+                    <%= form.text_field :label, required: true %>
+                  </div>
+                  <div class="event-settings__field">
+                    <%= form.label :url, "URL" %>
+                    <%= form.url_field :url, required: true, placeholder: "https://" %>
+                  </div>
+                  <div class="event-settings__form-actions">
+                    <%= form.submit "Add planning link" %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Client Portal</p>
             <h1 class="event-section__title">Quick Links</h1>
-            <p class="event-section__lead">Control the shortcuts clients see in the portal hero. Links display in the order listed below.</p>
+            <p class="event-section__lead">Control the shortcuts clients see in the quick links list. Links display in the order listed below.</p>
           </div>
         </header>
 
         <div class="event-section__body">
           <div class="event-settings__quick-links">
-            <% if @event_links.any? %>
+            <% if @quick_event_links.any? %>
               <ul class="event-settings__link-list">
-                <% @event_links.each_with_index do |event_link, index| %>
+                <% @quick_event_links.each_with_index do |event_link, index| %>
                   <li class="event-settings__link-item">
                     <%= form_with model: [@event, event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                      <%= form.hidden_field :link_type, value: "quick" %>
                       <div class="event-settings__field">
                         <%= form.label :label, "Label" %>
                         <%= form.text_field :label, required: true %>
@@ -38,7 +170,7 @@
                       <% if index.positive? %>
                         <%= link_to "Move up", move_up_event_event_link_path(@event, event_link), data: { turbo_method: :patch }, class: "event-settings__control" %>
                       <% end %>
-                      <% if index < @event_links.length - 1 %>
+                      <% if index < @quick_event_links.length - 1 %>
                         <%= link_to "Move down", move_down_event_event_link_path(@event, event_link), data: { turbo_method: :patch }, class: "event-settings__control" %>
                       <% end %>
                       <%= link_to "Remove", event_event_link_path(@event, event_link), data: { turbo_method: :delete, turbo_confirm: "Remove this quick link?" }, class: "event-settings__control event-settings__control--danger" %>
@@ -52,7 +184,8 @@
 
             <div class="event-settings__new-link">
               <h3>Add Quick Link</h3>
-              <%= form_with model: [@event, @event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+              <%= form_with model: [@event, @quick_event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                <%= form.hidden_field :link_type, value: "quick" %>
                 <div class="event-settings__field">
                   <%= form.label :label, "Label" %>
                   <%= form.text_field :label, required: true %>

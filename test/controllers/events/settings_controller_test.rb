@@ -23,7 +23,9 @@ module Events
     test "renders client portal page" do
       get client_portal_event_settings_url(@event)
       assert_response :success
+      assert_select "h1", text: "Planning Links"
       assert_select "h1", text: "Quick Links"
+      assert_select "h2", text: "Planner links in portal"
     end
 
     test "renders planners page" do

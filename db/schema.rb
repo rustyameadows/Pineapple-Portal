@@ -305,6 +305,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_011000) do
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "link_type", default: "quick", null: false
+    t.index ["event_id", "link_type"], name: "index_event_links_on_event_id_and_link_type"
     t.index ["event_id", "position"], name: "index_event_links_on_event_id_and_position"
     t.index ["event_id"], name: "index_event_links_on_event_id"
   end
@@ -366,9 +368,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_011000) do
     t.datetime "updated_at", null: false
     t.datetime "archived_at"
     t.bigint "event_photo_document_id"
+    t.jsonb "planning_link_keys", default: [], null: false
     t.index ["archived_at"], name: "index_events_on_archived_at"
     t.index ["event_photo_document_id"], name: "index_events_on_event_photo_document_id"
     t.index ["name"], name: "index_events_on_name"
+    t.check_constraint "jsonb_typeof(planning_link_keys) = 'array'::text", name: "events_planning_link_keys_array"
   end
 
   create_table "global_assets", force: :cascade do |t|

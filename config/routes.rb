@@ -68,6 +68,14 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
       end
     end
 
+    resources :planning_links, only: [], module: :events do
+      member do
+        patch :toggle
+        patch :move_up
+        patch :move_down
+      end
+    end
+
     resources :event_vendors, only: %i[create update destroy], module: :events do
       member do
         patch :move_up

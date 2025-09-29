@@ -33,8 +33,13 @@ module Events
     end
 
     def prepare_quick_links
-      @event_link = @event.event_links.new
-      @event_links = @event.event_links.ordered
+      @planning_event_link = @event.event_links.new(link_type: "planning")
+      @quick_event_link = @event.event_links.new(link_type: "quick")
+
+      @quick_event_links = @event.event_links.quick.ordered
+
+      @planning_link_entries = @event.ordered_planning_link_entries
+      @hidden_planning_links = hidden_built_in_planning_links
     end
 
     def prepare_vendors
@@ -83,6 +88,14 @@ module Events
 
       @available_clients = User.clients.order(:name)
       @available_clients = @available_clients.where.not(id: assigned_user_ids) if assigned_user_ids.any?
+    end
+
+    def hidden_built_in_planning_links
+      visible_keys = @event.planning_link_keys
+
+      ClientPortal::PlanningLinks
+        .built_in_links_for(@event)
+        .reject { |link| visible_keys.include?(link.key) }
     end
 
   end

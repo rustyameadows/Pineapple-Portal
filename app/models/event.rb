@@ -37,11 +37,103 @@ class Event < ApplicationRecord
              optional: true
 
   validate :event_photo_document_must_be_image
+  before_validation :sanitize_planning_link_tokens
+  validate :planning_link_keys_must_be_known
+
+  PlanningLinkEntry = Struct.new(:token, :kind, :record, keyword_init: true)
 
   scope :active, -> { where(archived_at: nil) }
   scope :archived, -> { where.not(archived_at: nil) }
 
   validates :name, presence: true
+
+  def planning_link_tokens
+    tokens = normalize_planning_link_tokens(stored_planning_link_tokens)
+    tokens = default_planning_link_tokens if tokens.blank?
+
+    tokens = prune_invalid_planning_link_tokens(tokens)
+
+    planning_event_link_tokens.each do |token|
+      tokens << token unless tokens.include?(token)
+    end
+
+    tokens
+  end
+
+  def planning_link_tokens=(value)
+    store_planning_link_tokens(value)
+  end
+
+  def planning_link_keys
+    planning_link_tokens
+      .select { |token| PlanningLinkToken.built_in?(token) }
+      .map { |token| PlanningLinkToken.token_value(token) }
+  end
+
+  def planning_link_enabled?(key)
+    planning_link_keys.include?(key.to_s)
+  end
+
+  def enable_planning_link(key)
+    tokens = planning_link_tokens.dup
+    token = PlanningLinkToken.built_in(key)
+    tokens << token unless tokens.include?(token)
+    store_planning_link_tokens(tokens)
+  end
+
+  def disable_planning_link(key)
+    tokens = planning_link_tokens.reject { |token| PlanningLinkToken.built_in?(token, key) }
+    store_planning_link_tokens(tokens)
+  end
+
+  def append_planning_event_link_token(link)
+    token = PlanningLinkToken.event_link(link.id)
+    tokens = planning_link_tokens.dup
+    tokens << token unless tokens.include?(token)
+    store_planning_link_tokens(tokens)
+  end
+
+  def remove_planning_event_link_token(link)
+    token = PlanningLinkToken.event_link(link.id)
+    tokens = planning_link_tokens.reject { |existing| existing == token }
+    store_planning_link_tokens(tokens)
+  end
+
+  def move_planning_link_token(token, direction)
+    tokens = planning_link_tokens.dup
+    index = tokens.index(token)
+    return false unless index
+
+    case direction
+    when :up
+      return false if index.zero?
+      tokens[index - 1], tokens[index] = tokens[index], tokens[index - 1]
+    when :down
+      return false if index == tokens.length - 1
+      tokens[index + 1], tokens[index] = tokens[index], tokens[index + 1]
+    else
+      return false
+    end
+
+    store_planning_link_tokens(tokens)
+    true
+  end
+
+  def ordered_planning_link_entries
+    mapping = planning_link_token_mapping
+
+    planning_link_tokens.filter_map do |token|
+      record = mapping[token]
+      next unless record
+
+      kind = PlanningLinkToken.built_in?(token) ? :built_in : :event_link
+      PlanningLinkEntry.new(token: token, kind: kind, record: record)
+    end
+  end
+
+  def ordered_planning_links
+    ordered_planning_link_entries.map(&:record)
+  end
 
   def archived?
     archived_at.present?
@@ -61,5 +153,67 @@ class Event < ApplicationRecord
     unless content_type.start_with?("image/")
       errors.add(:event_photo_document, "must be an image file")
     end
+  end
+
+  def stored_planning_link_tokens
+    self[:planning_link_keys] || []
+  end
+
+  def normalize_planning_link_tokens(value)
+    Array(value).map { |token| standardize_planning_link_token(token) }.compact.uniq
+  end
+
+  def planning_link_keys_must_be_known
+    tokens = normalize_planning_link_tokens(stored_planning_link_tokens)
+    invalid_tokens = tokens.reject { |token| PlanningLinkToken.valid?(token, event: self) }
+    return if invalid_tokens.empty?
+
+    errors.add(:planning_link_keys, "contains unknown links: #{invalid_tokens.join(', ')}")
+  end
+
+  def sanitize_planning_link_tokens
+    store_planning_link_tokens(planning_link_tokens)
+  end
+
+  def default_planning_link_tokens
+    ClientPortal::PlanningLinks.default_keys.map { |key| PlanningLinkToken.built_in(key) }
+  end
+
+  def planning_event_link_tokens
+    event_links.planning.ordered.pluck(:id).map do |id|
+      PlanningLinkToken.event_link(id)
+    end
+  end
+
+  def prune_invalid_planning_link_tokens(tokens)
+    normalize_planning_link_tokens(tokens).select do |token|
+      PlanningLinkToken.valid?(token, event: self)
+    end
+  end
+
+  def planning_link_token_mapping
+    built_in_links = ClientPortal::PlanningLinks.built_in_links_for(self)
+    mapping = built_in_links.to_h do |link|
+      [PlanningLinkToken.built_in(link.key), link]
+    end
+
+    event_links.planning.ordered.each do |link|
+      mapping[PlanningLinkToken.event_link(link.id)] = link
+    end
+
+    mapping
+  end
+
+  def store_planning_link_tokens(tokens)
+    self[:planning_link_keys] = normalize_planning_link_tokens(tokens)
+  end
+
+  def standardize_planning_link_token(token)
+    token = token.to_s.strip
+    return if token.blank?
+
+    return token if token.include?(":")
+
+    PlanningLinkToken.built_in(token)
   end
 end

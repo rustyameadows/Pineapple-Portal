@@ -22,47 +22,30 @@ module Client
     end
 
     def build_quick_links
-      @event.event_links.ordered.to_a
+      @event.event_links.quick.ordered.to_a
     end
 
     def build_module_cards
-      calendar = @event.run_of_show_calendar
-      visible_views = calendar&.event_calendar_views&.client_visible&.order(:position) || EventCalendarView.none
-
-      cards = []
-
-      decision_view = visible_views.find { |view| view.slug == "decision-calendar" }
-
-      cards.concat(
-        [
-          (decision_view && calendar ?
-            {
-              title: "Decision Calendar",
-              description: "Milestones and approvals at a glance.",
-              path: client_event_calendar_path(@event, decision_view.slug)
-            } : nil),
+      @event.ordered_planning_link_entries.map do |entry|
+        case entry.kind
+        when :built_in
+          link = entry.record
           {
-            title: "Guest List",
-            description: "Track RSVPs and key contacts.",
-            path: client_event_guest_list_path(@event)
-          },
-          {
-            title: "Questionnaires",
-            description: "Complete and review planner questionnaires.",
-            path: client_event_questionnaires_path(@event)
-          },
-          {
-            title: "Design & Inspo",
-            description: "Mood boards, files, and inspiration assets.",
-            path: client_event_designs_path(@event)
-          },
-          {
-            title: "Financial Management",
-            description: "Invoices, payments, and budget progress.",
-            path: client_event_financials_path(@event)
+            key: link.key,
+            title: link.title,
+            path: link.path,
+            external: false
           }
-        ].compact
-      )
+        else
+          link = entry.record
+          {
+            key: "event_link_#{link.id}",
+            title: link.label,
+            path: link.url,
+            external: true
+          }
+        end
+      end
     end
   end
 end
