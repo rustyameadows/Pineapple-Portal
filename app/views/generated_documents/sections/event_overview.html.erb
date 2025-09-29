@@ -33,6 +33,51 @@
     color: var(--color-dark-brown);
     line-height: 1.5;
   }
+
+  .generated-template--event-overview__vendor-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+
+  .generated-template--event-overview__vendor-table th,
+  .generated-template--event-overview__vendor-table td {
+    text-align: left;
+    padding: 0.55rem 0.65rem;
+    border-bottom: 1px solid rgba(45, 28, 18, 0.08);
+    vertical-align: top;
+  }
+
+  .generated-template--event-overview__vendor-table th {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(45, 28, 18, 0.75);
+  }
+
+  .generated-template--event-overview__vendor-type {
+    font-weight: 600;
+  }
+
+  .generated-template--event-overview__vendor-stack {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .generated-template--event-overview__vendor-name {
+    font-weight: 600;
+  }
+
+  .generated-template--event-overview__vendor-social {
+    font-weight: 600;
+    color: rgba(45, 28, 18, 0.85);
+  }
+
+  .generated-template--event-overview__empty {
+    font-style: italic;
+    color: rgba(45, 28, 18, 0.65);
+    margin: 0;
+  }
 </style>
 
 <div class="generated-template generated-template--event-overview">
@@ -47,12 +92,68 @@
     "Other"
   ] %>
 
+  <%
+    vendor_rows = @event.event_vendors.ordered.flat_map do |vendor|
+      contacts = vendor.contacts.presence || [{}]
+      contacts.map do |contact|
+        {
+          type: vendor.vendor_type.presence || "Vendor",
+          vendor_name: vendor.name,
+          contact_name: contact.to_h["name"].presence,
+          social_handle: vendor.social_handle.presence,
+          contact_email: contact.to_h["email"].presence,
+          contact_phone: contact.to_h["phone"].presence
+        }
+      end
+    end
+  %>
+
   <% sections.each do |title| %>
     <section class="generated-template--event-overview__section">
       <h2 class="generated-template--event-overview__section-label"><%= title %></h2>
-      <p class="generated-template--event-overview__section-body">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin sed lorem nec justo interdum gravida. Donec vel nisl vitae tortor tincidunt eleifend.
-      </p>
+      <% if title == "Vendor Contacts" %>
+        <% if vendor_rows.any? %>
+          <table class="generated-template--event-overview__vendor-table">
+            <thead>
+              <tr>
+                <th scope="col">Vendor Type</th>
+                <th scope="col">Contact</th>
+                <th scope="col">Social</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% vendor_rows.each do |row| %>
+                <tr>
+                  <td class="generated-template--event-overview__vendor-type"><%= row[:type] %></td>
+                  <td>
+                    <div class="generated-template--event-overview__vendor-stack">
+                      <span class="generated-template--event-overview__vendor-name"><%= row[:vendor_name] %></span>
+                      <% if row[:contact_name].present? %>
+                        <span><%= row[:contact_name] %></span>
+                      <% else %>
+                        <span>—</span>
+                      <% end %>
+                    </div>
+                  </td>
+                  <td>
+                    <% if row[:social_handle].present? %>
+                      <span class="generated-template--event-overview__vendor-social">@<%= row[:social_handle] %></span>
+                    <% else %>
+                      <span>—</span>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <p class="generated-template--event-overview__empty">Vendor list coming soon.</p>
+        <% end %>
+      <% else %>
+        <p class="generated-template--event-overview__section-body">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin sed lorem nec justo interdum gravida. Donec vel nisl vitae tortor tincidunt eleifend.
+        </p>
+      <% end %>
     </section>
   <% end %>
 </div>

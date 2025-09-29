@@ -1,0 +1,34 @@
+<% resource_key = form.object_name %>
+<% contacts = entity.contacts_attributes || [] %>
+<% total_slots = contacts.length + 1 %>
+
+<div class="event-settings__contacts">
+  <% total_slots.times do |index| %>
+    <% contact = contacts[index] || {} %>
+    <div class="event-settings__contact">
+      <h4 class="event-settings__contact-title">Contact <%= index + 1 %></h4>
+      <div class="event-settings__contact-fields">
+        <div class="event-settings__field">
+          <%= label_tag "#{resource_key}_contacts_attributes_#{index}_name", "Name" %>
+          <%= text_field_tag "#{resource_key}[contacts_attributes][#{index}][name]", contact["name"], class: "event-settings__input" %>
+        </div>
+        <div class="event-settings__field">
+          <%= label_tag "#{resource_key}_contacts_attributes_#{index}_title", "Title" %>
+          <%= text_field_tag "#{resource_key}[contacts_attributes][#{index}][title]", contact["title"], class: "event-settings__input" %>
+        </div>
+        <div class="event-settings__field">
+          <%= label_tag "#{resource_key}_contacts_attributes_#{index}_email", "Email" %>
+          <%= email_field_tag "#{resource_key}[contacts_attributes][#{index}][email]", contact["email"], class: "event-settings__input" %>
+        </div>
+        <div class="event-settings__field">
+          <%= label_tag "#{resource_key}_contacts_attributes_#{index}_phone", "Phone" %>
+          <%= telephone_field_tag "#{resource_key}[contacts_attributes][#{index}][phone]", contact["phone"], class: "event-settings__input" %>
+        </div>
+        <div class="event-settings__field event-settings__field--notes">
+          <%= label_tag "#{resource_key}_contacts_attributes_#{index}_notes", "Notes" %>
+          <%= text_area_tag "#{resource_key}[contacts_attributes][#{index}][notes]", contact["notes"], rows: 2, class: "event-settings__textarea" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

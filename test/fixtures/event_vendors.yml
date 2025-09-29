@@ -1,0 +1,24 @@
+catering:
+  event: one
+  name: Sunshine Catering
+  vendor_type: Catering
+  social_handle: sunshinecatering
+  contacts_jsonb:
+    - name: Maria Cater
+      title: Account Manager
+      email: maria@sunshine.test
+      phone: 555-123-4567
+      notes: Gluten-free specialist
+  position: 0
+  client_visible: true
+
+lighting:
+  event: one
+  name: Bright Lights Production
+  vendor_type: Lighting
+  social_handle: @brightlights
+  contacts_jsonb:
+    - name: Leo Light
+      email: leo@bright.test
+  position: 1
+  client_visible: false

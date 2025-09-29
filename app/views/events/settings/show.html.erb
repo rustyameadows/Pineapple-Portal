@@ -22,6 +22,231 @@
       <section class="event-section">
         <header class="event-section__header">
           <div>
+            <p class="event-section__eyebrow">Event Partners</p>
+            <h2 class="event-section__title">Vendors</h2>
+            <p class="event-section__lead">Track vendor details, manage visibility, and keep contact info handy for your team.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__contacts-section">
+            <% if @event_vendors.any? %>
+              <ul class="event-settings__contact-list">
+                <% @event_vendors.each_with_index do |vendor, index| %>
+                  <li class="event-settings__contact-item">
+                    <%= form_with model: [@event, vendor], local: true, html: { class: "event-settings__form" } do |form| %>
+                      <div class="event-settings__field-group">
+                        <div class="event-settings__field">
+                          <%= form.label :name, "Vendor name" %>
+                          <%= form.text_field :name, required: true %>
+                        </div>
+                        <div class="event-settings__field">
+                          <%= form.label :vendor_type, "Vendor type" %>
+                          <%= form.text_field :vendor_type, placeholder: "Floral, Lighting, etc." %>
+                        </div>
+                        <div class="event-settings__field">
+                          <%= form.label :social_handle, "Social handle" %>
+                          <%= form.text_field :social_handle, placeholder: "@vendor" %>
+                        </div>
+                        <div class="event-settings__field event-settings__field--checkbox">
+                          <label class="event-settings__toggle">
+                            <%= form.check_box :client_visible %>
+                            <span>Visible to clients</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <%= render "events/settings/contact_fields", form:, entity: vendor %>
+
+                      <div class="event-settings__form-actions">
+                        <%= form.submit "Save vendor" %>
+                      </div>
+                    <% end %>
+
+                    <div class="event-settings__controls">
+                      <% if index.positive? %>
+                        <%= link_to "Move up", move_up_event_event_vendor_path(@event, vendor), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                      <% end %>
+                      <% if index < @event_vendors.length - 1 %>
+                        <%= link_to "Move down", move_down_event_event_vendor_path(@event, vendor), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                      <% end %>
+                      <%= link_to "Remove", event_event_vendor_path(@event, vendor), data: { turbo_method: :delete, turbo_confirm: "Remove this vendor?" }, class: "event-settings__control event-settings__control--danger" %>
+                    </div>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="event-settings__empty">No vendors yet. Use the form below to add your first partner.</p>
+            <% end %>
+
+            <div class="event-settings__new-link">
+              <h3>Add Vendor</h3>
+              <%= form_with model: [@event, @event_vendor], local: true, html: { class: "event-settings__form" } do |form| %>
+                <div class="event-settings__field-group">
+                  <div class="event-settings__field">
+                    <%= form.label :name, "Vendor name" %>
+                    <%= form.text_field :name, required: true %>
+                  </div>
+                  <div class="event-settings__field">
+                    <%= form.label :vendor_type, "Vendor type" %>
+                    <%= form.text_field :vendor_type, placeholder: "Catering" %>
+                  </div>
+                  <div class="event-settings__field">
+                    <%= form.label :social_handle, "Social handle" %>
+                    <%= form.text_field :social_handle, placeholder: "@vendor" %>
+                  </div>
+                  <div class="event-settings__field event-settings__field--checkbox">
+                    <label class="event-settings__toggle">
+                      <%= form.check_box :client_visible %>
+                      <span>Visible to clients</span>
+                    </label>
+                  </div>
+                </div>
+
+                <%= render "events/settings/contact_fields", form:, entity: @event_vendor %>
+
+                <div class="event-settings__form-actions">
+                  <%= form.submit "Add vendor" %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Event Partners</p>
+            <h2 class="event-section__title">Venues</h2>
+            <p class="event-section__lead">Keep venue information alongside contacts and visibility preferences.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__contacts-section">
+            <% if @event_venues.any? %>
+              <ul class="event-settings__contact-list">
+                <% @event_venues.each_with_index do |venue, index| %>
+                  <li class="event-settings__contact-item">
+                    <%= form_with model: [@event, venue], local: true, html: { class: "event-settings__form" } do |form| %>
+                      <div class="event-settings__field-group">
+                        <div class="event-settings__field">
+                          <%= form.label :name, "Venue name" %>
+                          <%= form.text_field :name, required: true %>
+                        </div>
+                        <div class="event-settings__field event-settings__field--checkbox">
+                          <label class="event-settings__toggle">
+                            <%= form.check_box :client_visible %>
+                            <span>Visible to clients</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <%= render "events/settings/contact_fields", form:, entity: venue %>
+
+                      <div class="event-settings__form-actions">
+                        <%= form.submit "Save venue" %>
+                      </div>
+                    <% end %>
+
+                    <div class="event-settings__controls">
+                      <% if index.positive? %>
+                        <%= link_to "Move up", move_up_event_event_venue_path(@event, venue), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                      <% end %>
+                      <% if index < @event_venues.length - 1 %>
+                        <%= link_to "Move down", move_down_event_event_venue_path(@event, venue), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                      <% end %>
+                      <%= link_to "Remove", event_event_venue_path(@event, venue), data: { turbo_method: :delete, turbo_confirm: "Remove this venue?" }, class: "event-settings__control event-settings__control--danger" %>
+                    </div>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="event-settings__empty">No venues logged yet. Add the primary space below.</p>
+            <% end %>
+
+            <div class="event-settings__new-link">
+              <h3>Add Venue</h3>
+              <%= form_with model: [@event, @event_venue], local: true, html: { class: "event-settings__form" } do |form| %>
+                <div class="event-settings__field-group">
+                  <div class="event-settings__field">
+                    <%= form.label :name, "Venue name" %>
+                    <%= form.text_field :name, required: true %>
+                  </div>
+                  <div class="event-settings__field event-settings__field--checkbox">
+                    <label class="event-settings__toggle">
+                      <%= form.check_box :client_visible %>
+                      <span>Visible to clients</span>
+                    </label>
+                  </div>
+                </div>
+
+                <%= render "events/settings/contact_fields", form:, entity: @event_venue %>
+
+                <div class="event-settings__form-actions">
+                  <%= form.submit "Add venue" %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">At a Glance</p>
+            <h2 class="event-section__title">Unified People</h2>
+            <p class="event-section__lead">One place to scan every client-facing contact sourced from vendors, venues, and team assignments.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <% if @unified_people.any? %>
+            <ul class="event-settings__people-list">
+              <% @unified_people.each do |person| %>
+                <li class="event-settings__people-card">
+                  <header class="event-settings__people-card-header">
+                    <div>
+                      <p class="event-settings__people-card-eyebrow"><%= person[:group_label] %></p>
+                      <h3 class="event-settings__people-card-name"><%= person[:name] %></h3>
+                      <% if person[:title].present? %>
+                        <p class="event-settings__people-card-title"><%= person[:title] %></p>
+                      <% end %>
+                    </div>
+                    <div class="event-settings__people-card-meta">
+                      <span class="event-settings__people-card-source"><%= person[:source_name] %></span>
+                      <% unless person[:client_visible] %>
+                        <span class="event-settings__badge event-settings__badge--internal">Internal only</span>
+                      <% end %>
+                    </div>
+                  </header>
+                  <div class="event-settings__people-card-body">
+                    <ul class="event-settings__people-card-details">
+                      <% if person[:email].present? %>
+                        <li><strong>Email:</strong> <%= mail_to person[:email] %></li>
+                      <% end %>
+                      <% if person[:phone].present? %>
+                        <li><strong>Phone:</strong> <%= person[:phone] %></li>
+                      <% end %>
+                      <% if person[:notes].present? %>
+                        <li><strong>Notes:</strong> <%= person[:notes] %></li>
+                      <% end %>
+                    </ul>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="event-settings__empty">No contacts yet. Once you add vendors, venues, or team members they’ll roll up here.</p>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
             <p class="event-section__eyebrow">Client Portal</p>
             <h2 class="event-section__title">Quick Links</h2>
             <p class="event-section__lead">Control the shortcuts clients see in the portal hero. Links display in the order listed below.</p>

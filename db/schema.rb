@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_28_007000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_28_011000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -327,6 +327,36 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_007000) do
     t.index ["user_id"], name: "index_event_team_members_on_user_id"
   end
 
+  create_table "event_vendors", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "name", null: false
+    t.jsonb "contacts_jsonb", default: [], null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "client_visible", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "vendor_type"
+    t.string "social_handle"
+    t.index "event_id, lower((name)::text)", name: "index_event_vendors_on_event_id_and_lower_name", unique: true
+    t.index ["event_id", "position"], name: "index_event_vendors_on_event_id_and_position"
+    t.index ["event_id"], name: "index_event_vendors_on_event_id"
+    t.check_constraint "jsonb_typeof(contacts_jsonb) = 'array'::text", name: "event_vendors_contacts_jsonb_array"
+  end
+
+  create_table "event_venues", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "name", null: false
+    t.jsonb "contacts_jsonb", default: [], null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "client_visible", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "event_id, lower((name)::text)", name: "index_event_venues_on_event_id_and_lower_name", unique: true
+    t.index ["event_id", "position"], name: "index_event_venues_on_event_id_and_position"
+    t.index ["event_id"], name: "index_event_venues_on_event_id"
+    t.check_constraint "jsonb_typeof(contacts_jsonb) = 'array'::text", name: "event_venues_contacts_jsonb_array"
+  end
+
   create_table "events", force: :cascade do |t|
     t.string "name", null: false
     t.date "starts_on"
@@ -476,6 +506,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_007000) do
   add_foreign_key "event_links", "events"
   add_foreign_key "event_team_members", "events"
   add_foreign_key "event_team_members", "users"
+  add_foreign_key "event_vendors", "events"
+  add_foreign_key "event_venues", "events"
   add_foreign_key "events", "documents", column: "event_photo_document_id"
   add_foreign_key "global_assets", "users", column: "uploaded_by_id"
   add_foreign_key "password_reset_tokens", "users"

@@ -103,3 +103,177 @@
   color: var(--color-brown);
   text-align: center;
 }
+
+.event-settings__contacts-section {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.event-settings__contact-list,
+.event-settings__people-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.event-settings__contact-item,
+.event-settings__people-card {
+  border: 1px solid var(--color-sea-foam);
+  border-radius: var(--radius-lg);
+  background: var(--color-light-cream);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.event-settings__field-group {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: end;
+}
+
+.event-settings__field--checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.event-settings__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--color-dark-brown);
+}
+
+.event-settings__contacts {
+  display: grid;
+  gap: 1rem;
+}
+
+.event-settings__contact {
+  border: 1px dashed color-mix(in srgb, var(--color-sea-foam) 40%, white);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.event-settings__contact-title {
+  margin: 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-brown);
+}
+
+.event-settings__contact-fields {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.event-settings__field--notes {
+  grid-column: 1 / -1;
+}
+
+.event-settings__input,
+.event-settings__textarea {
+  width: 100%;
+}
+
+.event-settings__textarea {
+  resize: vertical;
+}
+
+.event-settings__form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.event-settings__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.event-settings__control {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-brown);
+}
+
+.event-settings__control--danger {
+  color: var(--color-danger);
+}
+
+.event-settings__people-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.event-settings__people-card-eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-brown);
+}
+
+.event-settings__people-card-name {
+  margin: 0.15rem 0 0.25rem;
+  font-size: 1.15rem;
+  color: var(--color-dark-brown);
+}
+
+.event-settings__people-card-title {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-brown);
+}
+
+.event-settings__people-card-meta {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: end;
+  text-align: right;
+}
+
+.event-settings__people-card-source {
+  font-size: 0.85rem;
+  color: var(--color-brown);
+}
+
+.event-settings__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: var(--radius-pill);
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.event-settings__badge--internal {
+  background: color-mix(in srgb, var(--color-brown) 12%, white);
+  color: var(--color-brown);
+}
+
+.event-settings__people-card-body {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.event-settings__people-card-details {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
