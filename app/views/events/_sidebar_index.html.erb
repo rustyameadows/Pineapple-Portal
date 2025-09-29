@@ -15,12 +15,17 @@
     </ul>
   </nav>
 
-  <div class="event-sidebar__auth">
+  <footer class="event-sidebar__footer" aria-label="Account navigation">
+    <%= link_to "Home", events_path, class: "event-sidebar__footer-button" %>
+
     <% if logged_in? %>
-      <span class="event-sidebar__auth-inline">Signed in as <strong><%= current_user.name %></strong></span>
-      <%= button_to "Log out", logout_path, method: :delete, class: "event-sidebar__auth-link" %>
+      <%= button_to "Log Out", logout_path,
+                    method: :delete,
+                    class: "event-sidebar__footer-button",
+                    data: { turbo_method: :delete },
+                    form: { data: { turbo: true } } %>
     <% else %>
-      <%= link_to "Log in", login_path, class: "event-sidebar__auth-link" %>
+      <%= link_to "Log In", login_path, class: "event-sidebar__footer-button" %>
     <% end %>
-  </div>
+  </footer>
 </aside>

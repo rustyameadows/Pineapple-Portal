@@ -23,7 +23,7 @@ module Events
         }
       end
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to locations_event_settings_url(@event)
       venue = EventVenue.find_by(name: "Skyline Loft")
       assert_equal "111-111-1111", venue.contacts.first["phone"]
     end
@@ -35,7 +35,7 @@ module Events
         event_venue: { client_visible: "1" }
       }
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to locations_event_settings_url(@event)
       assert venue.reload.client_visible?
     end
 
@@ -46,7 +46,7 @@ module Events
 
       patch move_down_event_event_venue_url(@event, top)
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to locations_event_settings_url(@event)
       top.reload
       bottom.reload
       assert top.position > bottom.position
@@ -59,7 +59,7 @@ module Events
         delete event_event_venue_url(@event, venue)
       end
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to locations_event_settings_url(@event)
     end
   end
 end

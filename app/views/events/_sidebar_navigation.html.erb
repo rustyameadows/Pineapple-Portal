@@ -63,27 +63,17 @@
     </ul>
   </nav>
 
-  <nav class="event-sidebar__nav event-sidebar__nav--secondary" aria-label="Account navigation">
-    <ul class="event-sidebar__secondary-links">
-      <% event_sidebar_secondary_links.each do |link| %>
-        <li>
-          <%= link_to link[:path],
-                      class: "event-sidebar__link",
-                      title: link[:label],
-                      aria: { label: link[:label] } do %>
-            <span class="event-sidebar__link-label" aria-hidden="true"><%= link[:label] %></span>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
-  </nav>
+  <footer class="event-sidebar__footer" aria-label="Account navigation">
+    <%= link_to "Home", events_path, class: "event-sidebar__footer-button" %>
 
-  <div class="event-sidebar__auth">
     <% if logged_in? %>
-      <span class="event-sidebar__auth-inline">Signed in as <strong><%= current_user.name %></strong></span>
-      <%= button_to "Log out", logout_path, method: :delete, class: "event-sidebar__auth-link" %>
+      <%= button_to "Log Out", logout_path,
+                    method: :delete,
+                    class: "event-sidebar__footer-button",
+                    data: { turbo_method: :delete },
+                    form: { data: { turbo: true } } %>
     <% else %>
-      <%= link_to "Log in", login_path, class: "event-sidebar__auth-link" %>
+      <%= link_to "Log In", login_path, class: "event-sidebar__footer-button" %>
     <% end %>
-  </div>
+  </footer>
 </aside>

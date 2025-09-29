@@ -13,6 +13,8 @@ module Events
       attributes[:client_visible] = true unless attributes.key?(:client_visible)
       attributes[:member_role] = EventTeamMember::TEAM_ROLES[:planner] if attributes[:member_role].blank?
 
+      target_path = attributes[:member_role] == EventTeamMember::TEAM_ROLES[:client] ? clients_event_settings_path(@event) : planners_event_settings_path(@event)
+
       if attributes[:member_role] == EventTeamMember::TEAM_ROLES[:client]
         attributes[:client_visible] = true unless attributes.key?(:client_visible)
 
@@ -20,11 +22,11 @@ module Events
           if client_user_data.present?
             user, generated_password = build_client_user(client_user_data)
             unless user.save
-              redirect_to event_settings_path(@event), alert: user.errors.full_messages.to_sentence and return
+              redirect_to target_path, alert: user.errors.full_messages.to_sentence and return
             end
             attributes[:user_id] = user.id
           else
-            redirect_to event_settings_path(@event), alert: "Select an existing client or enter details to invite one." and return
+            redirect_to target_path, alert: "Select an existing client or enter details to invite one." and return
           end
         end
       end
@@ -41,29 +43,29 @@ module Events
                  else
                    "Planner added to the event."
                  end
-        redirect_to event_settings_path(@event), notice: notice
+        redirect_to @team_member.client? ? clients_event_settings_path(@event) : planners_event_settings_path(@event), notice: notice
       else
-        redirect_to event_settings_path(@event), alert: @team_member.errors.full_messages.to_sentence
+        redirect_to target_path, alert: @team_member.errors.full_messages.to_sentence
       end
     end
 
     def update
       if @team_member.update(team_member_update_params)
         message = @team_member.client? ? "Client access updated." : "Team member updated."
-        redirect_to event_settings_path(@event), notice: message
+        redirect_to @team_member.client? ? clients_event_settings_path(@event) : planners_event_settings_path(@event), notice: message
       else
-        redirect_to event_settings_path(@event), alert: @team_member.errors.full_messages.to_sentence
+        redirect_to @team_member.client? ? clients_event_settings_path(@event) : planners_event_settings_path(@event), alert: @team_member.errors.full_messages.to_sentence
       end
     end
 
     def destroy
       @team_member.destroy
-      redirect_to event_settings_path(@event), notice: "Team member removed from the event."
+      redirect_to @team_member.client? ? clients_event_settings_path(@event) : planners_event_settings_path(@event), notice: "Team member removed from the event."
     end
 
     def issue_reset
       unless @team_member.client?
-        redirect_to event_settings_path(@event), alert: "Password resets are only available for client accounts." and return
+        redirect_to planners_event_settings_path(@event), alert: "Password resets are only available for client accounts." and return
       end
 
       token = PasswordResetToken.generate_for!(
@@ -73,7 +75,7 @@ module Events
 
       flash[:notice] = "Reset link generated. Share the link shown below with your client."
       flash[:highlight_reset_token_id] = token.id
-      redirect_to event_settings_path(@event)
+      redirect_to clients_event_settings_path(@event)
     end
 
     private

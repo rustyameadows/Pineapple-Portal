@@ -14,13 +14,19 @@ module EventsHelper
       label: "Event Info",
       path: event_settings_path(event),
       sub_links: [
-        { label: "General Info", path: nil, stub: true },
-        { label: "Clients", path: nil, stub: true },
-        { label: "Vendors", path: nil, stub: true },
-        { label: "Locations", path: nil, stub: true },
-        { label: "Planners", path: nil, stub: true }
+        { label: "General Info", path: event_settings_path(event) },
+        { label: "Clients", path: clients_event_settings_path(event) },
+        { label: "Vendors", path: vendors_event_settings_path(event) },
+        { label: "Locations", path: locations_event_settings_path(event) },
+        { label: "Planners", path: planners_event_settings_path(event) }
       ],
-      match_paths: [event_settings_path(event)]
+      match_paths: [
+        event_settings_path(event),
+        clients_event_settings_path(event),
+        vendors_event_settings_path(event),
+        locations_event_settings_path(event),
+        planners_event_settings_path(event)
+      ]
     }
 
     timeline_sub_links = []

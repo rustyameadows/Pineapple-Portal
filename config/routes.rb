@@ -17,7 +17,11 @@ end
 post "global_assets/presign", to: "global_asset_uploads#create", as: :global_assets_presign
 
   resources :events do
-    resource :settings, only: :show, module: :events do
+    resource :settings, only: [:show], module: :events, controller: :settings do
+      get :clients
+      get :vendors
+      get :locations
+      get :planners
     end
 
     resource :people, only: :show, module: :events

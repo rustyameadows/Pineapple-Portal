@@ -14,7 +14,7 @@ module Events
         }
       }
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to planners_event_settings_url(@event)
       team_member = EventTeamMember.find_by(event: @event, user: users(:planner_two))
       assert_not_nil team_member
       assert team_member.client_visible?
@@ -32,7 +32,7 @@ module Events
         }
       end
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to planners_event_settings_url(@event)
       assert_match "must be a planner or admin", flash[:alert]
     end
 
@@ -43,7 +43,7 @@ module Events
         event_team_member: { client_visible: "1" }
       }
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to planners_event_settings_url(@event)
       assert member.reload.client_visible?
     end
 
@@ -57,7 +57,7 @@ module Events
         }
       end
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to clients_event_settings_url(@event)
       team_member = EventTeamMember.find_by(event: @event, user: users(:client_two))
       assert_equal "client", team_member.member_role
       assert team_member.client_visible?
@@ -72,7 +72,7 @@ module Events
         event_team_member: { lead_planner: "1" }
       }
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to planners_event_settings_url(@event)
       assert member.reload.lead_planner?
     end
 
@@ -83,7 +83,7 @@ module Events
         event_team_member: { position: "5" }
       }
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to planners_event_settings_url(@event)
       assert_equal 5, member.reload.position
     end
 
@@ -95,7 +95,7 @@ module Events
         event_team_member: { client_visible: "0" }
       }
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to clients_event_settings_url(@event)
       refute member.reload.client_visible?
     end
 
@@ -106,7 +106,7 @@ module Events
         delete event_team_member_url(@event, member)
       end
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to planners_event_settings_url(@event)
     end
 
     test "generates reset token for client" do
@@ -116,7 +116,7 @@ module Events
         post issue_reset_event_team_member_url(@event, member)
       end
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to clients_event_settings_url(@event)
       token = PasswordResetToken.order(:created_at).last
       assert_equal member.user, token.user
       assert token.expires_at > Time.current
@@ -129,7 +129,7 @@ module Events
         post issue_reset_event_team_member_url(@event, member)
       end
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to planners_event_settings_url(@event)
       assert_match "only available for client accounts", flash[:alert]
     end
   end

@@ -1,0 +1,88 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Event Partners</p>
+            <h1 class="event-section__title">Locations</h1>
+            <p class="event-section__lead">Keep venue information alongside contacts and visibility preferences.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__contacts-section">
+            <% if @event_venues.any? %>
+              <ul class="event-settings__contact-list">
+                <% @event_venues.each_with_index do |venue, index| %>
+                  <li class="event-settings__contact-item">
+                    <%= form_with model: [@event, venue], local: true, html: { class: "event-settings__form" } do |form| %>
+                      <div class="event-settings__field-group">
+                        <div class="event-settings__field">
+                          <%= form.label :name, "Venue name" %>
+                          <%= form.text_field :name, required: true %>
+                        </div>
+                        <div class="event-settings__field event-settings__field--checkbox">
+                          <label class="event-settings__toggle">
+                            <%= form.check_box :client_visible %>
+                            <span>Visible to clients</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <%= render "events/settings/contact_fields", form:, entity: venue %>
+
+                      <div class="event-settings__form-actions">
+                        <%= form.submit "Save venue" %>
+                      </div>
+                    <% end %>
+
+                    <div class="event-settings__controls">
+                      <% if index.positive? %>
+                        <%= link_to "Move up", move_up_event_event_venue_path(@event, venue), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                      <% end %>
+                      <% if index < @event_venues.length - 1 %>
+                        <%= link_to "Move down", move_down_event_event_venue_path(@event, venue), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                      <% end %>
+                      <%= link_to "Remove", event_event_venue_path(@event, venue), data: { turbo_method: :delete, turbo_confirm: "Remove this location?" }, class: "event-settings__control event-settings__control--danger" %>
+                    </div>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="event-settings__empty">No locations logged yet. Add the primary space below.</p>
+            <% end %>
+
+            <div class="event-settings__new-link">
+              <h3>Add Location</h3>
+              <%= form_with model: [@event, @event_venue], local: true, html: { class: "event-settings__form" } do |form| %>
+                <div class="event-settings__field-group">
+                  <div class="event-settings__field">
+                    <%= form.label :name, "Venue name" %>
+                    <%= form.text_field :name, required: true %>
+                  </div>
+                  <div class="event-settings__field event-settings__field--checkbox">
+                    <label class="event-settings__toggle">
+                      <%= form.check_box :client_visible %>
+                      <span>Visible to clients</span>
+                    </label>
+                  </div>
+                </div>
+
+                <%= render "events/settings/contact_fields", form:, entity: @event_venue %>
+
+                <div class="event-settings__form-actions">
+                  <%= form.submit "Add location" %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

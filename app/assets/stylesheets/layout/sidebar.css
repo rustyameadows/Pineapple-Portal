@@ -13,7 +13,7 @@
 .event-sidebar {
     background: var(--color-light-cream);
     border-right: 1px solid var(--color-sea-foam);
-    padding: 2.5rem 2rem;
+    padding: 2rem 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 2rem;
@@ -173,12 +173,39 @@
     display: inline-block;
 }
 
-.event-sidebar__secondary-links {
-    list-style: none;
+.event-sidebar__footer {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+}
+
+.event-sidebar__footer form {
     margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 0.5rem;
+}
+
+.event-sidebar__footer-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-sea-foam);
+    border-radius: var(--radius-pill);
+    padding: 0.35rem 1rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: transparent;
+    color: var(--color-dark-brown);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.event-sidebar__footer-button:hover,
+.event-sidebar__footer-button:focus {
+    background: color-mix(in srgb, var(--color-sea-foam) 12%, white);
 }
 
 .event-sidebar__section--active > .event-sidebar__link {
@@ -191,8 +218,7 @@
 }
 
 .event-sidebar--collapsed .event-sidebar__context,
-.event-sidebar--collapsed .event-sidebar__subnav,
-.event-sidebar--collapsed .event-sidebar__auth-inline {
+.event-sidebar--collapsed .event-sidebar__subnav {
     display: none;
 }
 
@@ -207,7 +233,6 @@
 
 .event-sidebar--collapsed .event-sidebar__link,
 .event-sidebar--collapsed .event-sidebar__subnav-link,
-.event-sidebar--collapsed .event-sidebar__auth-link,
 .event-sidebar--collapsed .event-sidebar__toggle {
     width: 100%;
     text-align: center;
@@ -217,8 +242,7 @@
 }
 
 .event-sidebar--collapsed .event-sidebar__link::before,
-.event-sidebar--collapsed .event-sidebar__subnav-link::before,
-.event-sidebar--collapsed .event-sidebar__auth-link::before {
+.event-sidebar--collapsed .event-sidebar__subnav-link::before {
     content: "";
     width: 0.45rem;
     height: 0.45rem;
@@ -246,6 +270,17 @@
 
 .event-sidebar--collapsed .event-sidebar__brand-link {
     display: block;
+}
+
+.event-sidebar--collapsed .event-sidebar__footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.event-sidebar--collapsed .event-sidebar__footer-button {
+    width: 100%;
+    text-align: center;
 }
 
 @media (max-width: 700px) {

@@ -27,7 +27,7 @@ module Events
         }
       end
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to vendors_event_settings_url(@event)
       vendor = EventVendor.find_by(name: "Florist Collective")
       refute_nil vendor
       refute vendor.client_visible?
@@ -57,7 +57,7 @@ module Events
         }
       }
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to vendors_event_settings_url(@event)
       vendor.reload
       assert_equal "Bright Lights Co", vendor.name
       assert vendor.client_visible?
@@ -73,7 +73,7 @@ module Events
 
       patch move_up_event_event_vendor_url(@event, lower_vendor)
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to vendors_event_settings_url(@event)
       higher_vendor.reload
       lower_vendor.reload
       assert lower_vendor.position < higher_vendor.position
@@ -86,7 +86,7 @@ module Events
         delete event_event_vendor_url(@event, vendor)
       end
 
-      assert_redirected_to event_settings_url(@event)
+      assert_redirected_to vendors_event_settings_url(@event)
     end
   end
 end

@@ -7,23 +7,23 @@ module Events
       @event_vendor = @event.event_vendors.new(event_vendor_params)
 
       if @event_vendor.save
-        redirect_back fallback_location: event_settings_path(@event), notice: "Vendor saved."
+        redirect_back fallback_location: vendors_event_settings_path(@event), notice: "Vendor saved."
       else
-        redirect_back fallback_location: event_settings_path(@event), alert: @event_vendor.errors.full_messages.to_sentence
+        redirect_back fallback_location: vendors_event_settings_path(@event), alert: @event_vendor.errors.full_messages.to_sentence
       end
     end
 
     def update
       if @event_vendor.update(event_vendor_params)
-        redirect_back fallback_location: event_settings_path(@event), notice: "Vendor updated."
+        redirect_back fallback_location: vendors_event_settings_path(@event), notice: "Vendor updated."
       else
-        redirect_back fallback_location: event_settings_path(@event), alert: @event_vendor.errors.full_messages.to_sentence
+        redirect_back fallback_location: vendors_event_settings_path(@event), alert: @event_vendor.errors.full_messages.to_sentence
       end
     end
 
     def destroy
       @event_vendor.destroy
-      redirect_back fallback_location: event_settings_path(@event), notice: "Vendor removed."
+      redirect_back fallback_location: vendors_event_settings_path(@event), notice: "Vendor removed."
     end
 
     def move_up
@@ -64,7 +64,7 @@ module Events
         end
       end
 
-      redirect_back fallback_location: event_settings_path(@event)
+      redirect_back fallback_location: vendors_event_settings_path(@event)
     end
   end
 end
