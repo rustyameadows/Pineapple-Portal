@@ -1,0 +1,176 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Event Directory</p>
+            <h1 class="event-section__title">People</h1>
+            <p class="event-section__lead">Review everyone connected to this event. This is a simple preview while we shape a richer directory.</p>
+          </div>
+        </header>
+      </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Planning Team</p>
+            <h2 class="event-section__title">Planners</h2>
+          </div>
+        </header>
+        <div class="event-section__body">
+          <% if @planner_team_members.any? %>
+            <ul class="event-directory-list">
+              <% @planner_team_members.each do |member| %>
+                <% user = member.user %>
+                <li>
+                  <strong><%= user.name %></strong>
+                  <% if user.title.present? %>
+                    <span>· <%= user.title %></span>
+                  <% end %>
+                  <div class="event-directory-list__meta">
+                    <span><%= user.email %></span>
+                    <% if user.phone_number.present? %>
+                      <span>· <%= user.phone_number %></span>
+                    <% end %>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="event-section__lead">No planners are linked to this event yet.</p>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Client Team</p>
+            <h2 class="event-section__title">Clients</h2>
+          </div>
+        </header>
+        <div class="event-section__body">
+          <% if @client_team_members.any? %>
+            <ul class="event-directory-list">
+              <% @client_team_members.each do |member| %>
+                <% user = member.user %>
+                <li>
+                  <strong><%= user.name %></strong>
+                  <% if user.title.present? %>
+                    <span>· <%= user.title %></span>
+                  <% end %>
+                  <div class="event-directory-list__meta">
+                    <span><%= user.email %></span>
+                    <% if user.phone_number.present? %>
+                      <span>· <%= user.phone_number %></span>
+                    <% end %>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="event-section__lead">No clients are assigned yet.</p>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Vendors</p>
+            <h2 class="event-section__title">Vendor Contacts</h2>
+          </div>
+        </header>
+        <div class="event-section__body">
+          <% if @vendors.any? %>
+            <% @vendors.each do |vendor| %>
+              <article class="event-directory-card">
+                <h3><%= vendor.name %></h3>
+                <% if vendor.vendor_type.present? %>
+                  <p class="event-directory-card__meta"><%= vendor.vendor_type %></p>
+                <% end %>
+                <% if vendor.contacts.any? %>
+                  <ul class="event-directory-list event-directory-list--compact">
+                    <% vendor.contacts.each do |contact| %>
+                      <li>
+                        <strong><%= contact["name"].presence || "Contact" %></strong>
+                        <% if contact["title"].present? %>
+                          <span>· <%= contact["title"] %></span>
+                        <% end %>
+                        <div class="event-directory-list__meta">
+                          <% if contact["email"].present? %>
+                            <span><%= contact["email"] %></span>
+                          <% end %>
+                          <% if contact["phone"].present? %>
+                            <span>· <%= contact["phone"] %></span>
+                          <% end %>
+                        </div>
+                        <% if contact["notes"].present? %>
+                          <p class="event-directory-card__notes"><%= contact["notes"] %></p>
+                        <% end %>
+                      </li>
+                    <% end %>
+                  </ul>
+                <% else %>
+                  <p class="event-section__lead">No contacts recorded for this vendor yet.</p>
+                <% end %>
+              </article>
+            <% end %>
+          <% else %>
+            <p class="event-section__lead">No vendors have been added yet.</p>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Locations</p>
+            <h2 class="event-section__title">Venues</h2>
+          </div>
+        </header>
+        <div class="event-section__body">
+          <% if @venues.any? %>
+            <% @venues.each do |venue| %>
+              <article class="event-directory-card">
+                <h3><%= venue.name %></h3>
+                <% if venue.contacts.any? %>
+                  <ul class="event-directory-list event-directory-list--compact">
+                    <% venue.contacts.each do |contact| %>
+                      <li>
+                        <strong><%= contact["name"].presence || "Contact" %></strong>
+                        <% if contact["title"].present? %>
+                          <span>· <%= contact["title"] %></span>
+                        <% end %>
+                        <div class="event-directory-list__meta">
+                          <% if contact["email"].present? %>
+                            <span><%= contact["email"] %></span>
+                          <% end %>
+                          <% if contact["phone"].present? %>
+                            <span>· <%= contact["phone"] %></span>
+                          <% end %>
+                        </div>
+                        <% if contact["notes"].present? %>
+                          <p class="event-directory-card__notes"><%= contact["notes"] %></p>
+                        <% end %>
+                      </li>
+                    <% end %>
+                  </ul>
+                <% else %>
+                  <p class="event-section__lead">No contacts recorded for this location yet.</p>
+                <% end %>
+              </article>
+            <% end %>
+          <% else %>
+            <p class="event-section__lead">No locations have been added yet.</p>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

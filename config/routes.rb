@@ -20,6 +20,8 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
     resource :settings, only: :show, module: :events do
     end
 
+    resource :people, only: :show, module: :events
+
     resources :event_photo_documents, only: :create, module: :events
 
     resources :payments, module: :events

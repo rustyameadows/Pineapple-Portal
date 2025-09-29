@@ -1,49 +1,78 @@
+<% sections = event_sidebar_sections(event) %>
+<% current_path = request.path %>
+
 <aside class="event-sidebar">
-  <div class="event-sidebar__brand">
-    <%= link_to root_path, class: "event-sidebar__brand-link" do %>
-      <span class="event-sidebar__brand-top">Pineapple</span>
-      <span class="event-sidebar__brand-bottom">Productions</span>
-    <% end %>
+  <div class="event-sidebar__header">
+    <div class="event-sidebar__brand">
+      <%= link_to root_path, class: "event-sidebar__brand-link", title: "Pineapple Productions" do %>
+        <span class="event-sidebar__brand-top" aria-hidden="true">Pineapple</span>
+        <span class="event-sidebar__brand-bottom" aria-hidden="true">Productions</span>
+        <span class="sr-only">Pineapple Productions</span>
+      <% end %>
+    </div>
   </div>
 
   <div class="event-sidebar__context">
     <span class="event-sidebar__context-label">Currently Viewing</span>
     <h2 class="event-sidebar__event-name">
-      <%= link_to event.name, event_path(event), class: "event-sidebar__event-link" %>
+      <%= link_to event.name, event_path(event), class: "event-sidebar__event-link", title: event.name %>
     </h2>
   </div>
 
-  <% primary_links = [
-    { label: "Questionnaires", url: event_questionnaires_path(event) },
-    { label: "Calendars", url: event_calendars_path(event) },
-    { label: "Documents", url: event_documents_path(event) },
-    { label: "Signatures + Approvals", url: event_approvals_path(event) },
-    { label: "Payments", url: event_payments_path(event) },
-    { label: "Event Info", url: event_settings_path(event) }
-  ] %>
+  <nav class="event-sidebar__nav" aria-label="Event navigation">
+    <ul class="event-sidebar__sections">
+      <% sections.each do |section| %>
+        <% active = event_sidebar_section_active?(section, current_path) %>
+        <% top_path = section[:path] %>
+        <% stub = top_path.blank? %>
+        <% link_classes = ["event-sidebar__link"] %>
+        <% link_classes << "event-sidebar__link--stub" if stub %>
+        <% link_classes << "event-sidebar__link--active" if active %>
+        <li class="event-sidebar__section<%= ' event-sidebar__section--active' if active %>">
+          <%= link_to(top_path.presence || '#',
+                      class: link_classes.join(' '),
+                      title: section[:label],
+                      aria: { label: section[:label], current: (active && !stub ? 'page' : nil) }.compact,
+                      data: (stub ? { turbo: false } : {})) do %>
+            <span class="event-sidebar__link-label" aria-hidden="true"><%= section[:label] %></span>
+          <% end %>
 
-  <nav class="event-sidebar__nav">
-    <ul>
-      <% primary_links.each do |link| %>
-        <li>
-          <%= link_to link[:label], link[:url], class: "event-sidebar__link#{' event-sidebar__link--stub' if link[:url] == '#'}" %>
+          <% if active && section[:sub_links].present? %>
+            <ul class="event-sidebar__subnav">
+              <% section[:sub_links].each do |sub_link| %>
+                <% sub_path = sub_link[:path] %>
+                <% sub_stub = sub_path.blank? %>
+                <% sub_active = !sub_stub && current_path.start_with?(sub_path) %>
+                <% sub_classes = ["event-sidebar__subnav-link"] %>
+                <% sub_classes << "event-sidebar__subnav-link--stub" if sub_stub %>
+                <% sub_classes << "event-sidebar__subnav-link--active" if sub_active %>
+                <li>
+                  <%= link_to(sub_path.presence || '#',
+                              class: sub_classes.join(' '),
+                              title: sub_link[:label],
+                              aria: { label: sub_link[:label], current: (sub_active && !sub_stub ? 'page' : nil) }.compact,
+                              data: (sub_stub ? { turbo: false } : {})) do %>
+                    <span class="event-sidebar__link-label" aria-hidden="true"><%= sub_link[:label] %></span>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          <% end %>
         </li>
       <% end %>
     </ul>
   </nav>
 
-  <% secondary_links = [
-    { label: "Events", url: events_path },
-    { label: "Documents", url: "#" },
-    { label: "Templates", url: questionnaire_templates_path },
-    { label: "Settings", url: settings_path }
-  ] %>
-
-  <nav class="event-sidebar__nav event-sidebar__nav--secondary">
-    <ul>
-      <% secondary_links.each do |link| %>
+  <nav class="event-sidebar__nav event-sidebar__nav--secondary" aria-label="Account navigation">
+    <ul class="event-sidebar__secondary-links">
+      <% event_sidebar_secondary_links.each do |link| %>
         <li>
-          <%= link_to link[:label], link[:url], class: "event-sidebar__link#{' event-sidebar__link--stub' if link[:url] == '#'}" %>
+          <%= link_to link[:path],
+                      class: "event-sidebar__link",
+                      title: link[:label],
+                      aria: { label: link[:label] } do %>
+            <span class="event-sidebar__link-label" aria-hidden="true"><%= link[:label] %></span>
+          <% end %>
         </li>
       <% end %>
     </ul>

@@ -162,6 +162,50 @@
   background: var(--color-light-cream);
 }
 
+.event-directory-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.event-directory-list--compact {
+  gap: 0.75rem;
+}
+
+.event-directory-list__meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--color-brown);
+  margin-top: 0.35rem;
+}
+
+.event-directory-card {
+  border: 1px solid var(--color-sea-foam);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: grid;
+  gap: 0.85rem;
+  background: var(--color-light-cream);
+}
+
+.event-directory-card__meta {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-brown);
+}
+
+.event-directory-card__notes {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--color-brown);
+}
+
 .event-section__list-title {
   margin: 0;
   font-size: 1.2rem;
