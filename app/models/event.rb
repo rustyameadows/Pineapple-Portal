@@ -65,7 +65,10 @@ class Event < ApplicationRecord
   end
 
   def planning_link_keys
-    planning_link_tokens
+    tokens = normalize_planning_link_tokens(stored_planning_link_tokens)
+    tokens = default_planning_link_tokens if tokens.blank?
+
+    tokens
       .select { |token| PlanningLinkToken.built_in?(token) }
       .map { |token| PlanningLinkToken.token_value(token) }
   end
@@ -164,15 +167,26 @@ class Event < ApplicationRecord
   end
 
   def planning_link_keys_must_be_known
-    tokens = normalize_planning_link_tokens(stored_planning_link_tokens)
-    invalid_tokens = tokens.reject { |token| PlanningLinkToken.valid?(token, event: self) }
-    return if invalid_tokens.empty?
+    unrecognized_built_in_keys = stored_planning_link_tokens
+                                   .map { |token| standardize_planning_link_token(token) }
+                                   .compact
+                                   .select { |token| PlanningLinkToken.built_in?(token) }
+                                   .map { |token| PlanningLinkToken.token_value(token) }
+                                   .reject { |key| ClientPortal::PlanningLinks.built_in_keys.include?(key) }
 
-    errors.add(:planning_link_keys, "contains unknown links: #{invalid_tokens.join(', ')}")
+    return if unrecognized_built_in_keys.empty?
+
+    errors.add(:planning_link_keys, "contains unknown links: #{unrecognized_built_in_keys.join(', ')}")
   end
 
   def sanitize_planning_link_tokens
-    store_planning_link_tokens(planning_link_tokens)
+    tokens = normalize_planning_link_tokens(stored_planning_link_tokens)
+
+    planning_event_link_tokens.each do |token|
+      tokens << token unless tokens.include?(token)
+    end
+
+    self[:planning_link_keys] = tokens
   end
 
   def default_planning_link_tokens
