@@ -17,6 +17,9 @@ gem "stimulus-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
 gem "aws-sdk-s3", "~> 1.144"
+gem "grover", "~> 1.2.3"
+gem "pdf-reader", "~> 2.12"
+gem "combine_pdf", "~> 1.0"
 
 group :development, :test do
   gem "dotenv-rails"

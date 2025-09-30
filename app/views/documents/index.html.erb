@@ -12,10 +12,17 @@
             <h1 class="event-section__title">Files for <%= @event.name %></h1>
             <p class="event-section__lead">Browse by category to jump straight to packets, planner uploads, or client contributions.</p>
           </div>
-          <%= link_to "Upload Document", new_event_document_path(@event), class: "event-section__cta" %>
+          <div class="event-section__actions">
+            <%= link_to "Manage generated documents", event_documents_generated_index_path(@event), class: "button button--ghost" %>
+            <%= link_to "Upload document", new_event_document_path(@event), class: "event-section__cta" %>
+          </div>
         </header>
 
         <div class="event-section__body">
+          <%= render "documents/generated_panel",
+                     event: @event,
+                     generated_documents: @generated_documents %>
+
           <div class="event-docs__panel">
             <%= render "documents/summary_table", event: @event, groups: @document_groups %>
           </div>

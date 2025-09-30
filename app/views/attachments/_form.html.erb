@@ -40,7 +40,20 @@
         <label for="attachment_file_<%= entity.id %>">File</label><br>
         <input type="file" id="attachment_file_<%= entity.id %>" data-attachment-upload-target="file">
       </div>
-      <p data-attachment-upload-target="status">Optional: upload a new file to attach.</p>
+
+      <div class="attachment-upload" data-attachment-upload-target="ui">
+        <div class="attachment-upload__progress" data-attachment-upload-target="progress" hidden>
+          <div class="attachment-upload__progress-track" aria-hidden="true">
+            <div class="attachment-upload__progress-bar" data-attachment-upload-target="progressBar"></div>
+          </div>
+          <div class="attachment-upload__progress-status">
+            <span data-attachment-upload-target="progressLabel">Uploading…</span>
+            <span class="attachment-upload__progress-percent" data-attachment-upload-target="progressPercent">0%</span>
+          </div>
+        </div>
+
+        <p class="attachment-upload__status" data-attachment-upload-target="status">Optional: upload a new file to attach.</p>
+      </div>
 
       <%= form.hidden_field :file_upload_title %>
       <%= form.hidden_field :file_upload_storage_uri %>

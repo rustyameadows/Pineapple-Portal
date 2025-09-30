@@ -1,0 +1,100 @@
+<% tokens_path = Rails.root.join("app/assets/stylesheets/base/tokens.css") %>
+<% if File.exist?(tokens_path) %>
+  <% tokens_css = File.read(tokens_path) %>
+  <style><%= raw tokens_css %></style>
+<% end %>
+
+<style>
+  
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--page-bg, #ffffff);
+  }
+
+  .generated-template {
+    --page-bg: var(--color-white, #ffffff);
+    --page-content-padding-x: var(--generated-document-content-padding-x, 0.5in);
+    --page-content-padding-top: var(--generated-document-content-padding-top, 0.75in);
+    --page-content-padding-bottom: var(--generated-document-content-padding-bottom, 0.5in);
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 100%;
+    height: 100%;
+    padding:
+      var(--page-content-padding-top)
+      var(--page-content-padding-x)
+      var(--page-content-padding-bottom);
+    background: var(--page-bg);
+    color: var(--color-dark-brown, #000000);
+    font-family: var(--font-family-body, 'BaskervilleNo2', 'Times New Roman', serif);
+    letter-spacing: 0.02em;
+    display: grid;
+    gap: clamp(1.25rem, 4vh, 2rem);
+    align-content: start;
+  }
+
+  .generated-template h1,
+  .generated-template h2,
+  .generated-template h3 {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-family-display, 'Didot', 'Times New Roman', serif);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .generated-template p {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+  }
+
+  .generated-template table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .generated-template table th,
+  .generated-template table td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid var(--color-border, #000000);
+    text-align: left;
+  }
+
+  .generated-template table thead th {
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-subtle, #000000);
+  }
+
+  .generated-template table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .generated-template__muted {
+    color: var(--color-ink-subtle, #000000);
+    font-style: italic;
+  }
+
+  .generated-template__page-header {
+    display: grid;
+    gap: 0.6rem;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .generated-template__page-header-logo img {
+    max-width: 120px;
+    display: block;
+  }
+
+  .generated-template__page-header-title {
+    margin: 0;
+    font-size: 1.4rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+</style>

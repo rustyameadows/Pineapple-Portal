@@ -26,6 +26,41 @@ Because every file referenced in the layout corresponds directly to a physical f
 
 If you find yourself reusing a partial in both planner and client layouts, just add it to both lists. Keeping the inclusion explicit makes it easy to see which surfaces depend on which styles, and you can reorganise the order in one place.
 
+## Generated Document Templates
+
+Generated documents stitch together uploaded PDFs and branded HTML segments. All branded segments live under `app/views/generated_documents/sections` and share a common set of primitives so the builder preview, template gallery, and compiled Grover PDF stay in sync.
+
+### Shared base styles & tokens
+
+Every segment may opt-in to the shared base styles by rendering the partial at the top of the template:
+
+```erb
+<% if local_assigns.fetch(:render_base_styles, true) %>
+  <%= render "generated_documents/sections/base_styles" %>
+<% end %>
+```
+
+`_base_styles.html.erb` defines typography, table rules, and brand tokens (e.g. `--color-dark-brown`, `--color-light-cream`, `--color-white`). Templates should rely on these tokens rather than hard-coded colours (only black/white fallbacks are acceptable). Sections can override any token—for example, Section Break sets `--page-bg` and `--color-ink` so its title renders light-on-dark.
+
+### Preview frame
+
+`_preview_styles.html.erb` and `_preview_frame.html.erb` supply the 8.5"×11" preview chrome. The builder preview layout (`app/views/layouts/generated_preview.html.erb`) renders both partials; the template gallery loads the styles once and wraps each snippet with `_preview_frame`. Gallery cards apply `.template-card__preview-frame` overrides so the scaled page fills the card without the external shadow/padding.
+
+### Creating a new branded section
+
+1. Register the view in `DocumentSegment::HTML_VIEWS` (label, description, template path).
+2. Add `app/views/generated_documents/sections/<key>.html.erb`. Keep the guarded `render_base_styles` call shown above.
+3. Define any template-specific `<style>` blocks inside the view. Scope selectors to the template, use tokens (`--page-bg`, `--color-ink`, brand colours) instead of literals, and set additional tokens if needed.
+4. Preview the segment from the builder and the template gallery—both paths now rely on the same preview frame, so what you see should match the compiled PDF.
+
+### Event photo hook
+
+Events may reference one of their uploaded image documents as a hero photo (`event.event_photo_document`). Branded templates can reuse it via helpers—e.g., the cover page calls `inline_document_image_data_uri(event.event_photo_document)` to embed the image when present.
+
+### Global assets & user avatars
+
+Not every asset lives on an event. The `global_assets` table stores event-agnostic uploads (currently used for user avatars). Uploads go through the same R2 presign flow, then `user.avatar_global_asset` points at the stored record. UI layers can fetch the bytes with `inline_global_asset_data_uri(user.avatar_global_asset)` and fall back to initials/placeholders when absent.
+
 ## Local Environment
 
 ### Prerequisites
@@ -61,8 +96,11 @@ Node.js 24.8.0 (or any current LTS) is sufficient—no extra configuration neede
 ```bash
 bundle install
 bin/rails db:setup   # creates databases, runs migrations, seeds sample users
+npm install          # installs Puppeteer dependency for Grover
 bin/rails server     # or bin/dev for the foreman/dev server
 ```
+
+Chromium for Grover/Puppeteer downloads automatically via the `postinstall` script. If you prefer to run it manually, execute `npx puppeteer browsers install chrome` after `npm install`.
 
 Visit http://localhost:3000 after boot (you’ll be redirected to log in first). The seed data creates two demo accounts with password `password123`, a sample event with questionnaires (including a template), and a placeholder document.
 

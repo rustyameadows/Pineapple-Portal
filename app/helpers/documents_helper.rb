@@ -66,4 +66,78 @@ module DocumentsHelper
       event_documents_path(event)
     end
   end
+
+  def inline_asset_data_uri(path)
+    asset_path = ActionController::Base.helpers.asset_path(path)
+    return asset_path if asset_path.start_with?("data:")
+
+    manifest = Rails.application.assets_manifest if Rails.application.respond_to?(:assets_manifest)
+    source = manifest&.find_sources(path)&.first
+    if source.nil?
+      env = Rails.application.try(:assets)
+      if env.respond_to?(:find_asset)
+        asset = env.find_asset(path)
+        source = asset&.source
+      end
+    end
+
+    if source.nil?
+      clean_asset_path = asset_path.sub(%r{^/}, "")
+      candidate_paths = [
+        Rails.root.join("app/assets/images", path),
+        Rails.root.join("app/assets", path),
+        Rails.root.join("public", clean_asset_path),
+        Rails.root.join("public/assets", clean_asset_path),
+        Rails.root.join("public/assets", File.basename(clean_asset_path))
+      ]
+
+      candidate = candidate_paths.find { |p| p.exist? }
+      source = candidate&.binread if candidate
+    end
+
+    return unless source
+
+    blob = source.is_a?(String) ? source : source.source
+    base64 = Base64.strict_encode64(blob)
+    content_type = Marcel::MimeType.for(StringIO.new(blob), name: path)
+    "data:#{content_type};base64,#{base64}"
+  end
+
+  def inline_document_image_data_uri(document)
+    return unless document&.content_type.to_s.start_with?("image/")
+    return if document.storage_uri.blank?
+
+    storage = R2::Storage.new
+    data = storage.download(document.storage_uri)
+    if data.present?
+      buffer = data.respond_to?(:read) ? data.read : data.to_s
+      buffer = buffer.to_s
+      buffer.force_encoding(Encoding::BINARY)
+      return "data:#{document.content_type};base64,#{Base64.strict_encode64(buffer)}" if buffer.present?
+    end
+
+    storage.presigned_download_url(key: document.storage_uri)
+  rescue StandardError => e
+    Rails.logger.warn("[inline_document_image_data_uri] #{e.class}: #{e.message}")
+    nil
+  end
+
+  def inline_global_asset_data_uri(asset)
+    return unless asset&.content_type.to_s.start_with?("image/")
+    return if asset.storage_uri.blank?
+
+    storage = R2::Storage.new
+    data = storage.download(asset.storage_uri)
+    if data.present?
+      buffer = data.respond_to?(:read) ? data.read : data.to_s
+      buffer = buffer.to_s
+      buffer.force_encoding(Encoding::BINARY)
+      return "data:#{asset.content_type};base64,#{Base64.strict_encode64(buffer)}" if buffer.present?
+    end
+
+    storage.presigned_download_url(key: asset.storage_uri)
+  rescue StandardError => e
+    Rails.logger.warn("[inline_global_asset_data_uri] #{e.class}: #{e.message}")
+    nil
+  end
 end

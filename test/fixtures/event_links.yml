@@ -1,0 +1,20 @@
+guest_resources:
+  event: one
+  label: "Welcome Packet"
+  url: "https://example.com/welcome"
+  position: 0
+  link_type: quick
+
+planning_guestbook:
+  event: one
+  label: "Guest Book"
+  url: "https://guestbook.example.com"
+  position: 0
+  link_type: planning
+
+vendor_portal:
+  event: two
+  label: "Vendor Portal"
+  url: "https://vendors.example.com"
+  position: 0
+  link_type: quick

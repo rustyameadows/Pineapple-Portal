@@ -36,3 +36,4 @@
 
 # Ignore bundler config.
 /agent/uploads/
+.cache/

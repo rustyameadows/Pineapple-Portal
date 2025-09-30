@@ -43,10 +43,10 @@ class EventTeamMember < ApplicationRecord
 
   def assign_position
     self.member_role ||= TEAM_ROLES[:planner]
-    return if position.present?
     return unless event
+    return unless new_record? || position.nil?
 
-    next_position = event.event_team_members.maximum(:position)
+    next_position = EventTeamMember.where(event_id: event_id).where.not(id: id).maximum(:position)
     self.position = next_position.present? ? next_position + 1 : 0
   end
 

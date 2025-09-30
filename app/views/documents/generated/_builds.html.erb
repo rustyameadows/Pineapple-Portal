@@ -1,0 +1,109 @@
+<% document ||= builds.first&.document %>
+
+<ul class="generated-builder__builds">
+  <% builds.each do |build| %>
+    <% compiled_version = compiled_versions.find { |doc| doc.build_id == build.build_id } %>
+    <% started_at = build.started_at %>
+    <% finished_at = build.finished_at %>
+    <% pages = build.compiled_page_count %>
+    <% file_size = build.file_size %>
+
+    <% summary_parts = [] %>
+    <% meta_lines = [] %>
+    <% placeholder_note = nil %>
+
+    <% if started_at.present? %>
+      <% meta_lines << "Started #{started_at.to_fs(:short)} · #{time_ago_in_words(started_at)} ago" %>
+    <% end %>
+
+    <% if finished_at.present? %>
+      <% meta_lines << "Finished #{finished_at.to_fs(:short)} · #{time_ago_in_words(finished_at)} ago" %>
+    <% end %>
+
+    <% if started_at.present? && finished_at.present? %>
+      <% meta_lines << "Elapsed #{distance_of_time_in_words(started_at, finished_at)}" %>
+    <% end %>
+
+    <% stats_parts = [] %>
+    <% stats_parts << pluralize(pages, "page") if pages.present? %>
+    <% stats_parts << number_to_human_size(file_size) if file_size.present? %>
+
+    <% case build.status %>
+    <% when "pending" %>
+      <% reference_time = build.created_at || build.updated_at || Time.current %>
+      <% summary_parts << "Queued #{time_ago_in_words(reference_time)} ago" %>
+      <% meta_lines << "Requested #{reference_time.to_fs(:short)} · #{time_ago_in_words(reference_time)} ago" if reference_time.present? %>
+      <% placeholder_note = "Detailed progress coming soon" %>
+    <% when "running" %>
+      <% reference_time = started_at || build.created_at || build.updated_at || Time.current %>
+      <% started_phrase = started_at.present? ? "started" : "queued" %>
+      <% summary_parts << "Rendering – #{started_phrase} #{time_ago_in_words(reference_time)} ago" %>
+      <% placeholder_note = "Detailed progress coming soon" %>
+    <% when "succeeded" %>
+      <% summary_parts << (finished_at.present? ? "Finished #{time_ago_in_words(finished_at)} ago" : "Finished") %>
+      <% summary_parts.concat(stats_parts) if stats_parts.any? %>
+    <% when "failed" %>
+      <% summary_parts << (finished_at.present? ? "Failed #{time_ago_in_words(finished_at)} ago" : "Failed") %>
+      <% summary_parts.concat(stats_parts) if stats_parts.any? %>
+    <% when "cancelled" %>
+      <% reference_time = finished_at || build.updated_at || build.created_at %>
+      <% summary_parts << (reference_time.present? ? "Cancelled #{time_ago_in_words(reference_time)} ago" : "Cancelled") %>
+      <% summary_parts.concat(stats_parts) if stats_parts.any? %>
+    <% else %>
+      <% summary_parts << build.status.humanize %>
+      <% summary_parts.concat(stats_parts) if stats_parts.any? %>
+    <% end %>
+
+    <li class="generated-builder__build">
+      <div class="generated-builder__build-main">
+        <div class="generated-builder__build-row">
+          <div class="generated-builder__build-copy">
+            <% if summary_parts.any? %>
+              <p class="generated-builder__build-summary"><%= summary_parts.join(" · ") %></p>
+            <% end %>
+
+            <% meta_lines.each do |line| %>
+              <p class="generated-builder__build-meta"><%= line %></p>
+            <% end %>
+          </div>
+
+          <div class="generated-builder__build-status-wrap">
+            <span class="generated-builder__build-status generated-builder__build-status--<%= build.status %>">
+              <%= build.status.humanize %>
+            </span>
+            <div class="generated-builder__build-status-actions">
+              <% if compiled_version.present? %>
+                <%= link_to "Download v#{compiled_version.version}",
+                            download_event_document_path(event, compiled_version),
+                            class: "button button--tiny button--ghost",
+                            target: "_blank",
+                            rel: "noopener" %>
+              <% elsif placeholder_note.present? %>
+                <span class="generated-builder__build-progress generated-builder__build-progress--hint"><%= placeholder_note %></span>
+              <% end %>
+
+              <% if build.cancelable? %>
+                <%= button_to "Cancel",
+                              cancel_event_documents_generated_build_path(event, document.logical_id, build),
+                              method: :patch,
+                              class: "button button--tiny button--ghost" %>
+              <% end %>
+
+              <% if !build.running? && !build.succeeded? %>
+                <%= button_to "Remove",
+                              event_documents_generated_build_path(event, document.logical_id, build),
+                              method: :delete,
+                              class: "button button--tiny button--ghost",
+                              data: { confirm: "Remove this build record?" } %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <% if build.failed? && build.error_message.present? %>
+          <p class="generated-builder__build-error"><strong>Error:</strong> <%= build.error_message %></p>
+        <% end %>
+      </div>
+    </li>
+  <% end %>
+</ul>

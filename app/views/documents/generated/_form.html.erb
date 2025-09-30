@@ -1,0 +1,29 @@
+<%= form_with model: @document,
+              url: event_documents_generated_index_path(@event),
+              local: true,
+              class: "generated-doc__form" do |form| %>
+  <% if form.object.errors.any? %>
+    <div class="form-errors">
+      <p><strong><%= pluralize(form.object.errors.count, "error") %></strong> prevented the document from being saved:</p>
+      <ul>
+        <% form.object.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-field">
+    <%= form.label :title, "Document title" %>
+    <%= form.text_field :title, required: true, autofocus: true %>
+  </div>
+
+  <div class="form-field form-field--inline">
+    <%= form.check_box :client_visible %>
+    <%= form.label :client_visible, "Share latest version with clients" %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit "Create generated document", class: "button button--primary" %>
+  </div>
+<% end %>

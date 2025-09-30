@@ -1,23 +1,56 @@
-<section class="client-page">
+<section class="client-page client-questionnaires">
   <header class="client-page__header">
     <h1>Questionnaires</h1>
     <p>Share details that help us tailor the experience. Completed questionnaires remain visible for easy reference.</p>
   </header>
 
   <% if @questionnaires.any? %>
-    <ul class="client-list">
-      <% @questionnaires.each do |questionnaire| %>
-        <% status_label = questionnaire.finished? ? "Finished" : "In Progress" %>
-        <li class="client-list__item">
-          <span class="client-list__title">
-            <%= link_to questionnaire.title, client_event_questionnaire_path(@event, questionnaire) %>
-          </span>
-          <span class="client-status-tag <%= questionnaire.finished? ? 'client-status-tag--finished' : 'client-status-tag--in-progress' %>">
-            <%= status_label %>
-          </span>
-        </li>
+    <% segments = {
+         in_progress: { title: "In Progress" },
+         finished: { title: "Finished" }
+       } %>
+    <% grouped_questionnaires = @questionnaires.group_by { |questionnaire| questionnaire.finished? ? :finished : :in_progress } %>
+
+    <div class="client-questionnaires__segments">
+      <% segments.each do |status, config| %>
+        <% items = grouped_questionnaires.fetch(status, []) %>
+        <section class="client-questionnaires__segment client-questionnaires__segment--<%= status %>">
+          <div class="client-questionnaires__segment-header">
+            <h2 class="client-questionnaires__segment-title"><%= config[:title] %></h2>
+            <span class="client-questionnaires__segment-count"><%= pluralize(items.size, "questionnaire") %></span>
+          </div>
+
+          <% if items.any? %>
+            <div class="client-questionnaires__grid">
+              <% items.each do |questionnaire| %>
+                <article class="client-questionnaires__card client-questionnaires__card--<%= status %>">
+                  <div class="client-questionnaires__card-header">
+                    <h3 class="client-questionnaires__card-title">
+                      <%= link_to questionnaire.title,
+                                  client_event_questionnaire_path(@event, questionnaire),
+                                  class: "client-questionnaires__card-link" %>
+                    </h3>
+                    <span class="client-status-tag <%= status == :finished ? 'client-status-tag--finished' : 'client-status-tag--in-progress' %>">
+                      <%= config[:title] %>
+                    </span>
+                  </div>
+
+                  <% if questionnaire.description.present? %>
+                    <p class="client-questionnaires__card-summary"><%= questionnaire.description %></p>
+                  <% end %>
+
+                  <p class="client-questionnaires__card-meta">
+                    Updated <%= l(questionnaire.updated_at, format: :long) %>
+                  </p>
+                </article>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="client-questionnaires__empty">No <%= config[:title].downcase %> questionnaires right now.</p>
+          <% end %>
+        </section>
       <% end %>
-    </ul>
+    </div>
   <% else %>
     <div class="client-placeholder">
       <p>No questionnaires are available yet. Check back soon or reach out if you’re expecting something here.</p>

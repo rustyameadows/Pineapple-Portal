@@ -1,0 +1,96 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Team</p>
+            <h1 class="event-section__title">Planning Team</h1>
+            <p class="event-section__lead">Control which planners are assigned to this event and visible to your clients.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__team">
+            <h3>Planning Team</h3>
+            <% if @planner_team_members.any? %>
+              <table class="event-table">
+                <thead>
+                  <tr>
+                    <th>Planner</th>
+                    <th>Title</th>
+                    <th>Phone</th>
+                    <th>Visible to Clients</th>
+                    <th>Lead Planner</th>
+                    <th>Order</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @planner_team_members.each do |team_member| %>
+                    <% user = team_member.user %>
+                    <tr>
+                      <td><%= link_to user.name, edit_user_path(user, return_to: planners_event_settings_path(@event)), class: "event-section__link" %></td>
+                      <td><%= user.title.presence || "—" %></td>
+                      <td><%= user.phone_number.presence || "—" %></td>
+                      <td>
+                        <%= form_with url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do %>
+                          <label class="event-settings__toggle">
+                            <%= hidden_field_tag "event_team_member[client_visible]", 0 %>
+                            <%= check_box_tag "event_team_member[client_visible]", 1, team_member.client_visible?, onchange: "this.form.submit()", aria: { label: "Toggle client visibility for #{user.name}" } %>
+                            <span>Visible</span>
+                          </label>
+                        <% end %>
+                      </td>
+                      <td>
+                        <%= form_with url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do %>
+                          <label class="event-settings__toggle">
+                            <%= hidden_field_tag "event_team_member[lead_planner]", 0 %>
+                            <%= check_box_tag "event_team_member[lead_planner]", 1, team_member.lead_planner?, onchange: "this.form.submit()", aria: { label: "Toggle lead planner for #{user.name}" } %>
+                            <span>Lead</span>
+                          </label>
+                        <% end %>
+                      </td>
+                      <td>
+                        <%= form_with url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do %>
+                          <%= number_field_tag "event_team_member[position]", team_member.position, min: 0, class: "event-settings__position-input", onchange: "this.form.submit()", aria: { label: "Display order for #{user.name}" } %>
+                        <% end %>
+                      </td>
+                      <td class="event-table__actions">
+                        <%= button_to "Remove", event_team_member_path(@event, team_member), method: :delete, data: { turbo_confirm: "Remove #{user.name} from this event?" }, class: "event-section__link event-section__link--danger" %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% else %>
+              <p class="event-settings__empty">No planners are assigned yet. Add your planning team below.</p>
+            <% end %>
+
+            <div class="event-settings__new-link">
+              <h3>Add Planner</h3>
+              <% if @available_planners.any? %>
+                <%= form_with model: [@event, @planner_team_member], url: event_team_members_path(@event), local: true, class: "event-settings__form" do |form| %>
+                  <div class="event-settings__field">
+                    <%= form.label :user_id, "Planner" %>
+                    <%= form.collection_select :user_id, @available_planners, :id, ->(user) { "#{user.name}#{user.title.present? ? " – #{user.title}" : ""}" }, include_blank: "Select planner" %>
+                  </div>
+                  <%= form.hidden_field :member_role, value: EventTeamMember::TEAM_ROLES[:planner] %>
+                  <div class="event-settings__form-actions">
+                    <%= form.submit "Add to event" %>
+                  </div>
+                <% end %>
+              <% else %>
+                <p class="event-settings__empty">All planners are already assigned to this event.</p>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

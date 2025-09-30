@@ -43,6 +43,7 @@ module Client
     test "show redirects when nothing published" do
       @calendar.update!(client_visible: false)
       @view.update!(client_visible: false)
+      event_calendar_views(:decision_view).update!(client_visible: false)
 
       get client_event_calendar_path(@event, "run-of-show")
 

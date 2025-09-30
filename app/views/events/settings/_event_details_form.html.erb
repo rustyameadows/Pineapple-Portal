@@ -1,5 +1,15 @@
 <% event = local_assigns.fetch(:event) %>
-<%= form_with model: event, url: event_path(event), method: :patch, local: true, html: { class: "event-settings__details-form" } do |form| %>
+<% image_documents = event.documents
+                        .where(doc_kind: Document::DOC_KINDS[:uploaded])
+                        .latest
+                        .where("content_type LIKE ?", "image/%")
+                        .order(:title, :id) %>
+
+<%= form_with model: event,
+              url: event_path(event),
+              method: :patch,
+              local: true,
+              html: { class: "event-settings__details-form" } do |form| %>
   <% if event.errors.any? %>
     <div class="event-settings__form-errors">
       <h3><%= pluralize(event.errors.count, "error") %> prevented saving:</h3>
@@ -31,9 +41,81 @@
       <%= form.label :ends_on, "End Date" %>
       <%= form.date_field :ends_on %>
     </div>
+
+    <div class="event-settings__field event-settings__field--photo-select">
+      <%= form.label :event_photo_document_id, "Event Photo" %>
+      <%= form.select :event_photo_document_id,
+                      options_for_select(image_documents.map { |doc| [doc.title.presence || "Untitled (##{doc.id})", doc.id] }, event.event_photo_document_id),
+                      include_blank: "None" %>
+      <p class="event-settings__hint">Select an existing image or upload a new one below.</p>
+    </div>
   </div>
 
   <div class="event-settings__form-actions">
     <%= form.submit "Save Event Details", class: "event-section__cta" %>
   </div>
 <% end %>
+
+<div class="event-settings__photos-grid">
+  <div class="event-settings__photo-upload-card">
+    <h4 class="event-settings__upload-heading">Upload New Photo</h4>
+    <%= form_with scope: :document,
+                  url: event_event_photo_documents_path(event),
+                  method: :post,
+                  local: true,
+                  data: { document_upload_form: true, presign_url: presign_event_documents_path(event) },
+                  html: { class: "event-settings__photo-upload-form" } do |upload_form| %>
+      <div class="event-settings__upload-picker">
+        <label class="event-settings__upload-label" for="document_file">Choose image</label>
+        <input type="file" id="document_file" accept="image/*" data-document-upload-target="file">
+      </div>
+
+      <div class="document-upload" data-document-upload-target="ui">
+        <div class="document-upload__progress" data-document-upload-target="progress" hidden>
+          <div class="document-upload__progress-track" aria-hidden="true">
+            <div class="document-upload__progress-bar" data-document-upload-target="progressBar"></div>
+          </div>
+          <div class="document-upload__progress-status">
+            <span data-document-upload-target="progressLabel">Uploading…</span>
+            <span class="document-upload__progress-percent" data-document-upload-target="progressPercent">0%</span>
+          </div>
+        </div>
+
+        <p class="document-upload__status" data-document-upload-target="status">Select a file to upload to R2.</p>
+      </div>
+
+      <%= upload_form.hidden_field :title %>
+      <%= upload_form.hidden_field :storage_uri %>
+      <%= upload_form.hidden_field :checksum %>
+      <%= upload_form.hidden_field :size_bytes %>
+      <%= upload_form.hidden_field :content_type %>
+      <%= upload_form.hidden_field :logical_id %>
+      <%= upload_form.hidden_field :source, value: Document::SOURCE_KEYS.second || "staff_upload" %>
+      <%= upload_form.hidden_field :client_visible, value: false %>
+
+      <div class="event-settings__upload-actions">
+        <%= upload_form.submit "Upload image", class: "button button--small", disabled: true %>
+      </div>
+    <% end %>
+    <p class="event-settings__hint">Uploads appear in the selector above once saved.</p>
+  </div>
+
+  <div class="event-settings__photo-preview">
+    <h4 class="event-settings__photo-preview-heading">Current Preview</h4>
+    <div class="event-settings__photo-preview-body">
+      <% if event.event_photo_document.present? %>
+        <% preview_uri = inline_document_image_data_uri(event.event_photo_document) %>
+        <% if preview_uri.present? %>
+          <img src="<%= preview_uri %>" alt="<%= event.event_photo_document.title.presence || "Event photo" %>">
+          <p class="event-settings__photo-preview-meta"><%= event.event_photo_document.title.presence || "Untitled image" %></p>
+        <% else %>
+          <div class="event-settings__photo-preview-placeholder">Image unavailable. Re-upload the source file.</div>
+        <% end %>
+      <% else %>
+        <div class="event-settings__photo-preview-placeholder">No image selected yet.</div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<%= render "documents/upload_script" %>

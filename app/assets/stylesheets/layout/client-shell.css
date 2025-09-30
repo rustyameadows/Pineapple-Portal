@@ -2,6 +2,7 @@
   min-height: 100vh;
   background: var(--color-light-cream);
   color: var(--color-dark-brown);
+  --client-nav-offset: calc(40px + var(--space-3) * 2);
 }
 
 .client-container {

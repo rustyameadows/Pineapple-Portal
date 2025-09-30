@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_28_011000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -166,25 +166,86 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
     t.check_constraint "jsonb_typeof(variable_definitions) = 'object'::text", name: "calendar_templates_variable_definitions_object"
   end
 
+  create_table "document_builds", force: :cascade do |t|
+    t.bigint "document_id", null: false
+    t.string "status", default: "pending", null: false
+    t.string "build_id", null: false
+    t.integer "compiled_page_count"
+    t.integer "file_size"
+    t.string "checksum_sha256"
+    t.datetime "started_at"
+    t.datetime "finished_at"
+    t.string "error_message"
+    t.bigint "built_by_user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["build_id"], name: "index_document_builds_on_build_id", unique: true
+    t.index ["built_by_user_id"], name: "index_document_builds_on_built_by_user_id"
+    t.index ["document_id"], name: "index_document_builds_on_document_id"
+  end
+
+  create_table "document_dependencies", force: :cascade do |t|
+    t.uuid "document_logical_id", null: false
+    t.bigint "segment_id", null: false
+    t.string "entity_type", null: false
+    t.bigint "entity_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_logical_id"], name: "index_document_dependencies_on_document_logical_id"
+    t.index ["entity_type", "entity_id"], name: "index_document_dependencies_on_entity"
+  end
+
+  create_table "document_segments", force: :cascade do |t|
+    t.uuid "document_logical_id", null: false
+    t.integer "position", null: false
+    t.string "kind", null: false
+    t.string "title", default: "", null: false
+    t.jsonb "source_ref", default: {}, null: false
+    t.jsonb "spec", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "render_hash"
+    t.string "cached_pdf_key"
+    t.datetime "cached_pdf_generated_at"
+    t.integer "cached_page_count"
+    t.integer "cached_file_size"
+    t.string "last_render_error"
+    t.index ["document_logical_id", "position"], name: "index_document_segments_on_logical_id_and_position", unique: true
+    t.index ["document_logical_id"], name: "index_document_segments_on_document_logical_id"
+    t.index ["render_hash"], name: "index_document_segments_on_render_hash"
+    t.check_constraint "\"position\" > 0", name: "document_segments_position_positive"
+  end
+
   create_table "documents", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.string "title", null: false
-    t.string "storage_uri", null: false
-    t.string "checksum", null: false
-    t.bigint "size_bytes", null: false
+    t.string "storage_uri"
+    t.string "checksum"
+    t.bigint "size_bytes"
     t.uuid "logical_id", null: false
     t.integer "version", null: false
     t.boolean "is_latest", default: true, null: false
-    t.string "content_type", null: false
+    t.string "content_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "client_visible", default: false, null: false
     t.string "source", default: "staff_upload", null: false
+    t.string "doc_kind", default: "uploaded", null: false
+    t.boolean "is_template", default: false, null: false
+    t.uuid "template_source_logical_id"
+    t.bigint "built_by_user_id"
+    t.uuid "build_id"
+    t.string "manifest_hash"
+    t.string "checksum_sha256"
+    t.integer "compiled_page_count"
+    t.index ["build_id"], name: "index_documents_on_build_id"
     t.index ["client_visible"], name: "index_documents_on_client_visible"
+    t.index ["doc_kind"], name: "index_documents_on_doc_kind"
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["logical_id", "version"], name: "index_documents_on_logical_id_and_version", unique: true
     t.index ["logical_id"], name: "index_documents_on_logical_id_latest", unique: true, where: "(is_latest = true)"
     t.index ["source"], name: "index_documents_on_source"
+    t.index ["template_source_logical_id"], name: "index_documents_on_template_source_logical_id"
     t.check_constraint "size_bytes > 0", name: "documents_size_positive"
     t.check_constraint "version > 0", name: "documents_version_positive"
   end
@@ -244,6 +305,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "link_type", default: "quick", null: false
+    t.index ["event_id", "link_type"], name: "index_event_links_on_event_id_and_link_type"
     t.index ["event_id", "position"], name: "index_event_links_on_event_id_and_position"
     t.index ["event_id"], name: "index_event_links_on_event_id"
   end
@@ -266,6 +329,36 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
     t.index ["user_id"], name: "index_event_team_members_on_user_id"
   end
 
+  create_table "event_vendors", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "name", null: false
+    t.jsonb "contacts_jsonb", default: [], null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "client_visible", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "vendor_type"
+    t.string "social_handle"
+    t.index "event_id, lower((name)::text)", name: "index_event_vendors_on_event_id_and_lower_name", unique: true
+    t.index ["event_id", "position"], name: "index_event_vendors_on_event_id_and_position"
+    t.index ["event_id"], name: "index_event_vendors_on_event_id"
+    t.check_constraint "jsonb_typeof(contacts_jsonb) = 'array'::text", name: "event_vendors_contacts_jsonb_array"
+  end
+
+  create_table "event_venues", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "name", null: false
+    t.jsonb "contacts_jsonb", default: [], null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "client_visible", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "event_id, lower((name)::text)", name: "index_event_venues_on_event_id_and_lower_name", unique: true
+    t.index ["event_id", "position"], name: "index_event_venues_on_event_id_and_position"
+    t.index ["event_id"], name: "index_event_venues_on_event_id"
+    t.check_constraint "jsonb_typeof(contacts_jsonb) = 'array'::text", name: "event_venues_contacts_jsonb_array"
+  end
+
   create_table "events", force: :cascade do |t|
     t.string "name", null: false
     t.date "starts_on"
@@ -274,8 +367,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "archived_at"
+    t.bigint "event_photo_document_id"
+    t.jsonb "planning_link_keys", default: [], null: false
     t.index ["archived_at"], name: "index_events_on_archived_at"
+    t.index ["event_photo_document_id"], name: "index_events_on_event_photo_document_id"
     t.index ["name"], name: "index_events_on_name"
+    t.check_constraint "jsonb_typeof(planning_link_keys) = 'array'::text", name: "events_planning_link_keys_array"
+  end
+
+  create_table "global_assets", force: :cascade do |t|
+    t.string "storage_uri", null: false
+    t.string "filename", null: false
+    t.string "content_type", null: false
+    t.bigint "size_bytes"
+    t.string "checksum"
+    t.string "label"
+    t.bigint "uploaded_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["storage_uri"], name: "index_global_assets_on_storage_uri", unique: true
+    t.index ["uploaded_by_id"], name: "index_global_assets_on_uploaded_by_id"
   end
 
   create_table "password_reset_tokens", force: :cascade do |t|
@@ -367,6 +478,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
     t.string "role", default: "planner", null: false
     t.string "title"
     t.string "phone_number"
+    t.bigint "avatar_global_asset_id"
+    t.index ["avatar_global_asset_id"], name: "index_users_on_avatar_global_asset_id"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["role"], name: "index_users_on_role"
   end
@@ -385,7 +498,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
   add_foreign_key "calendar_template_items", "calendar_templates", on_delete: :cascade
   add_foreign_key "calendar_template_tags", "calendar_templates", on_delete: :cascade
   add_foreign_key "calendar_template_views", "calendar_templates", on_delete: :cascade
+  add_foreign_key "document_builds", "documents"
+  add_foreign_key "document_builds", "users", column: "built_by_user_id"
+  add_foreign_key "document_dependencies", "document_segments", column: "segment_id", on_delete: :cascade
   add_foreign_key "documents", "events"
+  add_foreign_key "documents", "users", column: "built_by_user_id"
   add_foreign_key "event_calendar_tags", "event_calendars", on_delete: :cascade
   add_foreign_key "event_calendar_views", "event_calendars", on_delete: :cascade
   add_foreign_key "event_calendars", "calendar_templates", column: "template_source_id", on_delete: :nullify
@@ -393,8 +510,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
   add_foreign_key "event_links", "events"
   add_foreign_key "event_team_members", "events"
   add_foreign_key "event_team_members", "users"
-  add_foreign_key "password_reset_tokens", "users", on_delete: :cascade
-  add_foreign_key "password_reset_tokens", "users", column: "issued_by_id", on_delete: :nullify
+  add_foreign_key "event_vendors", "events"
+  add_foreign_key "event_venues", "events"
+  add_foreign_key "events", "documents", column: "event_photo_document_id"
+  add_foreign_key "global_assets", "users", column: "uploaded_by_id"
+  add_foreign_key "password_reset_tokens", "users"
+  add_foreign_key "password_reset_tokens", "users", column: "issued_by_id"
   add_foreign_key "payments", "events"
   add_foreign_key "questionnaire_sections", "questionnaires"
   add_foreign_key "questionnaires", "events"
@@ -402,4 +523,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_090000) do
   add_foreign_key "questions", "events"
   add_foreign_key "questions", "questionnaire_sections"
   add_foreign_key "questions", "questionnaires"
+  add_foreign_key "users", "global_assets", column: "avatar_global_asset_id"
 end

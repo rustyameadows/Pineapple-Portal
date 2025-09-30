@@ -1,0 +1,19 @@
+main_hall:
+  event: one
+  name: Grand Ballroom
+  contacts_jsonb:
+    - name: Venue Manager
+      title: Operations Lead
+      email: venue.manager@grandballroom.test
+      phone: 555-777-8888
+  position: 0
+  client_visible: true
+
+backup_space:
+  event: one
+  name: Terrace Garden
+  contacts_jsonb:
+    - name: Garden Host
+      phone: 555-444-3333
+  position: 1
+  client_visible: false

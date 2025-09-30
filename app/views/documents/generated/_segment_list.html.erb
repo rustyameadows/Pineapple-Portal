@@ -1,0 +1,274 @@
+<% segment_warnings ||= {} %>
+<% reorder_url ||= nil %>
+<% csrf_token ||= form_authenticity_token %>
+<% available_timeline_views ||= [] %>
+
+<div class="generated-builder__segments"
+     data-controller="generated-segments"
+     data-generated-segments-reorder-url-value="<%= reorder_url %>"
+     data-generated-segments-csrf-token-value="<%= csrf_token %>"
+     data-generated-segments-view-mode-value="grid">
+  <div class="generated-builder__sidebar-header">
+    <div class="generated-builder__sidebar-header-main">
+      <h2>Segments</h2>
+      <p class="generated-builder__hint">Attach planner PDFs or branded sections, then arrange them in the order you want to publish.</p>
+    </div>
+    <div class="generated-builder__view-toggle" role="group" aria-label="Segment layout view">
+      <button type="button"
+              class="generated-builder__view-button"
+              data-generated-segments-target="viewButton"
+              data-view="list"
+              aria-pressed="false"
+              data-action="generated-segments#changeView">
+        List
+      </button>
+      <button type="button"
+              class="generated-builder__view-button generated-builder__view-button--active"
+              data-generated-segments-target="viewButton"
+              data-view="grid"
+              aria-pressed="true"
+              data-action="generated-segments#changeView">
+        Grid
+      </button>
+    </div>
+  </div>
+
+<% if defined?(flash_notice) && flash_notice.present? %>
+  <p class="generated-builder__status generated-builder__status--notice"><%= flash_notice %></p>
+<% end %>
+
+<% if defined?(errors) && errors.present? %>
+  <ul class="generated-builder__status generated-builder__status--error">
+    <% errors.each do |error| %>
+      <li><%= error %></li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if segments.any? %>
+  <ul class="generated-builder__list"
+      data-generated-segments-target="list">
+    <% segments.each do |segment| %>
+      <li class="generated-builder__list-item"
+          data-generated-segments-target="item"
+          data-segment-id="<%= segment.id %>"
+          draggable="true">
+        <div class="generated-builder__list-left">
+          <div class="generated-builder__list-main">
+            <button type="button"
+                    class="generated-builder__drag-handle"
+                    data-generated-segments-target="handle"
+                    aria-label="Drag to reorder segment">
+              <span aria-hidden="true">⋮⋮</span>
+            </button>
+            <div class="generated-builder__list-content">
+              <strong><%= segment.display_title %></strong>
+              <div class="generated-builder__list-meta">
+                <span class="generated-builder__segment-kind"><%= segment.kind.humanize %></span>
+                <%= render "documents/generated/render_status",
+                           segment: segment,
+                           event: event,
+                           document: document %>
+                <% if segment_warnings[segment.id].present? %>
+                  <% warning_text = segment_warnings[segment.id].split(":", 2).last&.strip || segment_warnings[segment.id] %>
+                  <span class="generated-builder__status-tag generated-builder__status-tag--warning"><%= warning_text %></span>
+                <% end %>
+              </div>
+            </div>
+          </div>
+          <div class="generated-builder__list-actions">
+            <%= link_to "Preview",
+                       preview_event_documents_generated_segment_path(event, document.logical_id, segment),
+                       class: "button button--tiny button--ghost",
+                       target: "_blank",
+                       rel: "noopener" %>
+            <%= render "documents/generated/render_form",
+                       event: event,
+                       document: document,
+                       segment: segment %>
+            <%= button_to "Remove",
+                          event_documents_generated_segment_path(event, document.logical_id, segment),
+                          method: :delete,
+                          class: "button button--tiny button--danger",
+                          data: { confirm: "Remove this segment?" } %>
+          </div>
+        </div>
+        <div class="generated-builder__list-right">
+          <%= form_with model: segment,
+                        scope: :segment,
+                        url: event_documents_generated_segment_path(event, document.logical_id, segment),
+                        method: :patch,
+                        local: true,
+                        class: "generated-builder__form" do |form| %>
+            <div class="generated-builder__form-row">
+              <%= form.label :title, "Display title" %>
+              <%= form.text_field :title, value: segment.display_title %>
+            </div>
+
+            <% if segment.pdf_asset? %>
+              <div class="generated-builder__form-row">
+                <%= form.label :pdf_document_id, "Attached document" %>
+                <% if available_pdf_documents.any? %>
+                  <%= form.select :pdf_document_id,
+                                  options_from_collection_for_select(available_pdf_documents, :id, :title, segment.pdf_document_id),
+                                  include_blank: "Select document" %>
+                <% else %>
+                  <p class="generated-builder__empty">No uploaded documents yet.</p>
+                <% end %>
+                <% if segment_warnings[segment.id].present? %>
+                  <% warning_text = segment_warnings[segment.id].split(":", 2).last&.strip || segment_warnings[segment.id] %>
+                  <p class="generated-builder__input-warning"><%= warning_text %></p>
+                <% end %>
+              </div>
+            <% elsif segment.html_view? %>
+              <div class="generated-builder__form-row">
+                <%= form.label :view_key, "Branded section" %>
+                <%= form.select :view_key,
+                                options_for_select(available_html_views, segment.html_view_key),
+                                include_blank: "Select section" %>
+                <% if segment_warnings[segment.id].present? %>
+                  <% warning_text = segment_warnings[segment.id].split(":", 2).last&.strip || segment_warnings[segment.id] %>
+                  <p class="generated-builder__input-warning"><%= warning_text %></p>
+                <% end %>
+              </div>
+
+              <% boolean_cast = ActiveModel::Type::Boolean.new %>
+
+              <% if segment.html_view_key == DocumentSegment::TIMELINE_VIEW_KEY %>
+                <% timeline_options = segment.html_options.stringify_keys %>
+                <% selected_view = timeline_options["view_ref"].presence || available_timeline_views.dig(0, 1) %>
+                <% show_location = boolean_cast.cast(timeline_options.fetch("show_location", true)) %>
+                <% show_vendor = boolean_cast.cast(timeline_options.fetch("show_vendor", true)) %>
+                <% show_team_members = boolean_cast.cast(timeline_options.fetch("show_team_members", true)) %>
+                <% timeline_options = timeline_options.merge(
+                  "view_ref" => selected_view,
+                  "show_location" => show_location,
+                  "show_vendor" => show_vendor,
+                  "show_team_members" => show_team_members
+                ) %>
+
+                <%= form.fields_for :options, timeline_options do |options_fields| %>
+                  <div class="generated-builder__form-row">
+                    <%= options_fields.label :view_ref, "Timeline view" %>
+                    <% if available_timeline_views.any? %>
+                      <%= options_fields.select :view_ref,
+                                               options_for_select(available_timeline_views, selected_view) %>
+                    <% else %>
+                      <p class="generated-builder__empty">No timeline views available yet.</p>
+                      <%= options_fields.hidden_field :view_ref, value: selected_view %>
+                    <% end %>
+                  </div>
+
+                  <fieldset class="generated-builder__form-row generated-builder__form-row--checkbox-group">
+                    <legend>Show columns</legend>
+                    <label class="generated-builder__checkbox">
+                      <%= options_fields.check_box :show_location, { checked: show_location }, "1", "0" %>
+                      <span>Location</span>
+                    </label>
+                    <label class="generated-builder__checkbox">
+                      <%= options_fields.check_box :show_vendor, { checked: show_vendor }, "1", "0" %>
+                      <span>Vendor</span>
+                    </label>
+                    <label class="generated-builder__checkbox">
+                      <%= options_fields.check_box :show_team_members, { checked: show_team_members }, "1", "0" %>
+                      <span>Team members</span>
+                    </label>
+                  </fieldset>
+                <% end %>
+              <% elsif segment.html_view_key == DocumentSegment::RUN_OF_SHOW_VIEW_KEY %>
+                <% run_options = segment.html_options.stringify_keys %>
+                <% show_location = boolean_cast.cast(run_options.fetch("show_location", true)) %>
+                <% show_vendor = boolean_cast.cast(run_options.fetch("show_vendor", true)) %>
+                <% show_team_members = boolean_cast.cast(run_options.fetch("show_team_members", true)) %>
+                <% run_options = run_options.merge(
+                  "show_location" => show_location,
+                  "show_vendor" => show_vendor,
+                  "show_team_members" => show_team_members
+                ) %>
+
+                <%= form.fields_for :options, run_options do |options_fields| %>
+                  <fieldset class="generated-builder__form-row generated-builder__form-row--checkbox-group">
+                    <legend>Show columns</legend>
+                    <label class="generated-builder__checkbox">
+                      <%= options_fields.check_box :show_location, { checked: show_location }, "1", "0" %>
+                      <span>Location</span>
+                    </label>
+                    <label class="generated-builder__checkbox">
+                      <%= options_fields.check_box :show_vendor, { checked: show_vendor }, "1", "0" %>
+                      <span>Vendor</span>
+                    </label>
+                    <label class="generated-builder__checkbox">
+                      <%= options_fields.check_box :show_team_members, { checked: show_team_members }, "1", "0" %>
+                      <span>Team members</span>
+                    </label>
+                  </fieldset>
+                <% end %>
+              <% end %>
+            <% end %>
+
+            <div class="generated-builder__form-actions">
+              <%= form.submit "Save changes", class: "button button--small" %>
+            </div>
+          <% end %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="generated-builder__empty">No segments yet. Add a branded section or attach a PDF to get started.</p>
+<% end %>
+
+<div class="generated-builder__new">
+  <div class="generated-builder__panel">
+    <h3>Attach uploaded PDF</h3>
+    <% if available_pdf_documents.any? %>
+      <%= form_with scope: :segment,
+                    url: event_documents_generated_segments_path(event, document.logical_id),
+                    method: :post,
+                    local: true,
+                    class: "generated-builder__form" do |form| %>
+        <%= form.hidden_field :kind, value: DocumentSegment::KINDS[:pdf_asset] %>
+        <div class="generated-builder__form-row">
+          <%= form.label :pdf_document_id, "Select document" %>
+          <%= form.select :pdf_document_id,
+                          options_from_collection_for_select(available_pdf_documents, :id, :title),
+                          include_blank: "Choose a document" %>
+        </div>
+        <div class="generated-builder__form-row">
+          <%= form.label :title, "Segment title" %>
+          <%= form.text_field :title, placeholder: "Defaults to document title" %>
+        </div>
+        <div class="generated-builder__form-actions">
+          <%= form.submit "Add PDF segment", class: "button button--small" %>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="generated-builder__empty">Upload documents first, then attach them to this packet.</p>
+    <% end %>
+  </div>
+
+  <div class="generated-builder__panel">
+    <h3>Add branded section</h3>
+    <%= form_with scope: :segment,
+                  url: event_documents_generated_segments_path(event, document.logical_id),
+                  method: :post,
+                  local: true,
+                  class: "generated-builder__form" do |form| %>
+      <%= form.hidden_field :kind, value: DocumentSegment::KINDS[:html_view] %>
+      <div class="generated-builder__form-row">
+        <%= form.label :view_key, "Section" %>
+        <%= form.select :view_key,
+                        options_for_select(available_html_views),
+                        include_blank: "Choose a section" %>
+      </div>
+      <div class="generated-builder__form-row">
+        <%= form.label :title, "Segment title" %>
+        <%= form.text_field :title, placeholder: "Defaults to section name" %>
+      </div>
+      <div class="generated-builder__form-actions">
+        <%= form.submit "Add branded section", class: "button button--small" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+</div>

@@ -1,9 +1,40 @@
 <% content_for :scripts do %>
   <script type="module">
+    const uploadWithProgress = (url, file, contentType, onProgress) => {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", url, true);
+        xhr.setRequestHeader("Content-Type", contentType);
+
+        xhr.upload.addEventListener("progress", (event) => {
+          onProgress(event.loaded, event.total, event.lengthComputable);
+        });
+
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error("Upload failed"));
+          }
+        });
+
+        xhr.addEventListener("error", () => {
+          reject(new Error("Upload failed"));
+        });
+
+        xhr.send(file);
+      });
+    };
+
     document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll("[data-document-upload-form]").forEach((form) => {
         const fileInput = form.querySelector("#document_file");
         const statusEl = form.querySelector("[data-document-upload-target='status']");
+        const uiContainer = form.querySelector("[data-document-upload-target='ui']");
+        const progressEl = form.querySelector("[data-document-upload-target='progress']");
+        const progressBar = form.querySelector("[data-document-upload-target='progressBar']");
+        const progressLabel = form.querySelector("[data-document-upload-target='progressLabel']");
+        const progressPercent = form.querySelector("[data-document-upload-target='progressPercent']");
         const submitButton = form.querySelector("input[type=submit], button[type=submit]");
         const titleInput = form.querySelector("#document_title");
         const storageUriInput = form.querySelector("#document_storage_uri");
@@ -16,12 +47,18 @@
         if (submitButton) submitButton.disabled = true;
 
         const resetStatus = () => {
+          if (uiContainer) uiContainer.classList.remove("is-uploading");
+          if (progressEl) progressEl.hidden = true;
+          if (progressBar) progressBar.style.width = "0%";
+          if (progressPercent) progressPercent.textContent = "0%";
           if (statusEl) statusEl.textContent = "Select a file to upload to R2.";
         };
 
         const setError = (message) => {
           if (statusEl) statusEl.textContent = message;
           if (submitButton) submitButton.disabled = true;
+          if (uiContainer) uiContainer.classList.remove("is-uploading");
+          if (progressEl) progressEl.hidden = true;
         };
 
         const hexDigest = async (file) => {
@@ -39,6 +76,7 @@
 
           if (submitButton) submitButton.disabled = true;
           if (statusEl) statusEl.textContent = "Preparing upload...";
+          resetStatus();
 
           try {
             const body = {
@@ -60,15 +98,26 @@
 
             const presignData = await presignResponse.json();
 
+            const showProgress = (label, percent) => {
+              if (uiContainer) uiContainer.classList.add("is-uploading");
+              if (progressEl) progressEl.hidden = false;
+              if (progressLabel) progressLabel.textContent = label;
+              if (progressBar) progressBar.style.width = `${percent}%`;
+              if (progressPercent) progressPercent.textContent = `${Math.round(percent)}%`;
+            };
+
             if (statusEl) statusEl.textContent = "Uploading to storage...";
+            showProgress("Uploading", 0);
 
-            const uploadResponse = await fetch(presignData.upload_url, {
-              method: "PUT",
-              headers: { "Content-Type": presignData.content_type },
-              body: file
+            await uploadWithProgress(presignData.upload_url, file, presignData.content_type, (loaded, total, computable) => {
+              if (!computable) {
+                showProgress("Uploading", 25);
+                return;
+              }
+
+              const percent = total > 0 ? (loaded / total) * 100 : 0;
+              showProgress("Uploading", Math.min(99, percent));
             });
-
-            if (!uploadResponse.ok) throw new Error("Upload to storage failed");
 
             const checksum = await hexDigest(file);
 
@@ -79,6 +128,7 @@
             if (contentTypeInput) contentTypeInput.value = presignData.content_type;
             if (logicalIdInput) logicalIdInput.value = presignData.logical_id;
 
+            showProgress("Processing", 100);
             if (statusEl) statusEl.textContent = "Upload ready. Click Save to store document metadata.";
             if (submitButton) submitButton.disabled = false;
           } catch (error) {

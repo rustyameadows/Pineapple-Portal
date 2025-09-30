@@ -7,7 +7,7 @@ module Calendars
 
     def items
       @items ||= begin
-        scope = calendar.calendar_items.includes(:event_calendar_tags, :relative_anchor).ordered
+        scope = calendar.calendar_items.includes(:event_calendar_tags, :relative_anchor, :team_members).ordered
         scope.select do |item|
           next false if view.hide_locked? && item.locked?
           next true if tag_ids.empty?

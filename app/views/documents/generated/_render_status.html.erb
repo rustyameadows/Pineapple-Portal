@@ -1,0 +1,23 @@
+<% if segment.cached? %>
+  <% cached_time = segment.cached_pdf_generated_at&.in_time_zone(Time.zone)&.strftime("%d %b %H:%M")&.upcase %>
+  <% cached_time ||= "RECENTLY" %>
+  <% page_count = segment.cached_page_count.present? ? pluralize(segment.cached_page_count, "page").upcase : nil %>
+  <% meta = [cached_time] %>
+  <% meta << page_count if page_count.present? %>
+
+  <%= link_to cached_pdf_event_documents_generated_segment_path(event, document.logical_id, segment),
+              class: "generated-builder__status-tag generated-builder__status-tag--link",
+              target: "_blank",
+              rel: "noopener" do %>
+    <span class="generated-builder__status-emphasis">CACHED</span>
+    <% if meta.any? %>
+      <span class="generated-builder__status-copy"><%= meta.join(" · ") %></span>
+    <% end %>
+  <% end %>
+<% elsif segment.last_render_error.present? %>
+  <span class="generated-builder__status-tag generated-builder__status-tag--error">
+    Render failed: <%= segment.last_render_error %>
+  </span>
+<% else %>
+  <span class="generated-builder__status-tag">Not rendered</span>
+<% end %>

@@ -1,3 +1,8 @@
-<% flash.each do |type, message| %>
-  <div class="flash flash-<%= type %>"><%= message %></div>
-<% end %>
+<div class="flash-toast-container" data-controller="flash-toast">
+  <% flash.each do |type, message| %>
+    <div class="flash flash-<%= type %> flash-toast" data-flash-toast-target="toast">
+      <span class="flash-toast__message"><%= message %></span>
+      <button type="button" class="flash-toast__close" data-action="flash-toast#dismiss">&times;</button>
+    </div>
+  <% end %>
+</div>

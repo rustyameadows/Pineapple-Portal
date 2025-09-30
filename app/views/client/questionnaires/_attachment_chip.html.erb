@@ -1,0 +1,17 @@
+<% document = attachment.resolved_document %>
+<li class="client-questionnaire__attachment" data-attachment-chip data-attachment-id="<%= attachment.id %>">
+  <% if document.present? %>
+    <%= link_to document.title,
+                download_event_document_path(event, document),
+                class: "client-questionnaire__attachment-link",
+                target: "_blank",
+                rel: "noopener" %>
+    <span class="client-questionnaire__attachment-meta">v<%= document.version %></span>
+  <% elsif attachment.document_logical_id.present? %>
+    <span class="client-questionnaire__attachment-link">
+      Logical ID: <%= attachment.document_logical_id %>
+    </span>
+  <% else %>
+    <span class="client-questionnaire__attachment-link">Attachment #<%= attachment.id %></span>
+  <% end %>
+</li>

@@ -12,13 +12,22 @@
             <h1 class="event-section__title"><%= @label %></h1>
             <p class="event-section__lead">Showing files uploaded as <%= @label.downcase %>. Use the summary to navigate to other categories.</p>
           </div>
-          <%= link_to "Upload Document", new_event_document_path(@event), class: "event-section__cta" %>
+          <div class="event-section__actions">
+            <%= link_to "Create generated document", event_documents_generated_index_path(@event), class: "button button--ghost" %>
+            <%= link_to "Upload Document", new_event_document_path(@event), class: "event-section__cta" %>
+          </div>
         </header>
 
         <div class="event-section__body">
           <div class="event-docs__panel">
             <%= render "documents/summary_table", event: @event, groups: @document_groups, active_key: @source_key %>
           </div>
+
+          <% if @source_key == "packet" %>
+            <%= render "documents/generated_panel",
+                       event: @event,
+                       generated_documents: @generated_documents %>
+          <% end %>
 
           <%= render "documents/table",
                     documents: @documents,

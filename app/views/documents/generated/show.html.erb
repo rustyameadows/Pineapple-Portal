@@ -1,0 +1,92 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section generated-builder">
+        <header class="event-section__header generated-builder__header">
+          <div>
+            <p class="event-section__eyebrow">Generated document</p>
+            <h1 class="event-section__title"><%= @document.title %></h1>
+            <% if @latest_version.present? && @latest_version.storage_uri.present? %>
+              <p class="event-section__meta">Last compiled <%= @latest_version.updated_at.to_fs(:long) %> · version <%= @latest_version.version %></p>
+            <% else %>
+              <p class="event-section__meta">No compiled version yet.</p>
+            <% end %>
+          </div>
+          <div class="generated-builder__actions">
+            <%= link_to "Back to documents", event_documents_path(@event), class: "button button--ghost" %>
+            <% if @latest_version.present? %>
+              <%= link_to "Download latest",
+                          download_event_document_path(@event, @latest_version),
+                          class: "button button--ghost button--small",
+                          target: "_blank",
+                          rel: "noopener" %>
+            <% end %>
+          </div>
+        </header>
+
+        <div class="generated-builder__body generated-builder__single-column">
+          <%= render "documents/generated/segment_list",
+                     event: @event,
+                     document: @document,
+                     segments: @segments,
+                     available_pdf_documents: @available_pdf_documents,
+                     available_html_views: @available_html_views,
+                     available_timeline_views: @available_timeline_views,
+                     segment_warnings: @segment_warnings,
+                     reorder_url: reorder_event_documents_generated_segments_path(@event, @document.logical_id),
+                     csrf_token: form_authenticity_token %>
+
+          <div class="generated-builder__workspace-card">
+            <div class="generated-builder__workspace-head">
+              <div>
+                <h2>Build & downloads</h2>
+                <% if @active_build.present? %>
+                  <p class="generated-builder__hint">Latest build kicked off <%= time_ago_in_words(@active_build.created_at) %> ago.</p>
+                <% elsif @compiled_versions.any? %>
+                  <p class="generated-builder__hint">Last compiled <%= @compiled_versions.first.updated_at.to_fs(:long) %>.</p>
+                <% else %>
+                  <p class="generated-builder__hint">Compile to generate a PDF with the segments above.</p>
+                <% end %>
+              </div>
+              <div class="generated-builder__workspace-actions">
+                <% if @latest_version.present? %>
+                  <%= link_to "Download latest",
+                              download_event_document_path(@event, @latest_version),
+                              class: "button button--ghost button--small",
+                              target: "_blank",
+                              rel: "noopener" %>
+                <% end %>
+                <%= button_to "Compile document",
+                              compile_event_documents_generated_path(@event, @document.logical_id),
+                              method: :post,
+                              class: "button button--primary button--small" %>
+                <%= button_to "Compile document with page numbers",
+                              compile_event_documents_generated_path(@event, @document.logical_id),
+                              method: :post,
+                              params: { page_numbers: true },
+                              class: "button button--ghost button--small" %>
+                <% if @active_build.present? %>
+                  <span class="generated-builder__build-progress generated-builder__build-progress--hint">A build is currently running.</span>
+                <% end %>
+              </div>
+            </div>
+
+            <% if @builds.any? %>
+              <%= render "documents/generated/builds",
+                         builds: @builds,
+                         compiled_versions: @compiled_versions,
+                         event: @event,
+                         document: @document %>
+            <% else %>
+              <p class="generated-builder__empty">Once you run the first compile, we’ll show build details here.</p>
+            <% end %>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

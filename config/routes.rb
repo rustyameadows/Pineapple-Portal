@@ -9,11 +9,25 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  resources :users, only: %i[index new create edit update]
+resources :users, only: %i[index new create edit update]
+resources :users, only: [] do
+  resources :avatar_assets, only: :create, module: :users
+end
+
+post "global_assets/presign", to: "global_asset_uploads#create", as: :global_assets_presign
 
   resources :events do
-    resource :settings, only: :show, module: :events do
+    resource :settings, only: [:show], module: :events, controller: :settings do
+      get :client_portal
+      get :clients
+      get :vendors
+      get :locations
+      get :planners
     end
+
+    resource :people, only: :show, module: :events
+
+    resources :event_photo_documents, only: :create, module: :events
 
     resources :payments, module: :events
     resources :approvals, module: :events
@@ -54,6 +68,31 @@ Rails.application.routes.draw do
       end
     end
 
+    resources :planning_links, only: [], module: :events do
+      member do
+        patch :toggle
+      end
+
+      collection do
+        patch :move_up
+        patch :move_down
+      end
+    end
+
+    resources :event_vendors, only: %i[create update destroy], module: :events do
+      member do
+        patch :move_up
+        patch :move_down
+      end
+    end
+
+    resources :event_venues, only: %i[create update destroy], module: :events do
+      member do
+        patch :move_up
+        patch :move_down
+      end
+    end
+
     resources :team_members, only: %i[create update destroy], module: :events do
       member { post :issue_reset }
     end
@@ -70,6 +109,44 @@ Rails.application.routes.draw do
         member { patch :answer }
         collection { patch :reorder }
       end
+    end
+
+    namespace :documents do
+      resources :generated, param: :logical_id, controller: :generated do
+        member do
+          post :compile
+          post :duplicate
+          post :mark_template
+          delete :unmark_template
+        end
+        collection do
+          post :create_from_template
+        end
+
+        resources :builds,
+                  controller: "generated/builds",
+                  only: [:destroy] do
+          member do
+            patch :cancel
+          end
+        end
+
+        resources :segments,
+                  controller: "generated/segments",
+                  only: %i[create update destroy] do
+          collection do
+            patch :reorder
+          end
+
+          member do
+            post :render_pdf
+            get :preview
+            get :cached_pdf
+          end
+        end
+      end
+
+      resources :templates, only: :index, controller: "templates"
     end
 
     resources :documents do

@@ -17,7 +17,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to users_url
     follow_redirect!
-    assert_select "div.flash.flash-notice", text: "User created."
+    assert_select "div.flash.flash-notice", text: /User created\./
     assert_select "tbody tr td", text: "New User"
     assert_equal "planner", User.find_by(email: "new@example.com").role
   end
@@ -34,6 +34,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   test "first user can sign up without prior login" do
     CalendarItemTeamMember.delete_all
     EventTeamMember.delete_all
+    PasswordResetToken.delete_all
     User.delete_all
 
     assert_difference("User.count") do
@@ -49,7 +50,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_url
     follow_redirect!
-    assert_select "div.flash.flash-notice", text: "Welcome aboard!"
+    assert_select "div.flash.flash-notice", text: /Welcome aboard!/
     assert_equal "admin", User.find_by(email: "first@example.com").role
   end
 

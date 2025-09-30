@@ -1,0 +1,13 @@
+<% if segment.pdf_asset? %>
+  <%= link_to "View PDF",
+              preview_event_documents_generated_segment_path(event, document.logical_id, segment),
+              class: "button button--tiny button--ghost",
+              target: "_blank",
+              rel: "noopener" %>
+<% else %>
+  <%= button_to "Render PDF",
+                render_pdf_event_documents_generated_segment_path(event, document.logical_id, segment),
+                method: :post,
+                class: "button button--tiny button--ghost",
+                form: { class: "generated-builder__inline-form" } %>
+<% end %>

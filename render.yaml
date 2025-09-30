@@ -16,6 +16,8 @@ services:
         value: "true"
       - key: RAILS_LOG_TO_STDOUT
         value: "true"
+      - key: PUPPETEER_CACHE_DIR
+        value: "/opt/render/project/.cache/puppeteer"
     healthCheckPath: /up
 databases:
   - name: pineapple-portal-db

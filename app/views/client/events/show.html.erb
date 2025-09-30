@@ -50,7 +50,12 @@
   <div class="client-container">
     <div class="client-planning-grid__grid">
       <% @module_cards.each do |card| %>
-        <%= link_to card[:path], class: "client-planning-grid__card" do %>
+        <% link_attrs = { class: "client-planning-grid__card" } %>
+        <% if card[:external] %>
+          <% link_attrs[:target] = "_blank" %>
+          <% link_attrs[:rel] = "noopener" %>
+        <% end %>
+        <%= link_to card[:path], **link_attrs do %>
           <h3><%= card[:title] %></h3>
         <% end %>
       <% end %>

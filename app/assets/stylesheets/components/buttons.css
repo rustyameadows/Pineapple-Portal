@@ -78,3 +78,75 @@
 .documents-show__delete:focus {
   background: var(--color-dark-brown);
 }
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-dark-brown);
+  color: var(--color-light-cream);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  text-decoration: none;
+}
+
+.button:hover,
+.button:focus {
+  background: color-mix(in srgb, var(--color-dark-brown) 85%, black 15%);
+  color: var(--color-light-cream);
+}
+
+.button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button--primary {
+  background: var(--color-accent);
+  color: var(--color-white);
+}
+
+.button--primary:hover,
+.button--primary:focus {
+  background: var(--color-accent-strong);
+}
+
+.button--ghost {
+  background: transparent;
+  border-color: var(--color-sea-foam);
+  color: var(--color-dark-brown);
+}
+
+.button--ghost:hover,
+.button--ghost:focus {
+  background: color-mix(in srgb, var(--color-sea-foam) 15%, white);
+}
+
+.button--danger {
+  background: transparent;
+  border-color: var(--color-ruby);
+  color: var(--color-ruby);
+}
+
+.button--danger:hover,
+.button--danger:focus {
+  background: color-mix(in srgb, var(--color-ruby) 12%, white);
+}
+
+.button--small {
+  padding: 0.5rem 1.1rem;
+  font-size: 0.78rem;
+}
+
+.button--tiny {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.7rem;
+}
