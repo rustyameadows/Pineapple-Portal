@@ -71,6 +71,9 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
     resources :planning_links, only: [], module: :events do
       member do
         patch :toggle
+      end
+
+      collection do
         patch :move_up
         patch :move_down
       end

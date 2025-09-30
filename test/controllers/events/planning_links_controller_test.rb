@@ -35,7 +35,7 @@ module Events
 
       @event.update!(planning_link_tokens: tokens)
 
-      patch move_down_event_planning_link_path(@event, Event::PlanningLinkToken.built_in("guest_list"))
+      patch move_down_event_planning_links_path(@event), params: { token: Event::PlanningLinkToken.built_in("guest_list") }
       assert_redirected_to client_portal_event_settings_path(@event)
 
       @event.reload
@@ -44,7 +44,7 @@ module Events
       assert_equal Event::PlanningLinkToken.event_link(planning_link.id), reordered_tokens.first,
                    "expected custom planning link to move ahead of guest list"
 
-      patch move_up_event_planning_link_path(@event, Event::PlanningLinkToken.built_in("financials"))
+      patch move_up_event_planning_links_path(@event), params: { token: Event::PlanningLinkToken.built_in("financials") }
       assert_redirected_to client_portal_event_settings_path(@event)
 
       @event.reload

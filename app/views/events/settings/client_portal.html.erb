@@ -37,10 +37,20 @@
                         </div>
                         <div class="event-settings__controls">
                           <% unless is_first %>
-                            <%= link_to "Move up", move_up_event_planning_link_path(@event, entry.token), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                            <%= button_to "Move up",
+                                          move_up_event_planning_links_path(@event),
+                                          params: { token: entry.token },
+                                          method: :patch,
+                                          class: "event-settings__control",
+                                          form_class: "event-settings__control-form" %>
                           <% end %>
                           <% unless is_last %>
-                            <%= link_to "Move down", move_down_event_planning_link_path(@event, entry.token), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                            <%= button_to "Move down",
+                                          move_down_event_planning_links_path(@event),
+                                          params: { token: entry.token },
+                                          method: :patch,
+                                          class: "event-settings__control",
+                                          form_class: "event-settings__control-form" %>
                           <% end %>
                           <%= button_to "Hide from portal",
                                         toggle_event_planning_link_path(@event, link.key),
@@ -66,10 +76,20 @@
 
                         <div class="event-settings__controls">
                           <% unless is_first %>
-                            <%= link_to "Move up", move_up_event_planning_link_path(@event, entry.token), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                            <%= button_to "Move up",
+                                          move_up_event_planning_links_path(@event),
+                                          params: { token: entry.token },
+                                          method: :patch,
+                                          class: "event-settings__control",
+                                          form_class: "event-settings__control-form" %>
                           <% end %>
                           <% unless is_last %>
-                            <%= link_to "Move down", move_down_event_planning_link_path(@event, entry.token), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                            <%= button_to "Move down",
+                                          move_down_event_planning_links_path(@event),
+                                          params: { token: entry.token },
+                                          method: :patch,
+                                          class: "event-settings__control",
+                                          form_class: "event-settings__control-form" %>
                           <% end %>
                           <%= link_to "Remove", event_event_link_path(@event, planning_link), data: { turbo_method: :delete, turbo_confirm: "Remove this planning link?" }, class: "event-settings__control event-settings__control--danger" %>
                         </div>

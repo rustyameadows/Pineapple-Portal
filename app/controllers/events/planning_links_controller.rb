@@ -40,7 +40,7 @@ module Events
     end
 
     def reorder_token(direction)
-      token = params[:id].to_s
+      token = params[:token].presence || params[:id].to_s
 
       unless planning_token_permitted?(token)
         redirect_back fallback_location: client_portal_event_settings_path(@event), alert: "Unknown planning link." and return
