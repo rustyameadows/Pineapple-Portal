@@ -16,45 +16,51 @@
   .generated-template--planning-team__card {
     border: 1px solid rgba(45, 28, 18, 0.12);
     border-radius: 0.55rem;
-    background: rgba(255, 255, 255, 0.82);
-    padding: 0.85rem;
-    display: grid;
-    gap: 0.75rem;
-    justify-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     text-align: center;
   }
 
-  .generated-template--planning-team__avatar {
-    width: 96px;
-    height: 96px;
-    border-radius: 50%;
-    overflow: hidden;
+  .generated-template--planning-team__photo {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 2;
     background: rgba(45, 28, 18, 0.08);
     display: grid;
     place-items: center;
-    font-size: 1.6rem;
-    font-weight: 600;
     color: #2d1c12;
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
   }
 
-  .generated-template--planning-team__avatar img {
+  .generated-template--planning-team__photo img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
   }
 
-  .generated-template--planning-team__name {
-    margin: 0;
-    font-size: 1.2rem;
-    letter-spacing: 0.04em;
+  .generated-template--planning-team__details {
+    padding: 1rem 1.1rem 1.3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
   }
 
-  .generated-template--planning-team__meta {
-    display: grid;
-    gap: 0.35rem;
-    font-size: 0.95rem;
-    color: rgba(45, 28, 18, 0.8);
+  .generated-template--planning-team__name {
+    margin: 0;
+    font-size: 1.25rem;
+    letter-spacing: 0.05em;
+  }
+
+  .generated-template--planning-team__title {
+    margin: 0;
+    font-size: 1rem;
+    color: rgba(45, 28, 18, 0.75);
   }
 
   .generated-template--planning-team__empty {
@@ -65,7 +71,6 @@
 
 <div class="generated-template generated-template--planning-team">
   <%= render "generated_documents/sections/page_header", segment: @segment %>
-  <h2>Planning Team</h2>
   <% planners = @event.planner_team_members.includes(:user) %>
   <% if planners.any? %>
     <div class="generated-template--planning-team__grid">
@@ -73,20 +78,16 @@
         <% user = member.user %>
         <% avatar_uri = inline_global_asset_data_uri(user.avatar_global_asset) %>
         <article class="generated-template--planning-team__card">
-          <div class="generated-template--planning-team__avatar">
+          <div class="generated-template--planning-team__photo">
             <% if avatar_uri.present? %>
               <img src="<%= avatar_uri %>" alt="<%= user.name %>">
             <% else %>
               <span><%= user.name.to_s.split.map { |part| part.first }.join.first(2).presence || "PP" %></span>
             <% end %>
           </div>
-          <div>
+          <div class="generated-template--planning-team__details">
             <p class="generated-template--planning-team__name"><%= user.name %></p>
-            <div class="generated-template--planning-team__meta">
-              <span><%= user.title.presence || "Planner" %></span>
-              <span><%= user.email %></span>
-              <span><%= user.phone_number.presence || "—" %></span>
-            </div>
+            <p class="generated-template--planning-team__title"><%= user.title.presence || "Planner" %></p>
           </div>
         </article>
       <% end %>
