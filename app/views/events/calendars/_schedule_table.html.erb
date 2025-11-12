@@ -9,8 +9,8 @@
 <table class="event-table event-calendars__table">
   <thead>
     <tr>
+      <th class="event-calendars__schedule-column">Schedule</th>
       <th>Title</th>
-      <th>Schedule</th>
       <th>Vendor</th>
       <th>Location</th>
       <th>Team</th>
@@ -29,19 +29,18 @@
       <% if group_by_date && bucket_label != current_bucket %>
         <% current_bucket = bucket_label %>
         <tr class="event-calendars__date-row">
-          <td colspan="<%= 5 + (show_tags ? 1 : 0) + (render_actions ? 1 : 0) %>"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
         </tr>
       <% end %>
 
       <% title_text, title_path = item_link_proc.call(item) %>
       <tr class="event-calendars__row <%= calendar_item_row_classes(item) %>">
+        <td class="event-calendars__schedule-column"><%= calendar_item_time_only_label(item, calendar.timezone) %></td>
         <td>
           <%= link_to title_text, title_path, class: "event-calendars__title-link" %>
           <% if item.notes.present? %>
             <p class="event-calendars__note"><%= simple_format(item.notes) %></p>
           <% end %>
         </td>
-        <td><%= calendar_item_time_only_label(item, calendar.timezone) %></td>
         <td><%= item.vendor_name.presence || "—" %></td>
         <td><%= item.location_name.presence || "—" %></td>
         <td>

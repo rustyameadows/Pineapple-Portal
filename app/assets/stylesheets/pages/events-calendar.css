@@ -138,6 +138,10 @@
   border-collapse: collapse;
 }
 
+.event-calendars__schedule-column {
+  min-width: 150px;
+}
+
 .event-calendars__note {
   margin: 0.35rem 0 0;
   font-size: 0.85rem;
