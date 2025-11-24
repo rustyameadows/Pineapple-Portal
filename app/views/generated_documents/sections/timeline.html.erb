@@ -15,26 +15,28 @@
     white-space: nowrap;
   }
 
-  .generated-template--timeline__note {
-    font-size: 10px;
-    color: #5b4639;
-    font-style: italic;
-  }
+.generated-template--timeline__note {
+  font-size: 10px;
+  color: #5b4639;
+  font-style: italic;
+}
 
-.generated-template--timeline__table th,
-.generated-template--timeline__table td {
-  padding: 0.3rem 0.45rem;
-  line-height: 1.35;
+.generated-template.generated-template--timeline .generated-template--timeline__table th,
+.generated-template.generated-template--timeline .generated-template--timeline__table td {
+  padding: 2px 4px !important;
+  line-height: 1.2;
   font-size: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .generated-template--timeline__date-row td {
   background: #f4f1ed;
   font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: #5b4639;
-  padding: 0.35rem 0.45rem;
+  padding: 3px 4px !important;
+  border-top: 8px solid transparent;
 }
 
 .generated-template--timeline h1,
@@ -47,12 +49,16 @@
 
 .generated-template--timeline table {
   font-size: 12px;
-  margin-top: 0.3rem;
+  margin-top: 0.2rem;
 }
 
 .generated-template--timeline table thead th {
   font-size: 11px;
   letter-spacing: 0.12em;
+}
+
+.generated-template--timeline__row--critical {
+  color: #dc2626;
 }
 </style>
 
@@ -133,7 +139,9 @@
           </tr>
           <% date_items.each do |item| %>
             <% start_time = item.effective_starts_at&.in_time_zone(timezone) %>
-            <tr>
+            <% row_classes = [] %>
+            <% row_classes << "generated-template--timeline__row--critical" if item.critical? %>
+            <tr class="<%= row_classes.join(' ') %>">
               <% columns.each do |column| %>
                 <td>
                  <% case column[:key]
@@ -142,13 +150,13 @@
                      when :title
                        concat(item.title)
                      when :location
-                       concat(item.location_name.presence || "—")
+                       concat(item.location_name.presence || "&mdash;".html_safe)
                      when :vendor
-                       concat(item.vendor_name.presence || "—")
+                       concat(item.vendor_name.presence || "&mdash;".html_safe)
                      when :team
-                       team_names = item.team_members.map(&:name).compact
+                       team_names = item.team_members.map { |tm| tm.name.to_s.split.first }.reject(&:blank?)
                        team_names << item.additional_team_members if item.additional_team_members.present?
-                       concat(team_names.reject(&:blank?).join(", ").presence || "—")
+                       concat(team_names.reject(&:blank?).join(", ").presence || "&mdash;".html_safe)
                      end %>
                 </td>
               <% end %>
