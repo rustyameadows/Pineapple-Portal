@@ -4,7 +4,11 @@
 
 <style>
   .generated-template--timeline {
-    gap: 1.5rem;
+    gap: 0.9rem;
+    font-size: 10px;
+    --generated-document-content-padding-x: 0.25in;
+    --generated-document-content-padding-top: 0.45in;
+    --generated-document-content-padding-bottom: 0.35in;
   }
 
   .generated-template--timeline table td:nth-child(1) {
@@ -12,23 +16,44 @@
   }
 
   .generated-template--timeline__note {
-    font-size: 0.9rem;
+    font-size: 10px;
     color: #5b4639;
     font-style: italic;
   }
 
-  .generated-template--timeline__table th,
-  .generated-template--timeline__table td {
-    padding: 0.5rem 0.65rem;
-  }
+.generated-template--timeline__table th,
+.generated-template--timeline__table td {
+  padding: 0.3rem 0.45rem;
+  line-height: 1.35;
+  font-size: 12px;
+}
 
-  .generated-template--timeline__date-row td {
-    background: #f4f1ed;
-    font-size: 0.85rem;
-    letter-spacing: 0.12em;
+.generated-template--timeline__date-row td {
+  background: #f4f1ed;
+  font-size: 10px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #5b4639;
-  }
+  color: #5b4639;
+  padding: 0.35rem 0.45rem;
+}
+
+.generated-template--timeline h1,
+.generated-template--timeline h2,
+.generated-template--timeline h3,
+.generated-template--timeline p {
+  font-size: 12px;
+  margin-bottom: 0.4rem;
+}
+
+.generated-template--timeline table {
+  font-size: 12px;
+  margin-top: 0.3rem;
+}
+
+.generated-template--timeline table thead th {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
 </style>
 
 <div class="generated-template generated-template--timeline">
