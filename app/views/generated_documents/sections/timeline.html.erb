@@ -4,31 +4,90 @@
 
 <style>
   .generated-template--timeline {
-    gap: 1.5rem;
+    gap: 0.9rem;
+    font-size: 10px;
+    --generated-document-content-padding-x: 0.25in;
+    --generated-document-content-padding-top: 0.65in;
+    --generated-document-content-padding-bottom: 0.55in;
   }
 
-  .generated-template--timeline table td:nth-child(2) {
+  .generated-template--timeline table td:nth-child(1) {
     white-space: nowrap;
   }
 
-  .generated-template--timeline__note {
-    font-size: 0.9rem;
-    color: #5b4639;
-    font-style: italic;
-  }
+.generated-template--timeline__note {
+  font-size: 10px;
+  color: #5b4639;
+  font-style: italic;
+}
+
+.generated-template.generated-template--timeline .generated-template--timeline__table th,
+.generated-template.generated-template--timeline .generated-template--timeline__table td {
+  padding: 2px 4px !important;
+  line-height: 1.2;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  vertical-align: top;
+}
+
+.generated-template--timeline__date-row td {
+  background: #f4f1ed;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5b4639;
+  padding: 3px 4px !important;
+  border-top: 8px solid transparent;
+}
+
+.generated-template--timeline h1,
+.generated-template--timeline h2,
+.generated-template--timeline h3,
+.generated-template--timeline p {
+  font-size: 12px;
+  margin-bottom: 0.4rem;
+}
+
+.generated-template--timeline table {
+  font-size: 12px;
+  margin-top: 0.2rem;
+}
+
+.generated-template--timeline table thead th {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.generated-template--timeline__notes {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  line-height: 1.25;
+  color: #4b5563;
+}
+
+.generated-template--timeline__notes span {
+  display: block;
+}
+.generated-template--timeline__row--critical {
+  color: #dc2626;
+}
 </style>
 
 <div class="generated-template generated-template--timeline">
-  <%= render "generated_documents/sections/page_header", segment: @segment %>
+  <header class="generated-template__page-header">
+    <p class="generated-template__page-header-title"><%= @segment.title.presence || "Timeline" %></p>
+  </header>
   <% options = @segment.html_options %>
   <% boolean_cast = ActiveModel::Type::Boolean.new %>
   <% show_location = boolean_cast.cast(options.fetch("show_location", true)) %>
   <% show_vendor = boolean_cast.cast(options.fetch("show_vendor", true)) %>
   <% show_team_members = boolean_cast.cast(options.fetch("show_team_members", true)) %>
+  <% timezone = @event.run_of_show_calendar&.timezone || Time.zone.name %>
 
   <% columns = [
-    { key: :title, label: "Title" },
-    { key: :starts, label: "Starts" }
+    { key: :starts, label: "Time" },
+    { key: :title, label: "Title" }
   ] %>
   <% columns << { key: :location, label: "Location" } if show_location %>
   <% columns << { key: :vendor, label: "Vendor" } if show_vendor %>
@@ -37,14 +96,16 @@
   <% items = [] %>
   <% total_count = 0 %>
   <% error_message = nil %>
+  <% far_future = Time.zone.parse("9999-12-31") rescue Time.zone.now + 100.years %>
 
   <% case @segment.html_view_key %>
   <% when DocumentSegment::RUN_OF_SHOW_VIEW_KEY %>
     <% calendar = @event.run_of_show_calendar %>
     <% if calendar.present? %>
       <% items_scope = calendar.calendar_items.includes(:team_members).ordered %>
-      <% items = items_scope.limit(20).to_a %>
-      <% total_count = items_scope.count %>
+      <% items_scope = items_scope.reject { |item| item.tagged_with?("decisions") } %>
+      <% items = items_scope.to_a %>
+      <% total_count = items.length %>
     <% else %>
       <% error_message = "Run-of-show calendar is not available." %>
     <% end %>
@@ -56,8 +117,9 @@
       <% if view.present? %>
         <% filter = Calendars::ViewFilter.new(calendar:, view:) %>
         <% filtered_items = filter.items %>
+        <% filtered_items = filtered_items.reject { |item| item.tagged_with?("decisions") } %>
         <% total_count = filtered_items.length %>
-        <% items = filtered_items.first(20) %>
+        <% items = filtered_items %>
       <% else %>
         <% error_message = "Selected timeline view is no longer available." %>
       <% end %>
@@ -69,7 +131,16 @@
   <% end %>
 
   <% if items.any? %>
-    <table>
+    <% sorted_items = items.sort_by { |item|
+      start_time = item.effective_starts_at&.in_time_zone(timezone)
+      [start_time || far_future, item.title.to_s.downcase]
+    } %>
+    <% grouped_items = sorted_items.group_by { |item|
+      start_time = item.effective_starts_at&.in_time_zone(timezone)
+      start_time ? start_time.strftime("%A, %B %-d, %Y") : "Date TBD"
+    } %>
+
+    <table class="generated-template--timeline__table">
       <thead>
         <tr>
           <% columns.each do |column| %>
@@ -78,33 +149,45 @@
         </tr>
       </thead>
       <tbody>
-        <% items.each do |item| %>
-          <tr>
-            <% columns.each do |column| %>
-              <td>
-                <% case column[:key]
-                   when :title
-                     concat(item.title)
-                   when :starts
-                     concat(item.starts_at&.to_fs(:long) || "TBD")
-                   when :location
-                     concat(item.location_name.presence || "—")
-                   when :vendor
-                     concat(item.vendor_name.presence || "—")
-                   when :team
-                     team_names = item.team_members.map(&:name).compact
-                     team_names << item.additional_team_members if item.additional_team_members.present?
-                     concat(team_names.reject(&:blank?).join(", ").presence || "—")
-                   end %>
-              </td>
-            <% end %>
+        <% grouped_items.each do |date_label, date_items| %>
+          <tr class="generated-template--timeline__date-row">
+            <td colspan="<%= columns.length %>"><%= date_label %></td>
           </tr>
+          <% date_items.each do |item| %>
+            <% start_time = item.effective_starts_at&.in_time_zone(timezone) %>
+            <% row_classes = [] %>
+            <% row_classes << "generated-template--timeline__row--critical" if item.critical? %>
+            <tr class="<%= row_classes.join(' ') %>">
+              <% columns.each do |column| %>
+                <td>
+                 <% case column[:key]
+                     when :starts
+                       time_label = calendar_item_time_only_label_with_marker(item, timezone)
+                       time_label = time_label.to_s.gsub("–", "&ndash;")
+                       concat(time_label.html_safe)
+                     when :title
+                       concat(item.title)
+                       if item.notes.present?
+                         concat("<div class=\"generated-template--timeline__notes\">".html_safe)
+                         concat(simple_format(item.notes, {}, wrapper_tag: "span").html_safe)
+                         concat("</div>".html_safe)
+                       end
+                     when :location
+                       concat(item.location_name.presence || "&mdash;".html_safe)
+                     when :vendor
+                       concat(item.vendor_name.presence || "&mdash;".html_safe)
+                     when :team
+                       team_names = item.team_members.map { |tm| tm.name.to_s.split.first }.reject(&:blank?)
+                       team_names << item.additional_team_members if item.additional_team_members.present?
+                       concat(team_names.reject(&:blank?).join(", ").presence || "&mdash;".html_safe)
+                     end %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
         <% end %>
       </tbody>
     </table>
-    <% if total_count > items.length %>
-      <p class="generated-template--timeline__note">Showing first <%= items.length %> milestones.</p>
-    <% end %>
   <% else %>
     <p class="generated-template__muted"><%= error_message.presence || "No timeline items found for this selection." %></p>
   <% end %>

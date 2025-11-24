@@ -1,8 +1,8 @@
 <% items ||= [] %>
 <% calendar ||= nil %>
 <% group_by_date = !!group_by_date %>
+<% group_label_proc = local_assigns[:group_label_proc] %>
 <% show_tags = true if local_assigns[:show_tags].nil? %>
-<% show_locked = local_assigns.key?(:show_locked) ? show_locked : true %>
 <% render_actions = local_assigns[:render_actions] %>
 <% actions_header = local_assigns[:actions_header] || "" %>
 <% item_link_proc = local_assigns[:item_link_proc] || ->(item) { [item.title, edit_event_calendar_item_path(calendar.event, item)] } %>
@@ -10,17 +10,13 @@
 <table class="event-table event-calendars__table">
   <thead>
     <tr>
+      <th class="event-calendars__schedule-column">Schedule</th>
       <th>Title</th>
-      <th>Schedule</th>
-      <th>Timing</th>
       <th>Vendor</th>
       <th>Location</th>
       <th>Team</th>
       <% if show_tags %>
         <th>Tags</th>
-      <% end %>
-      <% if show_locked %>
-        <th>Locked</th>
       <% end %>
       <% if render_actions %>
         <th><%= actions_header %></th>
@@ -30,24 +26,24 @@
   <tbody>
     <% current_bucket = nil %>
     <% items.each do |item| %>
-      <% bucket_label = calendar_item_date_bucket(item, calendar.timezone) %>
-      <% if group_by_date && bucket_label != current_bucket %>
-        <% current_bucket = bucket_label %>
+      <% bucket_key = calendar_item_date_bucket(item, calendar.timezone) %>
+      <% bucket_label = group_label_proc ? group_label_proc.call(item) : bucket_key %>
+      <% if group_by_date && bucket_key != current_bucket %>
+        <% current_bucket = bucket_key %>
         <tr class="event-calendars__date-row">
-          <td colspan="<%= 6 + (show_tags ? 1 : 0) + (show_locked ? 1 : 0) + (render_actions ? 1 : 0) %>"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
+          <td colspan="<%= 5 + (show_tags ? 1 : 0) + (render_actions ? 1 : 0) %>"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
         </tr>
       <% end %>
 
       <% title_text, title_path = item_link_proc.call(item) %>
       <tr class="event-calendars__row <%= calendar_item_row_classes(item) %>">
+        <td class="event-calendars__schedule-column"><%= calendar_item_time_only_label_with_marker(item, calendar.timezone) %></td>
         <td>
           <%= link_to title_text, title_path, class: "event-calendars__title-link" %>
           <% if item.notes.present? %>
             <p class="event-calendars__note"><%= simple_format(item.notes) %></p>
           <% end %>
         </td>
-        <td><%= calendar_item_time_label(item, calendar.timezone) %></td>
-        <td><%= calendar_item_timing_text(item) %></td>
         <td><%= item.vendor_name.presence || "—" %></td>
         <td><%= item.location_name.presence || "—" %></td>
         <td>
@@ -68,9 +64,6 @@
               <span class="event-table__status">None</span>
             <% end %>
           </td>
-        <% end %>
-        <% if show_locked %>
-          <td><%= item.locked? ? "Yes" : "No" %></td>
         <% end %>
         <% if render_actions %>
           <td class="event-settings__milestone-row-actions"><%= render_actions.call(item) %></td>

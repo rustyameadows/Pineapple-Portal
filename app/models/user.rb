@@ -5,9 +5,14 @@ class User < ApplicationRecord
     admin: "admin"
   }.freeze
 
+  ACCOUNT_KINDS = {
+    account: "account",
+    contact: "contact"
+  }.freeze
+
   before_validation :normalize_email
 
-  has_secure_password
+  has_secure_password validations: false
 
   has_many :event_team_members, dependent: :destroy
   has_many :events_as_team_member, through: :event_team_members, source: :event
@@ -19,16 +24,21 @@ class User < ApplicationRecord
              class_name: "GlobalAsset",
              optional: true
 
+  attribute :account_kind, :string
   attribute :role, :string
   enum :role, ROLES, default: :planner, validate: true
+  enum :account_kind, ACCOUNT_KINDS, default: :account, validate: true
 
   validates :name, presence: true
-  validates :email, presence: true, uniqueness: true
+  validates :email, presence: true, unless: :contact?
+  validates :email, uniqueness: { allow_blank: true }
   validates :password, length: { minimum: 8 }, allow_nil: true
   validates :role, presence: true
   validates :title, length: { maximum: 150 }, allow_blank: true
   validates :phone_number, length: { maximum: 32 }, allow_blank: true
   validate :avatar_must_be_image
+  validate :password_required_for_account
+  validate :password_confirmation_matches
 
   scope :planners, -> { where(role: ROLES[:planner]) }
   scope :clients, -> { where(role: ROLES[:client]) }
@@ -53,5 +63,19 @@ class User < ApplicationRecord
     unless avatar_global_asset&.content_type.to_s.start_with?("image/")
       errors.add(:avatar_global_asset, "must be an image")
     end
+  end
+
+  def password_required_for_account
+    return unless account?
+    return if password_digest.present? || password.present?
+
+    errors.add(:password, "can't be blank")
+  end
+
+  def password_confirmation_matches
+    return if password.blank?
+    return if password == password_confirmation
+
+    errors.add(:password_confirmation, "doesn't match Password")
   end
 end

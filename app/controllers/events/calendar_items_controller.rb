@@ -15,7 +15,6 @@ module Events
 
     def create
       @item = @calendar.calendar_items.new
-      assign_all_day(@item)
       assign_tags(@item)
       assign_team_members(@item)
       @item.assign_attributes(item_params)
@@ -33,7 +32,6 @@ module Events
     def edit; end
 
     def update
-      assign_all_day(@item)
       assign_tags(@item)
       assign_team_members(@item)
 
@@ -106,7 +104,6 @@ module Events
         end
       ).compact
       @default_start_time = default_calendar_start_time
-      set_all_day_defaults
     end
 
     def anchor_label(item)
@@ -133,12 +130,11 @@ module Events
         :relative_before,
         :locked,
         :relative_to_anchor_end,
-        :all_day_mode,
-        :all_day_date,
         :vendor_name,
         :location_name,
         :status,
         :additional_team_members,
+        :time_caption,
         team_member_ids: []
       )
     end
@@ -148,24 +144,9 @@ module Events
       item.event_calendar_tag_ids = tag_ids
     end
 
-    def assign_all_day(item)
-      all_day_params = params.fetch(:calendar_item, {}).slice(:all_day_mode, :all_day_date)
-      item.all_day_mode = all_day_params[:all_day_mode]
-      item.all_day_date = all_day_params[:all_day_date]
-    end
-
     def assign_team_members(item)
       member_ids = Array(params.dig(:calendar_item, :team_member_ids)).reject(&:blank?).map(&:to_i)
       item.team_member_ids = member_ids
-    end
-
-    def set_all_day_defaults
-      return unless @item
-
-      timezone = @calendar.timezone
-      local_start = @item.starts_at&.in_time_zone(timezone)
-      @item.all_day_mode = @item.all_day? ? "1" : @item.all_day_mode
-      @item.all_day_date ||= local_start&.to_date&.to_s || @default_start_time&.to_date&.to_s
     end
 
     def run_scheduler

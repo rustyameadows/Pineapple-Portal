@@ -43,6 +43,32 @@
           <div class="generated-builder__workspace-card">
             <div class="generated-builder__workspace-head">
               <div>
+                <h2>Packet settings</h2>
+                <p class="generated-builder__hint">Rename the generated packet to control how it appears in documents and downloads.</p>
+              </div>
+            </div>
+
+            <%= form_with model: @document,
+                          url: event_documents_generated_path(@event, @document.logical_id),
+                          method: :patch,
+                          scope: :document,
+                          class: "generated-builder__inline-form" do |form| %>
+              <div class="form-field">
+                <%= form.label :title, "Packet name" %>
+                <%= form.text_field :title, required: true %>
+              </div>
+
+              <%= form.hidden_field :client_visible, value: (@document.client_visible? ? 1 : 0) %>
+
+              <div class="form-actions">
+                <%= form.submit "Save name", class: "button button--primary button--small" %>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="generated-builder__workspace-card">
+            <div class="generated-builder__workspace-head">
+              <div>
                 <h2>Build & downloads</h2>
                 <% if @active_build.present? %>
                   <p class="generated-builder__hint">Latest build kicked off <%= time_ago_in_words(@active_build.created_at) %> ago.</p>

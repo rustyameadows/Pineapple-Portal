@@ -1,10 +1,12 @@
 module CalendarHelper
   def calendar_item_time_label(item, timezone)
+    return item.time_caption if item.time_caption.present?
+
     start_time = item.effective_starts_at&.in_time_zone(timezone)
     finish_time = item.effective_ends_at&.in_time_zone(timezone)
 
     if start_time
-      if finish_time && !item.all_day?
+      if finish_time
         "#{format_time_or_date(start_time)} – #{format_time_only(finish_time)}"
       else
         format_time_or_date(start_time)
@@ -12,6 +14,33 @@ module CalendarHelper
     else
       calendar_item_relative_label(item) || "Exact time coming soon"
     end
+  end
+
+  def calendar_item_time_only_label(item, timezone)
+    return item.time_caption if item.time_caption.present?
+
+    start_time = item.effective_starts_at&.in_time_zone(timezone)
+    finish_time = item.effective_ends_at&.in_time_zone(timezone)
+
+    if start_time
+      if finish_time
+        "#{format_clock_time(start_time)} – #{format_clock_time(finish_time)}"
+      else
+        format_clock_time(start_time)
+      end
+    else
+      calendar_item_relative_label(item) || "Exact time coming soon"
+    end
+  end
+
+  def calendar_item_time_label_with_marker(item, timezone)
+    label = calendar_item_time_label(item, timezone)
+    item.relative? ? "#{label}*" : label
+  end
+
+  def calendar_item_time_only_label_with_marker(item, timezone)
+    label = calendar_item_time_only_label(item, timezone)
+    item.relative? ? "#{label}*" : label
   end
 
   def calendar_item_relative_label(item)
@@ -31,46 +60,12 @@ module CalendarHelper
   end
 
   def calendar_item_duration_label(item)
-    return "All day" if item.all_day?
-
     item.duration_minutes.present? ? "#{item.duration_minutes} min" : "—"
   end
 
   def calendar_item_tags_label(item)
     names = item.event_calendar_tags.map(&:name).reject(&:blank?)
     names.any? ? names.join(', ') : "—"
-  end
-
-  def calendar_item_timing_text(item)
-    return "" if item.absolute?
-
-    anchor = item.relative_anchor
-    return "" unless anchor
-
-    offset = item.relative_offset_minutes.to_i
-    anchor_title = anchor.title
-
-    if item.relative_to_anchor_end?
-      if offset.zero?
-        "Immediately after #{anchor_title}"
-      elsif offset.positive?
-        "#{offset} min after #{anchor_title} ends"
-      else
-        "#{offset.abs} min before #{anchor_title} ends"
-      end
-    else
-      if offset.zero?
-        if anchor.duration_minutes.present?
-          "Immediately after #{anchor_title}"
-        else
-          "At the same time as #{anchor_title}"
-        end
-      elsif offset.positive?
-        "#{offset} min after #{anchor_title}"
-      else
-        "#{offset.abs} min before #{anchor_title}"
-      end
-    end
   end
 
   def calendar_item_date_bucket(item, timezone)
@@ -134,6 +129,10 @@ module CalendarHelper
   def format_time_only(time)
     return time.strftime("%b %-d") if midnight?(time)
 
+    time.strftime("%l:%M %p").strip
+  end
+
+  def format_clock_time(time)
     time.strftime("%l:%M %p").strip
   end
 

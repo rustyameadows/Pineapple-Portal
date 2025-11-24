@@ -1,5 +1,5 @@
 <% form_url = item.persisted? ? event_calendar_item_path(@event, item) : event_calendar_items_path(@event) %>
-<%= form_with model: item, url: form_url, class: "event-form", method: (item.persisted? ? :patch : :post) do |form| %>
+<%= form_with model: item, url: form_url, class: "event-form calendar-item-form", method: (item.persisted? ? :patch : :post) do |form| %>
   <% if item.errors.any? %>
     <div class="event-form__errors">
       <p><strong><%= pluralize(item.errors.count, "error") %> prevented this item from being saved:</strong></p>
@@ -11,194 +11,154 @@
     </div>
   <% end %>
 
-  <div class="event-form__group">
-    <%= form.label :title %>
-    <%= form.text_field :title, required: true %>
-  </div>
+  <div class="calendar-item-form__section">
+    <div class="calendar-item-form__section-header">
+      <p class="calendar-item-form__eyebrow">Basics</p>
+      <p class="calendar-item-form__hint">Give the task a clear name and context.</p>
+    </div>
+    <div class="calendar-item-form__grid">
+      <div class="event-form__group">
+        <%= form.label :title %>
+        <%= form.text_field :title, required: true %>
+      </div>
 
-  <div class="event-form__group">
-    <%= form.label :notes %>
-    <%= form.text_area :notes, rows: 4 %>
-  </div>
-
-  <div class="event-form__row">
-    <div class="event-form__group">
-      <%= form.label :starts_at, "Absolute Start" %>
-      <div class="calendar-item__datetime" data-calendar-all-day data-timezone="<%= @calendar.timezone %>">
-        <% start_value = item.starts_at&.in_time_zone(@calendar.timezone) || @default_start_time %>
-        <div class="calendar-item__time-wrapper" style="display: <%= item.all_day? ? 'none' : 'block' %>;">
-          <%= form.datetime_local_field :starts_at,
-                value: start_value&.strftime('%Y-%m-%dT%H:%M'),
-                class: "calendar-item__time-field" %>
-        </div>
-        <div class="calendar-item__all-day-toggle">
-          <%= form.check_box :all_day_mode, { checked: item.all_day?, class: "calendar-item__all-day-checkbox" }, "1", "0" %>
-          <%= form.label :all_day_mode, "Treat as all-day" %>
-        </div>
-        <div class="calendar-item__all-day-date" style="display: <%= item.all_day? ? 'block' : 'none' %>;">
-          <%= form.label :all_day_date, "All-day date" %>
-          <%= form.date_field :all_day_date, value: item.starts_at&.in_time_zone(@calendar.timezone)&.to_date %>
-        </div>
-        <p class="event-section__note">Leave blank when using relative timing. Times shown in <%= @calendar.timezone %>.</p>
+      <div class="event-form__group calendar-item-form__full">
+        <%= form.label :notes %>
+        <%= form.text_area :notes, rows: 4 %>
       </div>
     </div>
-    <div class="event-form__group">
-      <%= form.label :duration_minutes, "Duration (minutes)" %>
-      <%= form.number_field :duration_minutes, min: 0 %>
-    </div>
   </div>
 
-  <div class="event-form__row">
-    <div class="event-form__group">
-      <%= form.label :relative_anchor_id, "Relative Anchor" %>
-      <%= form.select :relative_anchor_id, options_for_select(@anchor_options, item.relative_anchor_id), { include_blank: "Absolute" }, class: "event-form__select" %>
+  <div class="calendar-item-form__section">
+    <div class="calendar-item-form__section-header">
+      <p class="calendar-item-form__eyebrow">Timing</p>
+      <p class="calendar-item-form__hint">Set the start, duration, or add a custom time label.</p>
     </div>
-    <div class="event-form__group">
-      <%= form.label :relative_offset_minutes, "Offset (minutes)" %>
-      <%= form.number_field :relative_offset_minutes %>
-    </div>
-    <div class="event-form__group event-form__group--checkbox">
-      <%= form.check_box :relative_before %>
-      <%= form.label :relative_before, "Occurs before anchor" %>
-    </div>
-  </div>
-
-  <div class="event-form__group event-form__group--checkbox">
-    <%= form.check_box :relative_to_anchor_end %>
-    <%= form.label :relative_to_anchor_end, "Anchor to the end of the selected item" %>
-  </div>
-
-  <div class="event-form__group event-form__group--checkbox">
-    <%= form.check_box :locked %>
-    <%= form.label :locked, "Lock start time" %>
-  </div>
-
-  <div class="event-form__row">
-    <div class="event-form__group">
-      <%= form.label :vendor_name, "Vendor" %>
-      <%= form.text_field :vendor_name %>
-    </div>
-    <div class="event-form__group">
-      <%= form.label :location_name, "Location" %>
-      <%= form.text_field :location_name %>
-    </div>
-  </div>
-
-  <div class="event-form__row">
-    <div class="event-form__group">
-      <%= form.label :status %>
-      <%= form.select :status, CalendarItem.statuses.keys.map { |key| [key.titleize, key] }, {}, class: "event-form__select" %>
-    </div>
-    <div class="event-form__group">
-      <%= form.label :additional_team_members, "Additional contacts" %>
-      <%= form.text_field :additional_team_members, placeholder: "Add external collaborators" %>
-    </div>
-  </div>
-
-  <div class="event-form__group">
-    <%= form.label :team_member_ids, "Assigned PP members" %>
-    <% if @available_team_members.any? %>
-      <div class="event-form__checkbox-grid">
-        <% @available_team_members.each do |member| %>
-          <% field_id = "calendar_item_team_member_#{member.id}" %>
-          <div class="event-form__group event-form__group--checkbox">
-            <%= check_box_tag "calendar_item[team_member_ids][]", member.id, item.team_member_ids.include?(member.id), id: field_id %>
-            <%= label_tag field_id, member.name %>
+    <div class="calendar-item-form__grid">
+      <div class="event-form__group">
+        <%= form.label :time_caption, "Time label (optional)" %>
+        <%= form.text_field :time_caption, placeholder: "e.g., Start of day, End of day" %>
+        <p class="calendar-item-form__help-text">Overrides the clock time with a label. Leave blank to show the scheduled time.</p>
+      </div>
+      <div class="event-form__group calendar-item-form__full">
+        <%= form.label :starts_at, "Absolute Start" %>
+        <div class="calendar-item__datetime" data-timezone="<%= @calendar.timezone %>">
+          <% start_value = item.starts_at&.in_time_zone(@calendar.timezone) || @default_start_time %>
+          <div class="calendar-item__time-wrapper">
+            <%= form.datetime_local_field :starts_at,
+                  value: start_value&.strftime('%Y-%m-%dT%H:%M'),
+                  class: "calendar-item__time-field" %>
           </div>
+          <p class="calendar-item-form__help-text">Leave blank when using relative timing. Times shown in <%= @calendar.timezone %>.</p>
+        </div>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :duration_minutes, "Duration (minutes)" %>
+        <%= form.number_field :duration_minutes, min: 0 %>
+      </div>
+      <div class="event-form__group event-form__group--checkbox calendar-item-form__stacked">
+        <%= form.check_box :locked %>
+        <%= form.label :locked, "Lock start time" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="calendar-item-form__section">
+    <div class="calendar-item-form__section-header">
+      <p class="calendar-item-form__eyebrow">Anchoring</p>
+      <p class="calendar-item-form__hint">Align this item relative to another, with offsets.</p>
+    </div>
+    <div class="calendar-item-form__grid">
+      <div class="event-form__group">
+        <%= form.label :relative_anchor_id, "Relative Anchor" %>
+        <%= form.select :relative_anchor_id, options_for_select(@anchor_options, item.relative_anchor_id), { include_blank: "Absolute" }, class: "event-form__select" %>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :relative_offset_minutes, "Offset (minutes)" %>
+        <%= form.number_field :relative_offset_minutes %>
+      </div>
+      <div class="event-form__group event-form__group--checkbox calendar-item-form__stacked">
+        <%= form.check_box :relative_before %>
+        <%= form.label :relative_before, "Occurs before anchor" %>
+      </div>
+      <div class="event-form__group event-form__group--checkbox calendar-item-form__stacked">
+        <%= form.check_box :relative_to_anchor_end %>
+        <%= form.label :relative_to_anchor_end, "Anchor to the end of the selected item" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="calendar-item-form__section">
+    <div class="calendar-item-form__section-header">
+      <p class="calendar-item-form__eyebrow">Logistics</p>
+      <p class="calendar-item-form__hint">Who and where for this task.</p>
+    </div>
+    <div class="calendar-item-form__grid">
+      <div class="event-form__group">
+        <%= form.label :vendor_name, "Vendor" %>
+        <%= form.text_field :vendor_name %>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :location_name, "Location" %>
+        <%= form.text_field :location_name %>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :status %>
+        <%= form.select :status, CalendarItem.statuses.keys.map { |key| [key.titleize, key] }, {}, class: "event-form__select" %>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :additional_team_members, "Additional contacts" %>
+        <%= form.text_field :additional_team_members, placeholder: "Add external collaborators" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="calendar-item-form__section">
+    <div class="calendar-item-form__section-header">
+      <p class="calendar-item-form__eyebrow">People & Tags</p>
+      <p class="calendar-item-form__hint">Assign team members and tag this item.</p>
+    </div>
+    <div class="calendar-item-form__grid">
+      <div class="event-form__group calendar-item-form__full">
+        <%= form.label :team_member_ids, "Assigned PP members" %>
+        <% if @available_team_members.any? %>
+          <div class="event-form__checkbox-grid">
+            <% @available_team_members.each do |member| %>
+              <% field_id = "calendar_item_team_member_#{member.id}" %>
+              <div class="event-form__group event-form__group--checkbox">
+                <%= check_box_tag "calendar_item[team_member_ids][]", member.id, item.team_member_ids.include?(member.id), id: field_id %>
+                <%= label_tag field_id, member.name %>
+              </div>
+            <% end %>
+          </div>
+          <%= hidden_field_tag "calendar_item[team_member_ids][]", "" %>
+        <% else %>
+          <p class="calendar-item-form__help-text">Assign planners from the event team to see them here.</p>
         <% end %>
       </div>
-      <%= hidden_field_tag "calendar_item[team_member_ids][]", "" %>
-    <% else %>
-      <p class="event-section__note">Assign planners from the event team to see them here.</p>
-    <% end %>
+
+      <div class="event-form__group calendar-item-form__full">
+        <%= form.label :event_calendar_tag_ids, "Tags" %>
+        <% if @available_tags.any? %>
+          <div class="calendar-item-form__tag-grid">
+            <% @available_tags.each do |tag| %>
+              <% field_id = "calendar_item_tag_#{tag.id}" %>
+              <div class="event-form__group event-form__group--checkbox">
+                <%= check_box_tag "calendar_item[event_calendar_tag_ids][]", tag.id, item.event_calendar_tag_ids.include?(tag.id), id: field_id %>
+                <%= label_tag field_id, tag.name %>
+              </div>
+            <% end %>
+          </div>
+          <%= hidden_field_tag "calendar_item[event_calendar_tag_ids][]", "" %>
+        <% else %>
+          <p class="calendar-item-form__help-text">No tags yet. Add tags from the calendar overview.</p>
+        <% end %>
+      </div>
+    </div>
   </div>
 
-  <div class="event-form__group">
-    <%= form.label :event_calendar_tag_ids, "Tags" %>
-    <% if @available_tags.any? %>
-      <% @available_tags.each do |tag| %>
-        <% field_id = "calendar_item_tag_#{tag.id}" %>
-        <div class="event-form__group event-form__group--checkbox">
-          <%= check_box_tag "calendar_item[event_calendar_tag_ids][]", tag.id, item.event_calendar_tag_ids.include?(tag.id), id: field_id %>
-          <%= label_tag field_id, tag.name %>
-        </div>
-      <% end %>
-      <%= hidden_field_tag "calendar_item[event_calendar_tag_ids][]", "" %>
-    <% else %>
-      <p class="event-section__note">No tags yet. Add tags from the calendar overview.</p>
-    <% end %>
+  <div class="event-form__actions">
+    <%= form.submit class: "event-form__submit" %>
+    <%= link_to "Cancel", event_calendar_path(@event), class: "event-form__cancel" %>
   </div>
-
-<div class="event-form__actions">
-  <%= form.submit class: "event-form__submit" %>
-  <%= link_to "Cancel", event_calendar_path(@event), class: "event-form__cancel" %>
-</div>
 <% end %>
-
-<script>
-  (function() {
-    function ready(fn) {
-      if (document.readyState !== "loading") {
-        fn();
-      } else {
-        document.addEventListener("DOMContentLoaded", fn);
-      }
-      document.addEventListener("turbo:load", fn);
-    }
-
-    function initAllDay(container) {
-      if (!container) return;
-
-      var checkbox = container.querySelector(".calendar-item__all-day-checkbox");
-      var timeWrapper = container.querySelector(".calendar-item__time-wrapper");
-      var timeInput = container.querySelector(".calendar-item__time-field");
-      var dateWrapper = container.querySelector(".calendar-item__all-day-date");
-      var dateInput = container.querySelector("input[name='calendar_item[all_day_date]']");
-
-      if (!checkbox || !timeInput || !dateInput) return;
-
-      if (!timeInput.dataset.originalValue && timeInput.value) {
-        timeInput.dataset.originalValue = timeInput.value;
-      }
-
-      function ensureDateValue() {
-        if (dateInput.value) return dateInput.value;
-        var base = (timeInput.value || new Date().toISOString()).slice(0, 10);
-        dateInput.value = base;
-        return base;
-      }
-
-      function setAllDay(state) {
-        if (state) {
-          timeWrapper.style.display = "none";
-          dateWrapper.style.display = "block";
-          var datePart = ensureDateValue();
-          timeInput.dataset.originalValue = timeInput.dataset.originalValue || (timeInput.value || "");
-          timeInput.value = datePart + "T00:00";
-        } else {
-          timeWrapper.style.display = "block";
-          dateWrapper.style.display = "none";
-          if (timeInput.dataset.originalValue) {
-            timeInput.value = timeInput.dataset.originalValue;
-          }
-        }
-      }
-
-      checkbox.addEventListener("change", function(event) {
-        setAllDay(event.target.checked);
-      });
-
-      dateInput.addEventListener("change", function() {
-        if (!checkbox.checked) return;
-        var datePart = dateInput.value || ensureDateValue();
-        timeInput.value = datePart + "T00:00";
-      });
-
-      setAllDay(checkbox.checked);
-    }
-
-    ready(function() {
-      document.querySelectorAll('[data-calendar-all-day]').forEach(initAllDay);
-    });
-  })();
-</script>

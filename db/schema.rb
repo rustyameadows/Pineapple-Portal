@@ -88,6 +88,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_011000) do
     t.string "location_name"
     t.string "status", default: "planned", null: false
     t.string "additional_team_members"
+    t.string "time_caption"
     t.index ["event_calendar_id", "position"], name: "index_calendar_items_on_calendar_and_position"
     t.index ["event_calendar_id"], name: "index_calendar_items_on_event_calendar_id"
     t.index ["relative_anchor_id"], name: "index_calendar_items_on_relative_anchor_id"
@@ -479,6 +480,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_011000) do
     t.string "title"
     t.string "phone_number"
     t.bigint "avatar_global_asset_id"
+    t.string "account_kind", default: "account", null: false
+    t.index ["account_kind"], name: "index_users_on_account_kind"
     t.index ["avatar_global_asset_id"], name: "index_users_on_avatar_global_asset_id"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["role"], name: "index_users_on_role"

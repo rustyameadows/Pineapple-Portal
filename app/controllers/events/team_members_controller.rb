@@ -29,6 +29,10 @@ module Events
             redirect_to target_path, alert: "Select an existing client or enter details to invite one." and return
           end
         end
+      elsif attributes[:member_role] == EventTeamMember::TEAM_ROLES[:planner]
+        if attributes[:user_id].blank?
+          redirect_to target_path, alert: "Select an existing planner." and return
+        end
       end
 
       @team_member = @event.event_team_members.new(attributes)

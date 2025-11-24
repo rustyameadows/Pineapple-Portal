@@ -46,6 +46,44 @@
   text-align: center;
 }
 
+.event-form--stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.event-form__section {
+  border: 1px solid var(--color-sea-foam);
+  border-radius: var(--radius-lg);
+  background: var(--color-light-cream);
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(60, 46, 37, 0.05);
+}
+
+.event-form__grid {
+  display: grid;
+  gap: 0.9rem 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.event-form__group {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.event-form__hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-neutral-600);
+}
+
+.event-form__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
 .user-avatar-upload__picker {
   display: flex;
   align-items: center;

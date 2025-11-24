@@ -1,34 +1,54 @@
 <% first_account = User.none? %>
 
-<section class="prose">
-  <h1><%= first_account ? "Create the First Account" : "Add a Teammate" %></h1>
-  <p class="lead">
-    <%= first_account ? "Set up the initial user so you can sign in to the portal." : "Invite another planner or teammate to Pineapple Portal." %>
-  </p>
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
 
-  <% if flash[:alert].present? %>
-    <p class="flash alert"><%= flash[:alert] %></p>
-  <% end %>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-  <%= render "form",
-            user: @user,
-            first_account: first_account,
-            allow_role_select: (@allow_role_select || first_account),
-            role_options: @role_options,
-            submit_label: (first_account ? "Create Account" : "Invite Teammate"),
-            require_password: true,
-            return_to: @return_to %>
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Team</p>
+            <h1 class="event-section__title"><%= first_account ? "Create the First Account" : "Add a Teammate" %></h1>
+            <p class="event-section__lead">
+              <%= first_account ? "Set up the initial user so you can sign in to the portal." : "Invite another planner, contact, or client." %>
+            </p>
+          </div>
+          <div class="event-section__actions">
+            <% unless first_account %>
+              <%= link_to "Back to roster", users_path, class: "event-section__link" %>
+            <% end %>
+          </div>
+        </header>
 
-  <% unless first_account %>
-    <p>
-      Need to change roles? Only admins can adjust them.
-    </p>
-  <% end %>
+        <div class="event-section__body">
+          <% if flash[:alert].present? %>
+            <p class="flash alert"><%= flash[:alert] %></p>
+          <% end %>
 
-  <% if first_account %>
-    <p>
-      Already have access?
-      <%= link_to "Log in", login_path %>.
-    </p>
-  <% end %>
-</section>
+          <%= render "form",
+                    user: @user,
+                    first_account: first_account,
+                    allow_role_select: (@allow_role_select || first_account),
+                    role_options: @role_options,
+                    submit_label: (first_account ? "Create Account" : "Save Teammate"),
+                    require_password: true,
+                    return_to: @return_to %>
+
+          <% unless first_account %>
+            <p class="event-section__note">Need to change roles? Only admins can adjust them.</p>
+          <% end %>
+
+          <% if first_account %>
+            <p class="event-section__note">
+              Already have access?
+              <%= link_to "Log in", login_path %>.
+            </p>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

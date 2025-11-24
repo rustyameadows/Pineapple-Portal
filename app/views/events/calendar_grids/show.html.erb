@@ -93,12 +93,6 @@
               <tbody>
                 <% @items.each do |item| %>
                   <% form_id = dom_id(item, :grid_form) %>
-                  <%= form_with model: item,
-                                url: grid_item_path(item),
-                                method: :patch,
-                                local: true,
-                                html: { id: form_id } do |form| %>
-                  <% end %>
                   <tr class="calendar-grid__row <%= 'calendar-grid__row--locked' if item.locked? %>">
                     <td class="calendar-grid__cell calendar-grid__cell--select">
                       <%= check_box_tag "item_ids[]", item.id, false, form: "calendar-grid-bulk-form", class: "calendar-grid__select", data: { bulk_toggle: true } %>
@@ -203,6 +197,15 @@
               </tbody>
             </table>
           </div>
+          <% @items.each do |item| %>
+            <% form_id = dom_id(item, :grid_form) %>
+            <%= form_with model: item,
+                          url: grid_item_path(item),
+                          method: :patch,
+                          local: true,
+                          html: { id: form_id, style: "display:none;", "aria-hidden": true } do |form| %>
+            <% end %>
+          <% end %>
         <% else %>
           <div class="event-section__empty">
             <p>No items available yet.</p>
