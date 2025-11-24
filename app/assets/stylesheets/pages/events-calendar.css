@@ -367,3 +367,71 @@
   text-decoration: line-through;
   color: var(--color-neutral-400);
 }
+
+@media print {
+  @page {
+    margin: 0.5in 0;
+  }
+
+  body,
+  .event-layout,
+  .event-layout__main {
+    background: #ffffff !important;
+    color: #0f172a;
+  }
+
+  .event-layout {
+    display: block;
+  }
+
+  .event-sidebar,
+  .event-layout__activity,
+  .event-breadcrumb,
+  .flash-toast-container,
+  .event-calendars__schedule-actions,
+  .event-calendars__tags,
+  .event-calendars__details,
+  .event-calendars__new-tag,
+  .event-calendars__form,
+  .event-calendars__actions,
+  .event-calendars__tag-list,
+  .event-calendars__tag-fields,
+  .event-section__actions {
+    display: none !important;
+  }
+
+  .event-section,
+  .event-section__header {
+    box-shadow: none;
+    border: none;
+  }
+
+  .event-section__subtitle {
+    color: #475569;
+  }
+
+  .event-calendars__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  .event-calendars__table th,
+  .event-calendars__table td {
+    border: 1px solid #cbd5e1;
+    padding: 0.5rem 0.65rem;
+  }
+
+  .event-calendars__date-row td {
+    background: #f1f5f9;
+  }
+
+  .event-calendars__table tr {
+    break-inside: avoid;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
