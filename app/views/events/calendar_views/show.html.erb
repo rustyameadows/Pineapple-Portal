@@ -44,11 +44,7 @@
           <% if @items.any? %>
             <% custom_group_label = if @view.slug == "decision-calendar" && params[:group_by_date] != "0"
                                       ->(item) {
-                                        if item.time_caption.present?
-                                          calendar_item_time_only_label_with_marker(item, @calendar.timezone)
-                                        else
-                                          calendar_item_date_bucket(item, @calendar.timezone)
-                                        end
+                                        item.time_caption.presence || calendar_item_date_bucket(item, @calendar.timezone)
                                       }
                                     end %>
             <%= render "events/calendars/schedule_table",
