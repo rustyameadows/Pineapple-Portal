@@ -29,6 +29,7 @@
       <% if group_by_date && bucket_label != current_bucket %>
         <% current_bucket = bucket_label %>
         <tr class="event-calendars__date-row">
+          <td colspan="<%= 5 + (show_tags ? 1 : 0) + (render_actions ? 1 : 0) %>"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
         </tr>
       <% end %>
 
