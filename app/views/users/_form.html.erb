@@ -5,52 +5,72 @@
 <% require_password = local_assigns.fetch(:require_password, user.new_record?) %>
 <% role_options = Array(local_assigns[:role_options]).presence || User.roles.keys %>
 <% role_option_pairs = role_options.map { |role| [role.to_s.humanize, role.to_s] } %>
+<% account_kind_options = User.account_kinds.keys.map { |kind| [kind.humanize, kind] } %>
 
-<%= form_with model: user, local: true, class: "stack" do |form| %>
-  <div>
-    <%= form.label :name %>
-    <%= form.text_field :name, required: true %>
-  </div>
+<%= form_with model: user, local: true, class: "event-form event-form--stack" do |form| %>
+  <div class="event-form__section">
+    <div class="event-form__grid">
+      <div class="event-form__group">
+        <%= form.label :account_kind, "Account Type" %>
+        <%= form.select :account_kind, account_kind_options, {}, { data: { account_kind_select: true, account_kind_control: true } } %>
+        <p class="event-form__hint">Choose “Contact” for planners who won't need their own login.</p>
+      </div>
 
-  <div>
-    <%= form.label :title, "Title" %>
-    <%= form.text_field :title, placeholder: "Lead Planner" %>
-  </div>
-
-  <div>
-    <%= form.label :phone_number, "Phone" %>
-    <%= form.telephone_field :phone_number, placeholder: "555-123-4567" %>
-  </div>
-
-  <div>
-    <%= form.label :email %>
-    <%= form.email_field :email, required: true %>
-  </div>
-
-  <% if allow_role_select %>
-    <div>
-      <%= form.label :role %>
-      <%= form.select :role, role_option_pairs, {}, {} %>
+      <% if allow_role_select %>
+        <div class="event-form__group">
+          <%= form.label :role %>
+          <%= form.select :role, role_option_pairs, {}, {} %>
+        </div>
+      <% elsif user.role.present? %>
+        <%= form.hidden_field :role, value: user.role %>
+      <% end %>
     </div>
-  <% elsif user.role.present? %>
-    <%= form.hidden_field :role, value: user.role %>
-  <% end %>
-
-  <div>
-    <%= form.label :password %>
-    <% password_options = { autocomplete: user.new_record? ? "new-password" : "off" } %>
-    <% password_options[:required] = true if require_password %>
-    <%= form.password_field :password, **password_options %>
-    <% unless require_password %>
-      <p class="form-help">Leave blank to keep the current password.</p>
-    <% end %>
   </div>
 
-  <div>
-    <%= form.label :password_confirmation %>
-    <% confirmation_options = { autocomplete: user.new_record? ? "new-password" : "off" } %>
-    <% confirmation_options[:required] = true if require_password %>
-    <%= form.password_field :password_confirmation, **confirmation_options %>
+  <div class="event-form__section">
+    <div class="event-form__grid">
+      <div class="event-form__group">
+        <%= form.label :name %>
+        <%= form.text_field :name, required: true %>
+      </div>
+
+      <div class="event-form__group">
+        <%= form.label :title, "Title" %>
+        <%= form.text_field :title, placeholder: "Lead Planner" %>
+      </div>
+
+      <div class="event-form__group">
+        <%= form.label :phone_number, "Phone" %>
+        <%= form.telephone_field :phone_number, placeholder: "555-123-4567" %>
+      </div>
+
+      <div class="event-form__group" data-email-field>
+        <%= form.label :email %>
+        <%= form.email_field :email, required: !user.contact?, data: { email_input: true } %>
+        <p class="event-form__hint">Required for portal accounts.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="event-form__section" data-password-section>
+    <div class="event-form__grid">
+      <div class="event-form__group" data-password-fields>
+        <%= form.label :password %>
+        <% password_options = { autocomplete: user.new_record? ? "new-password" : "off" } %>
+        <% password_options[:required] = true if require_password %>
+        <%= form.password_field :password, **password_options %>
+        <% unless require_password %>
+          <p class="event-form__hint">Leave blank to keep the current password.</p>
+        <% end %>
+      </div>
+
+      <div class="event-form__group" data-password-fields>
+        <%= form.label :password_confirmation %>
+        <% confirmation_options = { autocomplete: user.new_record? ? "new-password" : "off" } %>
+        <% confirmation_options[:required] = true if require_password %>
+        <%= form.password_field :password_confirmation, **confirmation_options %>
+      </div>
+    </div>
   </div>
 
   <% return_to_value = local_assigns[:return_to].presence || (defined?(@return_to) && @return_to.present? ? @return_to : nil) %>
@@ -58,7 +78,10 @@
     <%= hidden_field_tag :return_to, return_to_value %>
   <% end %>
 
-<%= form.submit submit_label %>
+  <div class="event-form__actions">
+    <%= form.submit submit_label, class: "event-form__submit" %>
+    <%= link_to "Cancel", (return_to_value.presence || users_path), class: "event-form__cancel" %>
+  </div>
 <% end %>
 
 <% if user.persisted? %>
@@ -121,3 +144,55 @@
 
   <%= render "documents/upload_script" %>
 <% end %>
+
+<script>
+  (function() {
+    function toggleFields(selectEl) {
+      var passwordContainer = document.querySelectorAll("[data-password-fields]");
+      var emailInput = document.querySelector("[data-email-input]");
+      if (!selectEl) return;
+
+      var isContact = selectEl.value === "contact";
+
+      passwordContainer.forEach(function(container) {
+        if (!container) return;
+        container.style.display = isContact ? "none" : "";
+        container.querySelectorAll("input[type='password']").forEach(function(input) {
+          if (isContact) {
+            input.removeAttribute("required");
+            input.value = "";
+          } else {
+            input.required = true;
+          }
+        });
+      });
+
+      if (emailInput) {
+        if (isContact) {
+          emailInput.removeAttribute("required");
+        } else {
+          emailInput.required = true;
+        }
+      }
+    }
+
+    function ready(fn) {
+      if (document.readyState !== "loading") {
+        fn();
+      } else {
+        document.addEventListener("DOMContentLoaded", fn);
+      }
+      document.addEventListener("turbo:load", fn);
+    }
+
+    ready(function() {
+      var selectEl = document.querySelector("[data-account-kind-select]");
+      toggleFields(selectEl);
+      if (selectEl) {
+        selectEl.addEventListener("change", function(event) {
+          toggleFields(event.target);
+        });
+      }
+    });
+  })();
+</script>

@@ -29,6 +29,7 @@
                   <th>Title</th>
                   <th>Email</th>
                   <th>Phone</th>
+                  <th>Account Type</th>
                   <th>Role</th>
                   <th>Joined</th>
                   <th></th>
@@ -41,6 +42,7 @@
                     <td><%= user.title.presence || "—" %></td>
                     <td><%= user.email %></td>
                     <td><%= user.phone_number.presence || "—" %></td>
+                    <td><%= user.account_kind.humanize %></td>
                     <td><%= user.role.humanize %></td>
                     <td><%= user.created_at&.strftime('%b %-d, %Y') %></td>
                     <td class="event-table__actions">

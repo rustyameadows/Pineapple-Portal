@@ -34,7 +34,14 @@
                   <% @planner_team_members.each do |team_member| %>
                     <% user = team_member.user %>
                     <tr>
-                      <td><%= link_to user.name, edit_user_path(user, return_to: planners_event_settings_path(@event)), class: "event-section__link" %></td>
+                      <td>
+                        <div class="event-settings__planner-cell">
+                          <%= link_to user.name, edit_user_path(user, return_to: planners_event_settings_path(@event)), class: "event-section__link" %>
+                          <% if user.contact? %>
+                            <span class="event-table__status">Contact-only</span>
+                          <% end %>
+                        </div>
+                      </td>
                       <td><%= user.title.presence || "—" %></td>
                       <td><%= user.phone_number.presence || "—" %></td>
                       <td>
