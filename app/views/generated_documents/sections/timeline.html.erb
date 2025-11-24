@@ -7,8 +7,8 @@
     gap: 0.9rem;
     font-size: 10px;
     --generated-document-content-padding-x: 0.25in;
-    --generated-document-content-padding-top: 0.45in;
-    --generated-document-content-padding-bottom: 0.35in;
+    --generated-document-content-padding-top: 0.65in;
+    --generated-document-content-padding-bottom: 0.55in;
   }
 
   .generated-template--timeline table td:nth-child(1) {
@@ -63,7 +63,9 @@
 </style>
 
 <div class="generated-template generated-template--timeline">
-  <%= render "generated_documents/sections/page_header", segment: @segment %>
+  <header class="generated-template__page-header">
+    <p class="generated-template__page-header-title"><%= @segment.title.presence || "Timeline" %></p>
+  </header>
   <% options = @segment.html_options %>
   <% boolean_cast = ActiveModel::Type::Boolean.new %>
   <% show_location = boolean_cast.cast(options.fetch("show_location", true)) %>
@@ -146,7 +148,9 @@
                 <td>
                  <% case column[:key]
                      when :starts
-                       concat(calendar_item_time_only_label(item, timezone))
+                       time_label = calendar_item_time_only_label(item, timezone)
+                       time_label = time_label.to_s.gsub("–", "&ndash;")
+                       concat(time_label.html_safe)
                      when :title
                        concat(item.title)
                      when :location
