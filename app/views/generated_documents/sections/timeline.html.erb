@@ -103,6 +103,7 @@
     <% calendar = @event.run_of_show_calendar %>
     <% if calendar.present? %>
       <% items_scope = calendar.calendar_items.includes(:team_members).ordered %>
+      <% items_scope = items_scope.reject { |item| item.tagged_with?("decisions") } %>
       <% items = items_scope.to_a %>
       <% total_count = items.length %>
     <% else %>
@@ -116,6 +117,7 @@
       <% if view.present? %>
         <% filter = Calendars::ViewFilter.new(calendar:, view:) %>
         <% filtered_items = filter.items %>
+        <% filtered_items = filtered_items.reject { |item| item.tagged_with?("decisions") } %>
         <% total_count = filtered_items.length %>
         <% items = filtered_items %>
       <% else %>

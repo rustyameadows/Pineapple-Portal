@@ -35,7 +35,10 @@ module Events
     end
 
     def load_collections
-      @items = @calendar.calendar_items.includes(:relative_anchor, :event_calendar_tags).ordered
+      @items = @calendar.calendar_items
+                         .includes(:relative_anchor, :event_calendar_tags)
+                         .ordered
+                         .reject { |item| item.tagged_with?("decisions") }
       @tags = @calendar.event_calendar_tags.order(:position)
       @tags_by_id = @tags.index_by(&:id)
       @views = @calendar.event_calendar_views.order(:position)
