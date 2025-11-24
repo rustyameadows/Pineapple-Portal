@@ -7,7 +7,7 @@
     gap: 1.5rem;
   }
 
-  .generated-template--timeline table td:nth-child(2) {
+  .generated-template--timeline table td:nth-child(1) {
     white-space: nowrap;
   }
 
@@ -15,6 +15,19 @@
     font-size: 0.9rem;
     color: #5b4639;
     font-style: italic;
+  }
+
+  .generated-template--timeline__table th,
+  .generated-template--timeline__table td {
+    padding: 0.5rem 0.65rem;
+  }
+
+  .generated-template--timeline__date-row td {
+    background: #f4f1ed;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #5b4639;
   }
 </style>
 
@@ -25,10 +38,11 @@
   <% show_location = boolean_cast.cast(options.fetch("show_location", true)) %>
   <% show_vendor = boolean_cast.cast(options.fetch("show_vendor", true)) %>
   <% show_team_members = boolean_cast.cast(options.fetch("show_team_members", true)) %>
+  <% timezone = @event.run_of_show_calendar&.timezone || Time.zone.name %>
 
   <% columns = [
-    { key: :title, label: "Title" },
-    { key: :starts, label: "Starts" }
+    { key: :starts, label: "Time" },
+    { key: :title, label: "Title" }
   ] %>
   <% columns << { key: :location, label: "Location" } if show_location %>
   <% columns << { key: :vendor, label: "Vendor" } if show_vendor %>
@@ -37,14 +51,15 @@
   <% items = [] %>
   <% total_count = 0 %>
   <% error_message = nil %>
+  <% far_future = Time.zone.parse("9999-12-31") rescue Time.zone.now + 100.years %>
 
   <% case @segment.html_view_key %>
   <% when DocumentSegment::RUN_OF_SHOW_VIEW_KEY %>
     <% calendar = @event.run_of_show_calendar %>
     <% if calendar.present? %>
       <% items_scope = calendar.calendar_items.includes(:team_members).ordered %>
-      <% items = items_scope.limit(20).to_a %>
-      <% total_count = items_scope.count %>
+      <% items = items_scope.to_a %>
+      <% total_count = items.length %>
     <% else %>
       <% error_message = "Run-of-show calendar is not available." %>
     <% end %>
@@ -57,7 +72,7 @@
         <% filter = Calendars::ViewFilter.new(calendar:, view:) %>
         <% filtered_items = filter.items %>
         <% total_count = filtered_items.length %>
-        <% items = filtered_items.first(20) %>
+        <% items = filtered_items %>
       <% else %>
         <% error_message = "Selected timeline view is no longer available." %>
       <% end %>
@@ -69,7 +84,16 @@
   <% end %>
 
   <% if items.any? %>
-    <table>
+    <% sorted_items = items.sort_by { |item|
+      start_time = item.effective_starts_at&.in_time_zone(timezone)
+      [start_time || far_future, item.title.to_s.downcase]
+    } %>
+    <% grouped_items = sorted_items.group_by { |item|
+      start_time = item.effective_starts_at&.in_time_zone(timezone)
+      start_time ? start_time.strftime("%A, %B %-d, %Y") : "Date TBD"
+    } %>
+
+    <table class="generated-template--timeline__table">
       <thead>
         <tr>
           <% columns.each do |column| %>
@@ -78,33 +102,36 @@
         </tr>
       </thead>
       <tbody>
-        <% items.each do |item| %>
-          <tr>
-            <% columns.each do |column| %>
-              <td>
-                <% case column[:key]
-                   when :title
-                     concat(item.title)
-                   when :starts
-                     concat(item.starts_at&.to_fs(:long) || "TBD")
-                   when :location
-                     concat(item.location_name.presence || "—")
-                   when :vendor
-                     concat(item.vendor_name.presence || "—")
-                   when :team
-                     team_names = item.team_members.map(&:name).compact
-                     team_names << item.additional_team_members if item.additional_team_members.present?
-                     concat(team_names.reject(&:blank?).join(", ").presence || "—")
-                   end %>
-              </td>
-            <% end %>
+        <% grouped_items.each do |date_label, date_items| %>
+          <tr class="generated-template--timeline__date-row">
+            <td colspan="<%= columns.length %>"><%= date_label %></td>
           </tr>
+          <% date_items.each do |item| %>
+            <% start_time = item.effective_starts_at&.in_time_zone(timezone) %>
+            <tr>
+              <% columns.each do |column| %>
+                <td>
+                 <% case column[:key]
+                     when :starts
+                       concat(calendar_item_time_only_label(item, timezone))
+                     when :title
+                       concat(item.title)
+                     when :location
+                       concat(item.location_name.presence || "—")
+                     when :vendor
+                       concat(item.vendor_name.presence || "—")
+                     when :team
+                       team_names = item.team_members.map(&:name).compact
+                       team_names << item.additional_team_members if item.additional_team_members.present?
+                       concat(team_names.reject(&:blank?).join(", ").presence || "—")
+                     end %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
         <% end %>
       </tbody>
     </table>
-    <% if total_count > items.length %>
-      <p class="generated-template--timeline__note">Showing first <%= items.length %> milestones.</p>
-    <% end %>
   <% else %>
     <p class="generated-template__muted"><%= error_message.presence || "No timeline items found for this selection." %></p>
   <% end %>
