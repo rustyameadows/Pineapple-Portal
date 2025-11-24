@@ -1,6 +1,7 @@
 <% items ||= [] %>
 <% calendar ||= nil %>
 <% group_by_date = !!group_by_date %>
+<% group_label_proc = local_assigns[:group_label_proc] %>
 <% show_tags = true if local_assigns[:show_tags].nil? %>
 <% render_actions = local_assigns[:render_actions] %>
 <% actions_header = local_assigns[:actions_header] || "" %>
@@ -25,9 +26,10 @@
   <tbody>
     <% current_bucket = nil %>
     <% items.each do |item| %>
-      <% bucket_label = calendar_item_date_bucket(item, calendar.timezone) %>
-      <% if group_by_date && bucket_label != current_bucket %>
-        <% current_bucket = bucket_label %>
+      <% bucket_key = calendar_item_date_bucket(item, calendar.timezone) %>
+      <% bucket_label = group_label_proc ? group_label_proc.call(item) : bucket_key %>
+      <% if group_by_date && bucket_key != current_bucket %>
+        <% current_bucket = bucket_key %>
         <tr class="event-calendars__date-row">
           <td colspan="<%= 5 + (show_tags ? 1 : 0) + (render_actions ? 1 : 0) %>"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
         </tr>

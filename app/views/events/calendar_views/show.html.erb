@@ -42,10 +42,20 @@
           </p>
 
           <% if @items.any? %>
+            <% custom_group_label = if @view.slug == "decision-calendar" && params[:group_by_date] != "0"
+                                      ->(item) {
+                                        if item.time_caption.present?
+                                          calendar_item_time_only_label_with_marker(item, @calendar.timezone)
+                                        else
+                                          calendar_item_date_bucket(item, @calendar.timezone)
+                                        end
+                                      }
+                                    end %>
             <%= render "events/calendars/schedule_table",
                        items: @items,
                        calendar: @calendar,
                        group_by_date: params[:group_by_date] != "0",
+                       group_label_proc: custom_group_label,
                        show_tags: false,
                        item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@event, item)] } %>
           <% else %>
