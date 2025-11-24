@@ -31,6 +31,16 @@ module CalendarHelper
     end
   end
 
+  def calendar_item_time_label_with_marker(item, timezone)
+    label = calendar_item_time_label(item, timezone)
+    item.relative? ? "#{label}*" : label
+  end
+
+  def calendar_item_time_only_label_with_marker(item, timezone)
+    label = calendar_item_time_only_label(item, timezone)
+    item.relative? ? "#{label}*" : label
+  end
+
   def calendar_item_relative_label(item)
     return unless item.relative? && item.relative_anchor
 

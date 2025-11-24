@@ -27,6 +27,7 @@
   line-height: 1.2;
   font-size: 12px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  vertical-align: top;
 }
 
 .generated-template--timeline__date-row td {
@@ -57,6 +58,17 @@
   letter-spacing: 0.12em;
 }
 
+.generated-template--timeline__notes {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  line-height: 1.25;
+  color: #4b5563;
+}
+
+.generated-template--timeline__notes span {
+  display: block;
+}
 .generated-template--timeline__row--critical {
   color: #dc2626;
 }
@@ -148,11 +160,16 @@
                 <td>
                  <% case column[:key]
                      when :starts
-                       time_label = calendar_item_time_only_label(item, timezone)
+                       time_label = calendar_item_time_only_label_with_marker(item, timezone)
                        time_label = time_label.to_s.gsub("–", "&ndash;")
                        concat(time_label.html_safe)
                      when :title
                        concat(item.title)
+                       if item.notes.present?
+                         concat("<div class=\"generated-template--timeline__notes\">".html_safe)
+                         concat(simple_format(item.notes, {}, wrapper_tag: "span").html_safe)
+                         concat("</div>".html_safe)
+                       end
                      when :location
                        concat(item.location_name.presence || "&mdash;".html_safe)
                      when :vendor
