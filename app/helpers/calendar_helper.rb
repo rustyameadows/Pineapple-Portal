@@ -1,10 +1,12 @@
 module CalendarHelper
   def calendar_item_time_label(item, timezone)
+    return item.time_caption if item.time_caption.present?
+
     start_time = item.effective_starts_at&.in_time_zone(timezone)
     finish_time = item.effective_ends_at&.in_time_zone(timezone)
 
     if start_time
-      if finish_time && !item.all_day?
+      if finish_time
         "#{format_time_or_date(start_time)} – #{format_time_only(finish_time)}"
       else
         format_time_or_date(start_time)
@@ -15,13 +17,13 @@ module CalendarHelper
   end
 
   def calendar_item_time_only_label(item, timezone)
-    return "All day" if item.all_day?
+    return item.time_caption if item.time_caption.present?
 
     start_time = item.effective_starts_at&.in_time_zone(timezone)
     finish_time = item.effective_ends_at&.in_time_zone(timezone)
 
     if start_time
-      if finish_time && !item.all_day?
+      if finish_time
         "#{format_clock_time(start_time)} – #{format_clock_time(finish_time)}"
       else
         format_clock_time(start_time)
@@ -58,8 +60,6 @@ module CalendarHelper
   end
 
   def calendar_item_duration_label(item)
-    return "All day" if item.all_day?
-
     item.duration_minutes.present? ? "#{item.duration_minutes} min" : "—"
   end
 

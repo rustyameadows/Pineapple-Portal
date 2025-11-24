@@ -1,7 +1,6 @@
 require "set"
 
 class CalendarItem < ApplicationRecord
-  attr_accessor :all_day_mode, :all_day_date
 
   belongs_to :event_calendar
   belongs_to :relative_anchor, class_name: "CalendarItem", optional: true
@@ -106,14 +105,6 @@ class CalendarItem < ApplicationRecord
     update_column(:tag_summary, event_calendar_tags.pluck(:name)) # rubocop:disable Rails/SkipsModelValidations
   end
 
-  def all_day?
-    explicit_toggle = ActiveModel::Type::Boolean.new.cast(all_day_mode)
-    return explicit_toggle unless all_day_mode.nil?
-
-    start_time = starts_at&.in_time_zone(event_calendar&.timezone || Time.zone)
-    start_time&.strftime("%H:%M") == "00:00"
-  end
-
   private
 
   def default_relative_offset
@@ -149,14 +140,7 @@ class CalendarItem < ApplicationRecord
     return value if timezone.blank?
 
     Time.use_zone(timezone) do
-      target = if ActiveModel::Type::Boolean.new.cast(all_day_mode)
-                 date_value = all_day_date.presence || value
-                 Time.zone.parse(date_value)&.beginning_of_day
-               else
-                 Time.zone.parse(value)
-               end
-
-      target&.utc
+      Time.zone.parse(value)&.utc
     end
   rescue ArgumentError
     value

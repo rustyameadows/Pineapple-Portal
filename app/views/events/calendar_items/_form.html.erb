@@ -32,25 +32,22 @@
   <div class="calendar-item-form__section">
     <div class="calendar-item-form__section-header">
       <p class="calendar-item-form__eyebrow">Timing</p>
-      <p class="calendar-item-form__hint">Set the start, duration, or mark as all-day.</p>
+      <p class="calendar-item-form__hint">Set the start, duration, or add a custom time label.</p>
     </div>
     <div class="calendar-item-form__grid">
+      <div class="event-form__group">
+        <%= form.label :time_caption, "Time label (optional)" %>
+        <%= form.text_field :time_caption, placeholder: "e.g., Start of day, End of day" %>
+        <p class="calendar-item-form__help-text">Overrides the clock time with a label. Leave blank to show the scheduled time.</p>
+      </div>
       <div class="event-form__group calendar-item-form__full">
         <%= form.label :starts_at, "Absolute Start" %>
-        <div class="calendar-item__datetime" data-calendar-all-day data-timezone="<%= @calendar.timezone %>">
+        <div class="calendar-item__datetime" data-timezone="<%= @calendar.timezone %>">
           <% start_value = item.starts_at&.in_time_zone(@calendar.timezone) || @default_start_time %>
-          <div class="calendar-item__time-wrapper" style="display: <%= item.all_day? ? 'none' : 'block' %>;">
+          <div class="calendar-item__time-wrapper">
             <%= form.datetime_local_field :starts_at,
                   value: start_value&.strftime('%Y-%m-%dT%H:%M'),
                   class: "calendar-item__time-field" %>
-          </div>
-          <div class="calendar-item__all-day-toggle">
-            <%= form.check_box :all_day_mode, { checked: item.all_day?, class: "calendar-item__all-day-checkbox" }, "1", "0" %>
-            <%= form.label :all_day_mode, "Treat as all-day" %>
-          </div>
-          <div class="calendar-item__all-day-date" style="display: <%= item.all_day? ? 'block' : 'none' %>;">
-            <%= form.label :all_day_date, "All-day date" %>
-            <%= form.date_field :all_day_date, value: item.starts_at&.in_time_zone(@calendar.timezone)&.to_date %>
           </div>
           <p class="calendar-item-form__help-text">Leave blank when using relative timing. Times shown in <%= @calendar.timezone %>.</p>
         </div>
@@ -165,71 +162,3 @@
     <%= link_to "Cancel", event_calendar_path(@event), class: "event-form__cancel" %>
   </div>
 <% end %>
-
-<script>
-  (function() {
-    function ready(fn) {
-      if (document.readyState !== "loading") {
-        fn();
-      } else {
-        document.addEventListener("DOMContentLoaded", fn);
-      }
-      document.addEventListener("turbo:load", fn);
-    }
-
-    function initAllDay(container) {
-      if (!container) return;
-
-      var checkbox = container.querySelector(".calendar-item__all-day-checkbox");
-      var timeWrapper = container.querySelector(".calendar-item__time-wrapper");
-      var timeInput = container.querySelector(".calendar-item__time-field");
-      var dateWrapper = container.querySelector(".calendar-item__all-day-date");
-      var dateInput = container.querySelector("input[name='calendar_item[all_day_date]']");
-
-      if (!checkbox || !timeInput || !dateInput) return;
-
-      if (!timeInput.dataset.originalValue && timeInput.value) {
-        timeInput.dataset.originalValue = timeInput.value;
-      }
-
-      function ensureDateValue() {
-        if (dateInput.value) return dateInput.value;
-        var base = (timeInput.value || new Date().toISOString()).slice(0, 10);
-        dateInput.value = base;
-        return base;
-      }
-
-      function setAllDay(state) {
-        if (state) {
-          timeWrapper.style.display = "none";
-          dateWrapper.style.display = "block";
-          var datePart = ensureDateValue();
-          timeInput.dataset.originalValue = timeInput.dataset.originalValue || (timeInput.value || "");
-          timeInput.value = datePart + "T00:00";
-        } else {
-          timeWrapper.style.display = "block";
-          dateWrapper.style.display = "none";
-          if (timeInput.dataset.originalValue) {
-            timeInput.value = timeInput.dataset.originalValue;
-          }
-        }
-      }
-
-      checkbox.addEventListener("change", function(event) {
-        setAllDay(event.target.checked);
-      });
-
-      dateInput.addEventListener("change", function() {
-        if (!checkbox.checked) return;
-        var datePart = dateInput.value || ensureDateValue();
-        timeInput.value = datePart + "T00:00";
-      });
-
-      setAllDay(checkbox.checked);
-    }
-
-    ready(function() {
-      document.querySelectorAll('[data-calendar-all-day]').forEach(initAllDay);
-    });
-  })();
-</script>
