@@ -8,11 +8,7 @@ class EventsController < ApplicationController
 
   def show
     @questionnaires = @event.questionnaires.order(:title)
-    @event_links = @event.event_links.quick.ordered
-    @payments = @event.payments.ordered
-    @approvals = @event.approvals.ordered
-    @calendar = @event.run_of_show_calendar
-    @calendar_views = @calendar&.event_calendar_views&.order(:position)
+    @internal_event_links = @event.event_links.internal.ordered
   end
 
   def new

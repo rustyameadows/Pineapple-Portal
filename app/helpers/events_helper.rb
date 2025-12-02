@@ -48,13 +48,15 @@ module EventsHelper
       timeline_sub_links << { label: "No derived views yet", path: nil, stub: true }
     end
 
+    timeline_sub_links << { label: "All Calendars", path: event_calendars_path(event) }
+
     timeline_match_paths = [event_calendars_path(event), event_calendar_path(event)] +
       derived_views.map { |view| event_calendar_view_path(event, view) }
 
     sections << {
       id: :timeline,
-      label: "Timeline",
-      path: event_calendars_path(event),
+      label: "Timelines",
+      path: (run_of_show ? event_calendar_path(event) : event_calendars_path(event)),
       sub_links: timeline_sub_links,
       match_paths: timeline_match_paths
     }
@@ -183,7 +185,7 @@ module EventsHelper
 
   def event_sidebar_section_active?(section, current_path)
     paths = Array(section[:match_paths])
-    paths += section.fetch(:sub_links, []).map { |link| link[:path] }
+    paths += section.fetch(:sub_links, []).map { |link| link[:path] unless link[:stub] }.compact
     paths.compact.any? { |path| sidebar_path_match?(current_path, path) }
   end
 
@@ -194,12 +196,14 @@ module EventsHelper
 
     return true if current_path == target_path
 
-    prefix = "#{target_path}/"
-    return false unless current_path.start_with?(prefix)
+    boundary_match = /\A#{Regexp.escape(target_path)}(?:\/|$)/
+    return false unless current_path =~ boundary_match
 
-    remainder = current_path.delete_prefix(prefix)
+    remainder = current_path.delete_prefix(target_path)
+    remainder = remainder.delete_prefix("/") if remainder.start_with?("/")
     first_segment = remainder.split("/").first
 
+    return false if first_segment == "views"
     if first_segment == "generated" && !target_path.include?("/generated")
       return false
     end

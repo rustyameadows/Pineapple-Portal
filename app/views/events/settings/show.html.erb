@@ -19,6 +19,73 @@
         </div>
       </section>
 
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Internal Links</p>
+            <h2 class="event-section__title">Planner Shortcuts</h2>
+            <p class="event-section__lead">Add internal-only links like the event spreadsheet. These do not show on the client portal.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__planning-links">
+            <% if @internal_event_links.any? %>
+              <ul class="event-settings__link-list">
+                <% @internal_event_links.each_with_index do |event_link, index| %>
+                  <li class="event-settings__link-item">
+                    <%= form_with model: [@event, event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                      <%= form.hidden_field :link_type, value: "internal" %>
+                      <div class="event-settings__field">
+                        <%= form.label :label, "Label" %>
+                        <%= form.text_field :label, required: true %>
+                      </div>
+                      <div class="event-settings__field">
+                        <%= form.label :url, "URL" %>
+                        <%= form.url_field :url, required: true, placeholder: "https://" %>
+                      </div>
+                      <div class="event-settings__form-actions">
+                        <%= form.submit "Save changes" %>
+                      </div>
+                    <% end %>
+
+                    <div class="event-settings__controls">
+                      <% if index.positive? %>
+                        <%= link_to "Move up", move_up_event_event_link_path(@event, event_link), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                      <% end %>
+                      <% if index < @internal_event_links.length - 1 %>
+                        <%= link_to "Move down", move_down_event_event_link_path(@event, event_link), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                      <% end %>
+                      <%= link_to "Remove", event_event_link_path(@event, event_link), data: { turbo_method: :delete, turbo_confirm: "Remove this link?" }, class: "event-settings__control event-settings__control--danger" %>
+                    </div>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="event-settings__empty">No internal links yet. Add one below to share planner shortcuts.</p>
+            <% end %>
+
+            <div class="event-settings__new-link">
+              <h3>Add Internal Link</h3>
+              <%= form_with model: [@event, @internal_event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                <%= form.hidden_field :link_type, value: "internal" %>
+                <div class="event-settings__field">
+                  <%= form.label :label, "Label" %>
+                  <%= form.text_field :label, required: true, placeholder: "Event Spreadsheet" %>
+                </div>
+                <div class="event-settings__field">
+                  <%= form.label :url, "URL" %>
+                  <%= form.url_field :url, required: true, placeholder: "https://" %>
+                </div>
+                <div class="event-settings__form-actions">
+                  <%= form.submit "Add internal link" %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <%# Milestone overview moved to dedicated workflow %>
     </div>
   </div>

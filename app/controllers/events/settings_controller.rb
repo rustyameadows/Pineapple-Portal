@@ -4,6 +4,7 @@ module Events
     helper CalendarHelper
 
     def show
+      prepare_internal_links
     end
 
     def client_portal
@@ -98,5 +99,9 @@ module Events
         .reject { |link| visible_keys.include?(link.key) }
     end
 
+    def prepare_internal_links
+      @internal_event_link = @event.event_links.new(link_type: "internal")
+      @internal_event_links = @event.event_links.internal.ordered
+    end
   end
 end
