@@ -3,7 +3,7 @@ module Events
     helper CalendarHelper
 
     before_action :set_event
-    before_action :ensure_calendar, only: %i[show update]
+    before_action :ensure_calendar, only: %i[show update timeline_preview]
     before_action :load_collections, only: %i[show update]
 
     def index
@@ -13,6 +13,18 @@ module Events
     end
 
     def show; end
+
+    def timeline_preview
+      @items = @calendar.calendar_items
+                         .includes(:event_calendar_tags, :team_members, :relative_anchor)
+                         .ordered
+      @segment = Struct.new(:title, :html_options, :html_view_key).new(
+        title: @calendar.name,
+        html_options: {},
+        html_view_key: DocumentSegment::RUN_OF_SHOW_VIEW_KEY
+      )
+      render template: "generated_documents/sections/timeline", layout: "generated_preview"
+    end
 
     def update
       if @calendar.update(calendar_params)
@@ -44,7 +56,7 @@ module Events
       @views = @calendar.event_calendar_views.order(:position)
       @new_tag = EventCalendarTag.new(event_calendar: @calendar)
       @time_zones = ActiveSupport::TimeZone.all
-      @group_by_date = params[:group_by_date] != "0"
+      @group_by_date = true
     end
 
     def calendar_params

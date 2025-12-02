@@ -139,7 +139,15 @@
 }
 
 .event-calendars__schedule-column {
-  min-width: 150px;
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
+
+.event-calendars__title-column {
+  width: 400px;
+  min-width: 400px;
+  max-width: 400px;
 }
 
 .event-calendars__note {

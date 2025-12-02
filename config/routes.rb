@@ -38,6 +38,7 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
       get :grid, to: "calendar_grids#show"
       patch "grid/items/:item_id", to: "calendar_grids#update", as: :grid_item
       patch "grid/bulk", to: "calendar_grids#bulk_update", as: :grid_bulk
+      get :timeline_preview, to: "calendars#timeline_preview"
       resources :items,
                 controller: "calendar_items",
                 except: :index do
@@ -57,6 +58,7 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
           get :grid, to: "calendar_grids#show"
           patch "grid/items/:item_id", to: "calendar_grids#update", as: :grid_item
           patch "grid/bulk", to: "calendar_grids#bulk_update", as: :grid_bulk
+          get :timeline_preview, to: "calendar_views#timeline_preview"
         end
       end
     end

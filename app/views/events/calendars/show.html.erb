@@ -5,26 +5,16 @@
     <div class="event-layout__main">
       <%= render "shared/flash" %>
 
-      <div class="event-breadcrumb">
-        <%= link_to "← Back to Calendars", event_calendars_path(@event), class: "event-section__link" %>
-      </div>
-
       <section class="event-section">
         <header class="event-section__header">
           <div>
-            <p class="event-section__eyebrow">Schedule</p>
+            <p class="event-section__eyebrow"></p>
             <h2 class="event-section__title">Run of Show</h2>
-            <p class="event-section__subtitle">Relative items can anchor to the start or end of another entry.</p>
+            <p class="event-section__subtitle"></p>
           </div>
           <div class="event-calendars__schedule-actions">
-            <%= form_with url: event_calendar_path(@event), method: :get, local: true, class: "event-calendars__toggle-form" do %>
-              <%= hidden_field_tag :group_by_date, "0" %>
-              <label class="event-calendars__toggle">
-                <%= check_box_tag :group_by_date, "1", @group_by_date, onchange: "this.form.submit()" %>
-                <span>Group by date</span>
-              </label>
-            <% end %>
             <%= link_to "Edit as Sheet", grid_event_calendar_path(@event), class: "event-section__cta event-section__cta--secondary" %>
+            <%= link_to "Preview Timeline", timeline_preview_event_calendar_path(@event), class: "event-section__cta event-section__cta--secondary" %>
             <%= link_to "Add Item", new_event_calendar_item_path(@event), class: "event-section__cta" %>
           </div>
         </header>
@@ -121,50 +111,6 @@
             </div>
           <% end %>
         </header>
-      </section>
-      
-      <section class="event-section">
-        <header class="event-section__header">
-          <div>
-            <p class="event-section__eyebrow">Derived Calendars</p>
-            <h2 class="event-section__title">Filtered Views</h2>
-            <p class="event-section__subtitle">Tailor the run of show for vendors, clients, or internal teams.</p>
-          </div>
-          <%= link_to "Create Derived Calendar", new_event_calendar_view_path(@event), class: "event-section__cta" %>
-        </header>
-
-        <% if @views.any? %>
-          <table class="event-table event-calendars__table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Tags</th>
-                <th>Client Portal</th>
-                <th>Items</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% @views.each do |view| %>
-                <tr>
-                  <td><%= link_to view.name, event_calendar_view_path(@event, view), class: "event-calendars__title-link" %></td>
-                  <td>
-                    <% if view.tag_filter.present? %>
-                      <%= view.tag_filter.map { |tag_id| @tags_by_id[tag_id]&.name }.compact.join(', ') %>
-                    <% else %>
-                      <span class="event-table__status">All items</span>
-                    <% end %>
-                  </td>
-                  <td><%= view.client_visible? ? "Visible" : "Hidden" %></td>
-                  <td><%= Calendars::ViewFilter.new(calendar: @calendar, view: view).items.count %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        <% else %>
-          <div class="event-section__empty">
-            <p>No derived calendars yet. Use tags to group items, then create a filtered view.</p>
-          </div>
-        <% end %>
       </section>
     </div>
   </div>

@@ -7,16 +7,6 @@
 
       <% event_date = @event.starts_on || @event.ends_on %>
       <% formatted_event_date = event_date&.strftime("%B %-d, %Y") %>
-      <% days_until = event_date ? (event_date - Date.current).to_i : nil %>
-      <% countdown_label = if days_until
-                              if days_until.positive?
-                                "#{days_until} days"
-                              elsif days_until.zero?
-                                "Today"
-                              else
-                                "#{days_until.abs} days ago"
-                              end
-                            end %>
       <section class="event-hero">
         <div class="event-hero__corner event-hero__corner--top-left">
           <p class="event-hero__location"><%= @event.location.presence || "Location TBD" %></p>
@@ -24,9 +14,6 @@
 
         <div class="event-hero__corner event-hero__corner--top-right">
           <p class="event-hero__date-primary"><%= formatted_event_date || "Date TBD" %></p>
-          <% if countdown_label.present? %>
-            <p class="event-hero__date-secondary"><%= countdown_label.upcase %></p>
-          <% end %>
         </div>
 
         <div class="event-hero__center">

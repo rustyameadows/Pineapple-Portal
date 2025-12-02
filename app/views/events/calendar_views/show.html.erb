@@ -8,21 +8,15 @@
       <section class="event-section">
         <header class="event-section__header">
           <div>
-            <p class="event-section__eyebrow">Derived Calendars</p>
+            <p class="event-section__eyebrow"></p>
             <h1 class="event-section__title"><%= @view.name %></h1>
             <p class="event-section__subtitle">
-              <%= @view.description.presence || "Filtered view of the run of show." %>
+              <%= @view.description.presence %>
             </p>
           </div>
           <div class="event-calendars__schedule-actions">
-            <%= form_with url: event_calendar_view_path(@event, @view), method: :get, local: true, class: "event-calendars__toggle-form" do %>
-              <%= hidden_field_tag :group_by_date, "0" %>
-              <label class="event-calendars__toggle">
-                <%= check_box_tag :group_by_date, "1", params[:group_by_date] != "0", onchange: "this.form.submit()" %>
-                <span>Group by date</span>
-              </label>
-            <% end %>
             <%= link_to "Edit as Sheet", grid_event_calendar_view_path(@event, @view), class: "event-section__cta event-section__cta--secondary" %>
+            <%= link_to "Preview Timeline", timeline_preview_event_calendar_view_path(@event, @view), class: "event-section__cta event-section__cta--secondary" %>
             <%= link_to "Edit View", edit_event_calendar_view_path(@event, @view), class: "event-section__cta" %>
           </div>
         </header>
@@ -42,7 +36,7 @@
           </p>
 
           <% if @items.any? %>
-            <% custom_group_label = if @view.slug == "decision-calendar" && params[:group_by_date] != "0"
+            <% custom_group_label = if @view.slug == "decision-calendar"
                                       ->(item) {
                                         item.time_caption.presence || calendar_item_date_bucket(item, @calendar.timezone)
                                       }
@@ -50,7 +44,7 @@
             <%= render "events/calendars/schedule_table",
                        items: @items,
                        calendar: @calendar,
-                       group_by_date: params[:group_by_date] != "0",
+                       group_by_date: true,
                        group_label_proc: custom_group_label,
                        show_tags: false,
                        item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@event, item)] } %>

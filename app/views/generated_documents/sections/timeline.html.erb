@@ -117,7 +117,7 @@
       <% if view.present? %>
         <% filter = Calendars::ViewFilter.new(calendar:, view:) %>
         <% filtered_items = filter.items %>
-        <% filtered_items = filtered_items.reject { |item| item.tagged_with?("decisions") } %>
+        <% filtered_items = filtered_items.reject { |item| item.tagged_with?("decisions") } unless view.slug == "decision-calendar" %>
         <% total_count = filtered_items.length %>
         <% items = filtered_items %>
       <% else %>
@@ -135,6 +135,7 @@
       start_time = item.effective_starts_at&.in_time_zone(timezone)
       [start_time || far_future, item.title.to_s.downcase]
     } %>
+    <% decision_calendar = defined?(view) && view&.slug == "decision-calendar" %>
     <% grouped_items = sorted_items.group_by { |item|
       start_time = item.effective_starts_at&.in_time_zone(timezone)
       start_time ? start_time.strftime("%A, %B %-d, %Y") : "Date TBD"
@@ -150,9 +151,15 @@
       </thead>
       <tbody>
         <% grouped_items.each do |date_label, date_items| %>
-          <tr class="generated-template--timeline__date-row">
-            <td colspan="<%= columns.length %>"><%= date_label %></td>
-          </tr>
+        <% display_label = if decision_calendar
+                             first_caption = date_items.find { |item| item.time_caption.present? }&.time_caption
+                             first_caption.presence || date_label
+                           else
+                             date_label
+                           end %>
+        <tr class="generated-template--timeline__date-row">
+          <td colspan="<%= columns.length %>"><%= display_label %></td>
+        </tr>
           <% date_items.each do |item| %>
             <% start_time = item.effective_starts_at&.in_time_zone(timezone) %>
             <% row_classes = [] %>
