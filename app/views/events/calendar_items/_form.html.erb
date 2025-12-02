@@ -122,13 +122,13 @@
       <div class="event-form__group calendar-item-form__full">
         <%= form.label :team_member_ids, "Assigned PP members" %>
         <% if @available_team_members.any? %>
-          <div class="event-form__checkbox-grid">
+          <div class="calendar-item-form__pill-list">
             <% @available_team_members.each do |member| %>
               <% field_id = "calendar_item_team_member_#{member.id}" %>
-              <div class="event-form__group event-form__group--checkbox">
+              <label class="calendar-item-form__pill">
                 <%= check_box_tag "calendar_item[team_member_ids][]", member.id, item.team_member_ids.include?(member.id), id: field_id %>
-                <%= label_tag field_id, member.name %>
-              </div>
+                <span><%= member.name %></span>
+              </label>
             <% end %>
           </div>
           <%= hidden_field_tag "calendar_item[team_member_ids][]", "" %>
@@ -140,13 +140,13 @@
       <div class="event-form__group calendar-item-form__full">
         <%= form.label :event_calendar_tag_ids, "Tags" %>
         <% if @available_tags.any? %>
-          <div class="calendar-item-form__tag-grid">
+          <div class="calendar-item-form__pill-list">
             <% @available_tags.each do |tag| %>
               <% field_id = "calendar_item_tag_#{tag.id}" %>
-              <div class="event-form__group event-form__group--checkbox">
+              <label class="calendar-item-form__pill calendar-item-form__pill--tag" style="<%= calendar_tag_style(tag) %>">
                 <%= check_box_tag "calendar_item[event_calendar_tag_ids][]", tag.id, item.event_calendar_tag_ids.include?(tag.id), id: field_id %>
-                <%= label_tag field_id, tag.name %>
-              </div>
+                <span><%= tag.name %></span>
+              </label>
             <% end %>
           </div>
           <%= hidden_field_tag "calendar_item[event_calendar_tag_ids][]", "" %>

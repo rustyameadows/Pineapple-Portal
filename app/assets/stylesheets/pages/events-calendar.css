@@ -335,6 +335,35 @@
   gap: 0.35rem 0.75rem;
 }
 
+.calendar-item-form__pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.calendar-item-form__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--color-neutral-300);
+  border-radius: var(--radius-pill);
+  background: var(--color-white);
+  font-size: 0.95rem;
+  color: var(--color-dark-brown);
+  cursor: pointer;
+}
+
+.calendar-item-form__pill input[type="checkbox"] {
+  margin: 0;
+}
+
+.calendar-item-form__pill--tag {
+  border: 1px solid var(--tag-border-color, var(--color-neutral-300));
+  background: var(--tag-color, var(--color-white));
+  color: var(--tag-text-color, var(--color-dark-brown));
+}
+
 @media (max-width: 768px) {
   .calendar-item-form__section {
     padding: 1rem 1.1rem;
