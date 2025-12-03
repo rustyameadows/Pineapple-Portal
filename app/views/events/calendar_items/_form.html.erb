@@ -14,7 +14,7 @@
   <div class="calendar-item-form__section">
     <div class="calendar-item-form__section-header">
       <p class="calendar-item-form__eyebrow">Basic Info</p>
-      <p class="calendar-item-form__hint">Set the essentials and categorize.</p>
+      <p class="calendar-item-form__hint"></p>
     </div>
     <div class="calendar-item-form__grid">
       <div class="event-form__group">
@@ -52,7 +52,7 @@
   <div class="calendar-item-form__section">
     <div class="calendar-item-form__section-header">
       <p class="calendar-item-form__eyebrow">Timing</p>
-      <p class="calendar-item-form__hint">Choose absolute or relative timing.</p>
+      <p class="calendar-item-form__hint"></p>
     </div>
 
     <div class="calendar-item-form__toggle">
@@ -220,7 +220,7 @@
   <div class="calendar-item-form__section">
     <div class="calendar-item-form__section-header">
       <p class="calendar-item-form__eyebrow">Logistics</p>
-      <p class="calendar-item-form__hint">People and places involved.</p>
+      <p class="calendar-item-form__hint"></p>
     </div>
     <div class="calendar-item-form__grid">
       <div class="event-form__group">
@@ -255,9 +255,18 @@
     </div>
   </div>
 
-  <div class="event-form__actions">
-    <%= form.submit class: "event-form__submit" %>
-    <%= link_to "Cancel", event_calendar_path(@event), class: "event-form__cancel" %>
+  <div class="event-form__actions calendar-item-form__actions">
+    <% if item.persisted? %>
+      <div class="calendar-item-form__actions-left">
+        <%= button_to "Delete Item", event_calendar_item_path(@event, item), method: :delete, data: { turbo_confirm: "Remove this calendar item?" }, class: "event-form__submit event-form__submit--danger" %>
+      </div>
+    <% else %>
+      <div></div>
+    <% end %>
+    <div class="calendar-item-form__actions-right">
+      <%= link_to "Cancel", event_calendar_path(@event), class: "event-form__cancel" %>
+      <%= form.submit class: "event-form__submit" %>
+    </div>
   </div>
 <% end %>
 

@@ -22,4 +22,6 @@
 .event-form__actions--delete {
   margin-top: var(--space-4);
   justify-content: flex-start;
+  align-items: flex-start;
+}
 }
