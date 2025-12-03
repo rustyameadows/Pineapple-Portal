@@ -40,7 +40,7 @@
                   <tr>
                     <td><%= user.name %></td>
                     <td><%= user.title.presence || "—" %></td>
-                    <td><%= user.email %></td>
+                    <td><%= user.display_email %></td>
                     <td><%= user.phone_number.presence || "—" %></td>
                     <td><%= user.account_kind.humanize %></td>
                     <td><%= user.role.humanize %></td>
