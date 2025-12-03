@@ -27,6 +27,7 @@ class CalendarItem < ApplicationRecord
 
   STATUSES = {
     planned: "planned",
+    to_be_confirmed: "to_be_confirmed",
     in_progress: "in_progress",
     completed: "completed"
   }.freeze

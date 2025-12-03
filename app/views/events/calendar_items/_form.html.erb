@@ -80,51 +80,6 @@
           <p class="calendar-item-form__help-text">Times shown in <%= @calendar.timezone %>.</p>
         </div>
       </div>
-      <div class="event-form__group">
-        <%= form.label :duration_minutes, "Duration" %>
-        <div class="calendar-item-form__duration">
-          <% duration_value = item.duration_minutes.present? ? item.duration_minutes : nil %>
-          <% duration_unit = "minutes" %>
-          <% if item.duration_minutes.present? %>
-            <% minutes = item.duration_minutes.to_i %>
-            <% if (minutes % (60 * 24 * 30)).zero? %>
-              <% duration_value = minutes / (60 * 24 * 30) %>
-              <% duration_unit = "months" %>
-            <% elsif (minutes % (60 * 24 * 7)).zero? %>
-              <% duration_value = minutes / (60 * 24 * 7) %>
-              <% duration_unit = "weeks" %>
-            <% elsif (minutes % (60 * 24)).zero? %>
-              <% duration_value = minutes / (60 * 24) %>
-              <% duration_unit = "days" %>
-            <% elsif (minutes % 60).zero? %>
-              <% duration_value = minutes / 60 %>
-              <% duration_unit = "hours" %>
-            <% end %>
-          <% end %>
-          <%= number_field_tag "calendar_item[duration_value]",
-                               duration_value,
-                               min: 0,
-                               step: 0.25,
-                               class: "calendar-item-form__duration-value" %>
-          <%= select_tag "calendar_item[duration_unit]",
-                         options_for_select(
-                           [
-                             ["Minutes", "minutes"],
-                             ["Hours", "hours"],
-                             ["Days", "days"],
-                             ["Weeks", "weeks"],
-                             ["Months", "months"]
-                           ],
-                           duration_unit
-                         ),
-                         class: "calendar-item-form__duration-unit" %>
-        </div>
-      </div>
-      <div class="event-form__group calendar-item-form__full">
-        <%= form.label :time_caption, "Time label (optional)" %>
-        <%= form.text_field :time_caption, placeholder: "e.g., Start of day, End of day" %>
-        <p class="calendar-item-form__help-text">Overrides the clock time with a label. Leave blank to show the scheduled time.</p>
-      </div>
     </div>
 
     <div class="calendar-item-form__grid calendar-item-form__timing-group" data-timing-mode="relative" style="<%= timing_mode == 'relative' ? '' : 'display:none;' %>">
@@ -169,6 +124,9 @@
                         { selected: item.relative_before? },
                         class: "event-form__select" %>
       </div>
+    </div>
+
+    <div class="calendar-item-form__grid">
       <div class="event-form__group">
         <%= form.label :duration_minutes, "Duration" %>
         <div class="calendar-item-form__duration">
