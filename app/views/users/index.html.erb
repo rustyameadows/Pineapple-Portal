@@ -47,6 +47,11 @@
                     <td><%= user.created_at&.strftime('%b %-d, %Y') %></td>
                     <td class="event-table__actions">
                       <%= link_to "Edit", edit_user_path(user), class: "event-section__link" %>
+                      <%= button_to "Delete",
+                                    user_path(user),
+                                    method: :delete,
+                                    form: { data: { turbo_confirm: "Delete #{user.name}? This cannot be undone." } },
+                                    class: "event-section__link event-section__link--danger" %>
                     </td>
                   </tr>
                 <% end %>
