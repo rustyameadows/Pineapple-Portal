@@ -74,6 +74,7 @@
     font-size: 1.6rem;
     font-weight: var(--font-weight-semibold);
     color: var(--color-dark-brown);
+    line-height: 2rem;
 }
 
 .event-sidebar__event-link {
