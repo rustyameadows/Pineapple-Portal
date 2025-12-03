@@ -83,6 +83,30 @@ module CalendarHelper
     classes.join(" ")
   end
 
+  def calendar_item_relative_tooltip(item)
+    return nil unless item.relative?
+    anchor = item.relative_anchor
+    return nil unless anchor
+
+    offset_minutes = item.relative_offset_minutes.to_i
+    direction = item.relative_before? ? "before" : "after"
+    anchor_point = item.relative_to_anchor_end? ? "end" : "start"
+
+    offset_label = if offset_minutes.zero?
+                     "At the #{anchor_point} of #{anchor.title}"
+                   else
+                     minutes = offset_minutes.abs
+                     parts = []
+                     hours = minutes / 60
+                     mins = minutes % 60
+                     parts << "#{hours} #{'hour'.pluralize(hours)}" if hours.positive?
+                     parts << "#{mins} #{'minute'.pluralize(mins)}" if mins.positive?
+                     "#{parts.join(' ')} #{direction} #{anchor.title} #{anchor_point}s"
+                   end
+
+    offset_label
+  end
+
   def calendar_tag_style(tag)
     color = tag.color_token.to_s.strip
     return nil if color.blank?

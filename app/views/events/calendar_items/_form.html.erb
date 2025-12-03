@@ -13,130 +13,22 @@
 
   <div class="calendar-item-form__section">
     <div class="calendar-item-form__section-header">
-      <p class="calendar-item-form__eyebrow">Basics</p>
-      <p class="calendar-item-form__hint">Give the task a clear name and context.</p>
+      <p class="calendar-item-form__eyebrow">Basic Info</p>
+      <p class="calendar-item-form__hint">Set the essentials and categorize.</p>
     </div>
     <div class="calendar-item-form__grid">
       <div class="event-form__group">
         <%= form.label :title %>
         <%= form.text_field :title, required: true %>
       </div>
-
-      <div class="event-form__group calendar-item-form__full">
-        <%= form.label :notes %>
-        <%= form.text_area :notes, rows: 4 %>
-      </div>
-    </div>
-  </div>
-
-  <div class="calendar-item-form__section">
-    <div class="calendar-item-form__section-header">
-      <p class="calendar-item-form__eyebrow">Timing</p>
-      <p class="calendar-item-form__hint">Set the start, duration, or add a custom time label.</p>
-    </div>
-    <div class="calendar-item-form__grid">
-      <div class="event-form__group">
-        <%= form.label :time_caption, "Time label (optional)" %>
-        <%= form.text_field :time_caption, placeholder: "e.g., Start of day, End of day" %>
-        <p class="calendar-item-form__help-text">Overrides the clock time with a label. Leave blank to show the scheduled time.</p>
-      </div>
-      <div class="event-form__group calendar-item-form__full">
-        <%= form.label :starts_at, "Absolute Start" %>
-        <div class="calendar-item__datetime" data-timezone="<%= @calendar.timezone %>">
-          <% start_value = item.starts_at&.in_time_zone(@calendar.timezone) || @default_start_time %>
-          <div class="calendar-item__time-wrapper">
-            <%= form.datetime_local_field :starts_at,
-                  value: start_value&.strftime('%Y-%m-%dT%H:%M'),
-                  class: "calendar-item__time-field" %>
-          </div>
-          <p class="calendar-item-form__help-text">Leave blank when using relative timing. Times shown in <%= @calendar.timezone %>.</p>
-        </div>
-      </div>
-      <div class="event-form__group">
-        <%= form.label :duration_minutes, "Duration (minutes)" %>
-        <%= form.number_field :duration_minutes, min: 0 %>
-      </div>
-      <div class="event-form__group event-form__group--checkbox calendar-item-form__stacked">
-        <%= form.check_box :locked %>
-        <%= form.label :locked, "Lock start time" %>
-      </div>
-    </div>
-  </div>
-
-  <div class="calendar-item-form__section">
-    <div class="calendar-item-form__section-header">
-      <p class="calendar-item-form__eyebrow">Anchoring</p>
-      <p class="calendar-item-form__hint">Align this item relative to another, with offsets.</p>
-    </div>
-    <div class="calendar-item-form__grid">
-      <div class="event-form__group">
-        <%= form.label :relative_anchor_id, "Relative Anchor" %>
-        <%= form.select :relative_anchor_id, options_for_select(@anchor_options, item.relative_anchor_id), { include_blank: "Absolute" }, class: "event-form__select" %>
-      </div>
-      <div class="event-form__group">
-        <%= form.label :relative_offset_minutes, "Offset (minutes)" %>
-        <%= form.number_field :relative_offset_minutes %>
-      </div>
-      <div class="event-form__group event-form__group--checkbox calendar-item-form__stacked">
-        <%= form.check_box :relative_before %>
-        <%= form.label :relative_before, "Occurs before anchor" %>
-      </div>
-      <div class="event-form__group event-form__group--checkbox calendar-item-form__stacked">
-        <%= form.check_box :relative_to_anchor_end %>
-        <%= form.label :relative_to_anchor_end, "Anchor to the end of the selected item" %>
-      </div>
-    </div>
-  </div>
-
-  <div class="calendar-item-form__section">
-    <div class="calendar-item-form__section-header">
-      <p class="calendar-item-form__eyebrow">Logistics</p>
-      <p class="calendar-item-form__hint">Who and where for this task.</p>
-    </div>
-    <div class="calendar-item-form__grid">
-      <div class="event-form__group">
-        <%= form.label :vendor_name, "Vendor" %>
-        <%= form.text_field :vendor_name %>
-      </div>
-      <div class="event-form__group">
-        <%= form.label :location_name, "Location" %>
-        <%= form.text_field :location_name %>
-      </div>
       <div class="event-form__group">
         <%= form.label :status %>
         <%= form.select :status, CalendarItem.statuses.keys.map { |key| [key.titleize, key] }, {}, class: "event-form__select" %>
       </div>
-      <div class="event-form__group">
-        <%= form.label :additional_team_members, "Additional contacts" %>
-        <%= form.text_field :additional_team_members, placeholder: "Add external collaborators" %>
-      </div>
-    </div>
-  </div>
-
-  <div class="calendar-item-form__section">
-    <div class="calendar-item-form__section-header">
-      <p class="calendar-item-form__eyebrow">People & Tags</p>
-      <p class="calendar-item-form__hint">Assign team members and tag this item.</p>
-    </div>
-    <div class="calendar-item-form__grid">
       <div class="event-form__group calendar-item-form__full">
-        <%= form.label :team_member_ids, "Assigned PP members" %>
-        <% if @available_team_members.any? %>
-          <div class="calendar-item-form__pill-list">
-            <% @available_team_members.each do |member| %>
-              <% field_id = "calendar_item_team_member_#{member.id}" %>
-              <label class="calendar-item-form__pill">
-                <%= check_box_tag "calendar_item[team_member_ids][]", member.id, item.team_member_ids.include?(member.id), id: field_id %>
-                <span><%= member.name %></span>
-              </label>
-            <% end %>
-          </div>
-          <%= hidden_field_tag "calendar_item[team_member_ids][]", "" %>
-        <% else %>
-          <p class="calendar-item-form__help-text">Assign planners from the event team to see them here.</p>
-        <% end %>
+        <%= form.label :notes %>
+        <%= form.text_area :notes, rows: 4 %>
       </div>
-
       <div class="event-form__group calendar-item-form__full">
         <%= form.label :event_calendar_tag_ids, "Tags" %>
         <% if @available_tags.any? %>
@@ -157,8 +49,249 @@
     </div>
   </div>
 
+  <div class="calendar-item-form__section">
+    <div class="calendar-item-form__section-header">
+      <p class="calendar-item-form__eyebrow">Timing</p>
+      <p class="calendar-item-form__hint">Choose absolute or relative timing.</p>
+    </div>
+
+    <div class="calendar-item-form__toggle">
+      <% timing_mode = item.relative? ? "relative" : "absolute" %>
+      <label class="calendar-item-form__toggle-option">
+        <%= radio_button_tag "calendar_item[timing_mode]", "absolute", timing_mode == "absolute", data: { timing_toggle_target: "absolute" } %>
+        <span>Absolute</span>
+      </label>
+      <label class="calendar-item-form__toggle-option">
+        <%= radio_button_tag "calendar_item[timing_mode]", "relative", timing_mode == "relative", data: { timing_toggle_target: "relative" } %>
+        <span>Relative</span>
+      </label>
+    </div>
+
+    <div class="calendar-item-form__grid calendar-item-form__timing-group" data-timing-mode="absolute" style="<%= timing_mode == 'relative' ? 'display:none;' : '' %>">
+      <div class="event-form__group">
+        <%= form.label :starts_at, "Start Time" %>
+        <div class="calendar-item__datetime" data-timezone="<%= @calendar.timezone %>">
+          <% start_value = item.starts_at&.in_time_zone(@calendar.timezone) || @default_start_time %>
+          <div class="calendar-item__time-wrapper">
+            <%= form.datetime_local_field :starts_at,
+                  value: start_value&.strftime('%Y-%m-%dT%H:%M'),
+                  class: "calendar-item__time-field" %>
+          </div>
+          <p class="calendar-item-form__help-text">Times shown in <%= @calendar.timezone %>.</p>
+        </div>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :duration_minutes, "Duration" %>
+        <div class="calendar-item-form__duration">
+          <% duration_value = item.duration_minutes.present? ? item.duration_minutes : nil %>
+          <% duration_unit = "minutes" %>
+          <% if item.duration_minutes.present? %>
+            <% minutes = item.duration_minutes.to_i %>
+            <% if (minutes % (60 * 24 * 30)).zero? %>
+              <% duration_value = minutes / (60 * 24 * 30) %>
+              <% duration_unit = "months" %>
+            <% elsif (minutes % (60 * 24 * 7)).zero? %>
+              <% duration_value = minutes / (60 * 24 * 7) %>
+              <% duration_unit = "weeks" %>
+            <% elsif (minutes % (60 * 24)).zero? %>
+              <% duration_value = minutes / (60 * 24) %>
+              <% duration_unit = "days" %>
+            <% elsif (minutes % 60).zero? %>
+              <% duration_value = minutes / 60 %>
+              <% duration_unit = "hours" %>
+            <% end %>
+          <% end %>
+          <%= number_field_tag "calendar_item[duration_value]",
+                               duration_value,
+                               min: 0,
+                               step: 0.25,
+                               class: "calendar-item-form__duration-value" %>
+          <%= select_tag "calendar_item[duration_unit]",
+                         options_for_select(
+                           [
+                             ["Minutes", "minutes"],
+                             ["Hours", "hours"],
+                             ["Days", "days"],
+                             ["Weeks", "weeks"],
+                             ["Months", "months"]
+                           ],
+                           duration_unit
+                         ),
+                         class: "calendar-item-form__duration-unit" %>
+        </div>
+      </div>
+      <div class="event-form__group calendar-item-form__full">
+        <%= form.label :time_caption, "Time label (optional)" %>
+        <%= form.text_field :time_caption, placeholder: "e.g., Start of day, End of day" %>
+        <p class="calendar-item-form__help-text">Overrides the clock time with a label. Leave blank to show the scheduled time.</p>
+      </div>
+    </div>
+
+    <div class="calendar-item-form__grid calendar-item-form__timing-group" data-timing-mode="relative" style="<%= timing_mode == 'relative' ? '' : 'display:none;' %>">
+      <div class="event-form__group calendar-item-form__full">
+        <%= form.label :relative_anchor_id, "Anchor" %>
+        <%= form.select :relative_anchor_id, options_for_select(@anchor_options, item.relative_anchor_id), { include_blank: "Absolute" }, class: "event-form__select" %>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :relative_to_anchor_end, "Reference" %>
+        <%= form.select :relative_to_anchor_end,
+                        [["Anchor start", false], ["Anchor end", true]],
+                        { selected: item.relative_to_anchor_end? },
+                        class: "event-form__select" %>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :relative_offset_minutes, "Offset" %>
+        <div class="calendar-item-form__duration">
+          <% offset_value = item.relative_offset_minutes.to_i %>
+          <% offset_unit = "minutes" %>
+          <%= number_field_tag "calendar_item[relative_offset_value]",
+                               offset_value,
+                               step: 0.25,
+                               class: "calendar-item-form__duration-value" %>
+          <%= select_tag "calendar_item[relative_offset_unit]",
+                         options_for_select(
+                           [
+                             ["Minutes", "minutes"],
+                             ["Hours", "hours"],
+                             ["Days", "days"],
+                             ["Weeks", "weeks"],
+                             ["Months", "months"]
+                           ],
+                           offset_unit
+                         ),
+                         class: "calendar-item-form__duration-unit" %>
+        </div>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :relative_before, "Position" %>
+        <%= form.select :relative_before,
+                        [["After anchor", false], ["Before anchor", true]],
+                        { selected: item.relative_before? },
+                        class: "event-form__select" %>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :duration_minutes, "Duration" %>
+        <div class="calendar-item-form__duration">
+          <% duration_value = item.duration_minutes.present? ? item.duration_minutes : nil %>
+          <% duration_unit = "minutes" %>
+          <% if item.duration_minutes.present? %>
+            <% minutes = item.duration_minutes.to_i %>
+            <% if (minutes % (60 * 24 * 30)).zero? %>
+              <% duration_value = minutes / (60 * 24 * 30) %>
+              <% duration_unit = "months" %>
+            <% elsif (minutes % (60 * 24 * 7)).zero? %>
+              <% duration_value = minutes / (60 * 24 * 7) %>
+              <% duration_unit = "weeks" %>
+            <% elsif (minutes % (60 * 24)).zero? %>
+              <% duration_value = minutes / (60 * 24) %>
+              <% duration_unit = "days" %>
+            <% elsif (minutes % 60).zero? %>
+              <% duration_value = minutes / 60 %>
+              <% duration_unit = "hours" %>
+            <% end %>
+          <% end %>
+          <%= number_field_tag "calendar_item[duration_value]",
+                               duration_value,
+                               min: 0,
+                               step: 0.25,
+                               class: "calendar-item-form__duration-value" %>
+          <%= select_tag "calendar_item[duration_unit]",
+                         options_for_select(
+                           [
+                             ["Minutes", "minutes"],
+                             ["Hours", "hours"],
+                             ["Days", "days"],
+                             ["Weeks", "weeks"],
+                             ["Months", "months"]
+                           ],
+                           duration_unit
+                         ),
+                         class: "calendar-item-form__duration-unit" %>
+        </div>
+      </div>
+      <div class="event-form__group calendar-item-form__full">
+        <%= form.label :time_caption, "Time label (optional)" %>
+        <%= form.text_field :time_caption, placeholder: "e.g., Start of day, End of day" %>
+        <p class="calendar-item-form__help-text">Overrides the clock time with a label. Leave blank to show the scheduled time.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="calendar-item-form__section">
+    <div class="calendar-item-form__section-header">
+      <p class="calendar-item-form__eyebrow">Logistics</p>
+      <p class="calendar-item-form__hint">People and places involved.</p>
+    </div>
+    <div class="calendar-item-form__grid">
+      <div class="event-form__group">
+        <%= form.label :location_name, "Location" %>
+        <%= form.text_field :location_name %>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :vendor_name, "Vendor" %>
+        <%= form.text_field :vendor_name %>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :team_member_ids, "Assigned PP members" %>
+        <% if @available_team_members.any? %>
+          <div class="calendar-item-form__pill-list">
+            <% @available_team_members.each do |member| %>
+              <% field_id = "calendar_item_team_member_#{member.id}" %>
+              <label class="calendar-item-form__pill">
+                <%= check_box_tag "calendar_item[team_member_ids][]", member.id, item.team_member_ids.include?(member.id), id: field_id %>
+                <span><%= member.name %></span>
+              </label>
+            <% end %>
+          </div>
+          <%= hidden_field_tag "calendar_item[team_member_ids][]", "" %>
+        <% else %>
+          <p class="calendar-item-form__help-text">Assign planners from the event team to see them here.</p>
+        <% end %>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :additional_team_members, "Other people" %>
+        <%= form.text_field :additional_team_members, placeholder: "Add external collaborators" %>
+      </div>
+    </div>
+  </div>
+
   <div class="event-form__actions">
     <%= form.submit class: "event-form__submit" %>
     <%= link_to "Cancel", event_calendar_path(@event), class: "event-form__cancel" %>
   </div>
 <% end %>
+
+<script>
+  (function() {
+    function ready(fn) {
+      if (document.readyState !== "loading") {
+        fn();
+      } else {
+        document.addEventListener("DOMContentLoaded", fn);
+      }
+      document.addEventListener("turbo:load", fn);
+    }
+
+    ready(function() {
+      var form = document.querySelector(".calendar-item-form");
+      if (!form) return;
+
+      var radios = form.querySelectorAll('input[name="calendar_item[timing_mode]"]');
+      var absoluteGroup = form.querySelector('[data-timing-mode="absolute"]');
+      var relativeGroup = form.querySelector('[data-timing-mode="relative"]');
+
+      function syncTiming() {
+        var mode = Array.from(radios).find(function(r) { return r.checked; });
+        mode = mode ? mode.value : "absolute";
+        if (absoluteGroup) absoluteGroup.style.display = mode === "absolute" ? "" : "none";
+        if (relativeGroup) relativeGroup.style.display = mode === "relative" ? "" : "none";
+      }
+
+      radios.forEach(function(radio) {
+        radio.addEventListener("change", syncTiming);
+      });
+
+      syncTiming();
+    });
+  })();
+</script>
