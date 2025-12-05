@@ -11,6 +11,7 @@ class User < ApplicationRecord
   }.freeze
 
   before_validation :normalize_email
+  before_validation :assign_placeholder_email_for_contact
 
   has_secure_password validations: false
 
@@ -51,10 +52,24 @@ class User < ApplicationRecord
     password_reset_tokens.active.most_recent_first.first
   end
 
+  def display_email
+    if contact?
+      return "n/a" if email.blank? || email.ends_with?("@placeholder.invalid")
+    end
+    email
+  end
+
   private
 
   def normalize_email
     self.email = email.to_s.downcase.strip
+  end
+
+  def assign_placeholder_email_for_contact
+    return unless contact?
+    return if email.present?
+
+    self.email = "contact-#{SecureRandom.hex(6)}@placeholder.invalid"
   end
 
   def avatar_must_be_image

@@ -7,103 +7,6 @@
 
       <% event_date = @event.starts_on || @event.ends_on %>
       <% formatted_event_date = event_date&.strftime("%B %-d, %Y") %>
-      <% days_until = event_date ? (event_date - Date.current).to_i : nil %>
-      <% countdown_label = if days_until
-                              if days_until.positive?
-                                "#{days_until} days"
-                              elsif days_until.zero?
-                                "Today"
-                              else
-                                "#{days_until.abs} days ago"
-                              end
-                            end %>
-      <% event_date_range_label = if @event.starts_on.present? && @event.ends_on.present?
-                                    if @event.starts_on == @event.ends_on
-                                      @event.starts_on.strftime("%B %-d, %Y")
-                                    else
-                                      "#{@event.starts_on.strftime('%B %-d, %Y')} - #{@event.ends_on.strftime('%B %-d, %Y')}"
-                                    end
-                                  elsif @event.starts_on.present?
-                                    @event.starts_on.strftime("%B %-d, %Y")
-                                  elsif @event.ends_on.present?
-                                    @event.ends_on.strftime("%B %-d, %Y")
-                                  else
-                                    "Dates TBD"
-                                  end %>
-
-      <% questionnaire_items = @event.questionnaires.order(:title).map do |questionnaire|
-        state = questionnaire.finished? ? :completed : :active
-        { label: questionnaire.title, url: event_questionnaire_path(@event, questionnaire), state: state }
-      end %>
-
-      <% if questionnaire_items.empty? %>
-        <% questionnaire_items = [
-          { label: "Create your first questionnaire", url: new_event_questionnaire_path(@event), state: :highlight }
-        ] %>
-      <% end %>
-
-      <% document_items = [
-        { label: "Packets", url: packets_event_documents_path(@event), state: :active },
-        { label: "Uploads", url: staff_uploads_event_documents_path(@event), state: :active },
-        { label: "Client Uploads", url: client_uploads_event_documents_path(@event), state: :active }
-      ] %>
-
-      <% quick_links = @event_links.map do |link|
-        { label: link.label, url: link.url, state: :active }
-      end %>
-
-      <% if quick_links.empty? %>
-        <% quick_links = [
-          { label: "Add quick links in Event Settings", url: event_settings_path(@event), state: :highlight }
-        ] %>
-      <% end %>
-
-      <% calendar_links = [] %>
-      <% if @calendar.present? %>
-        <% calendar_links << { label: @calendar.name, url: event_calendar_path(@event), state: :active } %>
-        <% Array(@calendar_views).each do |view| %>
-          <% calendar_links << { label: view.name, url: event_calendar_view_path(@event, view), state: :active } %>
-        <% end %>
-      <% else %>
-        <% calendar_links << { label: "Create your run of show", url: event_calendars_path(@event), state: :highlight } %>
-      <% end %>
-
-      <% payment_links = @payments.map do |payment| %>
-        <% state = payment.paid? ? :completed : :active %>
-        <% label = if payment.due_on.present?
-                     "#{payment.title} (due #{payment.due_on.strftime('%b %-d')})"
-                   else
-                     payment.title
-                   end %>
-        <% { label: label, url: event_payment_path(@event, payment), state: state } %>
-      <% end %>
-
-      <% if payment_links.empty? %>
-        <% payment_links = [
-          { label: "Add payment milestones", url: new_event_payment_path(@event), state: :highlight }
-        ] %>
-      <% end %>
-
-      <% approval_links = @approvals.map do |approval| %>
-        <% state = approval.acknowledged? ? :completed : :active %>
-        <% { label: approval.title, url: event_approval_path(@event, approval), state: state } %>
-      <% end %>
-
-      <% if approval_links.empty? %>
-        <% approval_links = [
-          { label: "Add signatures & approvals", url: new_event_approval_path(@event), state: :highlight }
-        ] %>
-      <% end %>
-
-      <% event_link_groups = [
-        { title: "Questionnaires", items: questionnaire_items },
-        { title: "Documents", items: document_items },
-        { title: "Quick Links", items: quick_links },
-        { title: "Calendars", items: calendar_links },
-        { title: "Payments", items: payment_links },
-        { title: "Approvals", items: approval_links }
-      ] %>
-
       <section class="event-hero">
         <div class="event-hero__corner event-hero__corner--top-left">
           <p class="event-hero__location"><%= @event.location.presence || "Location TBD" %></p>
@@ -111,45 +14,23 @@
 
         <div class="event-hero__corner event-hero__corner--top-right">
           <p class="event-hero__date-primary"><%= formatted_event_date || "Date TBD" %></p>
-          <% if countdown_label.present? %>
-            <p class="event-hero__date-secondary"><%= countdown_label.upcase %></p>
-          <% end %>
         </div>
 
         <div class="event-hero__center">
           <h1 class="event-hero__title"><%= @event.name %></h1>
         </div>
 
-        <div class="event-hero__corner event-hero__corner--bottom-left">
-          <%= link_to "Event Settings", event_settings_path(@event), class: "event-hero__link" %>
-        </div>
-
-        <div class="event-hero__corner event-hero__corner--bottom-right">
-          <%= link_to "Client Portal", client_event_path(@event), class: "event-hero__link" %>
-        </div>
       </section>
 
       <section class="event-links">
         <h2 class="event-links__title">Event Links</h2>
-        <div class="event-links__panel">
-          <% event_link_groups.each_slice(3) do |group_row| %>
-            <div class="event-links__row">
-              <% group_row.each do |group| %>
-                <section class="event-links__group">
-                  <h3 class="event-links__group-title"><%= group[:title] %></h3>
-                  <ul class="event-links__list">
-                    <% group[:items].each do |item| %>
-                      <% item_classes = ["event-links__list-item"] %>
-                      <% item_classes << "event-links__list-item--completed" if item[:state] == :completed %>
-                      <% item_classes << "event-links__list-item--highlight" if item[:state] == :highlight %>
-                      <li class="<%= item_classes.join(' ') %>">
-                        <%= link_to item[:label], item[:url], class: "event-links__link" %>
-                      </li>
-                    <% end %>
-                  </ul>
-                </section>
-              <% end %>
-            </div>
+        <div class="event-links__button-grid">
+          <%= link_to "Run of Show", event_calendar_path(@event), class: "event-links__button" %>
+          <%= link_to "Packets", packets_event_documents_path(@event), class: "event-links__button" %>
+          <%= link_to "Client Portal", client_event_path(@event), class: "event-links__button" %>
+          <%= link_to "Event Settings", event_settings_path(@event), class: "event-links__button" %>
+          <% @internal_event_links.each do |link| %>
+            <%= link_to link.label, link.url, class: "event-links__button" %>
           <% end %>
         </div>
       </section>

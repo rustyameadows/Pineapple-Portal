@@ -4,12 +4,33 @@ module Events
 
     before_action :set_event
     before_action :set_calendar
-    before_action :set_view, only: %i[show edit update destroy]
+    before_action :set_view, only: %i[show edit update destroy timeline_preview]
     before_action :load_tags, only: %i[new edit show]
 
     def show
       @filter = Calendars::ViewFilter.new(calendar: @calendar, view: @view)
       @items = @filter.items
+    end
+
+    def timeline_preview
+      filter = Calendars::ViewFilter.new(calendar: @calendar, view: @view)
+      @items = filter.items
+      @items = if @items.respond_to?(:includes)
+                 @items.includes(:event_calendar_tags, :team_members, :relative_anchor)
+               else
+                 @items.map do |item|
+                   item.association(:event_calendar_tags).target
+                   item.association(:team_members).target
+                   item.association(:relative_anchor).target
+                   item
+                 end
+               end
+      @segment = Struct.new(:title, :html_options, :html_view_key).new(
+        title: @view.name,
+        html_options: { "view_ref" => @view.id },
+        html_view_key: DocumentSegment::TIMELINE_VIEW_KEY
+      )
+      render template: "generated_documents/sections/timeline", layout: "generated_preview"
     end
 
     def new

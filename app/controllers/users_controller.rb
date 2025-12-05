@@ -1,6 +1,7 @@
 class UsersController < ApplicationController
   skip_before_action :require_login, only: %i[new create], if: -> { User.none? }
   before_action :set_user, only: %i[edit update]
+  before_action :set_user_for_destroy, only: %i[destroy]
 
   def index
     @show_clients = params[:show_clients] == "1"
@@ -59,9 +60,21 @@ class UsersController < ApplicationController
     end
   end
 
+  def destroy
+    if @user.destroy
+      redirect_to users_path, notice: "User removed."
+    else
+      redirect_to users_path, alert: @user.errors.full_messages.to_sentence
+    end
+  end
+
   private
 
   def set_user
+    @user = User.find(params[:id])
+  end
+
+  def set_user_for_destroy
     @user = User.find(params[:id])
   end
 

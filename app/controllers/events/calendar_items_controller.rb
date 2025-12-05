@@ -17,6 +17,9 @@ module Events
       @item = @calendar.calendar_items.new
       assign_tags(@item)
       assign_team_members(@item)
+      assign_duration(@item)
+      assign_offset(@item)
+      apply_timing_mode(@item)
       @item.assign_attributes(item_params)
 
       if @item.save
@@ -34,6 +37,9 @@ module Events
     def update
       assign_tags(@item)
       assign_team_members(@item)
+      assign_duration(@item)
+      assign_offset(@item)
+      apply_timing_mode(@item)
 
       if @item.update(item_params)
         run_scheduler
@@ -123,7 +129,6 @@ module Events
       params.require(:calendar_item).permit(
         :title,
         :notes,
-        :duration_minutes,
         :starts_at,
         :relative_anchor_id,
         :relative_offset_minutes,
@@ -147,6 +152,64 @@ module Events
     def assign_team_members(item)
       member_ids = Array(params.dig(:calendar_item, :team_member_ids)).reject(&:blank?).map(&:to_i)
       item.team_member_ids = member_ids
+    end
+
+    def assign_duration(item)
+      raw_value = params.dig(:calendar_item, :duration_value).to_s.strip
+      unit = params.dig(:calendar_item, :duration_unit).to_s.strip.presence || "minutes"
+
+      if raw_value.blank?
+        item.duration_minutes = nil
+        return
+      end
+
+      value = raw_value.to_f
+
+      multiplier = case unit
+                   when "minutes" then 1
+                   when "hours" then 60
+                   when "days" then 60 * 24
+                   when "weeks" then 60 * 24 * 7
+                   when "months" then 60 * 24 * 30
+                   else 1
+                   end
+
+      item.duration_minutes = (value * multiplier).to_i
+    end
+
+    def assign_offset(item)
+      raw_value = params.dig(:calendar_item, :relative_offset_value).to_s.strip
+      unit = params.dig(:calendar_item, :relative_offset_unit).to_s.strip.presence || "minutes"
+
+      if raw_value.blank?
+        item.relative_offset_minutes = 0
+        return
+      end
+
+      value = raw_value.to_f
+
+      multiplier = case unit
+                   when "minutes" then 1
+                   when "hours" then 60
+                   when "days" then 60 * 24
+                   when "weeks" then 60 * 24 * 7
+                   when "months" then 60 * 24 * 30
+                   else 1
+                   end
+
+      item.relative_offset_minutes = (value * multiplier).to_i
+    end
+
+    def apply_timing_mode(item)
+      mode = params.dig(:calendar_item, :timing_mode).to_s
+      return if mode.blank?
+
+      if mode == "absolute"
+        item.relative_anchor_id = nil
+        item.relative_offset_minutes = 0
+        item.relative_before = false
+        item.relative_to_anchor_end = false
+      end
     end
 
     def run_scheduler

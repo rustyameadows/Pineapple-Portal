@@ -1,5 +1,5 @@
 class EventLink < ApplicationRecord
-  LINK_TYPES = %w[quick planning].freeze
+  LINK_TYPES = %w[quick planning internal].freeze
 
   belongs_to :event
 
@@ -16,6 +16,7 @@ class EventLink < ApplicationRecord
   scope :with_type, ->(type) { where(link_type: type) }
   scope :quick, -> { with_type("quick") }
   scope :planning, -> { with_type("planning") }
+  scope :internal, -> { with_type("internal") }
 
   private
 

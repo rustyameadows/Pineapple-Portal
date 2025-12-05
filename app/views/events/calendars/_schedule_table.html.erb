@@ -11,7 +11,7 @@
   <thead>
     <tr>
       <th class="event-calendars__schedule-column">Schedule</th>
-      <th>Title</th>
+      <th class="event-calendars__title-column">Title</th>
       <th>Vendor</th>
       <th>Location</th>
       <th>Team</th>
@@ -37,8 +37,9 @@
 
       <% title_text, title_path = item_link_proc.call(item) %>
       <tr class="event-calendars__row <%= calendar_item_row_classes(item) %>">
-        <td class="event-calendars__schedule-column"><%= calendar_item_time_only_label_with_marker(item, calendar.timezone) %></td>
-        <td>
+        <% tooltip = calendar_item_relative_tooltip(item) %>
+        <td class="event-calendars__schedule-column" title="<%= tooltip.to_s %>"><%= calendar_item_time_only_label_with_marker(item, calendar.timezone) %></td>
+        <td class="event-calendars__title-column">
           <%= link_to title_text, title_path, class: "event-calendars__title-link" %>
           <% if item.notes.present? %>
             <p class="event-calendars__note"><%= simple_format(item.notes) %></p>

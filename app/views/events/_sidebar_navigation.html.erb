@@ -42,7 +42,11 @@
               <% section[:sub_links].each do |sub_link| %>
                 <% sub_path = sub_link[:path] %>
                 <% sub_stub = sub_path.blank? %>
-                <% sub_active = !sub_stub && current_path.start_with?(sub_path) %>
+                <% if !sub_stub && sub_path == event_settings_path(event) %>
+                  <% sub_active = current_path == sub_path %>
+                <% else %>
+                  <% sub_active = !sub_stub && sidebar_path_match?(current_path, sub_path) %>
+                <% end %>
                 <% sub_classes = ["event-sidebar__subnav-link"] %>
                 <% sub_classes << "event-sidebar__subnav-link--stub" if sub_stub %>
                 <% sub_classes << "event-sidebar__subnav-link--active" if sub_active %>
