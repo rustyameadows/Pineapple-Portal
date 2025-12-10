@@ -476,6 +476,25 @@
   color: var(--color-neutral-400);
 }
 
+.calendar-row--to-be-confirmed,
+.calendar-row--to-be-confirmed td {
+  background: #fef3c7;
+}
+
+.calendar-row--to-be-confirmed,
+.calendar-row--to-be-confirmed td,
+.calendar-row--to-be-confirmed a,
+.calendar-row--to-be-confirmed .event-calendars__note,
+.calendar-row--to-be-confirmed .client-calendar__meta-line,
+.calendar-row--to-be-confirmed .client-calendar__notes {
+  color: #111827;
+}
+
+.calendar-row--to-be-confirmed .event-calendars__title-link,
+.calendar-row--to-be-confirmed .client-calendar__title strong {
+  color: #111827;
+}
+
 @media print {
   @page {
     margin: 0.5in 0;

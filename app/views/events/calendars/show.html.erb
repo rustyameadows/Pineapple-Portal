@@ -38,6 +38,12 @@
             <h2 class="event-section__title">Organize by Tag</h2>
             <p class="event-section__subtitle">Color-coded tags help surface the right items in derived calendars.</p>
           </div>
+          <div class="event-section__actions">
+            <%= button_to "Add default tags",
+                          add_defaults_event_calendar_tags_path(@event),
+                          method: :post,
+                          class: "event-section__cta event-section__cta--secondary" %>
+          </div>
         </header>
 
         <% if @tags.any? %>

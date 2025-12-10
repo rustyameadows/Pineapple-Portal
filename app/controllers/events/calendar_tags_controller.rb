@@ -27,6 +27,28 @@ module Events
       redirect_to event_calendar_path(@event), notice: "Tag removed."
     end
 
+    def add_defaults
+      defaults = RunOfShowDefaults::TAGS
+      existing_names = @calendar.event_calendar_tags.pluck(:name).map { |name| name.to_s.downcase }
+      created = 0
+
+      defaults.each do |tag|
+        name = tag[:name].to_s.strip
+        next if name.blank? || existing_names.include?(name.downcase)
+
+        new_tag = @calendar.event_calendar_tags.create(name:, color_token: tag[:color_token])
+        if new_tag.persisted?
+          created += 1
+          existing_names << name.downcase
+        end
+      end
+
+      message = created.positive? ? "Added #{created} default tag#{'s' if created != 1}." : "All default tags already exist."
+      redirect_to event_calendar_path(@event), notice: message
+    rescue StandardError => e
+      redirect_to event_calendar_path(@event), alert: "Could not add default tags: #{e.message}"
+    end
+
     private
 
     def set_event

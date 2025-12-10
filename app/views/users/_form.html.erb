@@ -6,6 +6,7 @@
 <% role_options = Array(local_assigns[:role_options]).presence || User.roles.keys %>
 <% role_option_pairs = role_options.map { |role| [role.to_s.humanize, role.to_s] } %>
 <% account_kind_options = User.account_kinds.keys.map { |kind| [kind.humanize, kind] } %>
+<% show_financial_toggle = user.client? || role_option_pairs.any? { |(_, value)| value == "client" } %>
 
 <%= form_with model: user, local: true, class: "event-form event-form--stack" do |form| %>
   <div class="event-form__section">
@@ -19,7 +20,7 @@
       <% if allow_role_select %>
         <div class="event-form__group">
           <%= form.label :role %>
-          <%= form.select :role, role_option_pairs, {}, {} %>
+          <%= form.select :role, role_option_pairs, {}, { data: { role_select: true } } %>
         </div>
       <% elsif user.role.present? %>
         <%= form.hidden_field :role, value: user.role %>
@@ -52,7 +53,35 @@
     </div>
   </div>
 
-  <div class="event-form__section" data-password-section>
+  <% if show_financial_toggle %>
+    <div class="event-form__section">
+      <div class="event-form__grid">
+        <div class="event-form__group" data-financial-access data-client-default="<%= user.client? %>" style="<%= user.client? ? '' : 'display:none;' %>">
+          <%= form.label :can_view_financials, "Financial access" %>
+          <label class="event-form__checkbox">
+            <%= form.check_box :can_view_financials %>
+            <span>Allow this client to view financial info</span>
+          </label>
+          <p class="event-form__hint">Clients without this stay restricted from financial links.</p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="event-form__section">
+    <div class="event-form__grid">
+      <div class="event-form__group">
+        <%= form.label :general_notes, "General notes" %>
+        <%= form.text_area :general_notes, rows: 3, placeholder: "Internal notes for this person" %>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :dietary_restrictions, "Dietary restrictions" %>
+        <%= form.text_area :dietary_restrictions, rows: 3, placeholder: "Allergies or dietary needs" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="event-form__section" data-password-section data-require-password="<%= require_password %>">
     <div class="event-form__grid">
       <div class="event-form__group" data-password-fields>
         <%= form.label :password %>
@@ -147,6 +176,8 @@
 
 <script>
   (function() {
+    var requirePassword = false;
+
     function toggleFields(selectEl) {
       var passwordContainer = document.querySelectorAll("[data-password-fields]");
       var emailInput = document.querySelector("[data-email-input]");
@@ -161,8 +192,10 @@
           if (isContact) {
             input.removeAttribute("required");
             input.value = "";
-          } else {
+          } else if (requirePassword) {
             input.required = true;
+          } else {
+            input.removeAttribute("required");
           }
         });
       });
@@ -176,6 +209,20 @@
       }
     }
 
+    function toggleFinancialAccess(roleSelect) {
+      var financialGroup = document.querySelector("[data-financial-access]");
+      if (!financialGroup) return;
+
+      var isClient = false;
+      if (roleSelect) {
+        isClient = roleSelect.value === "client";
+      } else {
+        isClient = financialGroup.dataset.clientDefault === "true";
+      }
+
+      financialGroup.style.display = isClient ? "" : "none";
+    }
+
     function ready(fn) {
       if (document.readyState !== "loading") {
         fn();
@@ -187,10 +234,36 @@
 
     ready(function() {
       var selectEl = document.querySelector("[data-account-kind-select]");
+      var passwordSection = document.querySelector("[data-password-section]");
+      requirePassword = passwordSection && passwordSection.dataset.requirePassword === "true";
+      var roleSelect = document.querySelector("[data-role-select]");
+
+      function setPasswordRequired(enable) {
+        var passwordInputs = document.querySelectorAll("[data-password-fields] input[type='password']");
+        passwordInputs.forEach(function(input) {
+          if (enable) {
+            input.required = true;
+          } else {
+            input.removeAttribute("required");
+          }
+        });
+      }
+
       toggleFields(selectEl);
       if (selectEl) {
         selectEl.addEventListener("change", function(event) {
           toggleFields(event.target);
+        });
+      }
+
+      if (requirePassword) {
+        setPasswordRequired(true);
+      }
+
+      toggleFinancialAccess(roleSelect);
+      if (roleSelect) {
+        roleSelect.addEventListener("change", function(event) {
+          toggleFinancialAccess(event.target);
         });
       }
     });

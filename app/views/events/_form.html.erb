@@ -31,6 +31,11 @@
   </div>
 
   <div>
+    <%= form.label :location_secondary, "Secondary location line" %><br>
+    <%= form.text_field :location_secondary, placeholder: "City, State" %>
+  </div>
+
+  <div>
     <%= form.submit %>
   </div>
 <% end %>

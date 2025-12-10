@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_28_011000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_28_014000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -307,6 +307,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_011000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "link_type", default: "quick", null: false
+    t.boolean "financial_only", default: false, null: false
     t.index ["event_id", "link_type"], name: "index_event_links_on_event_id_and_link_type"
     t.index ["event_id", "position"], name: "index_event_links_on_event_id_and_position"
     t.index ["event_id"], name: "index_event_links_on_event_id"
@@ -370,6 +371,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_011000) do
     t.datetime "archived_at"
     t.bigint "event_photo_document_id"
     t.jsonb "planning_link_keys", default: [], null: false
+    t.string "location_secondary"
     t.index ["archived_at"], name: "index_events_on_archived_at"
     t.index ["event_photo_document_id"], name: "index_events_on_event_photo_document_id"
     t.index ["name"], name: "index_events_on_name"
@@ -481,6 +483,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_011000) do
     t.string "phone_number"
     t.bigint "avatar_global_asset_id"
     t.string "account_kind", default: "account", null: false
+    t.text "general_notes"
+    t.text "dietary_restrictions"
+    t.boolean "can_view_financials", default: false, null: false
     t.index ["account_kind"], name: "index_users_on_account_kind"
     t.index ["avatar_global_asset_id"], name: "index_users_on_avatar_global_asset_id"
     t.index ["email"], name: "index_users_on_email", unique: true

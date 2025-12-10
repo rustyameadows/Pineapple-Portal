@@ -26,7 +26,16 @@ module Client
     end
 
     def build_module_cards
-      @event.ordered_planning_link_entries.map do |entry|
+      entries = @event.ordered_planning_link_entries
+
+      unless financial_portal_access?
+        entries = entries.reject do |entry|
+          (entry.kind == :built_in && entry.record&.key == "financials") ||
+            (entry.kind == :event_link && entry.record.respond_to?(:financial_only) && entry.record.financial_only?)
+        end
+      end
+
+      entries.map do |entry|
         case entry.kind
         when :built_in
           link = entry.record
