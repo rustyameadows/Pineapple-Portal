@@ -1,0 +1,41 @@
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header event-calendars__tags-header">
+          <div>
+            <p class="event-section__eyebrow">Admin</p>
+            <h1 class="event-section__title">Run of Show Default Tags</h1>
+            <p class="event-section__lead">Default list not editable, please contact developer.</p>
+          </div>
+        </header>
+
+        <div style="margin-top: 1rem;">
+          <% if @default_tags.any? %>
+            <% tag_color_struct ||= Struct.new(:color_token) %>
+            <ul class="event-calendars__tag-list">
+              <% @default_tags.each do |tag| %>
+                <% style = calendar_tag_style(tag_color_struct.new(tag[:color_token])) %>
+                <li class="event-calendars__tag-row">
+                  <span class="event-tag-pill" style="<%= style %>"><%= tag[:name] %></span>
+                  <div class="event-calendars__tag-info">
+                    <strong class="event-calendars__tag-name"><%= tag[:name] %></strong>
+                    <span class="event-calendars__tag-count">Color: <%= tag[:color_token] %></span>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <div class="event-section__empty">
+              <p>No default tags configured.</p>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

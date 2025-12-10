@@ -14,6 +14,10 @@ resources :users, only: [] do
   resources :avatar_assets, only: :create, module: :users
 end
 
+namespace :settings do
+  get "run_of_show_defaults", to: "run_of_show_defaults#show", as: :run_of_show_defaults
+end
+
 post "global_assets/presign", to: "global_asset_uploads#create", as: :global_assets_presign
 
   resources :events do
@@ -50,7 +54,11 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
       end
       resources :tags,
                 only: %i[create update destroy],
-                controller: "calendar_tags"
+                controller: "calendar_tags" do
+        collection do
+          post :add_defaults
+        end
+      end
       resources :views,
                 controller: "calendar_views",
                 except: :index do
