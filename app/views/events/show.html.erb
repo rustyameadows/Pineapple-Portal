@@ -26,7 +26,7 @@
         <h2 class="event-links__title">Event Links</h2>
         <div class="event-links__button-grid">
           <%= link_to "Run of Show", event_calendar_path(@event), class: "event-links__button" %>
-          <%= link_to "Packets", packets_event_documents_path(@event), class: "event-links__button" %>
+          <%= link_to "Packets", event_documents_generated_index_path(@event), class: "event-links__button" %>
           <%= link_to "Client Portal", client_event_path(@event), class: "event-links__button" %>
           <%= link_to "Event Settings", event_settings_path(@event), class: "event-links__button" %>
           <% @internal_event_links.each do |link| %>
