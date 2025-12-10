@@ -724,3 +724,20 @@
 .client-calendar__tags {
     max-width: 16rem;
 }
+
+.client-calendar__row.calendar-row--to-be-confirmed,
+.client-calendar__row.calendar-row--to-be-confirmed td {
+    background: #fef3c7;
+}
+
+.client-calendar__row.calendar-row--to-be-confirmed,
+.client-calendar__row.calendar-row--to-be-confirmed td,
+.client-calendar__row.calendar-row--to-be-confirmed a,
+.client-calendar__row.calendar-row--to-be-confirmed .client-calendar__meta-line,
+.client-calendar__row.calendar-row--to-be-confirmed .client-calendar__notes {
+    color: #111827;
+}
+
+.client-calendar__row.calendar-row--to-be-confirmed .client-calendar__title strong {
+    color: #111827;
+}

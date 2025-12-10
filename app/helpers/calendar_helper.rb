@@ -77,6 +77,7 @@ module CalendarHelper
 
   def calendar_item_row_classes(item)
     classes = []
+    classes << "calendar-row--to-be-confirmed" if item.to_be_confirmed?
     classes << "calendar-row--completed" if item.completed?
     classes << "calendar-row--critical" if item.critical?
     classes << "calendar-row--milestone" if item.milestone?

@@ -72,6 +72,13 @@
 .generated-template--timeline__row--critical {
   color: #dc2626;
 }
+.generated-template--timeline__row--to-be-confirmed td {
+  background: #fef3c7;
+  color: #111827;
+}
+.generated-template--timeline__row--to-be-confirmed .generated-template--timeline__notes {
+  color: #111827;
+}
 </style>
 
 <div class="generated-template generated-template--timeline">
@@ -164,6 +171,7 @@
             <% start_time = item.effective_starts_at&.in_time_zone(timezone) %>
             <% row_classes = [] %>
             <% row_classes << "generated-template--timeline__row--critical" if item.critical? %>
+            <% row_classes << "generated-template--timeline__row--to-be-confirmed" if item.to_be_confirmed? %>
             <tr class="<%= row_classes.join(' ') %>">
               <% columns.each do |column| %>
                 <td>
