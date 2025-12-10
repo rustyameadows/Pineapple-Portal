@@ -52,7 +52,20 @@
     </div>
   </div>
 
-  <div class="event-form__section" data-password-section>
+  <div class="event-form__section">
+    <div class="event-form__grid">
+      <div class="event-form__group">
+        <%= form.label :general_notes, "General notes" %>
+        <%= form.text_area :general_notes, rows: 3, placeholder: "Notes visible to planners and clients" %>
+      </div>
+      <div class="event-form__group">
+        <%= form.label :dietary_restrictions, "Dietary restrictions" %>
+        <%= form.text_area :dietary_restrictions, rows: 3, placeholder: "Allergies or dietary needs" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="event-form__section" data-password-section data-require-password="<%= require_password %>">
     <div class="event-form__grid">
       <div class="event-form__group" data-password-fields>
         <%= form.label :password %>
@@ -147,6 +160,8 @@
 
 <script>
   (function() {
+    var requirePassword = false;
+
     function toggleFields(selectEl) {
       var passwordContainer = document.querySelectorAll("[data-password-fields]");
       var emailInput = document.querySelector("[data-email-input]");
@@ -161,8 +176,10 @@
           if (isContact) {
             input.removeAttribute("required");
             input.value = "";
-          } else {
+          } else if (requirePassword) {
             input.required = true;
+          } else {
+            input.removeAttribute("required");
           }
         });
       });
@@ -187,11 +204,29 @@
 
     ready(function() {
       var selectEl = document.querySelector("[data-account-kind-select]");
+      var passwordSection = document.querySelector("[data-password-section]");
+      requirePassword = passwordSection && passwordSection.dataset.requirePassword === "true";
+
+      function setPasswordRequired(enable) {
+        var passwordInputs = document.querySelectorAll("[data-password-fields] input[type='password']");
+        passwordInputs.forEach(function(input) {
+          if (enable) {
+            input.required = true;
+          } else {
+            input.removeAttribute("required");
+          }
+        });
+      }
+
       toggleFields(selectEl);
       if (selectEl) {
         selectEl.addEventListener("change", function(event) {
           toggleFields(event.target);
         });
+      }
+
+      if (requirePassword) {
+        setPasswordRequired(true);
       }
     });
   })();

@@ -79,7 +79,17 @@ class UsersController < ApplicationController
   end
 
   def user_params
-    permitted = %i[name email password password_confirmation title phone_number account_kind]
+    permitted = %i[
+      name
+      email
+      password
+      password_confirmation
+      title
+      phone_number
+      account_kind
+      general_notes
+      dietary_restrictions
+    ]
     permitted << :role if allow_role_param?
     attributes = params.require(:user).permit(permitted)
     sanitize_role_param(attributes)
