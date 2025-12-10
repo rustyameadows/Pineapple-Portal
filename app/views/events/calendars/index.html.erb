@@ -12,7 +12,13 @@
             <h1 class="event-section__title">Timeline Views</h1>
             <p class="event-section__subtitle">Choose a calendar to review schedules or share filtered views.</p>
           </div>
-          <%= link_to "New Derived Calendar", new_event_calendar_view_path(@event), class: "event-section__cta" %>
+          <div class="event-section__actions">
+            <%= button_to "Add default timelines",
+                          add_defaults_event_calendar_views_path(@event),
+                          method: :post,
+                          class: "event-section__cta event-section__cta--secondary" %>
+            <%= link_to "New Derived Calendar", new_event_calendar_view_path(@event), class: "event-section__cta" %>
+          </div>
         </header>
 
         <div class="calendar-list">

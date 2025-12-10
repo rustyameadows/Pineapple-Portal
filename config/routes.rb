@@ -68,6 +68,9 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
           patch "grid/bulk", to: "calendar_grids#bulk_update", as: :grid_bulk
           get :timeline_preview, to: "calendar_views#timeline_preview"
         end
+        collection do
+          post :add_defaults
+        end
       end
     end
 
