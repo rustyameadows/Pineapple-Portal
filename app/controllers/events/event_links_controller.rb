@@ -55,7 +55,7 @@ module Events
     end
 
     def event_link_params
-      params.require(:event_link).permit(:label, :url, :link_type)
+      params.require(:event_link).permit(:label, :url, :link_type, :financial_only)
     end
 
     def move_link(direction)

@@ -69,6 +69,12 @@
                             <%= form.label :url, "URL" %>
                             <%= form.url_field :url, required: true %>
                           </div>
+                          <div class="event-settings__field event-settings__field--checkbox">
+                            <label class="event-settings__checkbox">
+                              <%= form.check_box :financial_only %>
+                              <span>Financial-only (visible only to clients with financial access)</span>
+                            </label>
+                          </div>
                           <div class="event-settings__form-actions">
                             <%= form.submit "Save changes" %>
                           </div>
@@ -145,6 +151,12 @@
                   <div class="event-settings__field">
                     <%= form.label :url, "URL" %>
                     <%= form.url_field :url, required: true, placeholder: "https://" %>
+                  </div>
+                  <div class="event-settings__field event-settings__field--checkbox">
+                    <label class="event-settings__checkbox">
+                      <%= form.check_box :financial_only %>
+                      <span>Financial-only (visible only to clients with financial access)</span>
+                    </label>
                   </div>
                   <div class="event-settings__form-actions">
                     <%= form.submit "Add planning link" %>

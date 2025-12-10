@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_28_012000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_28_013000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -307,6 +307,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_012000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "link_type", default: "quick", null: false
+    t.boolean "financial_only", default: false, null: false
     t.index ["event_id", "link_type"], name: "index_event_links_on_event_id_and_link_type"
     t.index ["event_id", "position"], name: "index_event_links_on_event_id_and_position"
     t.index ["event_id"], name: "index_event_links_on_event_id"
@@ -483,6 +484,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_012000) do
     t.string "account_kind", default: "account", null: false
     t.text "general_notes"
     t.text "dietary_restrictions"
+    t.boolean "can_view_financials", default: false, null: false
     t.index ["account_kind"], name: "index_users_on_account_kind"
     t.index ["avatar_global_asset_id"], name: "index_users_on_avatar_global_asset_id"
     t.index ["email"], name: "index_users_on_email", unique: true

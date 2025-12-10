@@ -89,6 +89,7 @@ class UsersController < ApplicationController
       account_kind
       general_notes
       dietary_restrictions
+      can_view_financials
     ]
     permitted << :role if allow_role_param?
     attributes = params.require(:user).permit(permitted)

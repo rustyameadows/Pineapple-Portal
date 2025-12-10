@@ -8,7 +8,8 @@ module Client
     helper_method :nav_link_class,
                   :current_client_user,
                   :client_logged_in?,
-                  :portal_current_user
+                  :portal_current_user,
+                  :financial_portal_access?
 
     private
 
@@ -34,6 +35,13 @@ module Client
     def reset_client_session
       session.delete(:client_user_id)
       @current_client_user = nil
+    end
+
+    def financial_portal_access?
+      user = portal_current_user
+      return true unless user&.client?
+
+      user.can_view_financials?
     end
 
     def nav_link_class(target_path, starts_with: nil)
