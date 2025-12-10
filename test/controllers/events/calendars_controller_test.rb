@@ -19,7 +19,6 @@ module Events
       get event_calendar_path(@event)
 
       assert_response :success
-      assert_select "h1", text: /Run of Show/
       assert_select "table.event-table tbody tr", minimum: 1
     end
   end

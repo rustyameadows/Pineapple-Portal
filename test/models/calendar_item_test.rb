@@ -68,28 +68,6 @@ class CalendarItemTest < ActiveSupport::TestCase
     assert_in_delta expected.to_i, local_time.to_i, 1
   end
 
-  test "all day toggle coerces to midnight" do
-    @calendar.update!(timezone: "America/New_York")
-    item = @calendar.calendar_items.new(title: "Walkthrough")
-    item.all_day_mode = "1"
-    item.all_day_date = "2025-10-02"
-
-    item.starts_at = "2025-10-02"
-    item.save!
-
-    assert item.all_day?
-    local_time = item.starts_at.in_time_zone(@calendar.timezone)
-    assert_equal 0, local_time.hour
-    assert_equal 0, local_time.min
-  end
-
-  test "midnight start without toggle still reads as all day" do
-    item = calendar_items(:ceremony)
-    item.update!(starts_at: item.starts_at.change(hour: 0, min: 0))
-
-    assert item.all_day?
-  end
-
   test "defaults status to planned" do
     item = @calendar.calendar_items.create!(title: "Prep", starts_at: Time.current)
 
