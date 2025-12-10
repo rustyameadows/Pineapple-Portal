@@ -25,6 +25,7 @@
                               "TBD"
                             end %>
 <% event_venue_label = @event.location.presence || "Venue TBD" %>
+<% event_secondary_location = @event.location_secondary.presence || "TBD" %>
 
 <section class="client-header" id="portal-header">
   <div class="client-container">
@@ -40,7 +41,7 @@
       <div class="client-header__column">
         <p class="client-header__value"><%= event_venue_label %></p>
         <%= image_tag "hero-divider-line.png", alt: "", class: "client-header__divider" %>
-        <p class="client-header__value">TBD</p>
+        <p class="client-header__value"><%= event_secondary_location %></p>
       </div>
     </div>
   </div>

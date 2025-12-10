@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_28_013000) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_28_014000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -371,6 +371,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_013000) do
     t.datetime "archived_at"
     t.bigint "event_photo_document_id"
     t.jsonb "planning_link_keys", default: [], null: false
+    t.string "location_secondary"
     t.index ["archived_at"], name: "index_events_on_archived_at"
     t.index ["event_photo_document_id"], name: "index_events_on_event_photo_document_id"
     t.index ["name"], name: "index_events_on_name"

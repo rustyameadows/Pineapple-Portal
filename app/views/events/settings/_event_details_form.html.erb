@@ -33,6 +33,11 @@
     </div>
 
     <div class="event-settings__field">
+      <%= form.label :location_secondary, "Secondary location line" %>
+      <%= form.text_field :location_secondary, placeholder: "City, State" %>
+    </div>
+
+    <div class="event-settings__field">
       <%= form.label :starts_on, "Start Date" %>
       <%= form.date_field :starts_on %>
     </div>
