@@ -56,16 +56,17 @@
 .event-sidebar__brand-top,
 .event-sidebar__brand-bottom {
     display: block;
+    letter-spacing: 0.1em;
 }
 
 .event-sidebar__brand-bottom {
-    letter-spacing: 0.3em;
+    letter-spacing: 0.1em;
 }
 
 .event-sidebar__context-label {
     text-transform: uppercase;
     font-size: 0.7rem;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.1em;
     color: var(--color-brown);
 }
 
