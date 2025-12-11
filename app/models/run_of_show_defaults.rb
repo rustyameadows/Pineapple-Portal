@@ -9,6 +9,7 @@ module RunOfShowDefaults
     { name: "Production", color_token: "yellowgreen" },
     { name: "Hair & Makeup", color_token: "purple" },
     { name: "Transportation", color_token: "gainsboro" },
-    { name: "Milestones", color_token: "peru" }
+    { name: "Milestones", color_token: "peru" },
+    { name: "Wedding Party Reference", color_token: "lightsteelblue" }
   ].freeze
 end
