@@ -216,7 +216,10 @@
   <div class="event-form__actions calendar-item-form__actions">
     <% if item.persisted? %>
       <div class="calendar-item-form__actions-left">
-        <%= button_to "Delete Item", event_calendar_item_path(@event, item), method: :delete, data: { turbo_confirm: "Remove this calendar item?" }, class: "event-form__submit event-form__submit--danger" %>
+        <%= link_to "Delete Item",
+                    event_calendar_item_path(@event, item),
+                    class: "event-form__submit event-form__submit--danger",
+                    data: { turbo_method: :delete, turbo_confirm: "Remove this calendar item?", impact_delete: true } %>
       </div>
     <% else %>
       <div></div>

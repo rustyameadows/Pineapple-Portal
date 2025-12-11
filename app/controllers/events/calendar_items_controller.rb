@@ -1,9 +1,12 @@
 module Events
   class CalendarItemsController < ApplicationController
+    helper CalendarHelper
+
     before_action :set_event
     before_action :set_calendar
     before_action :set_item, only: %i[edit update destroy mark_completed mark_planned remove_milestone_tag]
     before_action :load_form_support, only: %i[new edit create update]
+    before_action :load_dependents, only: %i[edit]
 
     def new
       @item = @calendar.calendar_items.new
@@ -229,6 +232,13 @@ module Events
     def ensure_milestone_tag(create: true)
       scope = @calendar.event_calendar_tags.where("LOWER(name) = ?", "milestones")
       create ? scope.first_or_create(name: "Milestones") : scope.first
+    end
+
+    def load_dependents
+      @dependent_items = @calendar.calendar_items
+                                  .includes(:event_calendar_tags, :team_members, :relative_anchor)
+                                  .where(relative_anchor_id: @item.id)
+                                  .order(:starts_at, :position, :id)
     end
   end
 end

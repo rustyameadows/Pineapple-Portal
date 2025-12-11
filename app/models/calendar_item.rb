@@ -103,6 +103,8 @@ class CalendarItem < ApplicationRecord
   end
 
   def refresh_tag_summary!
+    return if destroyed? || !persisted?
+
     update_column(:tag_summary, event_calendar_tags.pluck(:name)) # rubocop:disable Rails/SkipsModelValidations
   end
 
