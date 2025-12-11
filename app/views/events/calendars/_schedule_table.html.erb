@@ -4,6 +4,7 @@
 <% group_label_proc = local_assigns[:group_label_proc] %>
 <% show_tags = true if local_assigns[:show_tags].nil? %>
 <% show_relative = !!local_assigns[:show_relative] %>
+<% show_edit_button = !!local_assigns[:show_edit_button] %>
 <% render_actions = local_assigns[:render_actions] %>
 <% actions_header = local_assigns[:actions_header] || "" %>
 <% item_link_proc = local_assigns[:item_link_proc] || ->(item) { [item.title, edit_event_calendar_item_path(calendar.event, item)] } %>
@@ -23,6 +24,9 @@
       <% if show_tags %>
         <th>Tags</th>
       <% end %>
+      <% if show_edit_button %>
+        <th class="event-calendars__actions-column"></th>
+      <% end %>
       <% if render_actions %>
         <th><%= actions_header %></th>
       <% end %>
@@ -36,7 +40,7 @@
       <% if group_by_date && bucket_key != current_bucket %>
         <% current_bucket = bucket_key %>
         <tr class="event-calendars__date-row">
-          <td colspan="<%= (show_relative ? 3 : 5) + (show_tags ? 1 : 0) + (render_actions ? 1 : 0) %>"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
+          <td colspan="<%= (show_relative ? 3 : 5) + (show_tags ? 1 : 0) + (show_edit_button ? 1 : 0) + (render_actions ? 1 : 0) %>"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
         </tr>
       <% end %>
 
@@ -73,6 +77,13 @@
             <% else %>
               <span class="event-table__status">None</span>
             <% end %>
+          </td>
+        <% end %>
+        <% if show_edit_button %>
+          <td class="event-calendars__row-action">
+            <%= link_to "Edit",
+                        edit_event_calendar_item_path(calendar.event, item),
+                        class: "event-calendars__edit-link" %>
           </td>
         <% end %>
         <% if render_actions %>

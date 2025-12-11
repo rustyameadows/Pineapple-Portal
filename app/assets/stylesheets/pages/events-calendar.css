@@ -138,6 +138,8 @@
   border-collapse: collapse;
 }
 
+/* Leave base backgrounds untouched; only apply hover overlay below to avoid affecting header colors */
+
 .event-calendars__schedule-column {
   width: 140px;
   min-width: 140px;
@@ -188,6 +190,46 @@
 .event-calendars__date-row td {
   text-align: center;
   padding: 0.6rem 0.75rem;
+}
+
+.event-calendars__actions-column {
+  width: 75px;
+}
+
+.event-calendars__row-action {
+  width: 75px;
+  text-align: center;
+}
+
+.event-calendars__edit-link {
+  opacity: 0;
+  transition: opacity 120ms ease-in-out;
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-dark-brown);
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  font-size: 0.85rem;
+}
+
+.event-calendars__row:hover .event-calendars__edit-link {
+  opacity: 1;
+}
+
+.event-calendars__row {
+  transition: filter 120ms ease-in-out;
+}
+
+.event-calendars__row:hover {
+  filter: none;
+}
+
+.event-calendars__row:hover td,
+.event-calendars__row:hover th {
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .event-calendars__date-label {
