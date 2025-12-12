@@ -52,21 +52,21 @@
         </div>
       </section>
 
-      <% if @dependent_items.present? %>
-        <div id="relative-impact-panel" class="event-section" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.35); z-index: 2000; align-items: center; justify-content: center; padding: 1rem;">
-          <div class="event-section" style="max-width: 720px; width: 100%; box-shadow: 0 18px 38px rgba(0,0,0,0.18);">
-            <header class="event-section__header">
-              <div>
-                <p class="event-section__eyebrow">Heads up</p>
-                <h2 class="event-section__title">Changes impact other items</h2>
-                <p class="event-section__subtitle">Changing this item will impact <%= @dependent_items.size %> other item<%= 's' if @dependent_items.size != 1 %>:</p>
-              </div>
-            </header>
-            <div class="event-section__body">
-              <ul class="event-section__list">
-                <% @dependent_items.each do |item| %>
-                  <li class="event-section__list-item">
-                    <div>
+	      <% if @dependent_items.present? %>
+	        <div id="relative-impact-panel" class="relative-impact-overlay" style="display:none;">
+	          <div class="event-section relative-impact-dialog" role="dialog" aria-modal="true" aria-label="Changes impact other items">
+	            <header class="event-section__header">
+	              <div>
+	                <p class="event-section__eyebrow">Heads up</p>
+	                <h2 class="event-section__title">Changes impact other items</h2>
+	                <p class="event-section__subtitle">Changing this item will impact <%= @dependent_items.size %> other item<%= 's' if @dependent_items.size != 1 %>:</p>
+	              </div>
+	            </header>
+	            <div class="event-section__body relative-impact-body">
+	              <ul class="event-section__list">
+	                <% @dependent_items.each do |item| %>
+	                  <li class="event-section__list-item">
+	                    <div>
                       <h3 class="event-section__list-title"><%= item.title %></h3>
                       <% if item.relative_anchor.present? %>
                         <p class="event-section__list-subtitle"><%= calendar_item_relative_label(item) %></p>
@@ -74,17 +74,17 @@
                     </div>
                     <div class="event-section__list-actions">
                       <%= link_to "Edit", edit_event_calendar_item_path(@event, item), class: "event-section__link" %>
-                    </div>
-                  </li>
-                <% end %>
-              </ul>
-              <div class="event-section__actions" style="justify-content: flex-end; gap: 0.75rem;">
-                <button type="button" class="event-section__cta event-section__cta--secondary" data-impact-cancel>Cancel</button>
-                <button type="button" class="event-section__cta" data-impact-confirm>Confirm changes</button>
-              </div>
-            </div>
-          </div>
-        </div>
+	                    </div>
+	                  </li>
+	                <% end %>
+	              </ul>
+	              <div class="event-section__actions relative-impact-actions">
+	                <button type="button" class="event-section__cta event-section__cta--secondary" data-impact-cancel>Cancel</button>
+	                <button type="button" class="event-section__cta" data-impact-confirm>Confirm changes</button>
+	              </div>
+	            </div>
+	          </div>
+	        </div>
 
         <script>
           (function() {
