@@ -48,7 +48,7 @@ module EventsHelper
       timeline_sub_links << { label: "No derived views yet", path: nil, stub: true }
     end
 
-    timeline_sub_links << { label: "All Calendars", path: event_calendars_path(event) }
+    timeline_sub_links << { label: "Calendar Settings", path: event_calendars_path(event) }
 
     timeline_match_paths = [event_calendars_path(event), event_calendar_path(event)] +
       derived_views.map { |view| event_calendar_view_path(event, view) }

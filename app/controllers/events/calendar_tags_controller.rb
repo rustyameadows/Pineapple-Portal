@@ -8,23 +8,23 @@ module Events
       @tag = @calendar.event_calendar_tags.new(tag_params)
 
       if @tag.save
-        redirect_to event_calendar_path(@event), notice: "Tag created."
+        redirect_to event_calendars_path(@event), notice: "Tag created."
       else
-        redirect_to event_calendar_path(@event), alert: @tag.errors.full_messages.to_sentence
+        redirect_to event_calendars_path(@event), alert: @tag.errors.full_messages.to_sentence
       end
     end
 
     def update
       if @tag.update(tag_params)
-        redirect_to event_calendar_path(@event), notice: "Tag updated."
+        redirect_to event_calendars_path(@event), notice: "Tag updated."
       else
-        redirect_to event_calendar_path(@event), alert: @tag.errors.full_messages.to_sentence
+        redirect_to event_calendars_path(@event), alert: @tag.errors.full_messages.to_sentence
       end
     end
 
     def destroy
       @tag.destroy
-      redirect_to event_calendar_path(@event), notice: "Tag removed."
+      redirect_to event_calendars_path(@event), notice: "Tag removed."
     end
 
     def add_defaults
@@ -44,9 +44,9 @@ module Events
       end
 
       message = created.positive? ? "Added #{created} default tag#{'s' if created != 1}." : "All default tags already exist."
-      redirect_to event_calendar_path(@event), notice: message
+      redirect_to event_calendars_path(@event), notice: message
     rescue StandardError => e
-      redirect_to event_calendar_path(@event), alert: "Could not add default tags: #{e.message}"
+      redirect_to event_calendars_path(@event), alert: "Could not add default tags: #{e.message}"
     end
 
     private
