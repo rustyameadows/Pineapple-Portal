@@ -104,7 +104,7 @@ module Events
 
     def load_form_support
       @available_tags = @calendar.event_calendar_tags.order(:position, :name)
-      @available_team_members = @event.team_members.order(:name)
+      @available_team_members = @event.team_members.where.not(role: User::ROLES[:client]).order(:name)
       @anchor_options = (
         @calendar.calendar_items.order(:title).map do |item|
           next if @item && item.id == @item.id
@@ -154,7 +154,8 @@ module Events
 
     def assign_team_members(item)
       member_ids = Array(params.dig(:calendar_item, :team_member_ids)).reject(&:blank?).map(&:to_i)
-      item.team_member_ids = member_ids
+      allowed_ids = @event.team_members.where.not(role: User::ROLES[:client]).where(id: member_ids).pluck(:id)
+      item.team_member_ids = allowed_ids
     end
 
     def assign_duration(item)
