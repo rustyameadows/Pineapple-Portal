@@ -31,62 +31,8 @@
             <p>No items yet — start by adding your ceremony or kickoff milestone.</p>
           </div>
         <% end %>
-      </section>
+	      </section>
 
-      <section class="event-section event-calendars__tags">
-        <header class="event-section__header event-calendars__tags-header">
-          <div>
-            <p class="event-section__eyebrow">Tags</p>
-            <h2 class="event-section__title">Organize by Tag</h2>
-            <p class="event-section__subtitle">Color-coded tags help surface the right items in derived calendars.</p>
-          </div>
-          <div class="event-section__actions">
-            <%= button_to "Add default tags",
-                          add_defaults_event_calendar_tags_path(@event),
-                          method: :post,
-                          class: "event-section__cta event-section__cta--secondary" %>
-          </div>
-        </header>
-
-        <% if @tags.any? %>
-          <ul class="event-calendars__tag-list">
-            <% @tags.each do |tag| %>
-              <li class="event-calendars__tag-row">
-                <div class="event-calendars__tag-info">
-                  <strong class="event-calendars__tag-name"><%= tag.name %></strong>
-                  <span class="event-tag-pill" style="<%= calendar_tag_style(tag) %>"><%= tag.name %></span>
-                  <span class="event-calendars__tag-count"><%= tag.calendar_items.count %> items</span>
-                </div>
-                <%= form_with model: tag, url: event_calendar_tag_path(@event, tag), class: "event-calendars__tag-form", method: :patch do |form| %>
-                  <div class="event-calendars__tag-fields">
-                    <%= form.text_field :name, placeholder: "Name", class: "event-calendars__input" %>
-                    <%= form.text_field :color_token, placeholder: "Color", class: "event-calendars__input event-calendars__input--color" %>
-                    <div class="event-calendars__tag-actions">
-                      <%= form.submit "Save", class: "event-form__submit event-form__submit--small" %>
-                      <%= link_to "Remove", event_calendar_tag_path(@event, tag), data: { turbo_confirm: "Remove this tag?", turbo_method: :delete }, class: "event-form__cancel" %>
-                    </div>
-                  </div>
-                <% end %>
-              </li>
-            <% end %>
-          </ul>
-        <% else %>
-          <div class="event-section__empty">
-            <p>No tags yet. Add one below to start grouping schedule items.</p>
-          </div>
-        <% end %>
-
-        <%= form_with model: @new_tag, url: event_calendar_tags_path(@event), class: "event-form event-calendars__new-tag" do |form| %>
-          <div class="event-calendars__tag-fields">
-            <%= form.text_field :name, placeholder: "New tag", class: "event-calendars__input", required: true %>
-            <%= form.text_field :color_token, placeholder: "Color (optional)", class: "event-calendars__input event-calendars__input--color" %>
-            <div class="event-form__actions event-calendars__tag-actions">
-              <%= form.submit "Add Tag", class: "event-form__submit event-form__submit--small" %>
-            </div>
-          </div>
-        <% end %>
-      </section>
-
-    </div>
-  </div>
-<% end %>
+	    </div>
+	  </div>
+	<% end %>

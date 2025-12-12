@@ -10,6 +10,8 @@ module Events
       @calendar = @event.run_of_show_calendar || build_default_calendar
       @views = @calendar.event_calendar_views.order(:position)
       @tag_lookup = @calendar.event_calendar_tags.index_by(&:id)
+      @tags = @calendar.event_calendar_tags.order(:position)
+      @new_tag = EventCalendarTag.new(event_calendar: @calendar)
       @time_zones = ActiveSupport::TimeZone.all
     end
 
