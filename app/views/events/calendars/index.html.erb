@@ -45,6 +45,27 @@
             <div class="calendar-card__actions">
               <%= link_to "View Schedule", event_calendar_path(@event), class: "event-section__link" %>
             </div>
+            <div class="calendar-card__meta">
+              <div>
+                <dt>Timezone</dt>
+                <dd>
+                  <%= form_with model: @calendar,
+                                url: event_calendar_path(@event),
+                                method: :patch,
+                                class: "event-form",
+                                data: { turbo: true } do |form| %>
+                    <%= form.select :timezone,
+                                    @time_zones.map { |tz| [tz.to_s, tz.tzinfo&.identifier || tz.name] },
+                                    {},
+                                    class: "event-form__select",
+                                    style: "max-width: 14rem;" %>
+                    <div style="margin-top: 0.35rem;">
+                      <%= form.submit "Save Timezone", class: "event-form__submit event-form__submit--small" %>
+                    </div>
+                  <% end %>
+                </dd>
+              </div>
+            </div>
           </article>
 
           <% if @views.any? %>

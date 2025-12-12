@@ -51,7 +51,7 @@
         <td class="event-calendars__title-column">
           <%= link_to title_text, title_path, class: "event-calendars__title-link" %>
           <% if item.notes.present? %>
-            <p class="event-calendars__note"><%= simple_format(item.notes) %></p>
+            <%= simple_format(item.notes, class: "event-calendars__note") %>
           <% end %>
         </td>
         <% if show_relative %>

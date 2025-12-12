@@ -87,38 +87,6 @@
         <% end %>
       </section>
 
-      <section class="event-section event-calendars__details">
-        <header class="event-section__header event-calendars__header">
-          <div>
-            <p class="event-section__eyebrow">Calendar Settings</p>
-            <h2 class="event-section__title"><%= @calendar.name %></h2>
-            <p class="event-section__subtitle">Edit calendar details and keep the master schedule up to date.</p>
-          </div>
-          <%= form_with model: @calendar, url: event_calendar_path(@event), class: "event-form event-calendars__form", method: :patch do |form| %>
-            <div class="event-calendars__form-grid">
-              <div class="event-form__group">
-                <%= form.label :name, "Calendar Name" %>
-                <%= form.text_field :name, required: true %>
-              </div>
-              <div class="event-form__group">
-                <%= form.label :timezone, "Timezone" %>
-                <%= form.select :timezone, @time_zones.map { |tz| [tz.to_s, tz.tzinfo&.identifier || tz.name] }, {}, class: "event-form__select" %>
-              </div>
-              <div class="event-form__group event-calendars__description">
-                <%= form.label :description, "Description" %>
-                <%= form.text_area :description, rows: 3 %>
-              </div>
-              <div class="event-form__group event-form__group--checkbox event-calendars__visibility">
-                <%= form.check_box :client_visible %>
-                <%= form.label :client_visible, "Show on client portal" %>
-              </div>
-            </div>
-            <div class="event-form__actions event-calendars__actions">
-              <%= form.submit "Save Details", class: "event-form__submit" %>
-            </div>
-          <% end %>
-        </header>
-      </section>
     </div>
   </div>
 <% end %>
