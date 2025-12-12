@@ -349,10 +349,11 @@
 
 .calendar-item-form__eyebrow {
   margin: 0;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: 0.78rem;
-  color: var(--color-brown);
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-brown);
 }
 
 .calendar-item-form__hint {
@@ -365,6 +366,69 @@
   display: grid;
   gap: 0.9rem 1rem;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  align-items: start;
+}
+
+.calendar-item-form .event-form__group {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+.calendar-item-form .event-form__group > label {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-brown);
+}
+
+.calendar-item-form input[type="text"],
+.calendar-item-form input[type="datetime-local"],
+.calendar-item-form input[type="number"],
+.calendar-item-form select,
+.calendar-item-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-neutral-300);
+  background: var(--color-white);
+  font-size: 0.95rem;
+  color: var(--color-dark-brown);
+}
+
+.calendar-item-form textarea {
+  resize: vertical;
+}
+
+.calendar-item-form input:focus,
+.calendar-item-form select:focus,
+.calendar-item-form textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  outline-offset: 2px;
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-neutral-300));
+}
+
+.calendar-item-form__grid--logistics {
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+}
+
+.calendar-item-form__stack {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+
+.calendar-item-form__pill-list--stack {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+.calendar-item-form__pill-list--stack .calendar-item-form__pill {
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .calendar-item-form__full {
