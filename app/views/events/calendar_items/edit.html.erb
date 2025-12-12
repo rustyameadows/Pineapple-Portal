@@ -67,13 +67,10 @@
 	                <% @dependent_items.each do |item| %>
 	                  <li class="event-section__list-item">
 	                    <div>
-                      <h3 class="event-section__list-title"><%= item.title %></h3>
-                      <% if item.relative_anchor.present? %>
-                        <p class="event-section__list-subtitle"><%= calendar_item_relative_label(item) %></p>
-                      <% end %>
-                    </div>
-                    <div class="event-section__list-actions">
-                      <%= link_to "Edit", edit_event_calendar_item_path(@event, item), class: "event-section__link" %>
+	                      <h3 class="event-section__list-title"><%= item.title %></h3>
+	                      <% if item.relative_anchor.present? %>
+	                        <p class="event-section__list-subtitle"><%= calendar_item_relative_label(item) %></p>
+	                      <% end %>
 	                    </div>
 	                  </li>
 	                <% end %>
