@@ -57,6 +57,7 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
                 controller: "calendar_tags" do
         collection do
           post :add_defaults
+          post :restore_default_colors
         end
       end
       resources :views,

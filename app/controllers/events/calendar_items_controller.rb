@@ -1,9 +1,12 @@
 module Events
   class CalendarItemsController < ApplicationController
+    helper CalendarHelper
+
     before_action :set_event
     before_action :set_calendar
     before_action :set_item, only: %i[edit update destroy mark_completed mark_planned remove_milestone_tag]
     before_action :load_form_support, only: %i[new edit create update]
+    before_action :load_dependents, only: %i[edit]
 
     def new
       @item = @calendar.calendar_items.new
@@ -100,8 +103,8 @@ module Events
     end
 
     def load_form_support
-      @available_tags = @calendar.event_calendar_tags.order(:position, :name)
-      @available_team_members = @event.team_members.order(:name)
+      @available_tags = @calendar.event_calendar_tags.order(Arel.sql("LOWER(name) ASC"))
+      @available_team_members = @event.team_members.where.not(role: User::ROLES[:client]).order(:name)
       @anchor_options = (
         @calendar.calendar_items.order(:title).map do |item|
           next if @item && item.id == @item.id
@@ -151,7 +154,8 @@ module Events
 
     def assign_team_members(item)
       member_ids = Array(params.dig(:calendar_item, :team_member_ids)).reject(&:blank?).map(&:to_i)
-      item.team_member_ids = member_ids
+      allowed_ids = @event.team_members.where.not(role: User::ROLES[:client]).where(id: member_ids).pluck(:id)
+      item.team_member_ids = allowed_ids
     end
 
     def assign_duration(item)
@@ -229,6 +233,13 @@ module Events
     def ensure_milestone_tag(create: true)
       scope = @calendar.event_calendar_tags.where("LOWER(name) = ?", "milestones")
       create ? scope.first_or_create(name: "Milestones") : scope.first
+    end
+
+    def load_dependents
+      @dependent_items = @calendar.calendar_items
+                                  .includes(:event_calendar_tags, :team_members, :relative_anchor)
+                                  .where(relative_anchor_id: @item.id)
+                                  .order(:starts_at, :position, :id)
     end
   end
 end

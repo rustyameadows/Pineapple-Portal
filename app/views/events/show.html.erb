@@ -10,6 +10,9 @@
       <section class="event-hero">
         <div class="event-hero__corner event-hero__corner--top-left">
           <p class="event-hero__location"><%= @event.location.presence || "Location TBD" %></p>
+          <% if @event.location_secondary.present? %>
+            <p class="event-hero__location"><%= @event.location_secondary %></p>
+          <% end %>
         </div>
 
         <div class="event-hero__corner event-hero__corner--top-right">
