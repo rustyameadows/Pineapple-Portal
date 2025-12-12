@@ -49,6 +49,27 @@ module Events
       redirect_to event_calendars_path(@event), alert: "Could not add default tags: #{e.message}"
     end
 
+    def restore_default_colors
+      defaults = RunOfShowDefaults::TAGS.index_by { |tag| tag[:name].to_s.strip.downcase }
+      updated = 0
+
+      @calendar.event_calendar_tags.find_each do |tag|
+        default = defaults[tag.name.to_s.strip.downcase]
+        next unless default
+
+        desired = default[:color_token].to_s.strip
+        next if desired.blank?
+        next if tag.color_token.to_s.strip == desired
+
+        updated += 1 if tag.update(color_token: desired)
+      end
+
+      message = updated.positive? ? "Restored default colors for #{updated} tag#{'s' if updated != 1}." : "All tag colors already match defaults."
+      redirect_to event_calendars_path(@event), notice: message
+    rescue StandardError => e
+      redirect_to event_calendars_path(@event), alert: "Could not restore default colors: #{e.message}"
+    end
+
     private
 
     def set_event
