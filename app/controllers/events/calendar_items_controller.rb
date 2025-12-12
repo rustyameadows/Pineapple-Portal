@@ -103,7 +103,7 @@ module Events
     end
 
     def load_form_support
-      @available_tags = @calendar.event_calendar_tags.order(:position, :name)
+      @available_tags = @calendar.event_calendar_tags.order(Arel.sql("LOWER(name) ASC"))
       @available_team_members = @event.team_members.where.not(role: User::ROLES[:client]).order(:name)
       @anchor_options = (
         @calendar.calendar_items.order(:title).map do |item|
