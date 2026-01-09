@@ -38,9 +38,18 @@ module Events
       @team_member = @event.event_team_members.new(attributes)
 
       if @team_member.save
+        reset_token = nil
+        if @team_member.client? && generated_password
+          reset_token = PasswordResetToken.generate_for!(
+            user: @team_member.user,
+            issued_by: current_user
+          )
+          flash[:highlight_reset_token_id] = reset_token.id
+        end
+
         notice = if @team_member.client?
-                   if generated_password
-                     "Client invited. Temporary password: #{generated_password}"
+                   if reset_token
+                     "Client account created. Reset link generated below."
                    else
                      "Client access granted."
                    end
