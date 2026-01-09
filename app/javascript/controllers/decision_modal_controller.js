@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-  static targets = ["dialog", "form", "titleInput", "statusInput", "vendorInput", "notesInput"];
+  static targets = ["dialog", "form", "titleLabel", "statusInput", "vendorInput", "notesInput"];
   static values = { basePath: String };
 
   open(event) {
@@ -51,7 +51,9 @@ export default class extends Controller {
 
   populateForm(data) {
     const item = data.calendar_item;
-    this.titleInputTarget.value = item.title || "";
+    if (this.hasTitleLabelTarget) {
+      this.titleLabelTarget.textContent = item.title || "Edit Decision";
+    }
     this.statusInputTarget.value = item.status || "planned";
     this.vendorInputTarget.value = item.vendor_name || "";
     this.notesInputTarget.value = item.notes || "";
