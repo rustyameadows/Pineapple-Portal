@@ -31,8 +31,10 @@
     });
   };
 
-  document.addEventListener("DOMContentLoaded", () => {
+  const initAttachmentUploads = () => {
     document.querySelectorAll("[data-attachment-upload-form]").forEach((form) => {
+      if (form.__attachmentUploadInitialized) return;
+      form.__attachmentUploadInitialized = true;
       const fileInput = form.querySelector("[data-attachment-upload-target='file']");
       const statusEl = form.querySelector("[data-attachment-upload-target='status']");
       const uiContainer = form.querySelector("[data-attachment-upload-target='ui']");
@@ -130,5 +132,14 @@
         }
       });
     });
-  });
+  };
+
+  const installAttachmentUploadHandlers = () => {
+    if (document.__attachmentUploadHandlersInstalled) return;
+    document.__attachmentUploadHandlersInstalled = true;
+    document.addEventListener("turbo:load", initAttachmentUploads);
+  };
+
+  installAttachmentUploadHandlers();
+  initAttachmentUploads();
 </script>

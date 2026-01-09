@@ -5,8 +5,10 @@
     return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
   };
 
-  document.addEventListener("DOMContentLoaded", () => {
+  const initAnswerUploads = () => {
     document.querySelectorAll("[data-answer-upload-form]").forEach((form) => {
+      if (form.__answerUploadInitialized) return;
+      form.__answerUploadInitialized = true;
       const fileInput = form.querySelector("[data-answer-upload-target='file']");
       if (!fileInput) return;
 
@@ -74,5 +76,14 @@
         }
       });
     });
-  });
+  };
+
+  const installAnswerUploadHandlers = () => {
+    if (document.__answerUploadHandlersInstalled) return;
+    document.__answerUploadHandlersInstalled = true;
+    document.addEventListener("turbo:load", initAnswerUploads);
+  };
+
+  installAnswerUploadHandlers();
+  initAnswerUploads();
 </script>

@@ -122,9 +122,11 @@
 
 <% content_for :scripts do %>
   <script type="module">
-    document.addEventListener("DOMContentLoaded", () => {
+    const initDesignUploadModal = () => {
       const modal = document.getElementById("design-upload-modal");
       if (!modal) return;
+      if (modal.__designUploadModalInitialized) return;
+      modal.__designUploadModalInitialized = true;
 
       const openButton = document.querySelector("[data-designs-upload-open]");
       const closeButtons = modal.querySelectorAll("[data-designs-upload-close]");
@@ -158,6 +160,15 @@
       if (modal.dataset.openOnLoad === "true") {
         openModal();
       }
-    });
+    };
+
+    const installDesignUploadModalHandlers = () => {
+      if (document.__designUploadModalHandlersInstalled) return;
+      document.__designUploadModalHandlersInstalled = true;
+      document.addEventListener("turbo:load", initDesignUploadModal);
+    };
+
+    installDesignUploadModalHandlers();
+    initDesignUploadModal();
   </script>
 <% end %>
