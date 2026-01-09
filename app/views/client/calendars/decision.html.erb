@@ -25,13 +25,14 @@
             <h2 class="decision-calendar__segment-label"><%= segment[:label] %></h2>
             <div class="decision-calendar__segment-body client-container">
               <% segment[:items].each do |item| %>
-                <article class="decision-calendar__row decision-calendar__row--<%= item.status %>">
+                <article class="decision-calendar__row decision-calendar__row--<%= item.status %>" data-action="click->decision-modal#open" data-decision-modal-item-id-value="<%= item.id %>">
                   <div class="decision-calendar__cell decision-calendar__cell--title">
-                    <button class="decision-calendar__title-button" data-action="decision-modal#open" data-decision-modal-item-id-value="<%= item.id %>" type="button">
+                    <button class="decision-calendar__title-button" type="button">
                       <strong><%= item.title %></strong>
                     </button>
                   </div>
-                  <div class="decision-calendar__cell decision-calendar__cell--status"><%= item.status.titleize %></div>
+                  <% status_label = item.status == "planned" ? "" : item.status.titleize %>
+                  <div class="decision-calendar__cell decision-calendar__cell--status"><%= status_label %></div>
                   <div class="decision-calendar__cell decision-calendar__cell--vendor"><%= item.vendor_name.to_s %></div>
                   <div class="decision-calendar__cell decision-calendar__cell--notes"><%= item.notes.to_s %></div>
                 </article>

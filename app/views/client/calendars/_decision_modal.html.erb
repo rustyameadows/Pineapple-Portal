@@ -14,8 +14,9 @@
       <div class="decision-modal__field">
         <%= form.label :status %>
         <select name="calendar_item[status]" data-decision-modal-target="statusInput">
-          <% CalendarItem.statuses.keys.each do |status| %>
-            <option value="<%= status %>"><%= status.titleize %></option>
+          <% client_statuses = CalendarItem::STATUSES.values_at(:planned, :in_progress, :completed) %>
+          <% client_statuses.each do |status| %>
+            <option value="<%= status %>"><%= status == "planned" ? "" : status.titleize %></option>
           <% end %>
         </select>
       </div>
