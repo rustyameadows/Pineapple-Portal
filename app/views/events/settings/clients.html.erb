@@ -49,10 +49,18 @@
                       </td>
                       <td>
                         <% if reset_token.present? %>
-                          <div class="event-settings__reset <%= "event-settings__reset--highlight" if highlight_reset %>">
-                            <label for="reset-link-<%= reset_token.id %>" class="event-settings__reset-label">Share this link</label>
-                            <input id="reset-link-<%= reset_token.id %>" type="text" class="event-settings__reset-input" value="<%= reset_url %>" readonly>
-                            <p class="event-settings__reset-meta">Expires <%= reset_token.expires_at.strftime('%b %-d, %Y %l:%M %p %Z') %></p>
+                          <div class="event-settings__reset-card <%= "event-settings__reset-card--highlight" if highlight_reset %>"
+                               data-reset-card
+                               data-reset-expires-at="<%= reset_token.expires_at.iso8601 %>">
+                            <div class="event-settings__reset-header">
+                              <label for="reset-link-<%= reset_token.id %>" class="event-settings__reset-label">Reset link</label>
+                              <button type="button" class="event-settings__reset-copy" data-reset-copy>Copy</button>
+                            </div>
+                            <input id="reset-link-<%= reset_token.id %>" type="text" class="event-settings__reset-input" value="<%= reset_url %>" readonly data-reset-input>
+                            <div class="event-settings__reset-meta">
+                              <span class="event-settings__reset-countdown" data-reset-countdown aria-live="polite"></span>
+                              <span class="event-settings__reset-expiration">Expires <%= reset_token.expires_at.strftime('%b %-d, %Y %l:%M %p %Z') %></span>
+                            </div>
                           </div>
                         <% else %>
                           <span class="event-settings__empty">No reset link yet.</span>
@@ -73,7 +81,7 @@
 
             <div class="event-settings__client-actions">
               <div class="event-settings__client-action">
-                <h4>Invite a Client</h4>
+                <h4>Add Client Account</h4>
                 <%= form_with model: [@event, @client_team_member], url: event_team_members_path(@event), local: true, class: "event-settings__form event-settings__form--stack" do |form| %>
                   <%= form.hidden_field :member_role, value: EventTeamMember::TEAM_ROLES[:client] %>
                   <%= form.hidden_field :client_visible, value: 1 %>
@@ -125,4 +133,101 @@
       </section>
     </div>
   </div>
+<% end %>
+
+<% content_for :scripts do %>
+  <script type="module">
+    const formatResetCountdown = (milliseconds) => {
+      const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+      const totalMinutes = Math.ceil(totalSeconds / 60);
+      const days = Math.floor(totalMinutes / (60 * 24));
+      const hours = Math.floor((totalMinutes - (days * 24 * 60)) / 60);
+      const minutes = totalMinutes - (days * 24 * 60) - (hours * 60);
+
+      if (days > 0) return `${days}d ${hours}h`;
+      if (hours > 0) return `${hours}h ${minutes}m`;
+      if (minutes > 0) return `${minutes}m`;
+      return "less than 1m";
+    };
+
+    const updateResetCountdown = (card) => {
+      const countdownEl = card.querySelector("[data-reset-countdown]");
+      const copyButton = card.querySelector("[data-reset-copy]");
+      if (!countdownEl) return;
+
+      const expiresAt = card.__resetExpiresAt || new Date(card.dataset.resetExpiresAt);
+      if (Number.isNaN(expiresAt.getTime())) return;
+      card.__resetExpiresAt = expiresAt;
+
+      const remainingMs = expiresAt.getTime() - Date.now();
+      if (remainingMs <= 0) {
+        countdownEl.textContent = "Expired";
+        card.classList.add("is-expired");
+        if (copyButton) copyButton.disabled = true;
+        return;
+      }
+
+      countdownEl.textContent = `Expires in ${formatResetCountdown(remainingMs)}`;
+      card.classList.remove("is-expired");
+      if (copyButton) copyButton.disabled = false;
+    };
+
+    const updateResetCountdowns = () => {
+      document.querySelectorAll("[data-reset-card]").forEach((card) => updateResetCountdown(card));
+    };
+
+    const initResetCards = () => {
+      document.querySelectorAll("[data-reset-card]").forEach((card) => {
+        if (card.__resetCardInitialized) return;
+        card.__resetCardInitialized = true;
+
+        const copyButton = card.querySelector("[data-reset-copy]");
+        const input = card.querySelector("[data-reset-input]");
+
+        if (copyButton && input) {
+          const defaultLabel = copyButton.textContent;
+          copyButton.dataset.copyLabel = defaultLabel;
+
+          copyButton.addEventListener("click", async () => {
+            const text = input.value;
+
+            try {
+              if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
+              } else {
+                input.select();
+                input.setSelectionRange(0, text.length);
+                document.execCommand("copy");
+                input.blur();
+              }
+            } catch (error) {
+              console.error("Failed to copy reset link", error);
+              return;
+            }
+
+            copyButton.textContent = "Copied";
+            copyButton.disabled = true;
+            window.setTimeout(() => {
+              if (!card.classList.contains("is-expired")) {
+                copyButton.textContent = copyButton.dataset.copyLabel || defaultLabel;
+                copyButton.disabled = false;
+              }
+            }, 1500);
+          });
+        }
+      });
+
+      updateResetCountdowns();
+    };
+
+    const installResetCardHandlers = () => {
+      if (document.__resetCardHandlersInstalled) return;
+      document.__resetCardHandlersInstalled = true;
+      document.addEventListener("turbo:load", initResetCards);
+      window.setInterval(updateResetCountdowns, 30000);
+    };
+
+    installResetCardHandlers();
+    initResetCards();
+  </script>
 <% end %>

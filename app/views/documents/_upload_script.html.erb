@@ -26,8 +26,10 @@
       });
     };
 
-    document.addEventListener("DOMContentLoaded", () => {
+    const initDocumentUploads = () => {
       document.querySelectorAll("[data-document-upload-form]").forEach((form) => {
+        if (form.__documentUploadInitialized) return;
+        form.__documentUploadInitialized = true;
         const fileInput = form.querySelector("#document_file");
         const statusEl = form.querySelector("[data-document-upload-target='status']");
         const uiContainer = form.querySelector("[data-document-upload-target='ui']");
@@ -137,6 +139,15 @@
           }
         });
       });
-    });
+    };
+
+    const installDocumentUploadHandlers = () => {
+      if (document.__documentUploadHandlersInstalled) return;
+      document.__documentUploadHandlersInstalled = true;
+      document.addEventListener("turbo:load", initDocumentUploads);
+    };
+
+    installDocumentUploadHandlers();
+    initDocumentUploads();
   </script>
 <% end %>

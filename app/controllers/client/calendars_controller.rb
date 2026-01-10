@@ -111,24 +111,18 @@ module Client
 
     def decision_calendar_segments
       raw_items = ::Calendars::ViewFilter.new(calendar: @calendar, view: @active_view).items
-      grouped = raw_items.group_by { |item| segment_label_for(item) }
+      grouped = raw_items.group_by { |item| helpers.calendar_item_date_bucket(item, @calendar.timezone) }
 
       grouped.map do |segment, items|
+        label = items.find { |item| item.time_caption.present? }&.time_caption || segment
         {
-          label: segment,
+          label: label,
           items: items.sort_by { |it| it.title.to_s.downcase },
           sort_key: items.map { |it| it.effective_starts_at || it.created_at }.compact.min
         }
       end
         .sort_by { |segment| [segment[:sort_key] || Time.zone.at(0), segment[:label]] }
         .map { |segment| segment.except(:sort_key) }
-    end
-
-    def segment_label_for(item)
-      start_time = item.effective_starts_at&.in_time_zone(@calendar.timezone)
-      return "Upcoming Decisions" unless start_time
-
-      start_time.strftime("%A, %B %-d")
     end
   end
 end

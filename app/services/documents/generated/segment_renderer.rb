@@ -9,7 +9,7 @@ module Documents
 
       GROVER_DEFAULTS = {
         format: "Letter",
-        margin: { top: "0", bottom: "0", left: "0", right: "0" },
+        margin: { top: "0.25in", bottom: "0.25in", left: "0", right: "0" },
         print_background: true
       }.freeze
 

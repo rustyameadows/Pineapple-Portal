@@ -2,20 +2,15 @@
   <div class="decision-modal__content" data-decision-modal-target="content">
     <button type="button" class="decision-modal__close" data-action="decision-modal#close">×</button>
     <header class="decision-modal__header">
-      <h2>Edit Decision</h2>
-      <p>Update the status, vendor, or notes for this calendar item.</p>
+      <h2 data-decision-modal-target="titleLabel">Edit Decision</h2>
     </header>
     <%= form_with url: "#", method: :patch, local: true, data: { decision_modal_target: "form" }, html: { class: "decision-modal__form" } do |form| %>
       <div class="decision-modal__field">
-        <%= form.label :title, "Decision" %>
-        <input type="text" name="calendar_item[title]" data-decision-modal-target="titleInput" required>
-      </div>
-
-      <div class="decision-modal__field">
         <%= form.label :status %>
         <select name="calendar_item[status]" data-decision-modal-target="statusInput">
-          <% CalendarItem.statuses.keys.each do |status| %>
-            <option value="<%= status %>"><%= status.titleize %></option>
+          <% client_statuses = CalendarItem::STATUSES.values_at(:planned, :in_progress, :completed) %>
+          <% client_statuses.each do |status| %>
+            <option value="<%= status %>"><%= status == "planned" ? "" : status.titleize %></option>
           <% end %>
         </select>
       </div>
