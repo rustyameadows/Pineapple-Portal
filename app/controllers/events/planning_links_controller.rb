@@ -6,7 +6,7 @@ module Events
       key = params[:id].to_s
 
       unless ClientPortal::PlanningLinks.built_in_keys.include?(key)
-        redirect_back fallback_location: client_portal_event_settings_path(@event), alert: "Unknown planning link." and return
+        redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), alert: "Unknown planning link." and return
       end
 
       message = if @event.planning_link_enabled?(key)
@@ -18,10 +18,10 @@ module Events
                 end
 
       if @event.save
-        redirect_back fallback_location: client_portal_event_settings_path(@event), notice: message
+        redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), notice: message
       else
         @event.reload
-        redirect_back fallback_location: client_portal_event_settings_path(@event), alert: @event.errors.full_messages.to_sentence
+        redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), alert: @event.errors.full_messages.to_sentence
       end
     end
 
@@ -43,18 +43,18 @@ module Events
       token = params[:token].presence || params[:id].to_s
 
       unless planning_token_permitted?(token)
-        redirect_back fallback_location: client_portal_event_settings_path(@event), alert: "Unknown planning link." and return
+        redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), alert: "Unknown planning link." and return
       end
 
       if @event.move_planning_link_token(token, direction)
         if @event.save
-          redirect_back fallback_location: client_portal_event_settings_path(@event), notice: "Planning link order updated."
+          redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), notice: "Planning link order updated."
         else
           @event.reload
-          redirect_back fallback_location: client_portal_event_settings_path(@event), alert: @event.errors.full_messages.to_sentence
+          redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), alert: @event.errors.full_messages.to_sentence
         end
       else
-        redirect_back fallback_location: client_portal_event_settings_path(@event), notice: "Planning link already at edge of list."
+        redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), notice: "Planning link already at edge of list."
       end
     end
 

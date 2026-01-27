@@ -8,22 +8,22 @@ module Events
 
       if @event_link.save
         unless persist_planning_tokens_for(@event_link)
-          redirect_back fallback_location: client_portal_event_settings_path(@event), alert: @event.errors.full_messages.to_sentence and return
+          redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), alert: @event.errors.full_messages.to_sentence and return
         end
-        redirect_back fallback_location: client_portal_event_settings_path(@event), notice: "Quick link added."
+        redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), notice: "Quick link added."
       else
-        redirect_back fallback_location: client_portal_event_settings_path(@event), alert: @event_link.errors.full_messages.to_sentence
+        redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), alert: @event_link.errors.full_messages.to_sentence
       end
     end
 
     def update
       if @event_link.update(event_link_params)
         unless persist_planning_tokens_for(@event_link)
-          redirect_back fallback_location: client_portal_event_settings_path(@event), alert: @event.errors.full_messages.to_sentence and return
+          redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), alert: @event.errors.full_messages.to_sentence and return
         end
-        redirect_back fallback_location: client_portal_event_settings_path(@event), notice: "Quick link updated."
+        redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), notice: "Quick link updated."
       else
-        redirect_back fallback_location: client_portal_event_settings_path(@event), alert: @event_link.errors.full_messages.to_sentence
+        redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), alert: @event_link.errors.full_messages.to_sentence
       end
     end
 
@@ -31,9 +31,9 @@ module Events
       token = planning_link_token_for(@event_link)
       @event_link.destroy
       unless remove_planning_token(token)
-        redirect_back fallback_location: client_portal_event_settings_path(@event), alert: @event.errors.full_messages.to_sentence and return
+        redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), alert: @event.errors.full_messages.to_sentence and return
       end
-      redirect_back fallback_location: client_portal_event_settings_path(@event), notice: "Quick link removed."
+      redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event)), notice: "Quick link removed."
     end
 
     def move_up
@@ -71,7 +71,7 @@ module Events
         end
       end
 
-      redirect_back fallback_location: client_portal_event_settings_path(@event)
+      redirect_to safe_return_to(fallback: client_portal_event_settings_path(@event))
     end
 
     def persist_planning_tokens_for(event_link)

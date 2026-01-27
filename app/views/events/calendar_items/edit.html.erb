@@ -21,7 +21,7 @@
                      group_by_date: false,
                      show_tags: true,
                      show_relative: true,
-                     item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@event, item)] } %>
+                     item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@event, item, return_to: request.fullpath)] } %>
         </section>
       <% else %>
         <section class="event-section">

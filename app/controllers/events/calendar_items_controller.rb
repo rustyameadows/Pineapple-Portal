@@ -27,7 +27,7 @@ module Events
 
       if @item.save
         run_scheduler
-        redirect_to event_calendar_path(@event), notice: "Calendar item added."
+        redirect_to safe_return_to(fallback: event_calendar_path(@event)), notice: "Calendar item added."
       else
         load_form_support
         flash.now[:alert] = @item.errors.full_messages.to_sentence
@@ -46,7 +46,7 @@ module Events
 
       if @item.update(item_params)
         run_scheduler
-        redirect_to event_calendar_path(@event), notice: "Calendar item updated."
+        redirect_to safe_return_to(fallback: event_calendar_path(@event)), notice: "Calendar item updated."
       else
         flash.now[:alert] = @item.errors.full_messages.to_sentence
         render :edit, status: :unprocessable_content
@@ -56,22 +56,22 @@ module Events
     def destroy
       @item.destroy
       run_scheduler
-      redirect_to event_calendar_path(@event), notice: "Calendar item removed."
+      redirect_to safe_return_to(fallback: event_calendar_path(@event)), notice: "Calendar item removed."
     end
 
     def mark_completed
       if @item.update(status: :completed)
-        redirect_back fallback_location: event_settings_path(@event), notice: "Milestone marked as completed."
+        redirect_to safe_return_to(fallback: event_settings_path(@event)), notice: "Milestone marked as completed."
       else
-        redirect_back fallback_location: event_settings_path(@event), alert: @item.errors.full_messages.to_sentence
+        redirect_to safe_return_to(fallback: event_settings_path(@event)), alert: @item.errors.full_messages.to_sentence
       end
     end
 
     def mark_planned
       if @item.update(status: :planned)
-        redirect_back fallback_location: event_settings_path(@event), notice: "Milestone reopened."
+        redirect_to safe_return_to(fallback: event_settings_path(@event)), notice: "Milestone reopened."
       else
-        redirect_back fallback_location: event_settings_path(@event), alert: @item.errors.full_messages.to_sentence
+        redirect_to safe_return_to(fallback: event_settings_path(@event)), alert: @item.errors.full_messages.to_sentence
       end
     end
 
@@ -79,9 +79,9 @@ module Events
       milestone_tag = ensure_milestone_tag(create: false)
       if milestone_tag
         @item.calendar_item_tags.where(event_calendar_tag: milestone_tag).destroy_all
-        redirect_back fallback_location: event_settings_path(@event), notice: "Milestone tag removed."
+        redirect_to safe_return_to(fallback: event_settings_path(@event)), notice: "Milestone tag removed."
       else
-        redirect_back fallback_location: event_settings_path(@event), alert: "Milestone tag not found."
+        redirect_to safe_return_to(fallback: event_settings_path(@event)), alert: "Milestone tag not found."
       end
     end
 

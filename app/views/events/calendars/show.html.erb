@@ -14,7 +14,7 @@
           </div>
           <div class="event-calendars__schedule-actions">
             <%= link_to "Preview Timeline", timeline_preview_event_calendar_path(@event), class: "event-section__cta event-section__cta--secondary" %>
-            <%= link_to "Add Item", new_event_calendar_item_path(@event), class: "event-section__cta" %>
+            <%= link_to "Add Item", new_event_calendar_item_path(@event, return_to: request.fullpath), class: "event-section__cta" %>
           </div>
         </header>
 

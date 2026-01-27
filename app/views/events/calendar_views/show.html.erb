@@ -46,7 +46,7 @@
                        group_by_date: true,
                        group_label_proc: custom_group_label,
                        show_tags: false,
-                       item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@event, item)] } %>
+                       item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@event, item, return_to: request.fullpath)] } %>
           <% else %>
             <div class="event-section__empty">
               <p>No items match this view yet.</p>

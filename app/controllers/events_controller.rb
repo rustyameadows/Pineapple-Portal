@@ -29,7 +29,7 @@ class EventsController < ApplicationController
 
   def update
     if @event.update(event_params)
-      redirect_to @event, notice: "Event updated."
+      redirect_to safe_return_to(fallback: event_path(@event)), notice: "Event updated."
     else
       render :edit, status: :unprocessable_content
     end

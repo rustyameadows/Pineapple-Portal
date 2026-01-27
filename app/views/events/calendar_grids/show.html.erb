@@ -184,7 +184,7 @@
                       <%= text_area_tag "calendar_item[notes]", item.notes, form: form_id, rows: 2, class: "calendar-grid__textarea" %>
                     </td>
                     <td class="calendar-grid__cell calendar-grid__cell--edit">
-                      <%= link_to edit_event_calendar_item_path(@event, item), class: "calendar-grid__edit" do %>
+                      <%= link_to edit_event_calendar_item_path(@event, item, return_to: request.fullpath), class: "calendar-grid__edit" do %>
                         <span class="calendar-grid__edit-icon" aria-hidden="true">✎</span>
                         <span class="visually-hidden">Open full edit</span>
                       <% end %>
