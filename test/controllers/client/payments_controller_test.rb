@@ -5,7 +5,9 @@ module Client
     setup do
       @event = events(:one)
       @payment = payments(:visible_payment)
-      log_in_client_portal(users(:client_contact))
+      @client = users(:client_contact)
+      @client.update!(can_view_financials: true)
+      log_in_client_portal(@client)
     end
 
     test "shows payment detail" do
@@ -29,6 +31,14 @@ module Client
       patch mark_paid_client_event_payment_url(@event, payment)
 
       assert_redirected_to client_event_payment_url(@event, payment)
+    end
+
+    test "redirects without financial access" do
+      @client.update!(can_view_financials: false)
+
+      get client_event_payment_url(@event, @payment)
+
+      assert_redirected_to client_event_financials_url(@event)
     end
   end
 end

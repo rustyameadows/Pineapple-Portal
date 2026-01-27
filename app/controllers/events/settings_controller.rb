@@ -36,11 +36,14 @@ module Events
     def prepare_quick_links
       @planning_event_link = @event.event_links.new(link_type: "planning")
       @quick_event_link = @event.event_links.new(link_type: "quick")
+      @financial_event_link = @event.event_links.new(link_type: "financial")
 
       @quick_event_links = @event.event_links.quick.ordered
+      @financial_event_links = @event.event_links.financial.ordered
 
       @planning_link_entries = @event.ordered_planning_link_entries
       @hidden_planning_links = hidden_built_in_planning_links
+      @financial_documents = @event.documents.latest.where.not(storage_uri: nil).order(updated_at: :desc, title: :asc)
     end
 
     def prepare_vendors

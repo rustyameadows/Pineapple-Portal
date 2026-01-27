@@ -49,6 +49,7 @@ class Document < ApplicationRecord
 
   scope :latest, -> { where(is_latest: true) }
   scope :client_visible, -> { where(client_visible: true) }
+  scope :financial_portal_visible, -> { where(financial_portal_visible: true) }
 
   def self.source_label(key)
     SOURCE_LABELS[key.to_s] || key.to_s.humanize

@@ -94,11 +94,11 @@ class DocumentsController < ApplicationController
   end
 
   def document_params
-    params.require(:document).permit(:title, :storage_uri, :checksum, :size_bytes, :content_type, :logical_id, :client_visible, :source)
+    params.require(:document).permit(:title, :storage_uri, :checksum, :size_bytes, :content_type, :logical_id, :client_visible, :financial_portal_visible, :source)
   end
 
   def edit_document_params
-    params.require(:document).permit(:title, :content_type, :client_visible, :source)
+    params.require(:document).permit(:title, :content_type, :client_visible, :financial_portal_visible, :source)
   end
 
   def available_entities_for(event)

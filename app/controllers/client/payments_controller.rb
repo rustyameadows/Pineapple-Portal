@@ -1,5 +1,6 @@
 module Client
   class PaymentsController < PortalController
+    before_action :require_financial_access
     before_action :set_payment, only: %i[show mark_paid]
 
     def show
@@ -30,6 +31,12 @@ module Client
 
     def payment_params
       params.fetch(:payment, {}).permit(:client_note)
+    end
+
+    def require_financial_access
+      return if financial_portal_access? && @event.financial_payments_enabled?
+
+      redirect_to client_event_financials_path(@event)
     end
   end
 end

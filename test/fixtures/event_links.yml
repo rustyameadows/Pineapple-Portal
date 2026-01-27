@@ -18,3 +18,10 @@ vendor_portal:
   url: "https://vendors.example.com"
   position: 0
   link_type: quick
+
+financial_portal_link:
+  event: one
+  label: "Payment Portal"
+  url: "https://pay.example.com"
+  position: 0
+  link_type: financial

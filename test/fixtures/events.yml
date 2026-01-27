@@ -3,9 +3,11 @@ one:
   starts_on: 2025-10-01
   ends_on: 2025-10-02
   location: Main Hall
+  financial_payments_enabled: true
 
 two:
   name: Awards Night
   starts_on: 2025-11-15
   ends_on: 2025-11-15
   location: Ballroom
+  financial_payments_enabled: false
