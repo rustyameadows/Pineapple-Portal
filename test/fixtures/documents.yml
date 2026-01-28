@@ -11,6 +11,7 @@ contract_v1:
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
   client_visible: true
+  financial_portal_visible: true
   source: staff_upload
 
 packet_brief:
@@ -24,6 +25,7 @@ packet_brief:
   is_latest: true
   content_type: application/pdf
   client_visible: true
+  financial_portal_visible: false
   source: packet
   created_at: <%= 2.days.ago %>
   updated_at: <%= 2.days.ago %>
@@ -39,6 +41,7 @@ client_inspo_board:
   is_latest: true
   content_type: image/png
   client_visible: true
+  financial_portal_visible: false
   source: client_upload
   created_at: <%= 1.day.ago %>
   updated_at: <%= 1.day.ago %>

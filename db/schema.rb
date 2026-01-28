@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_28_014000) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_27_093001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -239,6 +239,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_014000) do
     t.string "manifest_hash"
     t.string "checksum_sha256"
     t.integer "compiled_page_count"
+    t.boolean "financial_portal_visible", default: false, null: false
     t.index ["build_id"], name: "index_documents_on_build_id"
     t.index ["client_visible"], name: "index_documents_on_client_visible"
     t.index ["doc_kind"], name: "index_documents_on_doc_kind"
@@ -372,9 +373,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_28_014000) do
     t.bigint "event_photo_document_id"
     t.jsonb "planning_link_keys", default: [], null: false
     t.string "location_secondary"
+    t.boolean "financial_payments_enabled", default: false, null: false
+    t.string "portal_slug"
     t.index ["archived_at"], name: "index_events_on_archived_at"
     t.index ["event_photo_document_id"], name: "index_events_on_event_photo_document_id"
     t.index ["name"], name: "index_events_on_name"
+    t.index ["portal_slug"], name: "index_events_on_portal_slug", unique: true
     t.check_constraint "jsonb_typeof(planning_link_keys) = 'array'::text", name: "events_planning_link_keys_array"
   end
 

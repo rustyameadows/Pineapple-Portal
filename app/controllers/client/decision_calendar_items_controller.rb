@@ -7,23 +7,28 @@ module Client
     def show
       respond_to do |format|
         format.json { render json: { calendar_item: decision_item_payload(@item) } }
-        format.html { redirect_to client_event_calendar_path(@event, "decision-calendar") }
+        format.html { redirect_to client_event_calendar_path(@event.portal_slug.presence || @event.id, "decision-calendar") }
       end
     end
 
     def update
       if @item.update(decision_item_params)
-        redirect_to client_event_calendar_path(@event, "decision-calendar"), notice: "Decision updated."
+        redirect_to client_event_calendar_path(@event.portal_slug.presence || @event.id, "decision-calendar"), notice: "Decision updated."
       else
         flash[:alert] = @item.errors.full_messages.to_sentence
-        redirect_to client_event_calendar_path(@event, "decision-calendar"), status: :see_other
+        redirect_to client_event_calendar_path(@event.portal_slug.presence || @event.id, "decision-calendar"), status: :see_other
       end
     end
 
     private
 
     def set_event
-      @event = Event.find(params[:event_id])
+      slug = params[:event_slug].presence || params[:slug]
+      @event = if slug.present?
+                 Event.find_by(portal_slug: slug) || Event.find_by(id: slug) || raise(ActiveRecord::RecordNotFound)
+               else
+                 Event.find(params[:event_id])
+               end
     end
 
     def set_calendar

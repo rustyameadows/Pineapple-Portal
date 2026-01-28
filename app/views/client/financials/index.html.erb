@@ -1,35 +1,79 @@
 <section class="client-page">
   <header class="client-page__header">
-    <h1>Payments</h1>
-    <p>Track upcoming payments and let your planner know when you’ve sent one.</p>
+    <h1>Financial Management</h1>
+    <p>Links, documents, and payment details in one place.</p>
   </header>
 
-  <% if @payments.any? %>
-    <table class="client-table">
-      <thead>
-        <tr>
-          <th>Payment</th>
-          <th>Due</th>
-          <th>Amount</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @payments.each do |payment| %>
+  <div class="client-financials__resources">
+    <h2 class="client-financials__section-title">Links &amp; Documents</h2>
+    <% resources = [] %>
+    <% @financial_links.each do |link| %>
+      <% resources << { type: "Link", label: link.label, url: link.url, updated_at: link.updated_at, action_label: "Open link" } %>
+    <% end %>
+    <% @financial_documents.each do |document| %>
+      <% resources << { type: "Document", label: document.title, url: download_event_document_path(@event, document), updated_at: document.updated_at, action_label: "Download document" } %>
+    <% end %>
+    <% resources.sort_by! { |resource| resource[:updated_at] || Time.at(0) }.reverse! %>
+
+    <% if resources.any? %>
+      <table class="client-table client-financials__table">
+        <thead>
           <tr>
-            <td><%= link_to payment.title, client_event_payment_path(@event, payment) %></td>
-            <td><%= payment.due_on ? payment.due_on.strftime('%b %-d, %Y') : "Timing TBD" %></td>
-            <td><%= number_to_currency(payment.amount) %></td>
-            <td><span class="client-financials__status client-financials__status--<%= payment.status %>"><%= payment.status.humanize %></span></td>
-            <td class="client-table__actions"><%= link_to "View", client_event_payment_path(@event, payment), class: "client-link" %></td>
+            <th>Item</th>
+            <th>Updated</th>
+            <th></th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
-  <% else %>
-    <div class="client-placeholder">
-      <p>There aren’t any payments published yet. Your planner will add them here when ready.</p>
+        </thead>
+        <tbody>
+          <% resources.each do |resource| %>
+            <tr>
+              <td><%= link_to resource[:label], resource[:url], target: "_blank", rel: "noopener" %></td>
+              <td><%= resource[:updated_at] ? resource[:updated_at].strftime('%b %-d, %Y') : "—" %></td>
+              <td class="client-table__actions">
+                <%= link_to resource[:action_label], resource[:url], class: "client-link", target: "_blank", rel: "noopener" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="client-placeholder">
+        <p>No financial links or documents yet.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @event.financial_payments_enabled? %>
+    <div class="client-financials__payments">
+      <h2 class="client-financials__section-title">Payments</h2>
+      <% if @payments.any? %>
+        <table class="client-table">
+          <thead>
+            <tr>
+              <th>Payment</th>
+              <th>Due</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @payments.each do |payment| %>
+              <tr>
+                <td><%= link_to payment.title, client_event_payment_path(@event.portal_slug.presence || @event.id, payment) %></td>
+                <td><%= payment.due_on ? payment.due_on.strftime('%b %-d, %Y') : "Timing TBD" %></td>
+                <td><%= number_to_currency(payment.amount) %></td>
+                <td><span class="client-financials__status client-financials__status--<%= payment.status %>"><%= payment.status.humanize %></span></td>
+                <td class="client-table__actions"><%= link_to "View", client_event_payment_path(@event.portal_slug.presence || @event.id, payment), class: "client-link" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <div class="client-placeholder">
+          <p>There aren’t any payments published yet. Your planner will add them here when ready.</p>
+        </div>
+      <% end %>
     </div>
   <% end %>
 </section>

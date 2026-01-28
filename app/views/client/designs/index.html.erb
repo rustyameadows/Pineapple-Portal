@@ -78,7 +78,7 @@
 
     <div class="client-designs__modal-body">
       <%= form_with model: @document,
-                    url: client_event_designs_path(@event),
+                    url: client_event_designs_path(@event.portal_slug.presence || @event.id),
                     data: { document_upload_form: true, presign_url: presign_event_documents_path(@event) },
                     html: { class: "client-designs__form" } do |form| %>
         <% if @document.errors.any? %>

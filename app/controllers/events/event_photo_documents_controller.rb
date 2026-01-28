@@ -12,14 +12,14 @@ module Events
 
       if @document.errors.none? && @document.save
         if @event.update(event_photo_document: @document)
-          redirect_to event_settings_path(@event), notice: "Event photo updated."
+          redirect_to safe_return_to(fallback: event_settings_path(@event)), notice: "Event photo updated."
         else
           message = @event.errors.full_messages.to_sentence.presence || "Image uploaded, but could not assign as event photo."
-          redirect_to event_settings_path(@event), alert: message
+          redirect_to safe_return_to(fallback: event_settings_path(@event)), alert: message
         end
       else
         message = @document.errors.full_messages.to_sentence.presence || "Unable to upload image."
-        redirect_to event_settings_path(@event), alert: message
+        redirect_to safe_return_to(fallback: event_settings_path(@event)), alert: message
       end
     end
 

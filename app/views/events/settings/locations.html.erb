@@ -21,6 +21,7 @@
                 <% @event_venues.each_with_index do |venue, index| %>
                   <li class="event-settings__contact-item">
                     <%= form_with model: [@event, venue], local: true, html: { class: "event-settings__form" } do |form| %>
+                      <%= hidden_field_tag :return_to, request.fullpath %>
                       <div class="event-settings__field-group">
                         <div class="event-settings__field">
                           <%= form.label :name, "Venue name" %>
@@ -43,12 +44,12 @@
 
                     <div class="event-settings__controls">
                       <% if index.positive? %>
-                        <%= link_to "Move up", move_up_event_event_venue_path(@event, venue), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                        <%= link_to "Move up", move_up_event_event_venue_path(@event, venue, return_to: request.fullpath), data: { turbo_method: :patch }, class: "event-settings__control" %>
                       <% end %>
                       <% if index < @event_venues.length - 1 %>
-                        <%= link_to "Move down", move_down_event_event_venue_path(@event, venue), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                        <%= link_to "Move down", move_down_event_event_venue_path(@event, venue, return_to: request.fullpath), data: { turbo_method: :patch }, class: "event-settings__control" %>
                       <% end %>
-                      <%= link_to "Remove", event_event_venue_path(@event, venue), data: { turbo_method: :delete, turbo_confirm: "Remove this location?" }, class: "event-settings__control event-settings__control--danger" %>
+                      <%= link_to "Remove", event_event_venue_path(@event, venue, return_to: request.fullpath), data: { turbo_method: :delete, turbo_confirm: "Remove this location?" }, class: "event-settings__control event-settings__control--danger" %>
                     </div>
                   </li>
                 <% end %>
@@ -60,6 +61,7 @@
             <div class="event-settings__new-link">
               <h3>Add Location</h3>
               <%= form_with model: [@event, @event_venue], local: true, html: { class: "event-settings__form" } do |form| %>
+                <%= hidden_field_tag :return_to, request.fullpath %>
                 <div class="event-settings__field-group">
                   <div class="event-settings__field">
                     <%= form.label :name, "Venue name" %>

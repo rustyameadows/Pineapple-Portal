@@ -5,7 +5,7 @@ module Client
 
     def update
       if @questionnaire.template?
-        redirect_to client_event_questionnaire_path(@event, @questionnaire), alert: "Templates cannot record answers."
+        redirect_to client_event_questionnaire_path(@event.portal_slug.presence || @event.id, @questionnaire), alert: "Templates cannot record answers."
         return
       end
 
@@ -13,9 +13,9 @@ module Client
       attrs[:answered_at] = attrs[:answer_value].present? ? Time.current : nil
 
       if @question.update(attrs)
-        redirect_to client_event_questionnaire_path(@event, @questionnaire), notice: "Answer saved."
+        redirect_to client_event_questionnaire_path(@event.portal_slug.presence || @event.id, @questionnaire), notice: "Answer saved."
       else
-        redirect_to client_event_questionnaire_path(@event, @questionnaire), alert: @question.errors.full_messages.to_sentence
+        redirect_to client_event_questionnaire_path(@event.portal_slug.presence || @event.id, @questionnaire), alert: @question.errors.full_messages.to_sentence
       end
     end
 

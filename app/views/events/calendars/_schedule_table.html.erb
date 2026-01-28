@@ -7,7 +7,7 @@
 <% show_edit_button = !!local_assigns[:show_edit_button] %>
 <% render_actions = local_assigns[:render_actions] %>
 <% actions_header = local_assigns[:actions_header] || "" %>
-<% item_link_proc = local_assigns[:item_link_proc] || ->(item) { [item.title, edit_event_calendar_item_path(calendar.event, item)] } %>
+<% item_link_proc = local_assigns[:item_link_proc] || ->(item) { [item.title, edit_event_calendar_item_path(calendar.event, item, return_to: request.fullpath)] } %>
 
 <table class="event-table event-calendars__table">
   <thead>
@@ -82,7 +82,7 @@
         <% if show_edit_button %>
           <td class="event-calendars__row-action">
             <%= link_to "Edit",
-                        edit_event_calendar_item_path(calendar.event, item),
+                        edit_event_calendar_item_path(calendar.event, item, return_to: request.fullpath),
                         class: "event-calendars__edit-link" %>
           </td>
         <% end %>

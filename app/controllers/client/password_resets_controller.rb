@@ -38,7 +38,7 @@ module Client
         session[:client_user_id] = @reset_token.user.id
 
         if (event = first_client_event(@reset_token.user))
-          redirect_to client_event_path(event), notice: "Password updated. Welcome back to your portal."
+          redirect_to client_event_path(event.portal_slug.presence || event.id), notice: "Password updated. Welcome back to your portal."
         else
           redirect_to client_login_path, notice: "Password updated. Sign in once your planner grants portal access."
         end

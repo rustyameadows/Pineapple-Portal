@@ -10,21 +10,21 @@ module Client
     end
 
     test "index redirects to run of show when visible" do
-      get client_event_calendars_path(@event)
+      get client_event_calendars_path(@event.portal_slug)
 
-      assert_redirected_to client_event_calendar_path(@event, "run-of-show")
+      assert_redirected_to client_event_calendar_path(@event.portal_slug, "run-of-show")
     end
 
     test "index redirects to first visible derived view when run of show hidden" do
       @calendar.update!(client_visible: false)
 
-      get client_event_calendars_path(@event)
+      get client_event_calendars_path(@event.portal_slug)
 
-      assert_redirected_to client_event_calendar_path(@event, @view.slug)
+      assert_redirected_to client_event_calendar_path(@event.portal_slug, @view.slug)
     end
 
     test "show renders schedule" do
-      get client_event_calendar_path(@event, "run-of-show")
+      get client_event_calendar_path(@event.portal_slug, "run-of-show")
 
       assert_response :success
       assert_includes response.body, "Ceremony"
@@ -32,7 +32,7 @@ module Client
     end
 
     test "decision calendar renders segmented list" do
-      get client_event_calendar_path(@event, "decision-calendar")
+      get client_event_calendar_path(@event.portal_slug, "decision-calendar")
 
       assert_response :success
       assert_select "section.decision-calendar h1", text: "Decision Calendar"
@@ -45,9 +45,9 @@ module Client
       @view.update!(client_visible: false)
       event_calendar_views(:decision_view).update!(client_visible: false)
 
-      get client_event_calendar_path(@event, "run-of-show")
+      get client_event_calendar_path(@event.portal_slug, "run-of-show")
 
-      assert_redirected_to client_event_path(@event)
+      assert_redirected_to client_event_path(@event.portal_slug)
       assert_equal "Your planning team hasn’t published calendars yet.", flash[:alert]
     end
   end

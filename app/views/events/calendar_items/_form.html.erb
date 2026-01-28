@@ -1,5 +1,7 @@
+<% return_to = params[:return_to].presence %>
 <% form_url = item.persisted? ? event_calendar_item_path(@event, item) : event_calendar_items_path(@event) %>
 <%= form_with model: item, url: form_url, class: "event-form calendar-item-form", method: (item.persisted? ? :patch : :post) do |form| %>
+  <%= hidden_field_tag :return_to, return_to if return_to.present? %>
   <% if item.errors.any? %>
     <div class="event-form__errors">
       <p><strong><%= pluralize(item.errors.count, "error") %> prevented this item from being saved:</strong></p>
@@ -220,7 +222,7 @@
     <% if item.persisted? %>
       <div class="calendar-item-form__actions-left">
         <%= link_to "Delete Item",
-                    event_calendar_item_path(@event, item),
+                    event_calendar_item_path(@event, item, return_to: return_to),
                     class: "event-form__submit event-form__submit--danger",
                     data: { turbo_method: :delete, turbo_confirm: "Remove this calendar item?", impact_delete: true } %>
       </div>
@@ -228,7 +230,7 @@
       <div></div>
     <% end %>
     <div class="calendar-item-form__actions-right">
-      <%= link_to "Cancel", event_calendar_path(@event), class: "event-form__cancel" %>
+      <%= link_to "Cancel", return_to || event_calendar_path(@event), class: "event-form__cancel" %>
       <%= form.submit class: "event-form__submit" %>
     </div>
   </div>

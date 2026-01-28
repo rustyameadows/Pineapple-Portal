@@ -41,6 +41,28 @@ class Questionnaire < ApplicationRecord
     status == STATUSES[:in_progress]
   end
 
+  def duplicate_to_event!(event, title: nil)
+    transaction do
+      new_questionnaire = event.questionnaires.create!(
+        title: title.presence || self.title,
+        description: description,
+        client_visible: client_visible,
+        status: STATUSES[:in_progress],
+        is_template: false
+      )
+      copy_sections_and_questions!(new_questionnaire)
+      new_questionnaire
+    end
+  end
+
+  def append_to!(destination_questionnaire)
+    transaction do
+      section_offset = destination_questionnaire.sections.unscope(:order).maximum(:position) || 0
+      copy_sections_and_questions!(destination_questionnaire, section_position_offset: section_offset)
+      destination_questionnaire
+    end
+  end
+
   private
 
   def clear_template_source_when_template
@@ -61,5 +83,49 @@ class Questionnaire < ApplicationRecord
 
   def set_default_status
     self.status ||= STATUSES[:in_progress]
+  end
+
+  def copy_sections_and_questions!(destination_questionnaire, section_position_offset: 0)
+    sections.reorder(:position, :created_at).each_with_index do |section, index|
+      new_section = destination_questionnaire.sections.create!(
+        title: section.title,
+        helper_text: section.helper_text,
+        position: section_position_offset + index + 1
+      )
+
+      section.questions.reorder(:position, :created_at).each do |question|
+        new_question = destination_questionnaire.questions.create!(
+          questionnaire_section: new_section,
+          event: destination_questionnaire.event,
+          prompt: question.prompt,
+          help_text: question.help_text,
+          response_type: question.response_type,
+          position: question.position,
+          answer_value: nil,
+          answer_raw: {},
+          answered_at: nil
+        )
+        copy_question_attachments!(question, new_question)
+      end
+    end
+  end
+
+  def copy_question_attachments!(source_question, destination_question)
+    source_question.attachments.where.not(context: :answer).reorder(:position).each do |attachment|
+      attrs = {
+        context: attachment.context,
+        position: attachment.position
+      }
+
+      if attachment.document_id.present?
+        attrs[:document_id] = attachment.document_id
+      elsif attachment.document_logical_id.present?
+        attrs[:document_logical_id] = attachment.document_logical_id
+      else
+        next
+      end
+
+      destination_question.attachments.create!(attrs)
+    end
   end
 end

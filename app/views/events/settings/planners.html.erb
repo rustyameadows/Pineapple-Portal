@@ -36,7 +36,7 @@
                     <tr>
                       <td>
                         <div class="event-settings__planner-cell">
-                          <%= link_to user.name, edit_user_path(user, return_to: planners_event_settings_path(@event)), class: "event-section__link" %>
+                          <%= link_to user.name, edit_user_path(user, return_to: request.fullpath), class: "event-section__link" %>
                           <% if user.contact? %>
                             <span class="event-table__status">Contact-only</span>
                           <% end %>
@@ -46,6 +46,7 @@
                       <td><%= user.phone_number.presence || "—" %></td>
                       <td>
                         <%= form_with url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do %>
+                          <%= hidden_field_tag :return_to, request.fullpath %>
                           <label class="event-settings__toggle">
                             <%= hidden_field_tag "event_team_member[client_visible]", 0 %>
                             <%= check_box_tag "event_team_member[client_visible]", 1, team_member.client_visible?, onchange: "this.form.submit()", aria: { label: "Toggle client visibility for #{user.name}" } %>
@@ -55,6 +56,7 @@
                       </td>
                       <td>
                         <%= form_with url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do %>
+                          <%= hidden_field_tag :return_to, request.fullpath %>
                           <label class="event-settings__toggle">
                             <%= hidden_field_tag "event_team_member[lead_planner]", 0 %>
                             <%= check_box_tag "event_team_member[lead_planner]", 1, team_member.lead_planner?, onchange: "this.form.submit()", aria: { label: "Toggle lead planner for #{user.name}" } %>
@@ -64,11 +66,17 @@
                       </td>
                       <td>
                         <%= form_with url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do %>
+                          <%= hidden_field_tag :return_to, request.fullpath %>
                           <%= number_field_tag "event_team_member[position]", team_member.position, min: 0, class: "event-settings__position-input", onchange: "this.form.submit()", aria: { label: "Display order for #{user.name}" } %>
                         <% end %>
                       </td>
                       <td class="event-table__actions">
-                        <%= button_to "Remove", event_team_member_path(@event, team_member), method: :delete, data: { turbo_confirm: "Remove #{user.name} from this event?" }, class: "event-section__link event-section__link--danger" %>
+                        <%= button_to "Remove",
+                                      event_team_member_path(@event, team_member),
+                                      method: :delete,
+                                      params: { return_to: request.fullpath },
+                                      data: { turbo_confirm: "Remove #{user.name} from this event?" },
+                                      class: "event-section__link event-section__link--danger" %>
                       </td>
                     </tr>
                   <% end %>
@@ -82,6 +90,7 @@
               <h3>Add Planner</h3>
               <% if @available_planners.any? %>
                 <%= form_with model: [@event, @planner_team_member], url: event_team_members_path(@event), local: true, class: "event-settings__form" do |form| %>
+                  <%= hidden_field_tag :return_to, request.fullpath %>
                   <div class="event-settings__field">
                     <%= form.label :user_id, "Planner" %>
                     <%= form.collection_select :user_id, @available_planners, :id, ->(user) { "#{user.name}#{user.title.present? ? " – #{user.title}" : ""}" }, include_blank: "Select planner" %>

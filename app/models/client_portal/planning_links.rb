@@ -54,7 +54,7 @@ module ClientPortal
               key: "decision_calendar",
               title: "Decision Calendar",
               description: "Milestones and approvals at a glance.",
-              path: ROUTES.client_event_calendar_path(event, decision_view.slug)
+              path: ROUTES.client_event_calendar_path(event.portal_slug.presence || event.id, decision_view.slug)
             }
           end
         },
@@ -66,7 +66,7 @@ module ClientPortal
               key: "guest_list",
               title: "Guest List",
               description: "Track RSVPs and key contacts.",
-              path: ROUTES.client_event_guest_list_path(event)
+              path: ROUTES.client_event_guest_list_path(event.portal_slug.presence || event.id)
             }
           end
         },
@@ -78,7 +78,7 @@ module ClientPortal
               key: "questionnaires",
               title: "Questionnaires",
               description: "Complete and review planner questionnaires.",
-              path: ROUTES.client_event_questionnaires_path(event)
+              path: ROUTES.client_event_questionnaires_path(event.portal_slug.presence || event.id)
             }
           end
         },
@@ -90,7 +90,7 @@ module ClientPortal
               key: "designs",
               title: "Design & Inspo",
               description: "Mood boards, files, and inspiration assets.",
-              path: ROUTES.client_event_designs_path(event)
+              path: ROUTES.client_event_designs_path(event.portal_slug.presence || event.id)
             }
           end
         },
@@ -102,7 +102,7 @@ module ClientPortal
               key: "financials",
               title: "Financial Management",
               description: "Invoices, payments, and budget progress.",
-              path: ROUTES.client_event_financials_path(event)
+              path: ROUTES.client_event_financials_path(event.portal_slug.presence || event.id)
             }
           end
         }

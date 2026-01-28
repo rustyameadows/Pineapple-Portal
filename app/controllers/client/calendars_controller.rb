@@ -10,10 +10,12 @@ module Client
 
       slug = default_view_slug
 
+      event_key = @event.portal_slug.presence || @event.id
+
       if slug
-        redirect_to client_event_calendar_path(@event, slug)
+        redirect_to client_event_calendar_path(event_key, slug)
       else
-        redirect_to client_event_path(@event), alert: "Your planning team hasn’t published calendars yet."
+        redirect_to client_event_path(event_key), alert: "Your planning team hasn’t published calendars yet."
       end
     end
 
@@ -23,7 +25,7 @@ module Client
       @active_view = locate_view
 
       unless @active_view
-        redirect_to client_event_path(@event), alert: "Your planning team hasn’t published calendars yet."
+        redirect_to client_event_path(@event.portal_slug.presence || @event.id), alert: "Your planning team hasn’t published calendars yet."
         return
       end
 
@@ -43,7 +45,7 @@ module Client
       @calendar = @event.run_of_show_calendar
       return if @calendar
 
-      redirect_to client_event_path(@event), alert: "Your planning team hasn’t published the schedule yet."
+      redirect_to client_event_path(@event.portal_slug.presence || @event.id), alert: "Your planning team hasn’t published the schedule yet."
     end
 
     def load_views
@@ -57,7 +59,7 @@ module Client
 
       return if accessible_run_of_show? || @views.any?
 
-      redirect_to client_event_path(@event), alert: "Your planning team hasn’t published calendars yet."
+      redirect_to client_event_path(@event.portal_slug.presence || @event.id), alert: "Your planning team hasn’t published calendars yet."
     end
 
     def default_view_slug

@@ -11,7 +11,10 @@
             <p class="event-section__eyebrow">Questionnaires</p>
             <h1 class="event-section__title">Forms for <%= @event.name %></h1>
           </div>
-          <%= link_to "New Questionnaire", new_event_questionnaire_path(@event), class: "event-section__cta" %>
+          <div class="event-section__actions">
+            <%= link_to "New Questionnaire", new_event_questionnaire_path(@event), class: "event-section__cta" %>
+            <%= link_to "Import Questionnaire", event_questionnaire_import_path(@event), class: "event-section__cta" %>
+          </div>
         </header>
 
         <% if @questionnaires.any? %>

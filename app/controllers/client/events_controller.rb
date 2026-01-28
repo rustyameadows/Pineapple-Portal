@@ -18,7 +18,12 @@ module Client
     private
 
     def set_event
-      @event = Event.find(params[:id])
+      slug = params[:event_slug].presence || params[:slug]
+      @event = if slug.present?
+                 Event.find_by(portal_slug: slug) || Event.find_by(id: slug) || raise(ActiveRecord::RecordNotFound)
+               else
+                 Event.find(params[:id])
+               end
     end
 
     def build_quick_links
@@ -27,6 +32,7 @@ module Client
 
     def build_module_cards
       entries = @event.ordered_planning_link_entries
+      event_key = @event.portal_slug.presence || @event.id
 
       unless financial_portal_access?
         entries = entries.reject do |entry|
@@ -47,11 +53,12 @@ module Client
           }
         else
           link = entry.record
+          url = link.url.to_s
           {
             key: "event_link_#{link.id}",
             title: link.label,
-            path: link.url,
-            external: true
+            path: url.start_with?("/") ? "/client/#{event_key}#{url}" : url,
+            external: !url.start_with?("/")
           }
         end
       end

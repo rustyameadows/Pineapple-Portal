@@ -10,6 +10,7 @@
               method: :patch,
               local: true,
               html: { class: "event-settings__details-form" } do |form| %>
+  <%= hidden_field_tag :return_to, request.fullpath %>
   <% if event.errors.any? %>
     <div class="event-settings__form-errors">
       <h3><%= pluralize(event.errors.count, "error") %> prevented saving:</h3>
@@ -35,6 +36,15 @@
     <div class="event-settings__field">
       <%= form.label :location_secondary, "Secondary location line" %>
       <%= form.text_field :location_secondary, placeholder: "City, State" %>
+    </div>
+
+    <div class="event-settings__field">
+      <%= form.label :portal_slug, "Client portal slug" %>
+      <%= form.text_field :portal_slug, placeholder: "john-and-susie-wedding" %>
+      <p class="event-settings__hint">
+        Vanity URL:
+        <%= "#{request.base_url}/client/#{event.portal_slug.presence || 'your-slug'}" %>
+      </p>
     </div>
 
     <div class="event-settings__field">
@@ -70,6 +80,7 @@
                   local: true,
                   data: { document_upload_form: true, presign_url: presign_event_documents_path(event) },
                   html: { class: "event-settings__photo-upload-form" } do |upload_form| %>
+      <%= hidden_field_tag :return_to, request.fullpath %>
       <div class="event-settings__upload-picker">
         <label class="event-settings__upload-label" for="document_file">Choose image</label>
         <input type="file" id="document_file" accept="image/*" data-document-upload-target="file">

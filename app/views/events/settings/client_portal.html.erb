@@ -39,7 +39,7 @@
                           <% unless is_first %>
                             <%= button_to "Move up",
                                           move_up_event_planning_links_path(@event),
-                                          params: { token: entry.token },
+                                          params: { token: entry.token, return_to: request.fullpath },
                                           method: :patch,
                                           class: "event-settings__control",
                                           form_class: "event-settings__control-form" %>
@@ -47,19 +47,21 @@
                           <% unless is_last %>
                             <%= button_to "Move down",
                                           move_down_event_planning_links_path(@event),
-                                          params: { token: entry.token },
+                                          params: { token: entry.token, return_to: request.fullpath },
                                           method: :patch,
                                           class: "event-settings__control",
                                           form_class: "event-settings__control-form" %>
                           <% end %>
                           <%= button_to "Hide from portal",
                                         toggle_event_planning_link_path(@event, link.key),
+                                        params: { return_to: request.fullpath },
                                         method: :patch,
                                         class: "event-settings__control event-settings__control--danger" %>
                         </div>
                       <% else %>
                         <% planning_link = entry.record %>
                         <%= form_with model: [@event, planning_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                          <%= hidden_field_tag :return_to, request.fullpath %>
                           <%= form.hidden_field :link_type, value: "planning" %>
                           <div class="event-settings__field">
                             <%= form.label :label, "Label" %>
@@ -84,7 +86,7 @@
                           <% unless is_first %>
                             <%= button_to "Move up",
                                           move_up_event_planning_links_path(@event),
-                                          params: { token: entry.token },
+                                          params: { token: entry.token, return_to: request.fullpath },
                                           method: :patch,
                                           class: "event-settings__control",
                                           form_class: "event-settings__control-form" %>
@@ -92,12 +94,12 @@
                           <% unless is_last %>
                             <%= button_to "Move down",
                                           move_down_event_planning_links_path(@event),
-                                          params: { token: entry.token },
+                                          params: { token: entry.token, return_to: request.fullpath },
                                           method: :patch,
                                           class: "event-settings__control",
                                           form_class: "event-settings__control-form" %>
                           <% end %>
-                          <%= link_to "Remove", event_event_link_path(@event, planning_link), data: { turbo_method: :delete, turbo_confirm: "Remove this planning link?" }, class: "event-settings__control event-settings__control--danger" %>
+                          <%= link_to "Remove", event_event_link_path(@event, planning_link, return_to: request.fullpath), data: { turbo_method: :delete, turbo_confirm: "Remove this planning link?" }, class: "event-settings__control event-settings__control--danger" %>
                         </div>
                       <% end %>
                     </li>
@@ -126,6 +128,7 @@
                       <div class="event-settings__controls">
                         <%= button_to "Show in portal",
                                       toggle_event_planning_link_path(@event, link.key),
+                                      params: { return_to: request.fullpath },
                                       method: :patch,
                                       class: "event-settings__control" %>
                       </div>
@@ -143,6 +146,7 @@
 
               <div class="event-settings__new-link">
                 <%= form_with model: [@event, @planning_event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                  <%= hidden_field_tag :return_to, request.fullpath %>
                   <%= form.hidden_field :link_type, value: "planning" %>
                   <div class="event-settings__field">
                     <%= form.label :label, "Label" %>
@@ -184,6 +188,7 @@
                 <% @quick_event_links.each_with_index do |event_link, index| %>
                   <li class="event-settings__link-item">
                     <%= form_with model: [@event, event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                      <%= hidden_field_tag :return_to, request.fullpath %>
                       <%= form.hidden_field :link_type, value: "quick" %>
                       <div class="event-settings__field">
                         <%= form.label :label, "Label" %>
@@ -200,12 +205,12 @@
 
                     <div class="event-settings__controls">
                       <% if index.positive? %>
-                        <%= link_to "Move up", move_up_event_event_link_path(@event, event_link), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                        <%= link_to "Move up", move_up_event_event_link_path(@event, event_link, return_to: request.fullpath), data: { turbo_method: :patch }, class: "event-settings__control" %>
                       <% end %>
                       <% if index < @quick_event_links.length - 1 %>
-                        <%= link_to "Move down", move_down_event_event_link_path(@event, event_link), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                        <%= link_to "Move down", move_down_event_event_link_path(@event, event_link, return_to: request.fullpath), data: { turbo_method: :patch }, class: "event-settings__control" %>
                       <% end %>
-                      <%= link_to "Remove", event_event_link_path(@event, event_link), data: { turbo_method: :delete, turbo_confirm: "Remove this quick link?" }, class: "event-settings__control event-settings__control--danger" %>
+                      <%= link_to "Remove", event_event_link_path(@event, event_link, return_to: request.fullpath), data: { turbo_method: :delete, turbo_confirm: "Remove this quick link?" }, class: "event-settings__control event-settings__control--danger" %>
                     </div>
                   </li>
                 <% end %>
@@ -217,6 +222,7 @@
             <div class="event-settings__new-link">
               <h3>Add Quick Link</h3>
               <%= form_with model: [@event, @quick_event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                <%= hidden_field_tag :return_to, request.fullpath %>
                 <%= form.hidden_field :link_type, value: "quick" %>
                 <div class="event-settings__field">
                   <%= form.label :label, "Label" %>
@@ -229,6 +235,132 @@
                 <div class="event-settings__form-actions">
                   <%= form.submit "Add quick link" %>
                 </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Client Portal</p>
+            <h1 class="event-section__title">Financials</h1>
+            <p class="event-section__lead">Control what appears at the top of the financial management page.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__planning-links">
+            <div class="event-settings__planning-ordered">
+              <h2 class="event-settings__subheading">Payments</h2>
+              <p class="event-settings__description">Toggle whether the payments list is shown to clients.</p>
+              <%= form_with model: @event,
+                            url: event_path(@event),
+                            method: :patch,
+                            local: true,
+                            html: { class: "event-settings__form" } do |form| %>
+                <%= hidden_field_tag :return_to, request.fullpath %>
+                <div class="event-settings__field event-settings__field--checkbox">
+                  <label class="event-settings__checkbox">
+                    <%= form.check_box :financial_payments_enabled %>
+                    <span>Show payments in the client portal</span>
+                  </label>
+                </div>
+                <div class="event-settings__form-actions">
+                  <%= form.submit "Save changes" %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="event-settings__planning-custom">
+              <h2 class="event-settings__subheading">Financial Links</h2>
+              <p class="event-settings__description">Links display at the top of the financial management page.</p>
+
+              <% if @financial_event_links.any? %>
+                <ul class="event-settings__link-list">
+                  <% @financial_event_links.each_with_index do |event_link, index| %>
+                    <li class="event-settings__link-item">
+                      <%= form_with model: [@event, event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                        <%= hidden_field_tag :return_to, request.fullpath %>
+                        <%= form.hidden_field :link_type, value: "financial" %>
+                        <div class="event-settings__field">
+                          <%= form.label :label, "Label" %>
+                          <%= form.text_field :label, required: true %>
+                        </div>
+                        <div class="event-settings__field">
+                          <%= form.label :url, "URL" %>
+                          <%= form.url_field :url, required: true %>
+                        </div>
+                        <div class="event-settings__form-actions">
+                          <%= form.submit "Save changes" %>
+                        </div>
+                      <% end %>
+
+                      <div class="event-settings__controls">
+                        <% if index.positive? %>
+                          <%= link_to "Move up", move_up_event_event_link_path(@event, event_link, return_to: request.fullpath), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                        <% end %>
+                        <% if index < @financial_event_links.length - 1 %>
+                          <%= link_to "Move down", move_down_event_event_link_path(@event, event_link, return_to: request.fullpath), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                        <% end %>
+                        <%= link_to "Remove", event_event_link_path(@event, event_link, return_to: request.fullpath), data: { turbo_method: :delete, turbo_confirm: "Remove this financial link?" }, class: "event-settings__control event-settings__control--danger" %>
+                      </div>
+                    </li>
+                  <% end %>
+                </ul>
+              <% else %>
+                <p class="event-settings__empty">No financial links yet. Add one below.</p>
+              <% end %>
+
+              <div class="event-settings__new-link">
+                <h3>Add Financial Link</h3>
+                <%= form_with model: [@event, @financial_event_link], local: true, html: { class: "event-settings__form" } do |form| %>
+                  <%= hidden_field_tag :return_to, request.fullpath %>
+                  <%= form.hidden_field :link_type, value: "financial" %>
+                  <div class="event-settings__field">
+                    <%= form.label :label, "Label" %>
+                    <%= form.text_field :label, required: true %>
+                  </div>
+                  <div class="event-settings__field">
+                    <%= form.label :url, "URL" %>
+                    <%= form.url_field :url, required: true, placeholder: "https://" %>
+                  </div>
+                  <div class="event-settings__form-actions">
+                    <%= form.submit "Add financial link" %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+
+            <div class="event-settings__planning-hidden">
+              <h2 class="event-settings__subheading">Financial Documents</h2>
+              <p class="event-settings__description">Select which documents appear on the financial management page.</p>
+
+              <% if @financial_documents.any? %>
+                <ul class="event-settings__link-list">
+                  <% @financial_documents.each do |document| %>
+                    <li class="event-settings__link-item">
+                      <div class="event-settings__link-content">
+                        <h3><%= document.title %></h3>
+                        <p class="event-settings__link-description">Updated <%= document.updated_at.strftime('%b %-d, %Y') %></p>
+                      </div>
+                      <div class="event-settings__controls">
+                        <%= form_with model: [@event, document], local: true, html: { class: "event-settings__form" } do |form| %>
+                          <%= hidden_field_tag :return_to, request.fullpath %>
+                          <div class="event-settings__field event-settings__field--checkbox">
+                            <label class="event-settings__checkbox">
+                              <%= form.check_box :financial_portal_visible, onchange: "this.form.submit()" %>
+                              <span>Show in financials</span>
+                            </label>
+                          </div>
+                        <% end %>
+                      </div>
+                    </li>
+                  <% end %>
+                </ul>
+              <% else %>
+                <p class="event-settings__empty">No documents uploaded yet.</p>
               <% end %>
             </div>
           </div>

@@ -55,7 +55,7 @@ class DocumentsController < ApplicationController
 
   def update
     if @document.update(edit_document_params)
-      redirect_to event_document_path(@event, @document), notice: "Document updated."
+      redirect_to safe_return_to(fallback: event_document_path(@event, @document)), notice: "Document updated."
     else
       render :edit, status: :unprocessable_content
     end
@@ -94,11 +94,11 @@ class DocumentsController < ApplicationController
   end
 
   def document_params
-    params.require(:document).permit(:title, :storage_uri, :checksum, :size_bytes, :content_type, :logical_id, :client_visible, :source)
+    params.require(:document).permit(:title, :storage_uri, :checksum, :size_bytes, :content_type, :logical_id, :client_visible, :financial_portal_visible, :source)
   end
 
   def edit_document_params
-    params.require(:document).permit(:title, :content_type, :client_visible, :source)
+    params.require(:document).permit(:title, :content_type, :client_visible, :financial_portal_visible, :source)
   end
 
   def available_entities_for(event)

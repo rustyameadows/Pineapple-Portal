@@ -1,4 +1,4 @@
-<div data-controller="decision-modal" data-decision-modal-base-path-value="<%= client_event_decision_calendar_item_path(@event, '__ITEM__') %>">
+<div data-controller="decision-modal" data-decision-modal-base-path-value="<%= client_event_decision_calendar_item_path(@event.portal_slug.presence || @event.id, '__ITEM__') %>">
   <section class="decision-calendar">
     <header class="decision-calendar__hero">
       <div class="client-container">
@@ -48,7 +48,7 @@
     <% end %>
 
     <div class="decision-calendar__actions client-container">
-      <%= link_to "Back to Portal", client_event_path(@event), class: "client-button client-button--secondary" %>
+      <%= link_to "Back to Portal", client_event_path(@event.portal_slug.presence || @event.id), class: "client-button client-button--secondary" %>
     </div>
 
     <%= render "client/shared/footer" %>

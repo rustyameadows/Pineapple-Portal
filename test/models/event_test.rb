@@ -29,6 +29,19 @@ class EventTest < ActiveSupport::TestCase
     assert event.planning_link_enabled?("guest_list")
   end
 
+  test "generates a portal slug when blank" do
+    event = Event.create!(name: "Slugless Event")
+
+    assert event.portal_slug.present?
+    assert_match(/\A[a-f0-9]{12}\z/, event.portal_slug)
+  end
+
+  test "keeps normalized portal slug when provided" do
+    event = Event.create!(name: "Slugged Event", portal_slug: "Hello World")
+
+    assert_equal "hello-world", event.portal_slug
+  end
+
   test "rejects unknown planning link keys" do
     event = events(:one)
     event.planning_link_keys = %w[guest_list unknown]

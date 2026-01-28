@@ -12,7 +12,12 @@ module Client
     end
 
     def current_event
-      @current_event ||= Event.find(params[:event_id])
+      slug = params[:event_slug].presence || params[:slug]
+      @current_event ||= if slug.present?
+                           Event.find_by(portal_slug: slug) || Event.find_by(id: slug) || raise(ActiveRecord::RecordNotFound)
+                         else
+                           Event.find(params[:event_id])
+                         end
     end
 
     def authorize_event_access!

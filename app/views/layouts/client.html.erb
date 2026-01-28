@@ -45,10 +45,16 @@
     <%= javascript_importmap_tags %>
   </head>
   <body class="client-shell">
-    <% portal_home = defined?(@event) && @event.present? ? client_event_path(@event) : root_path %>
+    <% portal_event_key = defined?(@event) && @event.present? ? (@event.portal_slug.presence || @event.id) : nil %>
+    <% portal_home = portal_event_key ? client_event_path(portal_event_key) : root_path %>
+    <% portal_icon_home = if portal_event_key
+                            current_user&.planner_or_admin? ? event_path(@event) : portal_home
+                          else
+                            root_path
+                          end %>
     <nav class="client-nav">
       <div class="client-nav__inner client-container">
-        <%= link_to portal_home, class: "client-nav__icon", aria: { label: "Portal home" } do %>
+        <%= link_to portal_icon_home, class: "client-nav__icon", aria: { label: "Portal home" } do %>
           <%= image_tag "pineapple-icon.png", alt: "" %>
         <% end %>
         <%= link_to portal_home, class: "client-nav__logo", aria: { label: "Pineapple Productions" } do %>

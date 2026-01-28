@@ -29,7 +29,7 @@ class EventsController < ApplicationController
 
   def update
     if @event.update(event_params)
-      redirect_to @event, notice: "Event updated."
+      redirect_to safe_return_to(fallback: event_path(@event)), notice: "Event updated."
     else
       render :edit, status: :unprocessable_content
     end
@@ -47,6 +47,6 @@ class EventsController < ApplicationController
   end
 
   def event_params
-    params.require(:event).permit(:name, :starts_on, :ends_on, :location, :location_secondary, :event_photo_document_id)
+    params.require(:event).permit(:name, :starts_on, :ends_on, :location, :location_secondary, :event_photo_document_id, :financial_payments_enabled, :portal_slug)
   end
 end

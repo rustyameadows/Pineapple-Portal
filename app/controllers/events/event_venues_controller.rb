@@ -7,23 +7,23 @@ module Events
       @event_venue = @event.event_venues.new(event_venue_params)
 
       if @event_venue.save
-        redirect_back fallback_location: locations_event_settings_path(@event), notice: "Location saved."
+        redirect_to safe_return_to(fallback: locations_event_settings_path(@event)), notice: "Location saved."
       else
-        redirect_back fallback_location: locations_event_settings_path(@event), alert: @event_venue.errors.full_messages.to_sentence
+        redirect_to safe_return_to(fallback: locations_event_settings_path(@event)), alert: @event_venue.errors.full_messages.to_sentence
       end
     end
 
     def update
       if @event_venue.update(event_venue_params)
-        redirect_back fallback_location: locations_event_settings_path(@event), notice: "Location updated."
+        redirect_to safe_return_to(fallback: locations_event_settings_path(@event)), notice: "Location updated."
       else
-        redirect_back fallback_location: locations_event_settings_path(@event), alert: @event_venue.errors.full_messages.to_sentence
+        redirect_to safe_return_to(fallback: locations_event_settings_path(@event)), alert: @event_venue.errors.full_messages.to_sentence
       end
     end
 
     def destroy
       @event_venue.destroy
-      redirect_back fallback_location: locations_event_settings_path(@event), notice: "Location removed."
+      redirect_to safe_return_to(fallback: locations_event_settings_path(@event)), notice: "Location removed."
     end
 
     def move_up
@@ -64,7 +64,7 @@ module Events
         end
       end
 
-      redirect_back fallback_location: locations_event_settings_path(@event)
+      redirect_to safe_return_to(fallback: locations_event_settings_path(@event))
     end
   end
 end

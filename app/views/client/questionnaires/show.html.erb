@@ -55,7 +55,7 @@
                     <% end %>
                   </div>
 
-                  <%= form_with url: client_event_questionnaire_question_answer_path(@event, @questionnaire, question),
+                  <%= form_with url: client_event_questionnaire_question_answer_path(@event.portal_slug.presence || @event.id, @questionnaire, question),
                                 method: :patch,
                                 scope: :question,
                                 local: true,
@@ -115,9 +115,9 @@
     <div class="client-container">
       <div class="client-questionnaire__footer-actions">
         <% if @questionnaire.finished? %>
-          <%= button_to "Mark as In Progress", mark_in_progress_client_event_questionnaire_path(@event, @questionnaire), method: :patch, class: "client-questionnaire__status-action client-questionnaire__status-action--secondary" %>
+          <%= button_to "Mark as In Progress", mark_in_progress_client_event_questionnaire_path(@event.portal_slug.presence || @event.id, @questionnaire), method: :patch, class: "client-questionnaire__status-action client-questionnaire__status-action--secondary" %>
         <% else %>
-          <%= button_to "Mark as Finished", mark_finished_client_event_questionnaire_path(@event, @questionnaire), method: :patch, class: "client-questionnaire__status-action" %>
+          <%= button_to "Mark as Finished", mark_finished_client_event_questionnaire_path(@event.portal_slug.presence || @event.id, @questionnaire), method: :patch, class: "client-questionnaire__status-action" %>
         <% end %>
         <button type="button" class="client-questionnaire__save-action" data-action="questionnaire#saveAll" data-questionnaire-target="saveButton">
           Save all responses

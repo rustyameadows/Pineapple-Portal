@@ -1,5 +1,6 @@
 module Client
   class PaymentsController < PortalController
+    before_action :require_financial_access
     before_action :set_payment, only: %i[show mark_paid]
 
     def show
@@ -11,13 +12,13 @@ module Client
 
       if @payment.paid?
         @payment.update(client_note: note.presence) if note.present?
-        redirect_to client_event_payment_path(@event, @payment), notice: "Payment already marked as paid."
+        redirect_to client_event_payment_path(@event.portal_slug.presence || @event.id, @payment), notice: "Payment already marked as paid."
       else
         begin
           @payment.mark_paid!(by_client: true, note: note)
-          redirect_to client_event_payment_path(@event, @payment), notice: "Thanks! We'll let your planner know this payment is on the way."
+          redirect_to client_event_payment_path(@event.portal_slug.presence || @event.id, @payment), notice: "Thanks! We'll let your planner know this payment is on the way."
         rescue ActiveRecord::RecordInvalid => e
-          redirect_to client_event_payment_path(@event, @payment), alert: e.record.errors.full_messages.to_sentence
+          redirect_to client_event_payment_path(@event.portal_slug.presence || @event.id, @payment), alert: e.record.errors.full_messages.to_sentence
         end
       end
     end
@@ -30,6 +31,12 @@ module Client
 
     def payment_params
       params.fetch(:payment, {}).permit(:client_note)
+    end
+
+    def require_financial_access
+      return if financial_portal_access? && @event.financial_payments_enabled?
+
+      redirect_to client_event_financials_path(@event.portal_slug.presence || @event.id)
     end
   end
 end

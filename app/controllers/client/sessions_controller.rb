@@ -6,7 +6,7 @@ module Client
     def new
       if session[:client_user_id].present?
         if (event = first_client_event(User.find_by(id: session[:client_user_id])))
-          redirect_to client_event_path(event)
+          redirect_to client_event_path(event.portal_slug.presence || event.id)
         else
           session.delete(:client_user_id)
         end
@@ -20,7 +20,7 @@ module Client
       if authenticate_client(user)
         if (event = first_client_event(user))
           session[:client_user_id] = user.id
-          redirect_to client_event_path(event), notice: "Welcome to your client portal."
+          redirect_to client_event_path(event.portal_slug.presence || event.id), notice: "Welcome to your client portal."
         else
           flash.now[:alert] = "No events are linked to this account yet."
           render :new, status: :unprocessable_content

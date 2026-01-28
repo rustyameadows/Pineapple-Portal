@@ -21,7 +21,7 @@ module Client
         }
       }
 
-      assert_redirected_to client_event_path(events(:one))
+      assert_redirected_to client_event_path(events(:one).portal_slug)
       @token.reload
       assert @token.redeemed_at.present?
       assert_equal users(:client_contact).id, session[:client_user_id]

@@ -40,6 +40,7 @@
                       <td><%= user.phone_number.presence || "—" %></td>
                       <td>
                         <%= form_with url: event_team_member_path(@event, team_member), method: :patch, local: true, class: "event-settings__inline-form" do %>
+                          <%= hidden_field_tag :return_to, request.fullpath %>
                           <label class="event-settings__toggle">
                             <%= hidden_field_tag "event_team_member[client_visible]", 0 %>
                             <%= check_box_tag "event_team_member[client_visible]", 1, team_member.client_visible?, onchange: "this.form.submit()", aria: { label: "Toggle portal access for #{user.name}" } %>
@@ -67,9 +68,20 @@
                         <% end %>
                       </td>
                       <td class="event-table__actions event-table__actions--stack">
-                        <%= button_to "Generate Reset Link", issue_reset_event_team_member_path(@event, team_member), method: :post, class: "event-section__link", form: { class: "event-settings__inline-form" } %>
-                        <%= link_to "Edit", edit_user_path(user, return_to: clients_event_settings_path(@event)), class: "event-section__link" %>
-                        <%= button_to "Remove", event_team_member_path(@event, team_member), method: :delete, data: { turbo_confirm: "Remove #{user.name}'s portal access?" }, class: "event-section__link event-section__link--danger", form: { class: "event-settings__inline-form" } %>
+                        <%= button_to "Generate Reset Link",
+                                      issue_reset_event_team_member_path(@event, team_member),
+                                      method: :post,
+                                      params: { return_to: request.fullpath },
+                                      class: "event-section__link",
+                                      form: { class: "event-settings__inline-form" } %>
+                        <%= link_to "Edit", edit_user_path(user, return_to: request.fullpath), class: "event-section__link" %>
+                        <%= button_to "Remove",
+                                      event_team_member_path(@event, team_member),
+                                      method: :delete,
+                                      params: { return_to: request.fullpath },
+                                      data: { turbo_confirm: "Remove #{user.name}'s portal access?" },
+                                      class: "event-section__link event-section__link--danger",
+                                      form: { class: "event-settings__inline-form" } %>
                       </td>
                     </tr>
                   <% end %>
@@ -83,6 +95,7 @@
               <div class="event-settings__client-action">
                 <h4>Add Client Account</h4>
                 <%= form_with model: [@event, @client_team_member], url: event_team_members_path(@event), local: true, class: "event-settings__form event-settings__form--stack" do |form| %>
+                  <%= hidden_field_tag :return_to, request.fullpath %>
                   <%= form.hidden_field :member_role, value: EventTeamMember::TEAM_ROLES[:client] %>
                   <%= form.hidden_field :client_visible, value: 1 %>
 
@@ -115,6 +128,7 @@
                 <div class="event-settings__client-action">
                   <h4>Grant Existing Client Access</h4>
                   <%= form_with model: [@event, @client_link_member], url: event_team_members_path(@event), local: true, class: "event-settings__form event-settings__form--inline" do |form| %>
+                    <%= hidden_field_tag :return_to, request.fullpath %>
                     <div class="event-settings__field">
                       <%= form.label :user_id, "Client" %>
                       <%= form.collection_select :user_id, @available_clients, :id, ->(user) { "#{user.name} (#{user.email})" }, include_blank: "Select client" %>

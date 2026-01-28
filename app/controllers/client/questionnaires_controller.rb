@@ -12,17 +12,17 @@ module Client
 
     def mark_finished
       if @questionnaire.update(status: Questionnaire::STATUSES[:finished])
-        redirect_to client_event_questionnaire_path(@event, @questionnaire), notice: "Questionnaire marked as finished."
+        redirect_to client_event_questionnaire_path(@event.portal_slug.presence || @event.id, @questionnaire), notice: "Questionnaire marked as finished."
       else
-        redirect_to client_event_questionnaire_path(@event, @questionnaire), alert: @questionnaire.errors.full_messages.to_sentence
+        redirect_to client_event_questionnaire_path(@event.portal_slug.presence || @event.id, @questionnaire), alert: @questionnaire.errors.full_messages.to_sentence
       end
     end
 
     def mark_in_progress
       if @questionnaire.update(status: Questionnaire::STATUSES[:in_progress])
-        redirect_to client_event_questionnaire_path(@event, @questionnaire), notice: "Questionnaire marked as in progress."
+        redirect_to client_event_questionnaire_path(@event.portal_slug.presence || @event.id, @questionnaire), notice: "Questionnaire marked as in progress."
       else
-        redirect_to client_event_questionnaire_path(@event, @questionnaire), alert: @questionnaire.errors.full_messages.to_sentence
+        redirect_to client_event_questionnaire_path(@event.portal_slug.presence || @event.id, @questionnaire), alert: @questionnaire.errors.full_messages.to_sentence
       end
     end
 

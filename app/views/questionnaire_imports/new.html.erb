@@ -1,0 +1,91 @@
+<% selected_mode = params[:import_mode].presence || "new" %>
+
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Questionnaires</p>
+            <h1 class="event-section__title">Import a questionnaire</h1>
+            <p class="event-section__lead">Copy a questionnaire from another event without answers.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Back to questionnaires", event_questionnaires_path(@event), class: "event-section__link" %>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <% if flash[:alert].present? %>
+            <p class="flash alert"><%= flash[:alert] %></p>
+          <% end %>
+
+          <%= form_with url: event_questionnaire_import_path(@event), method: :get, local: true, html: { class: "event-settings__form" } do |form| %>
+            <div>
+              <%= form.label :source_event_id, "Source event" %><br>
+              <%= form.select :source_event_id,
+                              options_from_collection_for_select(@events, :id, :name, @source_event&.id),
+                              include_blank: "Select an event" %>
+            </div>
+            <div class="event-settings__form-actions">
+              <%= form.submit "Load questionnaires" %>
+            </div>
+          <% end %>
+
+          <% if @source_event.present? %>
+            <% if @source_questionnaires.any? %>
+              <%= form_with url: event_questionnaire_import_path(@event), method: :post, local: true, html: { class: "event-settings__form" } do |form| %>
+                <%= form.hidden_field :source_event_id, value: @source_event.id %>
+
+                <div>
+                  <%= form.label :source_questionnaire_id, "Questionnaire to copy" %><br>
+                  <%= form.select :source_questionnaire_id,
+                                  options_from_collection_for_select(@source_questionnaires, :id, :title, params[:source_questionnaire_id]) %>
+                </div>
+
+                <fieldset>
+                  <legend>Import method</legend>
+
+                  <div>
+                    <%= form.radio_button :import_mode, "new", checked: selected_mode == "new" %>
+                    <%= form.label :import_mode_new, "Create a new questionnaire" %>
+                  </div>
+                  <div>
+                    <%= form.label :new_title, "New questionnaire title (optional)" %><br>
+                    <%= form.text_field :new_title, value: params[:new_title], placeholder: "Leave blank to use the original title" %>
+                  </div>
+
+                  <div>
+                    <%= form.radio_button :import_mode, "append", checked: selected_mode == "append", disabled: @questionnaires.blank? %>
+                    <%= form.label :import_mode_append, "Add questions to an existing questionnaire" %>
+                  </div>
+
+                  <% if @questionnaires.any? %>
+                    <div>
+                      <%= form.label :destination_questionnaire_id, "Destination questionnaire" %><br>
+                      <%= form.select :destination_questionnaire_id,
+                                      options_from_collection_for_select(@questionnaires, :id, :title, params[:destination_questionnaire_id]),
+                                      include_blank: "Select a questionnaire" %>
+                    </div>
+                  <% else %>
+                    <p class="event-section__note">This event does not have any questionnaires yet.</p>
+                  <% end %>
+                </fieldset>
+
+                <div class="event-settings__form-actions">
+                  <%= form.submit "Import questionnaire" %>
+                </div>
+              <% end %>
+            <% else %>
+              <p class="event-section__note">No questionnaires found for the selected event.</p>
+            <% end %>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>
