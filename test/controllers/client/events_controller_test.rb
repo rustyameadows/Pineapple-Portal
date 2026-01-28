@@ -44,8 +44,8 @@ module Client
       assert_select "#planning-grid .client-planning-grid__card:nth-child(2) h3", text: "Guest List"
     end
 
-    test "vanity portal slug resolves to event" do
-      get client_event_vanity_url(@event.portal_slug)
+    test "portal slug resolves to event" do
+      get client_event_url(@event.portal_slug)
 
       assert_response :success
       assert_select "#planning-grid"

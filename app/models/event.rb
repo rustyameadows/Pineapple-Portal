@@ -49,6 +49,7 @@ class Event < ApplicationRecord
   validates :portal_slug, uniqueness: true, allow_blank: true
 
   before_validation :normalize_portal_slug
+  before_validation :ensure_portal_slug
 
   def planning_link_tokens
     tokens = normalize_planning_link_tokens(stored_planning_link_tokens)
@@ -167,6 +168,19 @@ class Event < ApplicationRecord
     normalized = portal_slug.to_s.strip
     normalized = normalized.parameterize if normalized.present?
     self.portal_slug = normalized.presence
+  end
+
+  def ensure_portal_slug
+    return if portal_slug.present?
+
+    self.portal_slug = generate_portal_slug
+  end
+
+  def generate_portal_slug
+    loop do
+      candidate = SecureRandom.hex(6)
+      return candidate unless Event.where.not(id: id).exists?(portal_slug: candidate)
+    end
   end
 
   def stored_planning_link_tokens

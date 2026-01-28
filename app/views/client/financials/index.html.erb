@@ -60,11 +60,11 @@
           <tbody>
             <% @payments.each do |payment| %>
               <tr>
-                <td><%= link_to payment.title, client_event_payment_path(@event, payment) %></td>
+                <td><%= link_to payment.title, client_event_payment_path(@event.portal_slug.presence || @event.id, payment) %></td>
                 <td><%= payment.due_on ? payment.due_on.strftime('%b %-d, %Y') : "Timing TBD" %></td>
                 <td><%= number_to_currency(payment.amount) %></td>
                 <td><span class="client-financials__status client-financials__status--<%= payment.status %>"><%= payment.status.humanize %></span></td>
-                <td class="client-table__actions"><%= link_to "View", client_event_payment_path(@event, payment), class: "client-link" %></td>
+                <td class="client-table__actions"><%= link_to "View", client_event_payment_path(@event.portal_slug.presence || @event.id, payment), class: "client-link" %></td>
               </tr>
             <% end %>
           </tbody>

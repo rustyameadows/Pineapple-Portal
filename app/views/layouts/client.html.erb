@@ -45,8 +45,9 @@
     <%= javascript_importmap_tags %>
   </head>
   <body class="client-shell">
-    <% portal_home = defined?(@event) && @event.present? ? client_event_path(@event) : root_path %>
-    <% portal_icon_home = if defined?(@event) && @event.present?
+    <% portal_event_key = defined?(@event) && @event.present? ? (@event.portal_slug.presence || @event.id) : nil %>
+    <% portal_home = portal_event_key ? client_event_path(portal_event_key) : root_path %>
+    <% portal_icon_home = if portal_event_key
                             current_user&.planner_or_admin? ? event_path(@event) : portal_home
                           else
                             root_path

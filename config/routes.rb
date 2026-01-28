@@ -174,7 +174,7 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
     end
   end
 
-  namespace :client, path: "portal" do
+  namespace :client, path: "client" do
     get "login", to: "sessions#new"
     post "login", to: "sessions#create"
     match "logout", to: "sessions#destroy", via: %i[delete get]
@@ -183,7 +183,12 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
     patch "reset/:token", to: "password_resets#update"
     put "reset/:token", to: "password_resets#update"
 
-    resources :events, only: :show do
+    scope ":event_slug", as: :event do
+      get "/", to: "events#show", as: ""
+
+      get "decision-calendar", to: "calendars#show", defaults: { slug: "decision-calendar" }
+      get "run-of-show", to: "calendars#show", defaults: { slug: "run-of-show" }
+
       resources :calendars, only: %i[index show], param: :slug
       resources :decision_calendar_items, only: %i[show update]
       resource :guest_list, only: :show, controller: :guest_lists
@@ -205,8 +210,6 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
       end
     end
   end
-
-  get "/client/:slug", to: "client/events#show", as: :client_event_vanity
 
   get "/questionnaire_templates", to: "questionnaires#templates", as: :questionnaire_templates
   get "/settings", to: "settings#show", as: :settings

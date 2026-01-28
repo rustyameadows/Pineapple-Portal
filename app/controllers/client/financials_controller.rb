@@ -17,7 +17,7 @@ module Client
     def require_financial_access
       return if financial_portal_access?
 
-      redirect_to client_event_path(@event), alert: "Financial access is required to view this page."
+      redirect_to client_event_path(@event.portal_slug.presence || @event.id), alert: "Financial access is required to view this page."
     end
   end
 end

@@ -5,7 +5,7 @@
       <p><%= @payment.due_on ? "Due #{@payment.due_on.strftime('%B %-d, %Y')}" : "Timing TBD" %></p>
     </div>
     <div class="client-page__actions">
-      <%= link_to "Back to Payments", client_event_financials_path(@event), class: "client-button client-button--secondary" %>
+      <%= link_to "Back to Payments", client_event_financials_path(@event.portal_slug.presence || @event.id), class: "client-button client-button--secondary" %>
     </div>
   </header>
 
@@ -38,7 +38,7 @@
       <div class="client-card__body">
         <h2>Let your planner know it’s paid</h2>
         <p>Once you’ve sent payment, leave a short note so your planner can reconcile it quickly.</p>
-        <%= form_with url: mark_paid_client_event_payment_path(@event, @payment), method: :patch, class: "client-form" do |form| %>
+        <%= form_with url: mark_paid_client_event_payment_path(@event.portal_slug.presence || @event.id, @payment), method: :patch, class: "client-form" do |form| %>
           <div class="client-form__group">
             <%= form.label :client_note, "Add a note (optional)" %>
             <%= form.text_area :client_note, rows: 3, placeholder: "Include a check number, transfer confirmation, or anything helpful." %>

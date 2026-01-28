@@ -27,7 +27,7 @@
                   <div class="client-questionnaires__card-header">
                     <h3 class="client-questionnaires__card-title">
                       <%= link_to questionnaire.title,
-                                  client_event_questionnaire_path(@event, questionnaire),
+                                  client_event_questionnaire_path(@event.portal_slug.presence || @event.id, questionnaire),
                                   class: "client-questionnaires__card-link" %>
                     </h3>
                     <span class="client-status-tag <%= status == :finished ? 'client-status-tag--finished' : 'client-status-tag--in-progress' %>">

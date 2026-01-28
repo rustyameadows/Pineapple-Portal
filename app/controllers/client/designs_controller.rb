@@ -12,7 +12,7 @@ module Client
       @document.client_visible = true
 
       if @document.save
-        redirect_to client_event_designs_path(@event), notice: "Upload received."
+        redirect_to client_event_designs_path(@event.portal_slug.presence || @event.id), notice: "Upload received."
       else
         @display_documents = planner_documents
         @gallery_documents = client_gallery_documents
