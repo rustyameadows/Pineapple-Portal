@@ -25,7 +25,7 @@ module Client
         }
       }
 
-      assert_redirected_to client_event_calendar_url(@event, "decision-calendar")
+    assert_redirected_to client_event_calendar_url(@event.portal_slug, "decision-calendar")
       @item.reload
       assert_equal "completed", @item.status
       assert_equal "Flora Co.", @item.vendor_name

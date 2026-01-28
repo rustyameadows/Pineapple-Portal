@@ -35,7 +35,7 @@ module Client
 
       get client_event_financials_url(@event)
 
-      assert_redirected_to client_event_url(@event)
+      assert_redirected_to client_event_url(@event.portal_slug)
     end
   end
 end

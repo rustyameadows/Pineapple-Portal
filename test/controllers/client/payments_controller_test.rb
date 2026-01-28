@@ -20,7 +20,7 @@ module Client
     test "marks payment as paid" do
       patch mark_paid_client_event_payment_url(@event, @payment), params: { payment: { client_note: "Check #42" } }
 
-      assert_redirected_to client_event_payment_url(@event, @payment)
+    assert_redirected_to client_event_payment_url(@event.portal_slug, @payment)
       @payment.reload
       assert @payment.paid?
       assert_equal "Check #42", @payment.client_note
@@ -30,7 +30,7 @@ module Client
       payment = payments(:paid_payment)
       patch mark_paid_client_event_payment_url(@event, payment)
 
-      assert_redirected_to client_event_payment_url(@event, payment)
+    assert_redirected_to client_event_payment_url(@event.portal_slug, payment)
     end
 
     test "redirects without financial access" do
@@ -38,7 +38,7 @@ module Client
 
       get client_event_payment_url(@event, @payment)
 
-      assert_redirected_to client_event_financials_url(@event)
+    assert_redirected_to client_event_financials_url(@event.portal_slug)
     end
   end
 end

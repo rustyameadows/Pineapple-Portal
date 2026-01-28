@@ -20,7 +20,7 @@ module Client
     def set_event
       slug = params[:event_slug].presence || params[:slug]
       @event = if slug.present?
-                 Event.find_by!(portal_slug: slug)
+                 Event.find_by(portal_slug: slug) || Event.find_by(id: slug) || raise(ActiveRecord::RecordNotFound)
                else
                  Event.find(params[:id])
                end
