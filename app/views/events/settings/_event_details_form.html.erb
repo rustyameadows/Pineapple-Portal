@@ -39,6 +39,15 @@
     </div>
 
     <div class="event-settings__field">
+      <%= form.label :portal_slug, "Client portal slug" %>
+      <%= form.text_field :portal_slug, placeholder: "john-and-susie-wedding" %>
+      <p class="event-settings__hint">
+        Vanity URL:
+        <%= "#{request.base_url}/client/#{event.portal_slug.presence || 'your-slug'}" %>
+      </p>
+    </div>
+
+    <div class="event-settings__field">
       <%= form.label :starts_on, "Start Date" %>
       <%= form.date_field :starts_on %>
     </div>

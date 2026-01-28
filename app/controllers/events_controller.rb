@@ -47,6 +47,6 @@ class EventsController < ApplicationController
   end
 
   def event_params
-    params.require(:event).permit(:name, :starts_on, :ends_on, :location, :location_secondary, :event_photo_document_id, :financial_payments_enabled)
+    params.require(:event).permit(:name, :starts_on, :ends_on, :location, :location_secondary, :event_photo_document_id, :financial_payments_enabled, :portal_slug)
   end
 end

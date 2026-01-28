@@ -18,7 +18,11 @@ module Client
     private
 
     def set_event
-      @event = Event.find(params[:id])
+      @event = if params[:slug].present?
+                 Event.find_by!(portal_slug: params[:slug])
+               else
+                 Event.find(params[:id])
+               end
     end
 
     def build_quick_links

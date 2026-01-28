@@ -46,6 +46,9 @@ class Event < ApplicationRecord
   scope :archived, -> { where.not(archived_at: nil) }
 
   validates :name, presence: true
+  validates :portal_slug, uniqueness: true, allow_blank: true
+
+  before_validation :normalize_portal_slug
 
   def planning_link_tokens
     tokens = normalize_planning_link_tokens(stored_planning_link_tokens)
@@ -156,6 +159,14 @@ class Event < ApplicationRecord
     unless content_type.start_with?("image/")
       errors.add(:event_photo_document, "must be an image file")
     end
+  end
+
+  def normalize_portal_slug
+    return if portal_slug.nil?
+
+    normalized = portal_slug.to_s.strip
+    normalized = normalized.parameterize if normalized.present?
+    self.portal_slug = normalized.presence
   end
 
   def stored_planning_link_tokens

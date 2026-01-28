@@ -206,6 +206,8 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
     end
   end
 
+  get "/client/:slug", to: "client/events#show", as: :client_event_vanity
+
   get "/questionnaire_templates", to: "questionnaires#templates", as: :questionnaire_templates
   get "/settings", to: "settings#show", as: :settings
   resources :attachments, only: %i[create destroy]
