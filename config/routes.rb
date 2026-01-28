@@ -111,6 +111,9 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
       member { post :issue_reset }
     end
 
+    get "questionnaires/import", to: "questionnaire_imports#new", as: :questionnaire_import
+    post "questionnaires/import", to: "questionnaire_imports#create"
+
     resources :questionnaires do
       member do
         patch :mark_finished
