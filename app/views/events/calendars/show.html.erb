@@ -23,7 +23,7 @@
                      items: @items,
                      calendar: @calendar,
                      group_by_date: @group_by_date,
-                     show_tags: false,
+                     show_tags: true,
                      show_edit_button: true,
                      item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@event, item)] } %>
         <% else %>
