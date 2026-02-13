@@ -89,7 +89,7 @@ module Documents
       end
 
       def render_template(template)
-        ApplicationController.render(
+        body_html = ApplicationController.render(
           template: template,
           layout: false,
           assigns: {
@@ -97,6 +97,20 @@ module Documents
             segment: segment
           }
         )
+
+        <<~HTML
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+            </head>
+            <body>
+              #{body_html}
+            </body>
+          </html>
+        HTML
       end
 
       def grover_options(config = {})

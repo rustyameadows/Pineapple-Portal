@@ -4,16 +4,76 @@
 
 <style>
   .generated-template--text-page {
-    --generated-document-content-padding-x: 0.35in;
-    --generated-document-content-padding-top: 0.45in;
-    --generated-document-content-padding-bottom: 0.45in;
-    gap: 1.1rem;
+    --generated-document-content-padding-x: 0.26in;
+    --generated-document-content-padding-top: 0.24in;
+    --generated-document-content-padding-bottom: 0.24in;
+    gap: 0.5rem;
+    background: var(--color-white, #ffffff);
+    border: none;
+  }
+
+  .generated-template--text-page .generated-template__page-header {
+    gap: 0.38rem;
+  }
+
+  .generated-template--text-page .generated-template__page-header-title {
+    margin-bottom: 0.02rem;
+    font-size: 1.18rem;
+    letter-spacing: 0.09em;
   }
 
   .generated-template--text-page__content {
     display: grid;
-    gap: 0.65rem;
-    line-height: 1.5;
+    gap: 0.16rem;
+    line-height: 1.18;
+    font-size: 0.94rem;
+    color: var(--color-dark-brown, #3f2211);
+  }
+
+  .generated-template--text-page__content .generated-text-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.16in;
+    align-items: start;
+    margin: 0.12rem 0 0.18rem;
+  }
+
+  .generated-template--text-page__content .generated-text-column {
+    min-width: 0;
+    display: grid;
+    align-content: start;
+    gap: 0.06rem;
+  }
+
+  .generated-template--text-page__content .generated-text-column > *:first-child {
+    margin-top: 0;
+  }
+
+  .generated-template--text-page__content .generated-text-column > *:last-child {
+    margin-bottom: 0;
+  }
+
+  .generated-template--text-page__content h2 {
+    margin: 0.02rem 0 0.18rem;
+    font-size: 1.36rem;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    border-bottom: 2px solid color-mix(in srgb, var(--color-gold, #be9c72) 65%, white);
+    padding-bottom: 0.08rem;
+  }
+
+  .generated-template--text-page__content h3 {
+    margin: 0.36rem 0 0.06rem;
+    padding: 0.11rem 0.4rem 0.12rem;
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--color-gold, #be9c72);
+    color: var(--color-dark-brown, #3f2211);
+    border: 1px solid color-mix(in srgb, var(--color-gold, #be9c72) 82%, var(--color-brown, #5b4639));
+    font-size: 0.97rem;
+    letter-spacing: 0.015em;
+    line-height: 1.15;
+    text-transform: uppercase;
   }
 
   .generated-template--text-page__content p:last-child {
@@ -22,43 +82,91 @@
 
   .generated-template--text-page__content h4,
   .generated-template--text-page__content h5 {
-    margin: 0.55rem 0 0.35rem;
+    margin: 0.22rem 0 0.08rem;
     font-family: var(--font-family-display, 'Didot', 'Times New Roman', serif);
-    letter-spacing: 0.05em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
+    line-height: 1.2;
+    color: var(--color-dark-brown, #3f2211);
   }
 
   .generated-template--text-page__content h4 {
-    font-size: 1.05rem;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.08rem 0.35rem 0.09rem;
+    background: var(--color-sand, #f3e4d2);
+    border: 1px solid var(--color-dark-sand, #dccbb3);
+    font-size: 0.95rem;
+    line-height: 1.14;
+    letter-spacing: 0.01em;
   }
 
   .generated-template--text-page__content h5 {
-    font-size: 0.92rem;
+    font-size: 0.84rem;
+    margin: 0.12rem 0 0.02rem;
+    padding: 0.02rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 60%, white);
+    line-height: 1.14;
+    letter-spacing: 0.01em;
   }
 
   .generated-template--text-page__content ul,
   .generated-template--text-page__content ol {
+    margin: 0.02rem 0 0.12rem;
+    padding-left: 0.88rem;
+  }
+
+  .generated-template--text-page__content li {
     margin: 0;
-    padding-left: 1.3rem;
   }
 
   .generated-template--text-page__content hr {
     border: 0;
-    border-top: 1px solid color-mix(in srgb, var(--color-dark-brown, #2f2a26) 28%, white);
-    margin: 0.55rem 0;
+    border-top: 1px solid color-mix(in srgb, var(--color-gold, #be9c72) 70%, var(--color-brown, #5b4639));
+    margin: 0.22rem 0 0.18rem;
   }
 
   .generated-template--text-page__content blockquote {
-    margin: 0.25rem 0;
-    padding: 0.65rem 0.9rem;
-    border-left: 3px solid color-mix(in srgb, var(--color-sea-foam, #8dbeb2) 65%, var(--color-dark-brown, #2f2a26));
-    background: color-mix(in srgb, var(--color-light-cream, #f7f3ec) 70%, white);
-    color: color-mix(in srgb, var(--color-dark-brown, #2f2a26) 85%, black);
+    margin: 0.08rem 0;
+    padding: 0.28rem 0.45rem;
+    border-left: 2px solid var(--color-gold, #be9c72);
+    background: color-mix(in srgb, var(--color-sand, #f3e4d2) 55%, white);
+    color: var(--color-brown, #5b4639);
+  }
+
+  .generated-template--text-page__content p {
+    margin: 0;
+  }
+
+  .generated-template--text-page__content p + p {
+    margin-top: 0.05rem;
+  }
+
+  .generated-template--text-page__content p strong:first-child {
+    letter-spacing: 0.01em;
+  }
+
+  .generated-template--text-page__content li + li {
+    margin-top: 0.05rem;
   }
 
   .generated-template--text-page__content a {
     color: var(--color-dark-brown, #2f2a26);
     text-decoration: underline;
+    text-decoration-color: var(--color-gold, #be9c72);
+    text-underline-offset: 2px;
+  }
+
+  .generated-template--text-page__content p,
+  .generated-template--text-page__content li {
+    border-bottom: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 34%, white);
+    padding-bottom: 0.035rem;
+  }
+
+  .generated-template--text-page__content h3 + p,
+  .generated-template--text-page__content h4 + p,
+  .generated-template--text-page__content h5 + p {
+    margin-top: 0;
   }
 
   .generated-template--text-page__empty {
