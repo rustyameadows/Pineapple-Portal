@@ -6,6 +6,8 @@ import QuestionAttachmentController from "controllers/question_attachment_contro
 import GeneratedSegmentsController from "controllers/generated_segments_controller"
 import EventSidebarController from "controllers/event_sidebar_controller"
 import FlashToastController from "controllers/flash_toast_controller"
+import RemoteOptionsController from "controllers/remote_options_controller"
+import CustomSelectController from "controllers/custom_select_controller"
 
 application.register("decision-modal", DecisionModalController)
 application.register("questionnaire", QuestionnaireController)
@@ -13,3 +15,5 @@ application.register("question-attachment", QuestionAttachmentController)
 application.register("generated-segments", GeneratedSegmentsController)
 application.register("event-sidebar", EventSidebarController)
 application.register("flash-toast", FlashToastController)
+application.register("remote-options", RemoteOptionsController)
+application.register("custom-select", CustomSelectController)

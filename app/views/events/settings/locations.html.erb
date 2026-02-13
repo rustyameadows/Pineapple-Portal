@@ -22,35 +22,41 @@
                   <li class="event-settings__contact-item">
                     <%= form_with model: [@event, venue], local: true, html: { class: "event-settings__form" } do |form| %>
                       <%= hidden_field_tag :return_to, request.fullpath %>
-                      <div class="event-settings__field-group">
-                        <div class="event-settings__field">
-                          <%= form.label :name, "Venue name" %>
-                          <%= form.text_field :name, required: true %>
+                      <div class="event-settings__vendor-top-row">
+                        <div class="event-settings__vendor-core">
+                          <div class="event-settings__field"
+                               data-controller="remote-options"
+                               data-remote-options-url-value="<%= event_venue_options_path(@event) %>">
+                            <%= form.hidden_field :global_venue_id, data: { remote_options_target: "hidden" } %>
+                            <%= form.label :name, "Venue name" %>
+                            <%= form.text_field :name, required: true, data: { remote_options_target: "input" } %>
+                          </div>
+                          <div class="event-settings__field event-settings__field--checkbox">
+                            <label class="event-settings__toggle">
+                              <%= form.check_box :client_visible %>
+                              <span>Visible to clients</span>
+                            </label>
+                          </div>
                         </div>
-                        <div class="event-settings__field event-settings__field--checkbox">
-                          <label class="event-settings__toggle">
-                            <%= form.check_box :client_visible %>
-                            <span>Visible to clients</span>
-                          </label>
+
+                        <div class="event-settings__vendor-actions">
+                          <div class="event-settings__controls event-settings__controls--vendor-top">
+                            <%= button_tag "Save venue", type: "submit", class: "event-settings__control" %>
+                            <% if index.positive? %>
+                              <%= link_to "Move up", move_up_event_event_venue_path(@event, venue, return_to: request.fullpath), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                            <% end %>
+                            <% if index < @event_venues.length - 1 %>
+                              <%= link_to "Move down", move_down_event_event_venue_path(@event, venue, return_to: request.fullpath), data: { turbo_method: :patch }, class: "event-settings__control" %>
+                            <% end %>
+                            <%= link_to "Remove", event_event_venue_path(@event, venue, return_to: request.fullpath), data: { turbo_method: :delete, turbo_confirm: "Remove this location?" }, class: "event-settings__control event-settings__control--danger" %>
+                          </div>
                         </div>
                       </div>
 
-                      <%= render "events/settings/contact_fields", form:, entity: venue %>
-
-                      <div class="event-settings__form-actions">
-                        <%= form.submit "Save venue" %>
+                      <div class="event-settings__vendor-contacts">
+                        <%= render "events/settings/contact_fields", form:, entity: venue %>
                       </div>
                     <% end %>
-
-                    <div class="event-settings__controls">
-                      <% if index.positive? %>
-                        <%= link_to "Move up", move_up_event_event_venue_path(@event, venue, return_to: request.fullpath), data: { turbo_method: :patch }, class: "event-settings__control" %>
-                      <% end %>
-                      <% if index < @event_venues.length - 1 %>
-                        <%= link_to "Move down", move_down_event_event_venue_path(@event, venue, return_to: request.fullpath), data: { turbo_method: :patch }, class: "event-settings__control" %>
-                      <% end %>
-                      <%= link_to "Remove", event_event_venue_path(@event, venue, return_to: request.fullpath), data: { turbo_method: :delete, turbo_confirm: "Remove this location?" }, class: "event-settings__control event-settings__control--danger" %>
-                    </div>
                   </li>
                 <% end %>
               </ul>
@@ -63,9 +69,12 @@
               <%= form_with model: [@event, @event_venue], local: true, html: { class: "event-settings__form" } do |form| %>
                 <%= hidden_field_tag :return_to, request.fullpath %>
                 <div class="event-settings__field-group">
-                  <div class="event-settings__field">
+                  <div class="event-settings__field"
+                       data-controller="remote-options"
+                       data-remote-options-url-value="<%= event_venue_options_path(@event) %>">
+                    <%= form.hidden_field :global_venue_id, data: { remote_options_target: "hidden" } %>
                     <%= form.label :name, "Venue name" %>
-                    <%= form.text_field :name, required: true %>
+                    <%= form.text_field :name, required: true, data: { remote_options_target: "input" } %>
                   </div>
                   <div class="event-settings__field event-settings__field--checkbox">
                     <label class="event-settings__toggle">

@@ -1,0 +1,65 @@
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Admin</p>
+            <h1 class="event-section__title">Global Venues</h1>
+            <p class="event-section__lead">Shared venue records across all events.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__new-link">
+            <h3>Add Global Venue</h3>
+            <%= form_with model: @global_venue, url: settings_global_venues_path, local: true, html: { class: "event-settings__form" } do |form| %>
+              <div class="event-settings__field-group">
+                <div class="event-settings__field">
+                  <%= form.label :name, "Venue name" %>
+                  <%= form.text_field :name, required: true %>
+                </div>
+              </div>
+              <%= render "events/settings/contact_fields", form:, entity: @global_venue %>
+              <div class="event-settings__form-actions">
+                <%= form.submit "Add global venue" %>
+              </div>
+            <% end %>
+          </div>
+
+          <% if @global_venues.any? %>
+            <ul class="event-settings__contact-list">
+              <% @global_venues.each do |venue| %>
+                <li class="event-settings__contact-item">
+                  <%= form_with model: venue, url: settings_global_venue_path(venue), method: :patch, local: true, html: { class: "event-settings__form" } do |form| %>
+                    <div class="event-settings__field-group">
+                      <div class="event-settings__field">
+                        <%= form.label :name, "Venue name" %>
+                        <%= form.text_field :name, required: true %>
+                      </div>
+                    </div>
+                    <p class="event-section__lead"><strong>Linked events:</strong> <%= venue.attributes["usage_count"].to_i %></p>
+                    <%= render "events/settings/contact_fields", form:, entity: venue %>
+                    <div class="event-settings__form-actions">
+                      <%= form.submit "Save global venue" %>
+                    </div>
+                  <% end %>
+
+                  <div class="event-settings__controls">
+                    <%= link_to "Remove", settings_global_venue_path(venue), data: { turbo_method: :delete, turbo_confirm: "Remove this global venue?" }, class: "event-settings__control event-settings__control--danger" %>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="event-settings__empty">No global venues yet.</p>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

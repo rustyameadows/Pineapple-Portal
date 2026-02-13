@@ -16,11 +16,16 @@ end
 
 namespace :settings do
   get "run_of_show_defaults", to: "run_of_show_defaults#show", as: :run_of_show_defaults
+  resources :global_vendors, only: %i[index create update destroy]
+  resources :global_venues, only: %i[index create update destroy]
 end
 
 post "global_assets/presign", to: "global_asset_uploads#create", as: :global_assets_presign
 
   resources :events do
+    get :vendor_options, to: "events/vendor_options#index"
+    get :venue_options, to: "events/venue_options#index"
+
     resource :settings, only: [:show], module: :events, controller: :settings do
       get :client_portal
       get :clients
@@ -105,6 +110,14 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
         patch :move_up
         patch :move_down
       end
+    end
+
+    resources :vendor_links, only: [], module: :events do
+      collection { post :ensure }
+    end
+
+    resources :venue_links, only: [], module: :events do
+      collection { post :ensure }
     end
 
     resources :team_members, only: %i[create update destroy], module: :events do

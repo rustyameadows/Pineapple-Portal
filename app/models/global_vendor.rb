@@ -1,28 +1,25 @@
-class EventVenue < ApplicationRecord
+class GlobalVendor < ApplicationRecord
   CONTACT_ATTRIBUTE_KEYS = %w[name title email phone notes].freeze
 
-  belongs_to :event
-  belongs_to :global_venue, optional: true
+  has_many :event_vendors, dependent: :nullify
 
   attr_writer :contacts_attributes
 
-  before_validation :strip_name
-  before_validation :sync_name_from_global_venue
-  before_validation :assign_position, on: :create
+  before_validation :normalize_name_fields
   before_validation :apply_contacts_attributes
   before_validation :ensure_contacts_default
 
-  validates :name, presence: true, uniqueness: { scope: :event_id, case_sensitive: false }
-  validates :position, numericality: { greater_than_or_equal_to: 0, allow_nil: false }
-  validates :client_visible, inclusion: { in: [true, false] }
+  validates :name, presence: true
+  validates :normalized_name, presence: true, uniqueness: { case_sensitive: true }
   validate :contacts_jsonb_must_be_array_of_hashes
 
-  scope :ordered, -> { order(:position, :id) }
-  scope :client_visible, -> { where(client_visible: true) }
+  scope :ordered, -> { order(Arel.sql("LOWER(name) ASC"), :id) }
+
+  def self.normalize_name(value)
+    value.to_s.strip.gsub(/\s+/, " ").downcase
+  end
 
   def contacts
-    return global_venue.contacts if global_venue
-
     contacts_jsonb || []
   end
 
@@ -32,22 +29,9 @@ class EventVenue < ApplicationRecord
 
   private
 
-  def sync_name_from_global_venue
-    return unless global_venue
-
-    self.name = global_venue.name
-  end
-
-  def strip_name
-    self.name = name.to_s.strip
-  end
-
-  def assign_position
-    return if event.nil?
-    return unless new_record? || position.nil?
-
-    max_position = EventVenue.where(event_id: event_id).where.not(id: id).maximum(:position)
-    self.position = max_position.to_i + 1
+  def normalize_name_fields
+    self.name = name.to_s.strip.gsub(/\s+/, " ")
+    self.normalized_name = self.class.normalize_name(name)
   end
 
   def apply_contacts_attributes

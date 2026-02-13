@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_27_093001) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_13_123000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -342,9 +342,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_27_093001) do
     t.datetime "updated_at", null: false
     t.string "vendor_type"
     t.string "social_handle"
+    t.bigint "global_vendor_id"
     t.index "event_id, lower((name)::text)", name: "index_event_vendors_on_event_id_and_lower_name", unique: true
     t.index ["event_id", "position"], name: "index_event_vendors_on_event_id_and_position"
     t.index ["event_id"], name: "index_event_vendors_on_event_id"
+    t.index ["global_vendor_id"], name: "index_event_vendors_on_global_vendor_id"
     t.check_constraint "jsonb_typeof(contacts_jsonb) = 'array'::text", name: "event_vendors_contacts_jsonb_array"
   end
 
@@ -356,9 +358,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_27_093001) do
     t.boolean "client_visible", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "global_venue_id"
     t.index "event_id, lower((name)::text)", name: "index_event_venues_on_event_id_and_lower_name", unique: true
     t.index ["event_id", "position"], name: "index_event_venues_on_event_id_and_position"
     t.index ["event_id"], name: "index_event_venues_on_event_id"
+    t.index ["global_venue_id"], name: "index_event_venues_on_global_venue_id"
     t.check_constraint "jsonb_typeof(contacts_jsonb) = 'array'::text", name: "event_venues_contacts_jsonb_array"
   end
 
@@ -394,6 +398,30 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_27_093001) do
     t.datetime "updated_at", null: false
     t.index ["storage_uri"], name: "index_global_assets_on_storage_uri", unique: true
     t.index ["uploaded_by_id"], name: "index_global_assets_on_uploaded_by_id"
+  end
+
+  create_table "global_vendors", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "normalized_name", null: false
+    t.string "default_vendor_type"
+    t.string "default_social_handle"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "contacts_jsonb", default: [], null: false
+    t.index ["name"], name: "index_global_vendors_on_name"
+    t.index ["normalized_name"], name: "index_global_vendors_on_normalized_name", unique: true
+    t.check_constraint "jsonb_typeof(contacts_jsonb) = 'array'::text", name: "global_vendors_contacts_jsonb_array"
+  end
+
+  create_table "global_venues", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "normalized_name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.jsonb "contacts_jsonb", default: [], null: false
+    t.index ["name"], name: "index_global_venues_on_name"
+    t.index ["normalized_name"], name: "index_global_venues_on_normalized_name", unique: true
+    t.check_constraint "jsonb_typeof(contacts_jsonb) = 'array'::text", name: "global_venues_contacts_jsonb_array"
   end
 
   create_table "password_reset_tokens", force: :cascade do |t|
@@ -523,7 +551,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_27_093001) do
   add_foreign_key "event_team_members", "events"
   add_foreign_key "event_team_members", "users"
   add_foreign_key "event_vendors", "events"
+  add_foreign_key "event_vendors", "global_vendors"
   add_foreign_key "event_venues", "events"
+  add_foreign_key "event_venues", "global_venues"
   add_foreign_key "events", "documents", column: "event_photo_document_id"
   add_foreign_key "global_assets", "users", column: "uploaded_by_id"
   add_foreign_key "password_reset_tokens", "users"

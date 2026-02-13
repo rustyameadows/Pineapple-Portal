@@ -175,10 +175,18 @@
                       </div>
                     </td>
                     <td class="calendar-grid__cell calendar-grid__cell--location">
-                      <%= text_field_tag "calendar_item[location_name]", item.location_name, form: form_id, class: "calendar-grid__input" %>
+                      <%= text_field_tag "calendar_item[location_name]",
+                                         item.location_name,
+                                         form: form_id,
+                                         class: "calendar-grid__input",
+                                         data: { controller: "remote-options", remote_options_url_value: event_venue_options_path(@event), remote_options_target: "input" } %>
                     </td>
                     <td class="calendar-grid__cell calendar-grid__cell--vendor">
-                      <%= text_field_tag "calendar_item[vendor_name]", item.vendor_name, form: form_id, class: "calendar-grid__input" %>
+                      <%= text_field_tag "calendar_item[vendor_name]",
+                                         item.vendor_name,
+                                         form: form_id,
+                                         class: "calendar-grid__input",
+                                         data: { controller: "remote-options", remote_options_url_value: event_vendor_options_path(@event), remote_options_target: "input" } %>
                     </td>
                     <td class="calendar-grid__cell calendar-grid__cell--notes">
                       <%= text_area_tag "calendar_item[notes]", item.notes, form: form_id, rows: 2, class: "calendar-grid__textarea" %>

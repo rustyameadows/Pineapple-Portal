@@ -28,9 +28,11 @@
       <%= form.text_field :name, required: true %>
     </div>
 
-    <div class="event-settings__field">
+    <div class="event-settings__field"
+         data-controller="remote-options"
+         data-remote-options-url-value="<%= event_venue_options_path(event) %>">
       <%= form.label :location, "Location" %>
-      <%= form.text_field :location %>
+      <%= form.text_field :location, data: { remote_options_target: "input" } %>
     </div>
 
     <div class="event-settings__field">
