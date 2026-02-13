@@ -203,6 +203,23 @@
                     </label>
                   </fieldset>
                 <% end %>
+              <% elsif segment.html_view_key == DocumentSegment::TEXT_PAGE_VIEW_KEY %>
+                <% text_options = segment.html_options.stringify_keys %>
+                <% body_markdown = text_options.fetch("body_markdown", "").to_s %>
+
+                <%= form.fields_for :options, text_options do |options_fields| %>
+                  <div class="generated-builder__form-row">
+                    <%= options_fields.label :body_markdown, "Page content" %>
+                    <%= options_fields.text_area :body_markdown,
+                                                value: body_markdown,
+                                                rows: 14,
+                                                class: "generated-builder__textarea",
+                                                placeholder: "Write notes, schedules, or instructions with Markdown syntax." %>
+                    <p class="generated-builder__form-help">
+                      Supports Markdown: headings, lists, bold, italics, blockquotes, and links.
+                    </p>
+                  </div>
+                <% end %>
               <% end %>
             <% end %>
 

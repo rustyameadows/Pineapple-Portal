@@ -280,6 +280,21 @@
   overflow: hidden;
 }
 
+.generated-builder__textarea {
+  width: 100%;
+  min-height: 14rem;
+  padding: 0.7rem 0.75rem;
+  line-height: 1.45;
+  font-family: var(--font-family-body);
+  resize: vertical;
+}
+
+.generated-builder__form-help {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-brown);
+}
+
 .generated-builder__form-row--inline {
   align-items: center;
   grid-template-columns: auto minmax(0, 1fr);

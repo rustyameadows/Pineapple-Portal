@@ -1,0 +1,89 @@
+<% if local_assigns.fetch(:render_base_styles, true) %>
+  <%= render "generated_documents/sections/base_styles" %>
+<% end %>
+
+<style>
+  .generated-template--text-page {
+    --generated-document-content-padding-x: 0.35in;
+    --generated-document-content-padding-top: 0.45in;
+    --generated-document-content-padding-bottom: 0.45in;
+    gap: 1.1rem;
+  }
+
+  .generated-template--text-page__content {
+    display: grid;
+    gap: 0.65rem;
+    line-height: 1.5;
+  }
+
+  .generated-template--text-page__content p:last-child {
+    margin-bottom: 0;
+  }
+
+  .generated-template--text-page__content h4,
+  .generated-template--text-page__content h5 {
+    margin: 0.55rem 0 0.35rem;
+    font-family: var(--font-family-display, 'Didot', 'Times New Roman', serif);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .generated-template--text-page__content h4 {
+    font-size: 1.05rem;
+  }
+
+  .generated-template--text-page__content h5 {
+    font-size: 0.92rem;
+  }
+
+  .generated-template--text-page__content ul,
+  .generated-template--text-page__content ol {
+    margin: 0;
+    padding-left: 1.3rem;
+  }
+
+  .generated-template--text-page__content hr {
+    border: 0;
+    border-top: 1px solid color-mix(in srgb, var(--color-dark-brown, #2f2a26) 28%, white);
+    margin: 0.55rem 0;
+  }
+
+  .generated-template--text-page__content blockquote {
+    margin: 0.25rem 0;
+    padding: 0.65rem 0.9rem;
+    border-left: 3px solid color-mix(in srgb, var(--color-sea-foam, #8dbeb2) 65%, var(--color-dark-brown, #2f2a26));
+    background: color-mix(in srgb, var(--color-light-cream, #f7f3ec) 70%, white);
+    color: color-mix(in srgb, var(--color-dark-brown, #2f2a26) 85%, black);
+  }
+
+  .generated-template--text-page__content a {
+    color: var(--color-dark-brown, #2f2a26);
+    text-decoration: underline;
+  }
+
+  .generated-template--text-page__empty {
+    font-style: italic;
+  }
+</style>
+
+<% options = if @segment.respond_to?(:html_options)
+               @segment.html_options
+             elsif @segment.respond_to?(:source_ref) && @segment.source_ref.is_a?(Hash)
+               source_options = @segment.source_ref["options"]
+               source_options.is_a?(Hash) ? source_options : {}
+             else
+               {}
+             end %>
+<% body_markdown = options.is_a?(Hash) ? options["body_markdown"].to_s : "" %>
+
+<section class="generated-template generated-template--text-page">
+  <%= render "generated_documents/sections/page_header", segment: @segment %>
+
+  <% if body_markdown.present? %>
+    <div class="generated-template--text-page__content">
+      <%= render_generated_markdown(body_markdown) %>
+    </div>
+  <% else %>
+    <p class="generated-template__muted generated-template--text-page__empty">Add text in segment settings to populate this page.</p>
+  <% end %>
+</section>

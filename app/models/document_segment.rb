@@ -6,6 +6,7 @@ class DocumentSegment < ApplicationRecord
 
   TIMELINE_VIEW_KEY = "timeline".freeze
   RUN_OF_SHOW_VIEW_KEY = "run_of_show_timeline".freeze
+  TEXT_PAGE_VIEW_KEY = "text_page".freeze
 
   belongs_to :document,
              foreign_key: :document_logical_id,
@@ -36,6 +37,11 @@ class DocumentSegment < ApplicationRecord
       label: "Run of Show",
       template: "generated_documents/sections/timeline",
       description: "Full run-of-show schedule from the master calendar."
+    },
+    TEXT_PAGE_VIEW_KEY => {
+      label: "Text Page",
+      template: "generated_documents/sections/text_page",
+      description: "General-purpose formatted text section using Markdown syntax."
     },
     "section_break" => {
       label: "Section Break",

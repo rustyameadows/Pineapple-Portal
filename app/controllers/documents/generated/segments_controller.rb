@@ -196,6 +196,8 @@ module Documents
           sanitize_timeline_options(options)
         when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
           sanitize_run_of_show_options(options)
+        when DocumentSegment::TEXT_PAGE_VIEW_KEY
+          sanitize_text_page_options(options)
         else
           options
         end
@@ -220,6 +222,14 @@ module Documents
           "show_vendor" => boolean_option(source.fetch("show_vendor", true), default: true),
           "show_team_members" => boolean_option(source.fetch("show_team_members", true), default: true)
         }
+      end
+
+      def sanitize_text_page_options(options)
+        source = options.to_h.stringify_keys
+        body = source["body_markdown"].to_s
+        normalized_body = body.gsub(/\r\n?/, "\n").delete("\u0000")
+
+        { "body_markdown" => normalized_body.first(20_000) }
       end
 
       def sanitize_timeline_view_ref(value)
