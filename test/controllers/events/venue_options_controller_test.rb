@@ -14,7 +14,7 @@ module Events
       @event.event_venues.create!(name: active_global.name, global_venue: active_global, client_visible: true)
       events(:two).event_venues.create!(name: inactive_global.name, global_venue: inactive_global, client_visible: true)
 
-      get venue_options_event_url(@event), params: { q: "venue" }, as: :json
+      get event_venue_options_url(@event), params: { q: "venue" }, as: :json
 
       assert_response :success
       body = JSON.parse(response.body)

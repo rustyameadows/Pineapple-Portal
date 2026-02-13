@@ -14,7 +14,7 @@ module Events
       @event.event_vendors.create!(name: active_global.name, global_vendor: active_global, client_visible: true)
       events(:two).event_vendors.create!(name: inactive_global.name, global_vendor: inactive_global, client_visible: true)
 
-      get vendor_options_event_url(@event), params: { q: "vendor" }, as: :json
+      get event_vendor_options_url(@event), params: { q: "vendor" }, as: :json
 
       assert_response :success
       body = JSON.parse(response.body)
