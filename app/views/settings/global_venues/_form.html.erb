@@ -1,0 +1,14 @@
+<%= form_with model: global_venue, url:, local: true, html: { class: "event-settings__form" } do |form| %>
+  <div class="event-settings__field-group">
+    <div class="event-settings__field">
+      <%= form.label :name, "Venue name" %>
+      <%= form.text_field :name, required: true %>
+    </div>
+  </div>
+
+  <%= render "events/settings/contact_fields", form:, entity: global_venue %>
+
+  <div class="event-settings__form-actions">
+    <%= form.submit submit_label %>
+  </div>
+<% end %>

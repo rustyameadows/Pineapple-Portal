@@ -1,9 +1,8 @@
 module Settings
   class GlobalVenuesController < ApplicationController
-    before_action :set_global_venue, only: %i[update destroy]
+    before_action :set_global_venue, only: %i[edit update destroy]
 
     def index
-      @global_venue = GlobalVenue.new
       @global_venues = GlobalVenue
                        .left_joins(:event_venues)
                        .select("global_venues.*, COUNT(event_venues.id) AS usage_count")
@@ -11,13 +10,20 @@ module Settings
                        .order(Arel.sql("LOWER(global_venues.name) ASC"), :id)
     end
 
+    def new
+      @global_venue = GlobalVenue.new
+    end
+
+    def edit; end
+
     def create
       @global_venue = GlobalVenue.new(global_venue_params)
 
       if @global_venue.save
         redirect_to settings_global_venues_path, notice: "Global venue created."
       else
-        redirect_to settings_global_venues_path, alert: @global_venue.errors.full_messages.to_sentence
+        flash.now[:alert] = @global_venue.errors.full_messages.to_sentence
+        render :new, status: :unprocessable_entity
       end
     end
 
@@ -25,7 +31,8 @@ module Settings
       if @global_venue.update(global_venue_params)
         redirect_to settings_global_venues_path, notice: "Global venue updated."
       else
-        redirect_to settings_global_venues_path, alert: @global_venue.errors.full_messages.to_sentence
+        flash.now[:alert] = @global_venue.errors.full_messages.to_sentence
+        render :edit, status: :unprocessable_entity
       end
     end
 

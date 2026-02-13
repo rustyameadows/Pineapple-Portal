@@ -1,9 +1,8 @@
 module Settings
   class GlobalVendorsController < ApplicationController
-    before_action :set_global_vendor, only: %i[update destroy]
+    before_action :set_global_vendor, only: %i[edit update destroy]
 
     def index
-      @global_vendor = GlobalVendor.new
       @global_vendors = GlobalVendor
                         .left_joins(:event_vendors)
                         .select("global_vendors.*, COUNT(event_vendors.id) AS usage_count")
@@ -11,13 +10,20 @@ module Settings
                         .order(Arel.sql("LOWER(global_vendors.name) ASC"), :id)
     end
 
+    def new
+      @global_vendor = GlobalVendor.new
+    end
+
+    def edit; end
+
     def create
       @global_vendor = GlobalVendor.new(global_vendor_params)
 
       if @global_vendor.save
         redirect_to settings_global_vendors_path, notice: "Global vendor created."
       else
-        redirect_to settings_global_vendors_path, alert: @global_vendor.errors.full_messages.to_sentence
+        flash.now[:alert] = @global_vendor.errors.full_messages.to_sentence
+        render :new, status: :unprocessable_entity
       end
     end
 
@@ -25,7 +31,8 @@ module Settings
       if @global_vendor.update(global_vendor_params)
         redirect_to settings_global_vendors_path, notice: "Global vendor updated."
       else
-        redirect_to settings_global_vendors_path, alert: @global_vendor.errors.full_messages.to_sentence
+        flash.now[:alert] = @global_vendor.errors.full_messages.to_sentence
+        render :edit, status: :unprocessable_entity
       end
     end
 

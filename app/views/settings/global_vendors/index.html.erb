@@ -12,65 +12,43 @@
             <h1 class="event-section__title">Global Vendors</h1>
             <p class="event-section__lead">Shared vendor records across all events.</p>
           </div>
+          <div class="event-section__actions">
+            <%= link_to "Add Global Vendor", new_settings_global_vendor_path, class: "event-section__cta" %>
+          </div>
         </header>
 
         <div class="event-section__body">
-          <div class="event-settings__new-link">
-            <h3>Add Global Vendor</h3>
-            <%= form_with model: @global_vendor, url: settings_global_vendors_path, local: true, html: { class: "event-settings__form" } do |form| %>
-              <div class="event-settings__field-group">
-                <div class="event-settings__field">
-                  <%= form.label :name, "Vendor name" %>
-                  <%= form.text_field :name, required: true %>
-                </div>
-                <div class="event-settings__field">
-                  <%= form.label :default_vendor_type, "Default vendor type" %>
-                  <%= form.text_field :default_vendor_type %>
-                </div>
-                <div class="event-settings__field">
-                  <%= form.label :default_social_handle, "Default social handle" %>
-                  <%= form.text_field :default_social_handle %>
-                </div>
-              </div>
-              <%= render "events/settings/contact_fields", form:, entity: @global_vendor %>
-              <div class="event-settings__form-actions">
-                <%= form.submit "Add global vendor" %>
-              </div>
-            <% end %>
-          </div>
-
           <% if @global_vendors.any? %>
-            <ul class="event-settings__contact-list">
+            <table class="event-table">
+              <thead>
+                <tr>
+                  <th>Vendor</th>
+                  <th>Default Type</th>
+                  <th>Default Social</th>
+                  <th>Contacts</th>
+                  <th>Linked Events</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
               <% @global_vendors.each do |vendor| %>
-                <li class="event-settings__contact-item">
-                  <%= form_with model: vendor, url: settings_global_vendor_path(vendor), method: :patch, local: true, html: { class: "event-settings__form" } do |form| %>
-                    <div class="event-settings__field-group">
-                      <div class="event-settings__field">
-                        <%= form.label :name, "Vendor name" %>
-                        <%= form.text_field :name, required: true %>
-                      </div>
-                      <div class="event-settings__field">
-                        <%= form.label :default_vendor_type, "Default vendor type" %>
-                        <%= form.text_field :default_vendor_type %>
-                      </div>
-                      <div class="event-settings__field">
-                        <%= form.label :default_social_handle, "Default social handle" %>
-                        <%= form.text_field :default_social_handle %>
-                      </div>
-                    </div>
-                    <p class="event-section__lead"><strong>Linked events:</strong> <%= vendor.attributes["usage_count"].to_i %></p>
-                    <%= render "events/settings/contact_fields", form:, entity: vendor %>
-                    <div class="event-settings__form-actions">
-                      <%= form.submit "Save global vendor" %>
-                    </div>
-                  <% end %>
-
-                  <div class="event-settings__controls">
-                    <%= link_to "Remove", settings_global_vendor_path(vendor), data: { turbo_method: :delete, turbo_confirm: "Remove this global vendor?" }, class: "event-settings__control event-settings__control--danger" %>
-                  </div>
-                </li>
+                <tr>
+                  <td><%= vendor.name %></td>
+                  <td><%= vendor.default_vendor_type.presence || "—" %></td>
+                  <td><%= vendor.default_social_handle.presence || "—" %></td>
+                  <td><%= vendor.contacts.size %></td>
+                  <td><%= vendor.attributes["usage_count"].to_i %></td>
+                  <td class="event-table__actions">
+                    <%= link_to "Edit", edit_settings_global_vendor_path(vendor), class: "event-section__link" %>
+                    <%= link_to "Remove",
+                                settings_global_vendor_path(vendor),
+                                data: { turbo_method: :delete, turbo_confirm: "Remove this global vendor?" },
+                                class: "event-section__link event-section__link--danger" %>
+                  </td>
+                </tr>
               <% end %>
-            </ul>
+              </tbody>
+            </table>
           <% else %>
             <p class="event-settings__empty">No global vendors yet.</p>
           <% end %>
