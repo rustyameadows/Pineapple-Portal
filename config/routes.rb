@@ -23,6 +23,11 @@ end
 post "global_assets/presign", to: "global_asset_uploads#create", as: :global_assets_presign
 
   resources :events do
+    member do
+      patch :archive
+      patch :restore
+    end
+
     get :vendor_options, to: "events/vendor_options#index"
     get :venue_options, to: "events/venue_options#index"
 

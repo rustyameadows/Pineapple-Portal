@@ -9,8 +9,8 @@
         <header class="event-section__header">
           <div>
             <p class="event-section__eyebrow">Events</p>
-            <h1 class="event-section__title">Active Projects</h1>
-            <p class="event-section__lead">Manage every event, from kickoff through wrap.</p>
+            <h1 class="event-section__title">All Events</h1>
+            <p class="event-section__lead">Review every event with active projects first and archived projects below.</p>
           </div>
           <div class="event-section__actions">
             <%= link_to "New Event", new_event_path, class: "event-section__cta" %>
@@ -18,37 +18,77 @@
         </header>
 
         <div class="event-section__body">
-          <% if @active_events.any? %>
-            <div class="event-card-grid event-card-grid--two">
-              <% @active_events.each do |event| %>
-                <%= render "card", event: event %>
-              <% end %>
+          <% if @active_events.any? || @archived_events.any? %>
+            <div class="events-all__table-wrap">
+              <table class="events-all__table">
+                <thead>
+                  <tr>
+                    <th>Event</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @active_events.each do |event| %>
+                    <tr class="events-all__row events-all__row--active">
+                      <td>
+                        <%= link_to event.name, event_path(event), class: "events-all__event-link" %>
+                      </td>
+                      <td><%= event.starts_on&.strftime("%b %-d, %Y") || "Date TBD" %></td>
+                      <td><%= (event.ends_on || event.starts_on)&.strftime("%b %-d, %Y") || "Date TBD" %></td>
+                      <td><%= event.location.presence || "To be announced" %></td>
+                      <td>
+                        <span class="events-all__status events-all__status--active">Active</span>
+                      </td>
+                      <td class="events-all__actions">
+                        <%= link_to "Open", event_path(event), class: "events-all__action-link" %>
+                        <%= link_to "Settings", event_settings_path(event), class: "events-all__action-link" %>
+                        <%= link_to "Archive",
+                                    archive_event_path(event, return_to: request.fullpath),
+                                    data: { turbo_method: :patch, turbo_confirm: "Archive this event? It will move to archived events." },
+                                    class: "events-all__action-link events-all__action-link--danger" %>
+                      </td>
+                    </tr>
+                  <% end %>
+
+                  <% if @archived_events.any? %>
+                    <tr class="events-all__divider-row">
+                      <th colspan="6">Archived Events</th>
+                    </tr>
+
+                    <% @archived_events.each do |event| %>
+                      <tr class="events-all__row events-all__row--archived">
+                        <td>
+                          <%= link_to event.name, event_path(event), class: "events-all__event-link" %>
+                        </td>
+                        <td><%= event.starts_on&.strftime("%b %-d, %Y") || "Date TBD" %></td>
+                        <td><%= (event.ends_on || event.starts_on)&.strftime("%b %-d, %Y") || "Date TBD" %></td>
+                        <td><%= event.location.presence || "To be announced" %></td>
+                        <td>
+                          <span class="events-all__status events-all__status--archived">Archived</span>
+                        </td>
+                        <td class="events-all__actions">
+                          <%= link_to "Open", event_path(event), class: "events-all__action-link" %>
+                          <%= link_to "Settings", event_settings_path(event), class: "events-all__action-link" %>
+                          <%= link_to "Restore",
+                                      restore_event_path(event, return_to: request.fullpath),
+                                      data: { turbo_method: :patch, turbo_confirm: "Restore this event to active projects?" },
+                                      class: "events-all__action-link" %>
+                        </td>
+                      </tr>
+                    <% end %>
+                  <% end %>
+                </tbody>
+              </table>
             </div>
           <% else %>
-            <div class="event-section__empty">No active events yet.</div>
+            <div class="event-section__empty">No events yet.</div>
           <% end %>
         </div>
       </section>
-
-      <% if @archived_events.any? %>
-        <section class="event-section">
-          <header class="event-section__header">
-            <div>
-              <p class="event-section__eyebrow">Archive</p>
-              <h2 class="event-section__title">Past Events</h2>
-              <p class="event-section__lead">Reference historical work and revive proven plans.</p>
-            </div>
-          </header>
-
-          <div class="event-section__body">
-            <div class="event-card-grid event-card-grid--two">
-              <% @archived_events.each do |event| %>
-                <%= render "card", event: event %>
-              <% end %>
-            </div>
-          </div>
-        </section>
-      <% end %>
     </div>
   </div>
 <% end %>

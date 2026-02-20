@@ -12,5 +12,6 @@ class WelcomeControllerTest < ActionDispatch::IntegrationTest
     get root_url
     assert_response :success
     assert_select "h1", text: "Your Active Events"
+    assert_select "a.event-section__cta[href='#{events_path}']", text: "All Events"
   end
 end
