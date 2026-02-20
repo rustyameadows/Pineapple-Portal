@@ -1,0 +1,105 @@
+<% selected_mode = @selection_mode.presence || "selected" %>
+
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Run of Show</p>
+            <h1 class="event-section__title">Import timeline items</h1>
+            <p class="event-section__lead">Copy Run of Show or filtered timeline items from another event.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Back to run of show", event_calendar_path(@event), class: "event-section__link" %>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <%= form_with url: event_calendar_item_import_path(@event), method: :get, local: true, html: { class: "event-settings__form" } do |form| %>
+            <div>
+              <%= form.label :source_event_id, "Source event" %><br>
+              <%= form.select :source_event_id,
+                              options_from_collection_for_select(@source_events, :id, :name, @source_event&.id),
+                              include_blank: "Select an event" %>
+            </div>
+
+            <div>
+              <%= form.label :source_timeline_ref, "Source timeline" %><br>
+              <% if @timeline_options.any? %>
+                <%= form.select :source_timeline_ref, options_for_select(@timeline_options, @source_timeline_ref) %>
+              <% else %>
+                <%= form.select :source_timeline_ref, options_for_select([]), { include_blank: "Select a timeline" }, disabled: true %>
+              <% end %>
+            </div>
+
+            <div class="event-settings__form-actions">
+              <%= form.submit "Load items" %>
+            </div>
+          <% end %>
+
+          <% if @source_event.present? && @timeline_options.empty? %>
+            <p class="event-section__note">The selected event does not have a Run of Show calendar yet.</p>
+          <% end %>
+
+          <% if @source_event.present? && @timeline_options.any? && @source_items.empty? %>
+            <p class="event-section__note">No items found for the selected timeline.</p>
+          <% end %>
+
+          <% if @source_items.any? %>
+            <%= form_with url: event_calendar_item_import_path(@event), method: :post, local: true, html: { class: "event-settings__form" } do |form| %>
+              <%= form.hidden_field :source_event_id, value: @source_event.id %>
+              <%= form.hidden_field :source_timeline_ref, value: @source_timeline_ref %>
+
+              <fieldset>
+                <legend>Import mode</legend>
+                <div>
+                  <%= form.radio_button :selection_mode, "selected", checked: selected_mode == "selected" %>
+                  <%= form.label :selection_mode_selected, "Selected items" %>
+                </div>
+                <div>
+                  <%= form.radio_button :selection_mode, "all", checked: selected_mode == "all" %>
+                  <%= form.label :selection_mode_all, "All listed items" %>
+                </div>
+              </fieldset>
+
+              <% import_actions = lambda do |item|
+                   check_box_tag(
+                     "item_ids[]",
+                     item.id,
+                     @selected_item_ids.include?(item.id),
+                     id: dom_id(item, :import_selection)
+                   )
+                 end %>
+
+              <%= render "events/calendars/schedule_table",
+                         items: @source_items,
+                         calendar: @source_calendar,
+                         group_by_date: true,
+                         show_tags: true,
+                         show_edit_button: false,
+                         actions_header: "Import",
+                         item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@source_event, item, return_to: request.fullpath)] },
+                         render_actions: import_actions %>
+
+              <div class="event-settings__form-actions">
+                <%= form.submit "Import items" %>
+              </div>
+            <% end %>
+          <% end %>
+
+          <section>
+            <h2 class="event-section__subtitle">Copy behavior</h2>
+            <p class="event-section__note">Copies title, notes, duration, schedule timing, time caption, and tags.</p>
+            <p class="event-section__note">Resets status to planned, unlocks the item, and clears vendor, location, and team assignments.</p>
+            <p class="event-section__note">Relative timing is preserved when the anchor is also imported. If an anchor is missing, the item is converted to absolute time using the source effective start when available.</p>
+          </section>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

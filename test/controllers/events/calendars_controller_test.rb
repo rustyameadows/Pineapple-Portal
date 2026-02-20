@@ -20,6 +20,7 @@ module Events
 
       assert_response :success
       assert_select "table.event-table tbody tr", minimum: 1
+      assert_select "a", text: "Import Items"
     end
   end
 end

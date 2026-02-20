@@ -126,6 +126,8 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
 
     get "questionnaires/import", to: "questionnaire_imports#new", as: :questionnaire_import
     post "questionnaires/import", to: "questionnaire_imports#create"
+    get "calendar/import", to: "calendar_item_imports#new", as: :calendar_item_import
+    post "calendar/import", to: "calendar_item_imports#create"
 
     resources :questionnaires do
       member do
