@@ -68,8 +68,6 @@
   </nav>
 
   <footer class="event-sidebar__footer" aria-label="Account navigation">
-    <%= link_to "Home", events_path, class: "event-sidebar__footer-button" %>
-
     <% if logged_in? %>
       <%= button_to "Log Out", logout_path,
                     method: :delete,
