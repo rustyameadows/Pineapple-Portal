@@ -203,25 +203,68 @@
                     </label>
                   </fieldset>
                 <% end %>
-              <% elsif segment.html_view_key == DocumentSegment::TEXT_PAGE_VIEW_KEY %>
-                <% text_options = segment.html_options.stringify_keys %>
-                <% body_markdown = text_options.fetch("body_markdown", "").to_s %>
-
-                <%= form.fields_for :options, text_options do |options_fields| %>
-                  <div class="generated-builder__form-row">
-                    <%= options_fields.label :body_markdown, "Page content" %>
-                    <%= options_fields.text_area :body_markdown,
-                                                value: body_markdown,
-                                                rows: 14,
-                                                class: "generated-builder__textarea",
-                                                placeholder: "Write notes, schedules, or instructions with Markdown syntax." %>
-                    <p class="generated-builder__form-help">
-                      Supports Markdown: headings, lists, bold, italics, blockquotes, and links.
-                    </p>
-                  </div>
-                <% end %>
-              <% end %>
-            <% end %>
+	              <% elsif segment.html_view_key == DocumentSegment::TEXT_PAGE_VIEW_KEY %>
+	                <% text_options = segment.html_options.stringify_keys %>
+	                <% body_markdown = text_options.fetch("body_markdown", "").to_s %>
+	
+	                <%= form.fields_for :options, text_options do |options_fields| %>
+	                  <div class="generated-builder__markdown-editor" data-controller="generated-markdown-editor">
+	                    <div class="generated-builder__form-row">
+	                      <%= options_fields.label :body_markdown, "Page content" %>
+	                      <%= options_fields.text_area :body_markdown,
+	                                                  value: body_markdown,
+	                                                  rows: 14,
+	                                                  class: "generated-builder__textarea",
+	                                                  placeholder: "Write notes, schedules, or instructions with Markdown syntax.",
+	                                                  data: {
+	                                                    generated_markdown_editor_target: "source",
+	                                                    action: "input->generated-markdown-editor#syncFromSource"
+	                                                  } %>
+	                      <p class="generated-builder__form-help">
+	                        Supports Markdown: headings, lists, bold, italics, blockquotes, and links.
+	                      </p>
+	                    </div>
+	
+	                    <div class="generated-builder__overlay-trigger-row">
+	                      <button type="button"
+	                              class="button button--tiny button--ghost generated-builder__overlay-trigger"
+	                              data-generated-markdown-editor-target="openButton"
+	                              data-action="generated-markdown-editor#open"
+	                              aria-haspopup="dialog"
+	                              hidden>
+	                        Open large editor
+	                      </button>
+	                    </div>
+	
+	                    <dialog class="generated-builder__overlay-dialog"
+	                            data-generated-markdown-editor-target="dialog"
+	                            data-action="cancel->generated-markdown-editor#handleCancel click->generated-markdown-editor#handleBackdropClose">
+	                      <div class="generated-builder__overlay-panel">
+	                        <header class="generated-builder__overlay-header">
+	                          <h3>Large text editor</h3>
+	                        </header>
+	                        <div class="generated-builder__overlay-body">
+	                          <textarea class="generated-builder__overlay-textarea"
+	                                    aria-label="Large markdown editor"
+	                                    data-generated-markdown-editor-target="overlay"
+	                                    data-action="input->generated-markdown-editor#syncFromOverlay"><%= body_markdown %></textarea>
+	                          <p class="generated-builder__form-help">
+	                            Supports Markdown: headings, lists, bold, italics, blockquotes, and links.
+	                          </p>
+	                        </div>
+	                        <footer class="generated-builder__overlay-actions">
+	                          <button type="button"
+	                                  class="button button--small"
+	                                  data-action="generated-markdown-editor#close">
+	                            Done
+	                          </button>
+	                        </footer>
+	                      </div>
+	                    </dialog>
+	                  </div>
+	                <% end %>
+	              <% end %>
+	            <% end %>
 
             <div class="generated-builder__form-actions">
               <%= form.submit "Save changes", class: "button button--small" %>
