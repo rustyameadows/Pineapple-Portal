@@ -1,1 +1,94 @@
-/* TODO: migrate legacy styles */
+.event-create-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.event-create-form__errors {
+  border: 1px solid color-mix(in srgb, var(--color-ruby) 35%, white);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-ruby) 10%, white);
+  color: color-mix(in srgb, var(--color-ruby) 75%, black);
+  padding: 0.9rem 1.1rem;
+}
+
+.event-create-form__errors h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.event-create-form__errors ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.event-create-form__errors li {
+  margin: 0.2rem 0;
+}
+
+.event-create-form__panel {
+  border: 1px solid var(--color-sea-foam);
+  border-radius: var(--radius-lg);
+  background: var(--color-light-cream);
+  padding: 1.4rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(60, 46, 37, 0.05);
+  display: grid;
+  gap: 1.25rem;
+}
+
+.event-create-form__grid {
+  display: grid;
+  gap: 0.95rem 1.1rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.event-create-form__group {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.event-create-form__group label {
+  margin: 0;
+  color: var(--color-dark-brown);
+  font-weight: var(--font-weight-semibold);
+}
+
+.event-create-form__group input[type="text"],
+.event-create-form__group input[type="date"] {
+  width: 100%;
+  border: 1px solid var(--color-sea-foam);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  color: var(--color-dark-brown);
+  padding: 0.6rem 0.7rem;
+}
+
+.event-create-form__group input[type="text"]:focus,
+.event-create-form__group input[type="date"]:focus {
+  outline: none;
+  border-color: var(--color-dark-brown);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-sea-foam) 45%, white);
+}
+
+.event-create-form__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-sea-foam) 60%, white);
+}
+
+@media (max-width: 700px) {
+  .event-create-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .event-create-form__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .event-create-form__actions .button {
+    width: 100%;
+  }
+}

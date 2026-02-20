@@ -1,6 +1,10 @@
-<%= form_with model: @event do |form| %>
+<% submit_label = local_assigns.fetch(:submit_label, @event.persisted? ? "Save Changes" : "Create Event") %>
+<% cancel_path = local_assigns.fetch(:cancel_path, @event.persisted? ? event_path(@event) : events_path) %>
+<% cancel_label = local_assigns.fetch(:cancel_label, "Cancel") %>
+
+<%= form_with model: @event, class: "event-create-form" do |form| %>
   <% if @event.errors.any? %>
-    <div class="errors">
+    <div class="event-create-form__errors">
       <h2><%= pluralize(@event.errors.count, "error") %> prevented saving:</h2>
       <ul>
         <% @event.errors.full_messages.each do |message| %>
@@ -10,32 +14,37 @@
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :name %><br>
-    <%= form.text_field :name %>
-  </div>
+  <div class="event-create-form__panel">
+    <div class="event-create-form__grid">
+      <div class="event-create-form__group">
+        <%= form.label :name, "Event Title" %>
+        <%= form.text_field :name, required: true, autofocus: true %>
+      </div>
 
-  <div>
-    <%= form.label :starts_on %><br>
-    <%= form.date_field :starts_on %>
-  </div>
+      <div class="event-create-form__group">
+        <%= form.label :starts_on, "Start Date" %>
+        <%= form.date_field :starts_on %>
+      </div>
 
-  <div>
-    <%= form.label :ends_on %><br>
-    <%= form.date_field :ends_on %>
-  </div>
+      <div class="event-create-form__group">
+        <%= form.label :ends_on, "End Date" %>
+        <%= form.date_field :ends_on %>
+      </div>
 
-  <div>
-    <%= form.label :location %><br>
-    <%= form.text_field :location %>
-  </div>
+      <div class="event-create-form__group">
+        <%= form.label :location, "Primary Location" %>
+        <%= form.text_field :location %>
+      </div>
 
-  <div>
-    <%= form.label :location_secondary, "Secondary location line" %><br>
-    <%= form.text_field :location_secondary, placeholder: "City, State" %>
-  </div>
+      <div class="event-create-form__group">
+        <%= form.label :location_secondary, "Secondary location line" %>
+        <%= form.text_field :location_secondary, placeholder: "City, State" %>
+      </div>
+    </div>
 
-  <div>
-    <%= form.submit %>
+    <div class="event-create-form__actions">
+      <%= link_to cancel_label, cancel_path, class: "button button--ghost" %>
+      <%= form.submit submit_label, class: "button" %>
+    </div>
   </div>
 <% end %>
