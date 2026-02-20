@@ -214,6 +214,13 @@ module CalendarHelper
     item.duration_minutes.present? ? "#{item.duration_minutes} min" : "—"
   end
 
+  def calendar_item_status_label(item)
+    status_key = item.status.to_s
+    return "Planned" if status_key.blank?
+
+    status_key.humanize.titleize
+  end
+
   def calendar_item_tags_label(item)
     names = item.event_calendar_tags.map(&:name).reject(&:blank?)
     names.any? ? names.join(', ') : "—"

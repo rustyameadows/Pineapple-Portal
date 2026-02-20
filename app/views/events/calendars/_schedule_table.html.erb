@@ -4,14 +4,20 @@
 <% group_label_proc = local_assigns[:group_label_proc] %>
 <% show_tags = true if local_assigns[:show_tags].nil? %>
 <% show_relative = !!local_assigns[:show_relative] %>
+<% show_status_first = !!local_assigns[:show_status_first] %>
 <% show_edit_button = !!local_assigns[:show_edit_button] %>
 <% render_actions = local_assigns[:render_actions] %>
 <% actions_header = local_assigns[:actions_header] || "" %>
 <% item_link_proc = local_assigns[:item_link_proc] || ->(item) { [item.title, edit_event_calendar_item_path(calendar.event, item, return_to: request.fullpath)] } %>
+<% base_column_count = show_relative ? 3 : 5 %>
+<% base_column_count += 1 if show_status_first %>
 
 <table class="event-table event-calendars__table">
   <thead>
     <tr>
+      <% if show_status_first %>
+        <th class="event-calendars__status-column">Status</th>
+      <% end %>
       <th class="event-calendars__schedule-column">Schedule</th>
       <th class="event-calendars__title-column">Title</th>
       <% if show_relative %>
@@ -40,13 +46,16 @@
       <% if group_by_date && bucket_key != current_bucket %>
         <% current_bucket = bucket_key %>
         <tr class="event-calendars__date-row">
-          <td colspan="<%= (show_relative ? 3 : 5) + (show_tags ? 1 : 0) + (show_edit_button ? 1 : 0) + (render_actions ? 1 : 0) %>"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
+          <td colspan="<%= base_column_count + (show_tags ? 1 : 0) + (show_edit_button ? 1 : 0) + (render_actions ? 1 : 0) %>"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
         </tr>
       <% end %>
 
       <% title_text, title_path = item_link_proc.call(item) %>
       <tr class="event-calendars__row <%= calendar_item_row_classes(item) %>">
         <% tooltip = calendar_item_relative_tooltip(item) %>
+        <% if show_status_first %>
+          <td class="event-calendars__status-value"><%= calendar_item_status_label(item) %></td>
+        <% end %>
         <td class="event-calendars__schedule-column" title="<%= tooltip.to_s %>"><%= calendar_item_time_only_label_with_marker(item, calendar.timezone) %></td>
         <td class="event-calendars__title-column">
           <%= link_to title_text, title_path, class: "event-calendars__title-link" %>

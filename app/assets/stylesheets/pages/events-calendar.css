@@ -157,6 +157,17 @@
   max-width: 400px;
 }
 
+.event-calendars__status-column {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
+
+.event-calendars__status-value {
+  white-space: nowrap;
+  font-weight: var(--font-weight-semibold);
+}
+
 .event-calendars__note {
   margin: 0;
   font-size: 0.85rem;
