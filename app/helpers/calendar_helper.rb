@@ -233,6 +233,13 @@ module CalendarHelper
     start_time.strftime("%A, %B %-d")
   end
 
+  def calendar_item_month_year_label(item, timezone)
+    start_time = item.effective_starts_at&.in_time_zone(timezone)
+    return "Date TBD" unless start_time
+
+    start_time.strftime("%B %Y")
+  end
+
   def calendar_item_row_classes(item)
     classes = []
     classes << "calendar-row--to-be-confirmed" if item.to_be_confirmed?

@@ -41,5 +41,21 @@ module Events
       assert_select "a", text: "View in Portal", count: 0
       assert_select "table.event-calendars__table thead tr th:first-child", text: "Schedule"
     end
+
+    test "decision view uses month year segment labels when no caption exists" do
+      get event_calendar_view_url(@event, @decision_view)
+
+      assert_response :success
+      assert_select ".event-calendars__date-label", text: "September 2025", minimum: 1
+    end
+
+    test "decision view segment label uses caption when present" do
+      calendar_items(:decision_flowers).update!(time_caption: "Contracts Month")
+
+      get event_calendar_view_url(@event, @decision_view)
+
+      assert_response :success
+      assert_select ".event-calendars__date-label", text: "Contracts Month", minimum: 1
+    end
   end
 end

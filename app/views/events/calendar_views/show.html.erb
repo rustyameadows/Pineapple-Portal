@@ -50,7 +50,7 @@
           <% if @items.any? %>
             <% custom_group_label = if decision_view
                                       ->(item) {
-                                        item.time_caption.presence || calendar_item_date_bucket(item, @calendar.timezone)
+                                        item.time_caption.presence || calendar_item_month_year_label(item, @calendar.timezone)
                                       }
                                     end %>
             <%= render "events/calendars/schedule_table",
