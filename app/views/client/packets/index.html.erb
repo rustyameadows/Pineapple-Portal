@@ -1,0 +1,44 @@
+<section class="client-page client-packets">
+  <header class="client-page__header">
+    <h1>Packets</h1>
+    <p>Documents your planning team has published for you.</p>
+  </header>
+
+  <% if @packets.any? %>
+    <table class="client-table client-packets__table">
+      <thead>
+        <tr>
+          <th>Document</th>
+          <th>Type</th>
+          <th>Updated</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @packets.each do |document| %>
+          <tr>
+            <td>
+              <%= link_to document.title,
+                          download_event_document_path(@event, document),
+                          target: "_blank",
+                          rel: "noopener" %>
+            </td>
+            <td><%= document.generated? ? "Generated" : "Upload" %></td>
+            <td><%= document.updated_at.strftime("%b %-d, %Y") %></td>
+            <td class="client-table__actions">
+              <%= link_to "Download",
+                          download_event_document_path(@event, document),
+                          class: "client-link",
+                          target: "_blank",
+                          rel: "noopener" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="client-placeholder">
+      <p>No packets have been shared yet.</p>
+    </div>
+  <% end %>
+</section>

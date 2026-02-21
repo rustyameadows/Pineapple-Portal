@@ -225,6 +225,7 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
         end
       end
       resources :designs, only: %i[index create]
+      resources :packets, only: :index
       resources :financials, only: :index
       resources :payments, only: :show do
         member do

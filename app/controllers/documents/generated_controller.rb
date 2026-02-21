@@ -130,7 +130,7 @@ module Documents
       @versions = generated_scope.where(logical_id: @document.logical_id).order(version: :desc).to_a
       @compiled_versions = @versions.select { |record| record.storage_uri.present? }
       @latest_version = @compiled_versions.max_by(&:version)
-      @available_pdf_documents = @event.documents.where(doc_kind: Document::DOC_KINDS[:uploaded]).order(:title)
+      @available_pdf_documents = @event.documents.where(doc_kind: Document::DOC_KINDS[:uploaded]).latest.order(:title)
       @available_html_views = DocumentSegment.html_view_options
       @available_timeline_views = timeline_view_options
       @builds = @document.builds.recent_first.to_a

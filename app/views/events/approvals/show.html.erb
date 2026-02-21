@@ -63,7 +63,7 @@
             <h2>Attachments</h2>
           </header>
           <%= render "attachments/list", attachments: @approval.attachments %>
-          <%= render "attachments/form", entity: @approval, documents: @event.documents.latest %>
+          <%= render "attachments/form", entity: @approval, documents: documents_for_entity(@approval) %>
           <%= render "attachments/upload_script" %>
         </section>
       </section>

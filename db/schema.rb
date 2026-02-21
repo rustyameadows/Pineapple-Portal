@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_13_123000) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -240,12 +240,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_13_123000) do
     t.string "checksum_sha256"
     t.integer "compiled_page_count"
     t.boolean "financial_portal_visible", default: false, null: false
+    t.boolean "packets_portal_visible", default: false, null: false
     t.index ["build_id"], name: "index_documents_on_build_id"
     t.index ["client_visible"], name: "index_documents_on_client_visible"
     t.index ["doc_kind"], name: "index_documents_on_doc_kind"
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["logical_id", "version"], name: "index_documents_on_logical_id_and_version", unique: true
     t.index ["logical_id"], name: "index_documents_on_logical_id_latest", unique: true, where: "(is_latest = true)"
+    t.index ["packets_portal_visible"], name: "index_documents_on_packets_portal_visible"
     t.index ["source"], name: "index_documents_on_source"
     t.index ["template_source_logical_id"], name: "index_documents_on_template_source_logical_id"
     t.check_constraint "size_bytes > 0", name: "documents_size_positive"

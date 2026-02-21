@@ -74,7 +74,7 @@
           </div>
           <div class="event-detail-block__content">
             <h3>Add Attachment</h3>
-            <%= render "attachments/form", entity: @payment, documents: @event.documents.latest %>
+            <%= render "attachments/form", entity: @payment, documents: documents_for_entity(@payment) %>
           </div>
           <%= render "attachments/upload_script" %>
         </section>

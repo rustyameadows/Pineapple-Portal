@@ -21,8 +21,9 @@
     <fieldset>
       <legend>Link existing document</legend>
       <div>
-        <%= form.label :document_id, "Document version" %><br>
-        <%= form.collection_select :document_id, documents, :id, ->(doc) { "#{doc.title} (v#{doc.version})" }, include_blank: true %>
+        <%= form.label :document_id, "Document" %><br>
+        <%= form.collection_select :document_id, documents, :id, ->(doc) { doc.title }, include_blank: true %>
+        <p>Only latest document versions are listed here.</p>
       </div>
 
       <div>

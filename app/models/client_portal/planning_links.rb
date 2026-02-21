@@ -95,6 +95,18 @@ module ClientPortal
           end
         },
         {
+          key: "packets",
+          default_visible: true,
+          resolver: lambda do |event, _context|
+            {
+              key: "packets",
+              title: "Packets",
+              description: "Published packet documents from your planning team.",
+              path: ROUTES.client_event_packets_path(event.portal_slug.presence || event.id)
+            }
+          end
+        },
+        {
           key: "financials",
           default_visible: true,
           resolver: lambda do |event, _context|

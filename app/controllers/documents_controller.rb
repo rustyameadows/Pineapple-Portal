@@ -6,11 +6,9 @@ class DocumentsController < ApplicationController
   before_action :authorize_download, only: :download
 
   def index
+    assign_packet_component_filter_state
     @document_groups = build_document_groups
-    @latest_documents = @event.documents
-                                  .where(doc_kind: Document::DOC_KINDS[:uploaded])
-                                  .latest
-                                  .order(updated_at: :desc, title: :asc)
+    @latest_documents = filtered_uploaded_documents(@event.documents)
     @generated_documents = generated_manifest
   end
 
@@ -39,7 +37,15 @@ class DocumentsController < ApplicationController
   end
 
   def create
-    @document = @event.documents.new(document_params)
+    attrs = document_params
+    @document = @event.documents.new(attrs)
+
+    if disallowed_staff_source_selected?(@document, attrs[:source])
+      @existing_versions = versions_for(@document.logical_id)
+      @next_version_number = (@existing_versions.first&.version || 0) + 1
+      render :new, status: :unprocessable_content
+      return
+    end
 
     if @document.save
       redirect_to event_document_path(@event, @document), notice: "Document saved."
@@ -54,7 +60,13 @@ class DocumentsController < ApplicationController
   end
 
   def update
-    if @document.update(edit_document_params)
+    attrs = edit_document_params
+    if disallowed_staff_source_selected?(@document, attrs[:source])
+      render :edit, status: :unprocessable_content
+      return
+    end
+
+    if @document.update(attrs)
       redirect_to safe_return_to(fallback: event_document_path(@event, @document)), notice: "Document updated."
     else
       render :edit, status: :unprocessable_content
@@ -94,11 +106,11 @@ class DocumentsController < ApplicationController
   end
 
   def document_params
-    params.require(:document).permit(:title, :storage_uri, :checksum, :size_bytes, :content_type, :logical_id, :client_visible, :financial_portal_visible, :source)
+    params.require(:document).permit(:title, :storage_uri, :checksum, :size_bytes, :content_type, :logical_id, :client_visible, :financial_portal_visible, :packets_portal_visible, :source)
   end
 
   def edit_document_params
-    params.require(:document).permit(:title, :content_type, :client_visible, :financial_portal_visible, :source)
+    params.require(:document).permit(:title, :content_type, :client_visible, :financial_portal_visible, :packets_portal_visible, :source)
   end
 
   def available_entities_for(event)
@@ -108,12 +120,10 @@ class DocumentsController < ApplicationController
   end
 
   def render_grouped_documents(source_key)
+    assign_packet_component_filter_state
     @source_key = source_key.to_s
     @label = Document.source_label(@source_key)
-    @documents = @event.documents
-                         .where(source: @source_key, doc_kind: Document::DOC_KINDS[:uploaded])
-                         .latest
-                         .order(updated_at: :desc, title: :asc)
+    @documents = filtered_uploaded_documents(@event.documents.where(source: @source_key))
 
     if @source_key == "packet"
       generated_latest = latest_compiled_generated_documents
@@ -123,6 +133,17 @@ class DocumentsController < ApplicationController
     @document_groups = build_document_groups
     @generated_documents = @source_key == "packet" ? generated_manifest : []
     render :group
+  end
+
+  def filtered_uploaded_documents(scope)
+    relation = scope.where(doc_kind: Document::DOC_KINDS[:uploaded]).latest
+
+    unless include_packet_component_documents?
+      packet_component_ids = packet_component_logical_ids_for_event
+      relation = relation.where.not(logical_id: packet_component_ids) if packet_component_ids.any?
+    end
+
+    relation.order(updated_at: :desc, title: :asc)
   end
 
   def build_document_groups
@@ -188,5 +209,28 @@ class DocumentsController < ApplicationController
     generated_scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated]).where.not(storage_uri: nil)
     grouped = generated_scope.order(version: :desc).group_by(&:logical_id)
     grouped.values.map { |versions| versions.max_by(&:version) }
+  end
+
+  def disallowed_staff_source_selected?(document, source_value)
+    requested_source = source_value.to_s
+    return false if requested_source.blank?
+    return false unless requested_source == "client_upload"
+    return false if document.persisted? && document.source == "client_upload"
+
+    document.errors.add(:source, "client uploads can only be created from the client portal")
+    true
+  end
+
+  def include_packet_component_documents?
+    ActiveModel::Type::Boolean.new.cast(params[:include_packet_components])
+  end
+
+  def packet_component_logical_ids_for_event
+    @packet_component_logical_ids_for_event ||= Document.packet_component_logical_ids_for_event(@event)
+  end
+
+  def assign_packet_component_filter_state
+    @show_packet_component_documents = include_packet_component_documents?
+    @packet_component_document_count = packet_component_logical_ids_for_event.count
   end
 end
