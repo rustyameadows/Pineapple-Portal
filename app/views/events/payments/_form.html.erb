@@ -1,6 +1,6 @@
-<%= form_with model: [@event, payment], class: "event-form" do |form| %>
+<%= form_with model: [@event, payment], class: "event-form event-payments-form" do |form| %>
   <% if payment.errors.any? %>
-    <div class="event-form__errors">
+    <div class="event-form__errors event-payments-form__errors">
       <p><strong><%= pluralize(payment.errors.count, "error") %> prevented this payment from being saved:</strong></p>
       <ul>
         <% payment.errors.full_messages.each do |message| %>
@@ -10,56 +10,74 @@
     </div>
   <% end %>
 
-  <div class="event-form__group">
-    <%= form.label :title %>
-    <%= form.text_field :title, required: true %>
-  </div>
-
-  <div class="event-form__row">
-    <div class="event-form__group">
-      <%= form.label :amount %>
-      <%= form.number_field :amount, step: 0.01, min: 0 %>
+  <section class="event-payments-form__section">
+    <header class="event-payments-form__section-header">
+      <h2 class="event-payments-form__section-title">Payment Details</h2>
+      <p class="event-payments-form__hint">Set payment amount, due date, and internal notes for your planning team.</p>
+    </header>
+    <div class="event-payments-form__grid">
+      <div class="event-form__group event-payments-form__group event-payments-form__group--full">
+        <%= form.label :title %>
+        <%= form.text_field :title, required: true %>
+      </div>
+      <div class="event-form__group event-payments-form__group">
+        <%= form.label :amount %>
+        <%= form.number_field :amount, step: 0.01, min: 0 %>
+      </div>
+      <div class="event-form__group event-payments-form__group">
+        <%= form.label :due_on, "Due Date" %>
+        <%= form.date_field :due_on %>
+      </div>
+      <div class="event-form__group event-payments-form__group event-payments-form__group--full">
+        <%= form.label :description, "Notes" %>
+        <%= form.text_area :description, rows: 4 %>
+      </div>
     </div>
-    <div class="event-form__group">
-      <%= form.label :due_on, "Due Date" %>
-      <%= form.date_field :due_on %>
-    </div>
-  </div>
+  </section>
 
-  <div class="event-form__group">
-    <%= form.label :description, "Notes" %>
-    <%= form.text_area :description, rows: 4 %>
-  </div>
-
-  <div class="event-form__row">
-    <div class="event-form__group">
-      <%= form.label :status %>
-      <%= form.select :status, Payment.statuses.keys.map { |key| [key.humanize, key] } %>
+  <section class="event-payments-form__section">
+    <header class="event-payments-form__section-header">
+      <h2 class="event-payments-form__section-title">Portal &amp; Status</h2>
+      <p class="event-payments-form__hint">Control portal visibility and track payment status milestones.</p>
+    </header>
+    <div class="event-payments-form__grid">
+      <div class="event-form__group event-payments-form__group">
+        <%= form.label :status %>
+        <%= form.select :status, Payment.statuses.keys.map { |key| [key.humanize, key] } %>
+      </div>
+      <div class="event-form__group event-form__group--checkbox event-payments-form__group event-payments-form__group--checkbox">
+        <label class="event-payments-form__checkbox">
+          <%= form.check_box :client_visible %>
+          <span>Visible on client portal</span>
+        </label>
+        <p class="event-payments-form__hint">Enabled payments are visible in the client portal.</p>
+      </div>
+      <div class="event-form__group event-payments-form__group">
+        <%= form.label :paid_at, "Paid On" %>
+        <%= form.datetime_local_field :paid_at %>
+      </div>
+      <div class="event-form__group event-payments-form__group">
+        <%= form.label :paid_by_client_at, "Marked Paid By Client" %>
+        <%= form.datetime_local_field :paid_by_client_at %>
+      </div>
     </div>
-    <div class="event-form__group event-form__group--checkbox">
-      <%= form.check_box :client_visible %>
-      <%= form.label :client_visible, "Visible on client portal" %>
-    </div>
-  </div>
+  </section>
 
-  <div class="event-form__row">
-    <div class="event-form__group">
-      <%= form.label :paid_at, "Paid On" %>
-      <%= form.datetime_local_field :paid_at %>
+  <section class="event-payments-form__section">
+    <header class="event-payments-form__section-header">
+      <h2 class="event-payments-form__section-title">Client Record</h2>
+      <p class="event-payments-form__hint">Store any note the client provided when they marked this payment paid.</p>
+    </header>
+    <div class="event-payments-form__grid">
+      <div class="event-form__group event-payments-form__group event-payments-form__group--full">
+        <%= form.label :client_note, "Client Note" %>
+        <%= form.text_area :client_note, rows: 4 %>
+      </div>
     </div>
-    <div class="event-form__group">
-      <%= form.label :paid_by_client_at, "Marked Paid By Client" %>
-      <%= form.datetime_local_field :paid_by_client_at %>
-    </div>
-  </div>
+  </section>
 
-  <div class="event-form__group">
-    <%= form.label :client_note, "Client Note" %>
-    <%= form.text_area :client_note, rows: 3 %>
-  </div>
-
-  <div class="event-form__actions">
-    <%= form.submit class: "event-form__submit" %>
-    <%= link_to "Cancel", payment.persisted? ? event_payment_path(@event, payment) : event_payments_path(@event), class: "event-form__cancel" %>
+  <div class="event-form__actions event-payments-form__actions">
+    <%= form.submit class: "event-form__submit event-payments-form__submit" %>
+    <%= link_to "Cancel", payment.persisted? ? event_payment_path(@event, payment) : event_payments_path(@event), class: "event-form__cancel event-payments-form__cancel" %>
   </div>
 <% end %>
