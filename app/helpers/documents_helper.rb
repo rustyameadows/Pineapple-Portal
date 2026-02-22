@@ -47,7 +47,7 @@ module DocumentsHelper
     event = case entity
             when Event
               entity
-            when Questionnaire, Question
+            when Questionnaire, Question, Payment, Approval
               entity.event
             else
               nil

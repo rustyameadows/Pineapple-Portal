@@ -10,7 +10,7 @@ module Client
     end
 
     def show
-      @attachments = @approval.attachments.includes(document: :event)
+      @attachments = @approval.attachments.includes(document: :event).order(:position, :created_at)
     end
 
     def accept

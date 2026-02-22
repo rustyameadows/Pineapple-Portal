@@ -84,7 +84,7 @@
           <% document = attachment.resolved_document %>
           <li>
             <% if document.present? %>
-              <%= link_to document.title, download_event_document_path(@event, document) %>
+              <%= link_to document.title, download_event_document_path(@event, document), target: "_blank", rel: "noopener" %>
               <span class="client-attachment-meta">(v<%= document.version %>)</span>
             <% elsif attachment.document_logical_id.present? %>
               Logical ID: <%= attachment.document_logical_id %>

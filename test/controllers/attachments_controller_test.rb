@@ -3,6 +3,7 @@ require "test_helper"
 class AttachmentsControllerTest < ActionDispatch::IntegrationTest
   setup do
     log_in_as(users(:one))
+    @event = events(:one)
     @questionnaire = questionnaires(:checklist)
     @document = documents(:contract_v1)
   end
@@ -40,6 +41,59 @@ class AttachmentsControllerTest < ActionDispatch::IntegrationTest
     attachment = Attachment.order(:created_at).last
     assert_equal "answer", attachment.context
     assert attachment.document.present?
+  end
+
+  test "creates attachment for approval with context forced to other" do
+    approval = @event.approvals.create!(
+      title: "Layout Approval",
+      client_visible: true,
+      status: :pending
+    )
+
+    assert_difference("Attachment.count") do
+      post attachments_url, params: {
+        attachment: {
+          entity_type: "Approval",
+          entity_id: approval.id,
+          document_id: @document.id,
+          context: "answer"
+        }
+      }
+    end
+
+    attachment = Attachment.order(:created_at).last
+    assert_equal approval, attachment.entity
+    assert_equal "other", attachment.context
+    assert_equal @document, attachment.document
+  end
+
+  test "uploads new document and attaches it to approval" do
+    approval = @event.approvals.create!(
+      title: "Menu Approval",
+      client_visible: true,
+      status: :pending
+    )
+
+    assert_difference(["Document.count", "Attachment.count"]) do
+      post attachments_url, params: {
+        attachment: {
+          entity_type: "Approval",
+          entity_id: approval.id,
+          file_upload_title: "Approval Upload.pdf",
+          file_upload_storage_uri: "documents/#{@event.id}/abc/v1/approval-upload.pdf",
+          file_upload_checksum: "feedbeef",
+          file_upload_size_bytes: "1024",
+          file_upload_content_type: "application/pdf",
+          file_upload_logical_id: SecureRandom.uuid
+        }
+      }
+    end
+
+    attachment = Attachment.order(:created_at).last
+    assert_equal approval, attachment.entity
+    assert_equal "other", attachment.context
+    assert attachment.document.present?
+    assert_equal @event, attachment.document.event
   end
 
   test "removes attachment" do

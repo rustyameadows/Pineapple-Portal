@@ -10,10 +10,11 @@
                      end
   presign_url = event_for_entity ? presign_event_documents_path(event_for_entity) : nil
   question_entity = entity.is_a?(Question)
+  approval_entity = entity.is_a?(Approval)
   next_position = entity.attachments.maximum(:position).to_i + 1
 %>
 
-<%= form_with url: attachments_path, data: (presign_url ? { attachment_upload_form: true, presign_url: presign_url } : {}) do |form| %>
+<%= form_with url: attachments_path, scope: :attachment, data: (presign_url ? { attachment_upload_form: true, presign_url: presign_url } : {}) do |form| %>
   <%= form.hidden_field :entity_type, value: entity.class.name %>
   <%= form.hidden_field :entity_id, value: entity.id %>
 
@@ -67,6 +68,9 @@
 
   <% if question_entity %>
     <%= form.hidden_field :context, value: "answer" %>
+    <%= form.hidden_field :position, value: next_position %>
+  <% elsif approval_entity %>
+    <%= form.hidden_field :context, value: "other" %>
     <%= form.hidden_field :position, value: next_position %>
   <% else %>
     <div>

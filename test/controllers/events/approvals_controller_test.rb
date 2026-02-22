@@ -86,5 +86,40 @@ module Events
       assert_response :success
       assert_select "button", text: "Clear response", count: 0
     end
+
+    test "show renders approval attachments" do
+      approval = @event.approvals.create!(
+        title: "Photo Wall Approval",
+        client_visible: true,
+        status: :pending
+      )
+      approval.attachments.create!(
+        document: documents(:contract_v1),
+        context: :other,
+        position: 1
+      )
+
+      get event_approval_url(@event, approval)
+
+      assert_response :success
+      assert_select "h2", text: "Attachments"
+      assert_select "a", text: "Production Contract"
+    end
+
+    test "show renders scoped approval attachment form without context dropdown" do
+      approval = @event.approvals.create!(
+        title: "Audio Approval",
+        client_visible: true,
+        status: :pending
+      )
+
+      get event_approval_url(@event, approval)
+
+      assert_response :success
+      assert_select "form input[name='attachment[entity_type]'][value='Approval']", count: 1
+      assert_select "form input[name='attachment[entity_id]'][value='#{approval.id}']", count: 1
+      assert_select "form input[name='attachment[context]'][value='other']", count: 1
+      assert_select "form select[name='attachment[context]']", count: 0
+    end
   end
 end

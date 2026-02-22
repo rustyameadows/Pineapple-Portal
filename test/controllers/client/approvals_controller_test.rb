@@ -75,7 +75,7 @@ module Client
 
       assert_response :success
       assert_select "h1", text: approval.title
-      assert_select "button", text: "Accept"
+      assert_select "button", text: "Approve"
       assert_select "textarea[name='approval[client_note]'][required]", count: 1
       assert_select "a", text: "Production Contract"
     end
@@ -94,7 +94,7 @@ module Client
       get client_event_approval_url(@event, approval)
 
       assert_response :success
-      assert_select "button", text: "Accept", count: 0
+      assert_select "button", text: "Approve", count: 0
       assert_select "textarea[name='approval[client_note]']", count: 0
       assert_select "h2", text: "Client response"
       assert_select ".client-pill", text: "Returned with comments"

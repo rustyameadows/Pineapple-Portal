@@ -108,7 +108,7 @@
               <h2 class="event-approvals__card-title">Attachments</h2>
             </header>
             <div class="event-approvals__attachments-list">
-              <%= render "attachments/list", attachments: @approval.attachments %>
+              <%= render "attachments/list", attachments: @approval.attachments.includes(document: :event).order(:position, :created_at) %>
             </div>
             <div class="event-approvals__attachments-form">
               <%= render "attachments/form", entity: @approval, documents: documents_for_entity(@approval) %>
