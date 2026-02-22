@@ -14,6 +14,7 @@ module Client
       assert_response :success
       assert_select "#planning-grid h3", text: "Guest List"
       assert_select "#planning-grid h3", text: "Packets"
+      assert_select "#planning-grid h3", text: "Approvals"
       assert_select "#planning-grid h3", text: "Guest Book"
     end
 
@@ -37,6 +38,17 @@ module Client
 
       assert_response :success
       assert_select "#planning-grid h3", text: "Packets", count: 0
+    end
+
+    test "planning grid hides approvals when disabled" do
+      @event.disable_planning_link("approvals")
+      @event.save!
+      @event.reload
+
+      get client_event_url(@event)
+
+      assert_response :success
+      assert_select "#planning-grid h3", text: "Approvals", count: 0
     end
 
     test "planning grid respects custom ordering" do

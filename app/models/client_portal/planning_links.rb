@@ -107,6 +107,18 @@ module ClientPortal
           end
         },
         {
+          key: "approvals",
+          default_visible: true,
+          resolver: lambda do |event, _context|
+            {
+              key: "approvals",
+              title: "Approvals",
+              description: "Review and respond to planner approvals.",
+              path: ROUTES.client_event_approvals_path(event.portal_slug.presence || event.id)
+            }
+          end
+        },
+        {
           key: "financials",
           default_visible: true,
           resolver: lambda do |event, _context|

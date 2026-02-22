@@ -30,7 +30,7 @@
               <% @approvals.each do |approval| %>
                 <tr>
                   <td><%= link_to approval.title, event_approval_path(@event, approval) %></td>
-                  <td class="event-table__status event-table__status--<%= approval.status %>"><%= approval.status.humanize %></td>
+                  <td class="event-table__status event-table__status--<%= approval.status %>"><%= approval.status_label %></td>
                   <td><%= approval.client_visible? ? "Yes" : "No" %></td>
                   <td><%= l(approval.updated_at, format: :short) %></td>
                   <td class="event-table__actions">

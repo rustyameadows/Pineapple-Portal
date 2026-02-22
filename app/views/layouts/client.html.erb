@@ -36,6 +36,7 @@
       pages/client-portal
       pages/client-designs
       pages/client-packets
+      pages/client-approvals
       pages/client-financials
       pages/client-questionnaires
       pages/client-decision-calendar
@@ -83,5 +84,8 @@
     </main>
 
     <%= yield :scripts %>
+    <% if defined?(RailsAgentAnnotator) %>
+      <%= rails_agent_annotator %>
+    <% end %>
   </body>
 </html>

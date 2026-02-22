@@ -1,6 +1,6 @@
-<%= form_with model: [@event, approval], class: "event-form" do |form| %>
+<%= form_with model: [@event, approval], class: "event-form event-approvals-form" do |form| %>
   <% if approval.errors.any? %>
-    <div class="event-form__errors">
+    <div class="event-form__errors event-approvals-form__errors">
       <p><strong><%= pluralize(approval.errors.count, "error") %> prevented this approval from being saved:</strong></p>
       <ul>
         <% approval.errors.full_messages.each do |message| %>
@@ -10,50 +10,70 @@
     </div>
   <% end %>
 
-  <div class="event-form__group">
-    <%= form.label :title %>
-    <%= form.text_field :title, required: true %>
-  </div>
-
-  <div class="event-form__group">
-    <%= form.label :summary, "Summary" %>
-    <%= form.text_area :summary, rows: 4 %>
-  </div>
-
-  <div class="event-form__group">
-    <%= form.label :instructions, "Instructions" %>
-    <%= form.text_area :instructions, rows: 6 %>
-  </div>
-
-  <div class="event-form__row">
-    <div class="event-form__group">
-      <%= form.label :status %>
-      <%= form.select :status, Approval.statuses.keys.map { |key| [key.humanize, key] } %>
+  <section class="event-approvals-form__section">
+    <header class="event-approvals-form__section-header">
+      <h2 class="event-approvals-form__section-title">Approval Details</h2>
+      <p class="event-approvals-form__hint">Define what the client is reviewing and any context they need before responding.</p>
+    </header>
+    <div class="event-approvals-form__grid">
+      <div class="event-form__group event-approvals-form__group event-approvals-form__group--full">
+        <%= form.label :title %>
+        <%= form.text_field :title, required: true %>
+      </div>
+      <div class="event-form__group event-approvals-form__group event-approvals-form__group--full">
+        <%= form.label :summary, "Summary" %>
+        <%= form.text_area :summary, rows: 4 %>
+      </div>
+      <div class="event-form__group event-approvals-form__group event-approvals-form__group--full">
+        <%= form.label :instructions, "Instructions" %>
+        <%= form.text_area :instructions, rows: 6 %>
+      </div>
     </div>
-    <div class="event-form__group event-form__group--checkbox">
-      <%= form.check_box :client_visible %>
-      <%= form.label :client_visible, "Visible on client portal" %>
-    </div>
-  </div>
+  </section>
 
-  <div class="event-form__row">
-    <div class="event-form__group">
-      <%= form.label :acknowledged_at, "Acknowledged On" %>
-      <%= form.datetime_local_field :acknowledged_at %>
+  <section class="event-approvals-form__section">
+    <header class="event-approvals-form__section-header">
+      <h2 class="event-approvals-form__section-title">Portal & Status</h2>
+      <p class="event-approvals-form__hint">Control whether the approval is published and track acknowledgement timing.</p>
+    </header>
+    <div class="event-approvals-form__grid">
+      <div class="event-form__group event-approvals-form__group">
+        <%= form.label :status %>
+        <%= form.select :status, Approval.statuses.keys.map { |key| [Approval::STATUS_LABELS.fetch(key.to_sym, key.humanize), key] } %>
+      </div>
+      <div class="event-form__group event-form__group--checkbox event-approvals-form__group event-approvals-form__group--checkbox">
+        <label class="event-approvals-form__checkbox">
+          <%= form.check_box :client_visible %>
+          <span>Visible on client portal</span>
+        </label>
+        <p class="event-approvals-form__hint">Enabled approvals are visible in the client portal.</p>
+      </div>
+      <div class="event-form__group event-approvals-form__group">
+        <%= form.label :acknowledged_at, "Responded On" %>
+        <%= form.datetime_local_field :acknowledged_at %>
+      </div>
     </div>
-    <div class="event-form__group">
-      <%= form.label :client_name, "Client Name" %>
-      <%= form.text_field :client_name %>
+  </section>
+
+  <section class="event-approvals-form__section">
+    <header class="event-approvals-form__section-header">
+      <h2 class="event-approvals-form__section-title">Client Response Record</h2>
+      <p class="event-approvals-form__hint">Use these fields to document the client’s name and any comments they provided.</p>
+    </header>
+    <div class="event-approvals-form__grid">
+      <div class="event-form__group event-approvals-form__group">
+        <%= form.label :client_name, "Client Name" %>
+        <%= form.text_field :client_name %>
+      </div>
+      <div class="event-form__group event-approvals-form__group event-approvals-form__group--full">
+        <%= form.label :client_note, "Client Note" %>
+        <%= form.text_area :client_note, rows: 4 %>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <div class="event-form__group">
-    <%= form.label :client_note, "Client Note" %>
-    <%= form.text_area :client_note, rows: 4 %>
-  </div>
-
-  <div class="event-form__actions">
-    <%= form.submit class: "event-form__submit" %>
-    <%= link_to "Cancel", approval.persisted? ? event_approval_path(@event, approval) : event_approvals_path(@event), class: "event-form__cancel" %>
+  <div class="event-form__actions event-approvals-form__actions">
+    <%= form.submit class: "event-form__submit event-approvals-form__submit" %>
+    <%= link_to "Cancel", approval.persisted? ? event_approval_path(@event, approval) : event_approvals_path(@event), class: "event-form__cancel event-approvals-form__cancel" %>
   </div>
 <% end %>

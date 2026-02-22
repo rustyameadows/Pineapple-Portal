@@ -44,7 +44,11 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
     resources :event_photo_documents, only: :create, module: :events
 
     resources :payments, module: :events
-    resources :approvals, module: :events
+    resources :approvals, module: :events do
+      member do
+        patch :clear_response
+      end
+    end
 
     resources :calendars, only: :index, module: :events, controller: :calendars
 
@@ -225,6 +229,12 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
         end
       end
       resources :designs, only: %i[index create]
+      resources :approvals, only: %i[index show] do
+        member do
+          patch :accept
+          patch :respond
+        end
+      end
       resources :packets, only: :index
       resources :financials, only: :index
       resources :payments, only: :show do

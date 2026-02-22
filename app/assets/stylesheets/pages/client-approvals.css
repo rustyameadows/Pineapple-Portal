@@ -1,0 +1,24 @@
+.client-approvals__table td:first-child a {
+  word-break: break-word;
+}
+
+.client-approvals__actions {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.client-approvals__form {
+  margin: 0;
+}
+
+.client-pill--acknowledged {
+  border-color: var(--color-light-green);
+  background: color-mix(in srgb, var(--color-light-green) 25%, white);
+  color: var(--color-dark-green);
+}
+
+.client-pill--approved {
+  border-color: var(--color-light-green);
+  background: color-mix(in srgb, var(--color-light-green) 25%, white);
+  color: var(--color-dark-green);
+}

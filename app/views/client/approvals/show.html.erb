@@ -1,0 +1,104 @@
+<section class="client-page client-approvals">
+  <header class="client-page__header client-page__header--split">
+    <div>
+      <h1><%= @approval.title %></h1>
+      <% if @approval.pending? %>
+        <p>Awaiting your response</p>
+      <% elsif @approval.approved? %>
+        <p>Approved <%= l(@approval.acknowledged_at, format: :long) %></p>
+      <% else %>
+        <p>Returned with comments <%= l(@approval.acknowledged_at, format: :long) %></p>
+      <% end %>
+    </div>
+    <div class="client-page__actions">
+      <%= link_to "Back to Approvals",
+                  client_event_approvals_path(@event.portal_slug.presence || @event.id),
+                  class: "client-button client-button--secondary" %>
+    </div>
+  </header>
+
+  <section class="client-card client-card--detail">
+    <header class="client-card__header">
+      <span class="client-pill client-pill--<%= @approval.status %>"><%= @approval.status_label %></span>
+    </header>
+
+    <% if @approval.summary.present? %>
+      <div class="client-card__body">
+        <h2>Summary</h2>
+        <%= simple_format(@approval.summary) %>
+      </div>
+    <% end %>
+
+    <% if @approval.instructions.present? %>
+      <div class="client-card__body">
+        <h2>Instructions</h2>
+        <%= simple_format(@approval.instructions) %>
+      </div>
+    <% end %>
+
+    <% if @approval.client_name.present? || @approval.client_note.present? %>
+      <div class="client-card__body client-card__body--muted">
+        <h2>Client response</h2>
+        <% if @approval.client_name.present? %>
+          <p><strong>Responder:</strong> <%= @approval.client_name %></p>
+        <% end %>
+        <% if @approval.client_note.present? %>
+          <%= simple_format(@approval.client_note) %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if @approval.pending? %>
+      <div class="client-approvals__actions">
+        <%= button_to "Approve",
+                      accept_client_event_approval_path(@event.portal_slug.presence || @event.id, @approval),
+                      method: :patch,
+                      class: "client-button" %>
+
+        <%= form_with url: respond_client_event_approval_path(@event.portal_slug.presence || @event.id, @approval),
+                      method: :patch,
+                      scope: :approval,
+                      class: "client-form client-approvals__form" do |form| %>
+          <div class="client-form__group">
+            <%= form.label :client_note, "Respond with comments" %>
+            <%= form.text_area :client_note,
+                               required: true,
+                               rows: 4,
+                               placeholder: "Share your requested changes or confirmation details." %>
+          </div>
+          <div class="client-form__actions">
+            <%= form.submit "Respond with comments", class: "client-button" %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+
+  <section class="client-card client-card--attachments">
+    <header class="client-card__header">
+      <h2>Attachments</h2>
+    </header>
+    <% if @attachments.any? %>
+      <ul class="client-attachment-list">
+        <% @attachments.each do |attachment| %>
+          <% document = attachment.resolved_document %>
+          <li>
+            <% if document.present? %>
+              <%= link_to document.title, download_event_document_path(@event, document) %>
+              <span class="client-attachment-meta">(v<%= document.version %>)</span>
+            <% elsif attachment.document_logical_id.present? %>
+              Logical ID: <%= attachment.document_logical_id %>
+            <% else %>
+              <span>No document linked.</span>
+            <% end %>
+            <% if attachment.notes.present? %>
+              <p class="client-attachment-notes"><%= attachment.notes %></p>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="client-empty">No supporting documents yet.</p>
+    <% end %>
+  </section>
+</section>

@@ -5,67 +5,117 @@
     <div class="event-layout__main">
       <%= render "shared/flash" %>
 
-      <section class="event-section event-section--detail">
+      <section class="event-section event-section--detail event-approvals event-approvals--show">
+        <div class="event-approvals__top-actions">
+          <div class="event-approvals__top-actions-right">
+            <%= link_to "Edit", edit_event_approval_path(@event, @approval), class: "event-approvals__action-link" %>
+            <%= button_to "Delete", event_approval_path(@event, @approval), method: :delete, data: { confirm: "Delete this approval?" }, class: "event-approvals__delete" %>
+          </div>
+        </div>
+
         <header class="event-section__header">
           <div>
             <p class="event-section__eyebrow">Approval</p>
             <h1 class="event-section__title"><%= @approval.title %></h1>
-            <% if @approval.acknowledged_at.present? %>
-              <p class="event-section__subtitle">Acknowledged <%= l(@approval.acknowledged_at, format: :long) %></p>
-            <% else %>
-              <p class="event-section__subtitle">Awaiting client acknowledgement</p>
+            <% if @approval.approved? && @approval.acknowledged_at.present? %>
+              <p class="event-section__subtitle">Approved <%= l(@approval.acknowledged_at, format: :long) %></p>
+            <% elsif @approval.acknowledged? && @approval.acknowledged_at.present? %>
+              <p class="event-section__subtitle">Returned with comments <%= l(@approval.acknowledged_at, format: :long) %></p>
             <% end %>
-          </div>
-          <div class="event-section__actions">
-            <%= link_to "Edit", edit_event_approval_path(@event, @approval), class: "event-section__link" %>
-            <%= button_to "Delete", event_approval_path(@event, @approval), method: :delete, data: { confirm: "Delete this approval?" }, class: "event-section__danger" %>
           </div>
         </header>
 
-        <div class="event-summary-grid">
-          <div>
-            <h2 class="event-summary-grid__label">Status</h2>
-            <p class="event-summary-grid__value"><span class="event-pill event-pill--<%= @approval.status %>"><%= @approval.status.humanize %></span></p>
+        <section class="event-approvals__hero" aria-label="Approval status">
+          <div class="event-approvals__hero-item">
+            <p class="event-approvals__hero-label">Status</p>
+            <p class="event-approvals__hero-value">
+              <span class="event-approvals__status-pill event-approvals__status-pill--<%= @approval.status %>"><%= @approval.status_label %></span>
+            </p>
           </div>
-          <div>
-            <h2 class="event-summary-grid__label">Client Visible</h2>
-            <p class="event-summary-grid__value"><%= @approval.client_visible? ? "Yes" : "No" %></p>
+          <div class="event-approvals__hero-item">
+            <p class="event-approvals__hero-label">Client Visibility</p>
+            <p class="event-approvals__hero-value">
+              <span class="event-approvals__visibility-pill event-approvals__visibility-pill--<%= @approval.client_visible? ? "visible" : "hidden" %>"><%= @approval.client_visible? ? "Visible" : "Hidden" %></span>
+            </p>
           </div>
-          <div>
-            <h2 class="event-summary-grid__label">Client Name</h2>
-            <p class="event-summary-grid__value"><%= @approval.client_name.presence || "—" %></p>
+          <div class="event-approvals__hero-item">
+            <p class="event-approvals__hero-label">Response</p>
+            <p class="event-approvals__hero-value">
+              <% if @approval.approved? && @approval.acknowledged_at.present? %>
+                Approved <%= l(@approval.acknowledged_at, format: :long) %>
+              <% elsif @approval.acknowledged? && @approval.acknowledged_at.present? %>
+                Returned with comments <%= l(@approval.acknowledged_at, format: :long) %>
+              <% else %>
+                Awaiting client acknowledgement
+              <% end %>
+            </p>
           </div>
-        </div>
-
-        <% if @approval.summary.present? %>
-          <section class="event-detail-block">
-            <h2>Summary</h2>
-            <p><%= simple_format(@approval.summary) %></p>
-          </section>
-        <% end %>
-
-        <% if @approval.instructions.present? %>
-          <section class="event-detail-block">
-            <h2>Instructions</h2>
-            <p><%= simple_format(@approval.instructions) %></p>
-          </section>
-        <% end %>
-
-        <% if @approval.client_note.present? %>
-          <section class="event-detail-block">
-            <h2>Client Note</h2>
-            <p><%= simple_format(@approval.client_note) %></p>
-          </section>
-        <% end %>
-
-        <section class="event-detail-block">
-          <header class="event-detail-block__header">
-            <h2>Attachments</h2>
-          </header>
-          <%= render "attachments/list", attachments: @approval.attachments %>
-          <%= render "attachments/form", entity: @approval, documents: documents_for_entity(@approval) %>
-          <%= render "attachments/upload_script" %>
+          <div class="event-approvals__hero-item">
+            <p class="event-approvals__hero-label">Client Name</p>
+            <p class="event-approvals__hero-value"><%= @approval.client_name.presence || "—" %></p>
+          </div>
         </section>
+
+        <div class="event-approvals__cards">
+          <section class="event-approvals__card event-approvals__card--response">
+            <header class="event-approvals__card-header">
+              <h2 class="event-approvals__card-title">Client response</h2>
+              <% if @approval.client_name.present? || @approval.client_note.present? %>
+                <%= button_to "Clear response",
+                              clear_response_event_approval_path(@event, @approval),
+                              method: :patch,
+                              data: { confirm: "Clear stored client response details?" },
+                              class: "event-approvals__action-link" %>
+              <% end %>
+            </header>
+            <div class="event-approvals__card-body">
+              <% if @approval.client_name.present? || @approval.client_note.present? %>
+                <% if @approval.client_name.present? %>
+                  <p><strong>Responder:</strong> <%= @approval.client_name %></p>
+                <% end %>
+                <% if @approval.client_note.present? %>
+                  <%= simple_format(@approval.client_note) %>
+                <% end %>
+              <% else %>
+                <p>No response</p>
+              <% end %>
+            </div>
+          </section>
+
+          <% if @approval.summary.present? %>
+            <section class="event-approvals__card">
+              <h2 class="event-approvals__card-title">Summary</h2>
+              <div class="event-approvals__card-body"><%= simple_format(@approval.summary) %></div>
+            </section>
+          <% end %>
+
+          <% if @approval.instructions.present? %>
+            <section class="event-approvals__card">
+              <h2 class="event-approvals__card-title">Instructions</h2>
+              <div class="event-approvals__card-body"><%= simple_format(@approval.instructions) %></div>
+            </section>
+          <% end %>
+
+          <% if @approval.client_note.present? %>
+            <section class="event-approvals__card">
+              <h2 class="event-approvals__card-title">Client Note</h2>
+              <div class="event-approvals__card-body"><%= simple_format(@approval.client_note) %></div>
+            </section>
+          <% end %>
+
+          <section class="event-approvals__card event-approvals__card--attachments">
+            <header class="event-approvals__card-header">
+              <h2 class="event-approvals__card-title">Attachments</h2>
+            </header>
+            <div class="event-approvals__attachments-list">
+              <%= render "attachments/list", attachments: @approval.attachments %>
+            </div>
+            <div class="event-approvals__attachments-form">
+              <%= render "attachments/form", entity: @approval, documents: documents_for_entity(@approval) %>
+            </div>
+            <%= render "attachments/upload_script" %>
+          </section>
+        </div>
       </section>
     </div>
   </div>
