@@ -203,9 +203,9 @@
                     </label>
                   </fieldset>
                 <% end %>
-	              <% elsif segment.html_view_key == DocumentSegment::TEXT_PAGE_VIEW_KEY %>
+	              <% elsif [DocumentSegment::TEXT_PAGE_VIEW_KEY, DocumentSegment::EVENT_OVERVIEW_VIEW_KEY].include?(segment.html_view_key) %>
 	                <% text_options = segment.html_options.stringify_keys %>
-	                <% body_markdown = text_options.fetch("body_markdown", "").to_s %>
+	                <% body_markdown = generated_segment_body_markdown(segment) %>
 	
 	                <%= form.fields_for :options, text_options do |options_fields| %>
 	                  <div class="generated-builder__markdown-editor" data-controller="generated-markdown-editor">

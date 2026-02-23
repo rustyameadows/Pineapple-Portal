@@ -5,6 +5,28 @@ module GeneratedDocumentsHelper
   MARKDOWN_ALLOWED_ATTRIBUTES = %w[href title rel target].freeze
   MARKDOWN_ALLOWED_PROTOCOLS = %w[http https mailto].freeze
 
+  def generated_segment_body_markdown(segment)
+    options = if segment.respond_to?(:html_options)
+                segment.html_options
+              elsif segment.respond_to?(:source_ref) && segment.source_ref.is_a?(Hash)
+                source_options = segment.source_ref["options"]
+                source_options.is_a?(Hash) ? source_options : {}
+              else
+                {}
+              end
+
+    body_markdown = options.is_a?(Hash) ? options["body_markdown"].to_s : ""
+    return body_markdown if body_markdown.present?
+
+    view_key = if segment.respond_to?(:html_view_key)
+                 segment.html_view_key
+               elsif segment.respond_to?(:source_ref) && segment.source_ref.is_a?(Hash)
+                 segment.source_ref["view_key"]
+               end
+
+    DocumentSegment.default_body_markdown_for(view_key)
+  end
+
   def render_generated_markdown(markdown_text)
     html = render_generated_markdown_segments(markdown_text.to_s)
 
