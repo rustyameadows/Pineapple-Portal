@@ -1,9 +1,9 @@
 class EventsController < ApplicationController
-  before_action :set_event, only: %i[show edit update destroy]
+  before_action :set_event, only: %i[show edit update destroy archive restore]
 
   def index
-    @active_events = Event.active.order(Arel.sql("COALESCE(events.starts_on, events.updated_at, events.created_at) ASC"))
-    @archived_events = Event.archived.order(updated_at: :desc)
+    @active_events = active_events_scope
+    @archived_events = archived_events_scope
   end
 
   def show
@@ -40,6 +40,30 @@ class EventsController < ApplicationController
     redirect_to events_path, notice: "Event deleted."
   end
 
+  def archive
+    if @event.archived?
+      redirect_to safe_return_to(fallback: events_path), alert: "Event is already archived." and return
+    end
+
+    if @event.update(archived_at: Time.current)
+      redirect_to safe_return_to(fallback: events_path), notice: "Event archived."
+    else
+      redirect_to safe_return_to(fallback: events_path), alert: @event.errors.full_messages.to_sentence
+    end
+  end
+
+  def restore
+    unless @event.archived?
+      redirect_to safe_return_to(fallback: events_path), alert: "Event is already active." and return
+    end
+
+    if @event.update(archived_at: nil)
+      redirect_to safe_return_to(fallback: events_path), notice: "Event restored."
+    else
+      redirect_to safe_return_to(fallback: events_path), alert: @event.errors.full_messages.to_sentence
+    end
+  end
+
   private
 
   def set_event
@@ -48,5 +72,13 @@ class EventsController < ApplicationController
 
   def event_params
     params.require(:event).permit(:name, :starts_on, :ends_on, :location, :location_secondary, :event_photo_document_id, :financial_payments_enabled, :portal_slug)
+  end
+
+  def active_events_scope
+    Event.active.order(Arel.sql("COALESCE(events.starts_on, events.updated_at, events.created_at) ASC"))
+  end
+
+  def archived_events_scope
+    Event.archived.order(Arel.sql("COALESCE(events.archived_at, events.updated_at) DESC"))
   end
 end

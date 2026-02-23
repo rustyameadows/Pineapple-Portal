@@ -1,0 +1,3 @@
+.client-packets__table td:first-child a {
+  word-break: break-word;
+}

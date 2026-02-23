@@ -40,6 +40,22 @@ module Client
       assert_select ".decision-calendar__actions .client-button", text: "Back to Portal"
     end
 
+    test "decision calendar segment fallback label uses month year" do
+      get client_event_calendar_path(@event.portal_slug, "decision-calendar")
+
+      assert_response :success
+      assert_select ".decision-calendar__segment-label", text: "September 2025", minimum: 1
+    end
+
+    test "decision calendar segment label uses caption when present" do
+      calendar_items(:decision_flowers).update!(time_caption: "Contracts Month")
+
+      get client_event_calendar_path(@event.portal_slug, "decision-calendar")
+
+      assert_response :success
+      assert_select ".decision-calendar__segment-label", text: "Contracts Month", minimum: 1
+    end
+
     test "show redirects when nothing published" do
       @calendar.update!(client_visible: false)
       @view.update!(client_visible: false)

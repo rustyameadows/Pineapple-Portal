@@ -10,10 +10,17 @@ module Events
 
     def new
       @item = @calendar.calendar_items.new
+      preselected_tag_ids = []
+
       if params[:milestone] == "1"
         milestone_tag = ensure_milestone_tag
-        @item.event_calendar_tag_ids = [milestone_tag.id] if milestone_tag
+        preselected_tag_ids << milestone_tag.id if milestone_tag
       end
+
+      default_tag = find_default_tag_by_name(params[:default_tag_name])
+      preselected_tag_ids << default_tag.id if default_tag
+
+      @item.event_calendar_tag_ids = preselected_tag_ids.uniq if preselected_tag_ids.any?
     end
 
     def create
@@ -233,6 +240,13 @@ module Events
     def ensure_milestone_tag(create: true)
       scope = @calendar.event_calendar_tags.where("LOWER(name) = ?", "milestones")
       create ? scope.first_or_create(name: "Milestones") : scope.first
+    end
+
+    def find_default_tag_by_name(raw_name)
+      normalized_name = raw_name.to_s.strip.downcase
+      return if normalized_name.blank?
+
+      @calendar.event_calendar_tags.where("LOWER(name) = ?", normalized_name).first
     end
 
     def load_dependents

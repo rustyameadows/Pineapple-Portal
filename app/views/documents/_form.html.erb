@@ -1,6 +1,7 @@
 <%
   event = @event || @document.event
   form_options = { model: [event, @document] }
+  staff_source_options = Document.staff_sources.keys.map { |key| [Document.source_label(key), key] }
   if @document.new_record?
     presign_url = presign_event_documents_path(event)
     form_options[:data] = { document_upload_form: true, presign_url: presign_url }
@@ -25,7 +26,12 @@
 
   <div>
     <%= form.label :source, "Document Type" %><br>
-    <%= form.select :source, options_for_select(Document.sources.keys.map { |key| [key.humanize, key] }, form.object.source || "staff_upload") %>
+    <% if form.object.persisted? && form.object.source == "client_upload" %>
+      <%= form.hidden_field :source, value: form.object.source %>
+      <p>Client Uploads can only be created in the client portal.</p>
+    <% else %>
+      <%= form.select :source, options_for_select(staff_source_options, form.object.source || "staff_upload") %>
+    <% end %>
   </div>
 
   <% if form.object.new_record? %>
@@ -69,6 +75,13 @@
     <%= form.label :client_visible do %>
       <%= form.check_box :client_visible %>
       Share with client portal
+    <% end %>
+  </div>
+
+  <div>
+    <%= form.label :packets_portal_visible do %>
+      <%= form.check_box :packets_portal_visible %>
+      Show in client Packets
     <% end %>
   </div>
 

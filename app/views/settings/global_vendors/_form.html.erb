@@ -1,0 +1,22 @@
+<%= form_with model: global_vendor, url:, local: true, html: { class: "event-settings__form" } do |form| %>
+  <div class="event-settings__field-group">
+    <div class="event-settings__field">
+      <%= form.label :name, "Vendor name" %>
+      <%= form.text_field :name, required: true %>
+    </div>
+    <div class="event-settings__field">
+      <%= form.label :default_vendor_type, "Default vendor type" %>
+      <%= form.text_field :default_vendor_type %>
+    </div>
+    <div class="event-settings__field">
+      <%= form.label :default_social_handle, "Default social handle" %>
+      <%= form.text_field :default_social_handle %>
+    </div>
+  </div>
+
+  <%= render "events/settings/contact_fields", form:, entity: global_vendor %>
+
+  <div class="event-settings__form-actions">
+    <%= form.submit submit_label %>
+  </div>
+<% end %>

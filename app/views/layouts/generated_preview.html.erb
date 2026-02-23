@@ -10,5 +10,8 @@
     <%= render "generated_documents/sections/preview_frame" do %>
       <%= yield %>
     <% end %>
+    <% if defined?(RailsAgentAnnotator) %>
+      <%= rails_agent_annotator %>
+    <% end %>
   </body>
 </html>

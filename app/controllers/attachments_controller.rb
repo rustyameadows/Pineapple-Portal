@@ -11,6 +11,8 @@ class AttachmentsController < ApplicationController
 
     attrs[:context] = if entity.is_a?(Question)
                         "answer"
+                      elsif entity.is_a?(Approval)
+                        "other"
                       else
                         attrs[:context].presence || "other"
                       end

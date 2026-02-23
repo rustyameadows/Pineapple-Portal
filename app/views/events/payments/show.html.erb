@@ -5,7 +5,14 @@
     <div class="event-layout__main">
       <%= render "shared/flash" %>
 
-      <section class="event-section event-section--detail">
+      <section class="event-section event-section--detail event-payments event-payments--show">
+        <div class="event-payments__top-actions">
+          <div class="event-payments__top-actions-right">
+            <%= link_to "Edit", edit_event_payment_path(@event, @payment), class: "event-payments__action-link" %>
+            <%= button_to "Delete", event_payment_path(@event, @payment), method: :delete, data: { confirm: "Delete this payment?" }, class: "event-payments__delete" %>
+          </div>
+        </div>
+
         <header class="event-section__header">
           <div>
             <p class="event-section__eyebrow">Payment</p>
@@ -14,70 +21,81 @@
               <%= @payment.due_on ? "Due #{@payment.due_on.strftime('%B %-d, %Y')}" : "Timing TBD" %>
             </p>
           </div>
-          <div class="event-section__actions">
-            <%= link_to "Edit", edit_event_payment_path(@event, @payment), class: "event-section__link" %>
-            <%= button_to "Delete", event_payment_path(@event, @payment), method: :delete, data: { confirm: "Delete this payment?" }, class: "event-section__danger" %>
-          </div>
         </header>
 
-        <div class="event-detail-block event-detail-block--summary">
-          <div class="event-detail-block__content">
-            <dl class="event-summary-grid">
-              <div>
-                <dt class="event-summary-grid__label">Amount</dt>
-                <dd class="event-summary-grid__value"><%= number_to_currency(@payment.amount) %></dd>
-              </div>
-              <div>
-                <dt class="event-summary-grid__label">Status</dt>
-                <dd class="event-summary-grid__value"><span class="event-pill event-pill--<%= @payment.status %>"><%= @payment.status.humanize %></span></dd>
-              </div>
-              <div>
-                <dt class="event-summary-grid__label">Client Visible</dt>
-                <dd class="event-summary-grid__value"><%= @payment.client_visible? ? "Yes" : "No" %></dd>
-              </div>
-              <div>
-                <dt class="event-summary-grid__label">Due</dt>
-                <dd class="event-summary-grid__value"><%= @payment.due_on ? @payment.due_on.strftime('%B %-d, %Y') : "Timing TBD" %></dd>
-              </div>
-              <div>
-                <dt class="event-summary-grid__label">Paid On</dt>
-                <dd class="event-summary-grid__value"><%= @payment.paid_at ? l(@payment.paid_at, format: :long) : "—" %></dd>
-              </div>
-            </dl>
+        <section class="event-payments__hero" aria-label="Payment status">
+          <div class="event-payments__hero-item">
+            <p class="event-payments__hero-label">Status</p>
+            <p class="event-payments__hero-value">
+              <span class="event-payments__status-pill event-payments__status-pill--<%= @payment.status %>"><%= @payment.status.humanize %></span>
+            </p>
           </div>
-        </div>
+          <div class="event-payments__hero-item">
+            <p class="event-payments__hero-label">Client Visibility</p>
+            <p class="event-payments__hero-value">
+              <span class="event-payments__visibility-pill event-payments__visibility-pill--<%= @payment.client_visible? ? "visible" : "hidden" %>"><%= @payment.client_visible? ? "Visible" : "Hidden" %></span>
+            </p>
+          </div>
+          <div class="event-payments__hero-item">
+            <p class="event-payments__hero-label">Amount</p>
+            <p class="event-payments__hero-value"><%= number_to_currency(@payment.amount) %></p>
+          </div>
+          <div class="event-payments__hero-item">
+            <p class="event-payments__hero-label">Due Date</p>
+            <p class="event-payments__hero-value"><%= @payment.due_on ? @payment.due_on.strftime('%B %-d, %Y') : "Timing TBD" %></p>
+          </div>
+        </section>
 
-        <% if @payment.description.present? %>
-          <section class="event-detail-block">
-            <header class="event-detail-block__header">
-              <h2>Planner Notes</h2>
-            </header>
-            <div class="event-detail-block__content">
-              <%= simple_format(@payment.description) %>
+        <div class="event-payments__cards">
+          <section class="event-payments__card">
+            <h2 class="event-payments__card-title">Planner Notes</h2>
+            <div class="event-payments__card-body">
+              <% if @payment.description.present? %>
+                <%= simple_format(@payment.description) %>
+              <% else %>
+                <p>No notes</p>
+              <% end %>
             </div>
           </section>
-        <% end %>
 
-        <% if @payment.client_note.present? %>
-          <section class="event-detail-block">
-            <h2>Client Note</h2>
-            <p><%= simple_format(@payment.client_note) %></p>
+          <section class="event-payments__card">
+            <h2 class="event-payments__card-title">Client Note</h2>
+            <div class="event-payments__card-body">
+              <% if @payment.client_note.present? %>
+                <%= simple_format(@payment.client_note) %>
+              <% else %>
+                <p>No client note</p>
+              <% end %>
+            </div>
           </section>
-        <% end %>
 
-        <section class="event-detail-block">
-          <header class="event-detail-block__header">
-            <h2>Attachments</h2>
-          </header>
-          <div class="event-detail-block__content">
-            <%= render "attachments/list", attachments: @payment.attachments %>
-          </div>
-          <div class="event-detail-block__content">
-            <h3>Add Attachment</h3>
-            <%= render "attachments/form", entity: @payment, documents: @event.documents.latest %>
-          </div>
-          <%= render "attachments/upload_script" %>
-        </section>
+          <section class="event-payments__card">
+            <h2 class="event-payments__card-title">Payment Timing</h2>
+            <dl class="event-payments__meta-grid">
+              <div>
+                <dt>Paid On</dt>
+                <dd><%= @payment.paid_at ? l(@payment.paid_at, format: :long) : "—" %></dd>
+              </div>
+              <div>
+                <dt>Marked Paid By Client</dt>
+                <dd><%= @payment.paid_by_client_at ? l(@payment.paid_by_client_at, format: :long) : "—" %></dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="event-payments__card event-payments__card--attachments">
+            <header class="event-payments__card-header">
+              <h2 class="event-payments__card-title">Attachments</h2>
+            </header>
+            <div class="event-payments__attachments-list">
+              <%= render "attachments/list", attachments: @payment.attachments.includes(document: :event).order(:position, :created_at) %>
+            </div>
+            <div class="event-payments__attachments-form">
+              <%= render "attachments/form", entity: @payment, documents: documents_for_entity(@payment) %>
+            </div>
+            <%= render "attachments/upload_script" %>
+          </section>
+        </div>
       </section>
     </div>
   </div>

@@ -2,10 +2,12 @@ class EventVendor < ApplicationRecord
   CONTACT_ATTRIBUTE_KEYS = %w[name title email phone notes].freeze
 
   belongs_to :event
+  belongs_to :global_vendor, optional: true
 
   attr_writer :contacts_attributes
 
   before_validation :strip_name
+  before_validation :sync_name_from_global_vendor
   before_validation :normalize_vendor_type
   before_validation :normalize_social_handle
   before_validation :assign_position, on: :create
@@ -23,6 +25,8 @@ class EventVendor < ApplicationRecord
   scope :client_visible, -> { where(client_visible: true) }
 
   def contacts
+    return global_vendor.contacts if global_vendor
+
     contacts_jsonb || []
   end
 
@@ -31,6 +35,14 @@ class EventVendor < ApplicationRecord
   end
 
   private
+
+  def sync_name_from_global_vendor
+    return unless global_vendor
+
+    self.name = global_vendor.name
+    self.vendor_type = global_vendor.default_vendor_type if vendor_type.blank? && global_vendor.default_vendor_type.present?
+    self.social_handle = global_vendor.default_social_handle if social_handle.blank? && global_vendor.default_social_handle.present?
+  end
 
   def strip_name
     self.name = name.to_s.strip

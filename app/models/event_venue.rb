@@ -2,10 +2,12 @@ class EventVenue < ApplicationRecord
   CONTACT_ATTRIBUTE_KEYS = %w[name title email phone notes].freeze
 
   belongs_to :event
+  belongs_to :global_venue, optional: true
 
   attr_writer :contacts_attributes
 
   before_validation :strip_name
+  before_validation :sync_name_from_global_venue
   before_validation :assign_position, on: :create
   before_validation :apply_contacts_attributes
   before_validation :ensure_contacts_default
@@ -19,6 +21,8 @@ class EventVenue < ApplicationRecord
   scope :client_visible, -> { where(client_visible: true) }
 
   def contacts
+    return global_venue.contacts if global_venue
+
     contacts_jsonb || []
   end
 
@@ -27,6 +31,12 @@ class EventVenue < ApplicationRecord
   end
 
   private
+
+  def sync_name_from_global_venue
+    return unless global_venue
+
+    self.name = global_venue.name
+  end
 
   def strip_name
     self.name = name.to_s.strip

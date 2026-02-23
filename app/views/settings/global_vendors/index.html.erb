@@ -1,0 +1,59 @@
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Admin</p>
+            <h1 class="event-section__title">Global Vendors</h1>
+            <p class="event-section__lead">Shared vendor records across all events.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Add Global Vendor", new_settings_global_vendor_path, class: "event-section__cta" %>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <% if @global_vendors.any? %>
+            <table class="event-table">
+              <thead>
+                <tr>
+                  <th>Vendor</th>
+                  <th>Default Type</th>
+                  <th>Default Social</th>
+                  <th>Contacts</th>
+                  <th>Linked Events</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+              <% @global_vendors.each do |vendor| %>
+                <tr>
+                  <td><%= vendor.name %></td>
+                  <td><%= vendor.default_vendor_type.presence || "—" %></td>
+                  <td><%= vendor.default_social_handle.presence || "—" %></td>
+                  <td><%= vendor.contacts.size %></td>
+                  <td><%= vendor.attributes["usage_count"].to_i %></td>
+                  <td class="event-table__actions">
+                    <%= link_to "Edit", edit_settings_global_vendor_path(vendor), class: "event-section__link" %>
+                    <%= link_to "Remove",
+                                settings_global_vendor_path(vendor),
+                                data: { turbo_method: :delete, turbo_confirm: "Remove this global vendor?" },
+                                class: "event-section__link event-section__link--danger" %>
+                  </td>
+                </tr>
+              <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <p class="event-settings__empty">No global vendors yet.</p>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

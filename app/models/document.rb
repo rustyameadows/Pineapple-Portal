@@ -4,6 +4,8 @@ class Document < ApplicationRecord
     generated: "generated"
   }.freeze
 
+  UUID_REGEX = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i.freeze
+
   belongs_to :event
   belongs_to :built_by_user, class_name: "User", optional: true
 
@@ -28,6 +30,7 @@ class Document < ApplicationRecord
   before_update :prevent_file_metadata_change
 
   SOURCE_KEYS = %w[packet staff_upload client_upload].freeze
+  STAFF_SOURCE_KEYS = (SOURCE_KEYS - ["client_upload"]).freeze
 
   SOURCE_LABELS = {
     "packet" => "Packets",
@@ -48,8 +51,12 @@ class Document < ApplicationRecord
   scope :templates, -> { where(is_template: true) }
 
   scope :latest, -> { where(is_latest: true) }
+  scope :with_stored_file, -> { where.not(storage_uri: nil) }
+  scope :excluding_client_uploads, -> { where.not(source: "client_upload") }
   scope :client_visible, -> { where(client_visible: true) }
   scope :financial_portal_visible, -> { where(financial_portal_visible: true) }
+  scope :packets_portal_visible, -> { where(packets_portal_visible: true) }
+  scope :packets_portal_listing, -> { latest.with_stored_file.excluding_client_uploads.packets_portal_visible }
 
   def self.source_label(key)
     SOURCE_LABELS[key.to_s] || key.to_s.humanize
@@ -59,8 +66,23 @@ class Document < ApplicationRecord
     SOURCE_KEYS.index_with(&:to_s)
   end
 
+  def self.staff_sources
+    STAFF_SOURCE_KEYS.index_with(&:to_s)
+  end
+
   def self.doc_kinds
     DOC_KINDS.transform_values(&:dup)
+  end
+
+  def self.packet_component_logical_ids_for_event(event)
+    generated_logical_ids = event.documents.generated.select(:logical_id)
+    return [] unless generated_logical_ids.exists?
+
+    DocumentSegment
+      .where(document_logical_id: generated_logical_ids, kind: DocumentSegment::KINDS[:pdf_asset])
+      .pluck(Arel.sql("source_ref ->> 'logical_id'"))
+      .filter_map { |value| normalize_uuid(value) }
+      .uniq
   end
 
   def source_label
@@ -96,6 +118,13 @@ class Document < ApplicationRecord
   end
 
   private
+
+  def self.normalize_uuid(value)
+    uuid = value.to_s.strip
+    return if uuid.blank?
+    return uuid if uuid.match?(UUID_REGEX)
+  end
+  private_class_method :normalize_uuid
 
   def assign_defaults
     self.logical_id ||= SecureRandom.uuid

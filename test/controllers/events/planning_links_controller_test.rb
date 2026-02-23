@@ -53,5 +53,37 @@ module Events
       assert_equal Event::PlanningLinkToken.built_in("financials"), tokens_after_move[1],
                    "expected financials card to move up"
     end
+
+    test "toggles packets planning link visibility" do
+      assert @event.planning_link_enabled?("packets"), "expected packets to start enabled"
+
+      patch toggle_event_planning_link_path(@event, "packets")
+      assert_redirected_to client_portal_event_settings_path(@event)
+
+      @event.reload
+      assert_not @event.planning_link_enabled?("packets"), "expected packets to be disabled"
+
+      patch toggle_event_planning_link_path(@event, "packets")
+      assert_redirected_to client_portal_event_settings_path(@event)
+
+      @event.reload
+      assert @event.planning_link_enabled?("packets"), "expected packets to be enabled again"
+    end
+
+    test "toggles approvals planning link visibility" do
+      assert @event.planning_link_enabled?("approvals"), "expected approvals to start enabled"
+
+      patch toggle_event_planning_link_path(@event, "approvals")
+      assert_redirected_to client_portal_event_settings_path(@event)
+
+      @event.reload
+      assert_not @event.planning_link_enabled?("approvals"), "expected approvals to be disabled"
+
+      patch toggle_event_planning_link_path(@event, "approvals")
+      assert_redirected_to client_portal_event_settings_path(@event)
+
+      @event.reload
+      assert @event.planning_link_enabled?("approvals"), "expected approvals to be enabled again"
+    end
   end
 end

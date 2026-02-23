@@ -159,6 +159,7 @@ module Documents
         options = options.to_h if options.respond_to?(:to_h) && !options.is_a?(Hash)
         options = options.presence || {}
         options = sanitize_html_view_options(view_key, options)
+        options = apply_default_html_view_options(view_key, options) if segment.new_record?
         segment.assign_html_view(view_key, options: options)
       end
 
@@ -196,9 +197,23 @@ module Documents
           sanitize_timeline_options(options)
         when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
           sanitize_run_of_show_options(options)
+        when DocumentSegment::TEXT_PAGE_VIEW_KEY, DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
+          sanitize_markdown_body_options(options)
         else
           options
         end
+      end
+
+      def apply_default_html_view_options(view_key, options)
+        return options unless view_key.to_s == DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
+
+        source = options.to_h.stringify_keys
+        body_markdown = source["body_markdown"].to_s
+        return source if body_markdown.present?
+
+        source.merge(
+          "body_markdown" => DocumentSegment.default_body_markdown_for(view_key)
+        )
       end
 
       def sanitize_timeline_options(options)
@@ -220,6 +235,14 @@ module Documents
           "show_vendor" => boolean_option(source.fetch("show_vendor", true), default: true),
           "show_team_members" => boolean_option(source.fetch("show_team_members", true), default: true)
         }
+      end
+
+      def sanitize_markdown_body_options(options)
+        source = options.to_h.stringify_keys
+        body = source["body_markdown"].to_s
+        normalized_body = body.gsub(/\r\n?/, "\n").delete("\u0000")
+
+        { "body_markdown" => normalized_body.first(20_000) }
       end
 
       def sanitize_timeline_view_ref(value)

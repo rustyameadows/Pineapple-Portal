@@ -44,14 +44,21 @@ module DocumentsHelper
   end
 
   def documents_for_entity(entity)
-    case entity
-    when Event
-      entity.documents.order(:title, :version)
-    when Questionnaire, Question
-      entity.event.documents.order(:title, :version)
-    else
-      Document.none
-    end
+    event = case entity
+            when Event
+              entity
+            when Questionnaire, Question, Payment, Approval
+              entity.event
+            else
+              nil
+            end
+    return Document.none unless event
+
+    relation = event.documents.latest.order(:title)
+    packet_component_ids = packet_component_logical_ids_for_event(event)
+    return relation if packet_component_ids.empty?
+
+    relation.where.not(logical_id: packet_component_ids)
   end
 
   def document_group_path(event, key)
@@ -65,6 +72,11 @@ module DocumentsHelper
     else
       event_documents_path(event)
     end
+  end
+
+  def packet_component_logical_ids_for_event(event)
+    @packet_component_logical_ids_by_event ||= {}
+    @packet_component_logical_ids_by_event[event.id] ||= Document.packet_component_logical_ids_for_event(event)
   end
 
   def inline_asset_data_uri(path)

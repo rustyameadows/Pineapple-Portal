@@ -1,0 +1,31 @@
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Admin</p>
+            <h1 class="event-section__title">Edit Global Venue</h1>
+            <p class="event-section__lead">Update this shared venue record.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Back to Venues", settings_global_venues_path, class: "event-section__link" %>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__new-link">
+            <%= render "form",
+                       global_venue: @global_venue,
+                       url: settings_global_venue_path(@global_venue),
+                       submit_label: "Save global venue" %>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

@@ -1,0 +1,267 @@
+<% if local_assigns.fetch(:render_base_styles, true) %>
+  <%= render "generated_documents/sections/base_styles" %>
+<% end %>
+
+<style>
+  .generated-template--text-page {
+    --generated-document-content-padding-x: 0.26in;
+    --generated-document-content-padding-top: 0.24in;
+    --generated-document-content-padding-bottom: 0.24in;
+    gap: 0.5rem;
+    background: var(--color-white, #ffffff);
+    border: none;
+  }
+
+  .generated-template--text-page .generated-template__page-header {
+    gap: 0.38rem;
+  }
+
+  .generated-template--text-page .generated-template__page-header-logo {
+    display: none;
+  }
+
+  .generated-template--text-page .generated-template__page-header-title {
+    margin-bottom: 0.02rem;
+    font-size: 20px;
+    letter-spacing: 1.25px;
+  }
+
+  .generated-template--text-page__content {
+    display: grid;
+    gap: 0.16rem;
+    line-height: 1.18;
+    font-size: 0.86rem;
+    color: var(--color-dark-brown, #3f2211);
+  }
+
+  .generated-template--text-page__content .generated-text-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.16in;
+    align-items: start;
+    margin: 0.12rem 0 0.18rem;
+  }
+
+  .generated-template--text-page__content .generated-text-column {
+    min-width: 0;
+    display: grid;
+    align-content: start;
+    gap: 0.06rem;
+  }
+
+  .generated-template--text-page__content .generated-text-columns ul {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .generated-template--text-page__content .generated-text-columns li {
+    margin: 0.02rem 0;
+  }
+
+  .generated-template--text-page__content .generated-text-column > *:first-child {
+    margin-top: 0;
+  }
+
+  .generated-template--text-page__content .generated-text-column > *:last-child {
+    margin-bottom: 0;
+  }
+
+  .generated-template--text-page__content h2 {
+    margin: 0.02rem 0 0.18rem;
+    font-size: 1.36rem;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    border-bottom: 2px solid color-mix(in srgb, var(--color-gold, #be9c72) 65%, white);
+    padding-bottom: 0.08rem;
+  }
+
+  .generated-template--text-page__content h3 {
+    margin: 0.3rem 0 0.02rem;
+    padding: 0.15rem 0.4rem 0.16rem;
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--color-gold, #be9c72);
+    color: var(--color-dark-brown, #3f2211);
+    border: none;
+    font-size: 0.9rem;
+    letter-spacing: 0.035em;
+    line-height: 1.15;
+    text-transform: uppercase;
+  }
+
+  .generated-template--text-page__content > h3 {
+    text-align: center;
+  }
+
+  .generated-template--text-page__content > h3 {
+    padding: 8px;
+    font-size: 16px;
+    line-height: 16px;
+    letter-spacing: 1.5px;
+  }
+
+  .generated-template--text-page__content p:last-child {
+    margin-bottom: 0;
+  }
+
+  .generated-template--text-page__content h4,
+  .generated-template--text-page__content h5 {
+    margin: 0.14rem 0 0.03rem;
+    font-family: var(--font-family-display, 'Didot', 'Times New Roman', serif);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    color: var(--color-dark-brown, #3f2211);
+  }
+
+  .generated-template--text-page__content h4 {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 7px 0 6px 6px;
+    background: var(--color-sand, #f3e4d2);
+    border: none;
+    font-size: 12px;
+    line-height: 12px;
+    letter-spacing: 1px;
+  }
+
+  .generated-template--text-page__content .generated-text-columns .generated-text-column > h3 {
+    padding: 5px 0 4px 6px;
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+
+  .generated-template--text-page__content h5 {
+    font-size: 0.84rem;
+    margin: 0.08rem 0 0;
+    padding: 0.02rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 60%, white);
+    line-height: 1.14;
+    letter-spacing: 0.01em;
+  }
+
+  .generated-template--text-page__content ul,
+  .generated-template--text-page__content ol {
+    margin: 0.02rem 0 0.12rem;
+    padding-left: 0.88rem;
+  }
+
+  .generated-template--text-page__content li {
+    margin: 0;
+  }
+
+  .generated-template--text-page__content hr {
+    border: 0;
+    border-top: 1px solid color-mix(in srgb, var(--color-gold, #be9c72) 70%, var(--color-brown, #5b4639));
+    margin: 0.22rem 0 0.18rem;
+  }
+
+  .generated-template--text-page__content blockquote {
+    margin: 0.08rem 0;
+    padding: 0.28rem 0.45rem;
+    border-left: 2px solid var(--color-gold, #be9c72);
+    background: color-mix(in srgb, var(--color-sand, #f3e4d2) 55%, white);
+    color: var(--color-brown, #5b4639);
+  }
+
+  .generated-template--text-page__content p {
+    margin: 0;
+  }
+
+  .generated-template--text-page__content > p {
+    font-size: 14px;
+    line-height: 17px;
+    padding: 6px 4px 8px 4px;
+  }
+
+  .generated-template--text-page__content .generated-text-columns .generated-text-column > p {
+    font-size: 14px;
+    line-height: 17px;
+    padding: 6px 4px 8px 4px;
+  }
+
+  .generated-template--text-page__content p + p {
+    margin-top: 0.05rem;
+  }
+
+  .generated-template--text-page__content p strong:first-child {
+    letter-spacing: 0.01em;
+  }
+
+  .generated-template--text-page__content > p > strong {
+    font-weight: 600;
+  }
+
+  .generated-template--text-page__content .generated-text-columns .generated-text-column > p > strong {
+    font-weight: 600;
+  }
+
+  .generated-template--text-page__content li + li {
+    margin-top: 0.05rem;
+  }
+
+  .generated-template--text-page__content a {
+    color: var(--color-dark-brown, #2f2a26);
+    text-decoration: underline;
+    text-decoration-color: var(--color-gold, #be9c72);
+    text-underline-offset: 2px;
+  }
+
+  .generated-template--text-page__content p,
+  .generated-template--text-page__content li {
+    border-bottom: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 34%, white);
+    padding-bottom: 0.035rem;
+  }
+
+  .generated-template--text-page__content p:not(:has(+ p)) {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .generated-template--text-page__content h3 + p,
+  .generated-template--text-page__content h4 + p,
+  .generated-template--text-page__content h5 + p {
+    margin-top: 0;
+  }
+
+  .generated-template--text-page__content > h4 {
+    margin-top: 0.34rem;
+  }
+
+  .generated-template--text-page__content h3 + h4,
+  .generated-template--text-page__content h3 + h5,
+  .generated-template--text-page__content h4 + h3,
+  .generated-template--text-page__content h4 + h4,
+  .generated-template--text-page__content h4 + h5,
+  .generated-template--text-page__content h5 + h3,
+  .generated-template--text-page__content h5 + h4,
+  .generated-template--text-page__content h5 + h5 {
+    margin-top: 0.06rem;
+  }
+
+  .generated-template--text-page__empty {
+    font-style: italic;
+  }
+</style>
+
+<% options = if @segment.respond_to?(:html_options)
+               @segment.html_options
+             elsif @segment.respond_to?(:source_ref) && @segment.source_ref.is_a?(Hash)
+               source_options = @segment.source_ref["options"]
+               source_options.is_a?(Hash) ? source_options : {}
+             else
+               {}
+             end %>
+<% body_markdown = options.is_a?(Hash) ? options["body_markdown"].to_s : "" %>
+
+<section class="generated-template generated-template--text-page">
+  <%= render "generated_documents/sections/page_header", segment: @segment %>
+
+  <% if body_markdown.present? %>
+    <div class="generated-template--text-page__content">
+      <%= render_generated_markdown(body_markdown) %>
+    </div>
+  <% else %>
+    <p class="generated-template__muted generated-template--text-page__empty">Add text in segment settings to populate this page.</p>
+  <% end %>
+</section>

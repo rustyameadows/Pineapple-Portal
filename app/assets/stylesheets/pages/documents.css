@@ -280,6 +280,92 @@
   overflow: hidden;
 }
 
+.generated-builder__textarea {
+  width: 100%;
+  min-height: 14rem;
+  padding: 0.7rem 0.75rem;
+  line-height: 1.45;
+  font-family: var(--font-family-body);
+  resize: vertical;
+}
+
+.generated-builder__markdown-editor {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.generated-builder__overlay-trigger-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.generated-builder__overlay-trigger[hidden] {
+  display: none;
+}
+
+.generated-builder__overlay-dialog {
+  width: min(70rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 45%, white);
+  border-radius: var(--radius-lg);
+  background: white;
+  color: var(--color-dark-brown);
+  z-index: var(--z-modal);
+}
+
+.generated-builder__overlay-dialog::backdrop {
+  background: color-mix(in srgb, var(--color-dark-brown) 32%, transparent);
+}
+
+.generated-builder__overlay-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(70rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2.5rem);
+}
+
+.generated-builder__overlay-header {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-sea-foam) 30%, white);
+  padding: 0.9rem 1.1rem 0.75rem;
+}
+
+.generated-builder__overlay-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-dark-brown);
+}
+
+.generated-builder__overlay-body {
+  display: grid;
+  gap: 0.6rem;
+  min-height: 0;
+  padding: 1rem 1.1rem;
+}
+
+.generated-builder__overlay-textarea {
+  width: 100%;
+  min-height: 20rem;
+  height: min(70vh, 42rem);
+  padding: 0.8rem 0.9rem;
+  line-height: 1.5;
+  font-family: var(--font-family-body);
+  resize: vertical;
+}
+
+.generated-builder__overlay-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0 1.1rem 1rem;
+}
+
+.generated-builder__form-help {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-brown);
+}
+
 .generated-builder__form-row--inline {
   align-items: center;
   grid-template-columns: auto minmax(0, 1fr);
@@ -891,5 +977,34 @@
 
   .generated-builder__workspace-actions {
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .generated-builder__overlay-dialog {
+    width: calc(100vw - 1rem);
+    max-width: calc(100vw - 1rem);
+  }
+
+  .generated-builder__overlay-panel {
+    width: calc(100vw - 1rem);
+    max-height: calc(100vh - 1rem);
+  }
+
+  .generated-builder__overlay-header {
+    padding: 0.85rem 0.75rem 0.65rem;
+  }
+
+  .generated-builder__overlay-body {
+    padding: 0.75rem;
+  }
+
+  .generated-builder__overlay-textarea {
+    min-height: 16rem;
+    height: min(64vh, 34rem);
+  }
+
+  .generated-builder__overlay-actions {
+    padding: 0 0.75rem 0.75rem;
   }
 }

@@ -1,0 +1,31 @@
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Admin</p>
+            <h1 class="event-section__title">Edit Global Vendor</h1>
+            <p class="event-section__lead">Update this shared vendor record.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Back to Vendors", settings_global_vendors_path, class: "event-section__link" %>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__new-link">
+            <%= render "form",
+                       global_vendor: @global_vendor,
+                       url: settings_global_vendor_path(@global_vendor),
+                       submit_label: "Save global vendor" %>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

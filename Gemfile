@@ -20,6 +20,7 @@ gem "aws-sdk-s3", "~> 1.144"
 gem "grover", "~> 1.2.3"
 gem "pdf-reader", "~> 2.12"
 gem "combine_pdf", "~> 1.0"
+gem "commonmarker", "~> 2.3"
 
 group :development, :test do
   gem "dotenv-rails"
@@ -60,6 +61,8 @@ group :development, :test do
 end
 
 group :development do
+  gem "rails_agent_annotator", git: "https://github.com/rustyameadows/Rails-Agent-Annotator.git", branch: "main"
+
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 end
@@ -68,4 +71,5 @@ group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
+  gem "minitest", "~> 5.25", "< 6"
 end

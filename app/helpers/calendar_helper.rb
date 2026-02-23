@@ -214,6 +214,13 @@ module CalendarHelper
     item.duration_minutes.present? ? "#{item.duration_minutes} min" : "—"
   end
 
+  def calendar_item_status_label(item)
+    status_key = item.status.to_s
+    return "Planned" if status_key.blank?
+
+    status_key.humanize.titleize
+  end
+
   def calendar_item_tags_label(item)
     names = item.event_calendar_tags.map(&:name).reject(&:blank?)
     names.any? ? names.join(', ') : "—"
@@ -224,6 +231,13 @@ module CalendarHelper
     return "Date TBD" unless start_time
 
     start_time.strftime("%A, %B %-d")
+  end
+
+  def calendar_item_month_year_label(item, timezone)
+    start_time = item.effective_starts_at&.in_time_zone(timezone)
+    return "Date TBD" unless start_time
+
+    start_time.strftime("%B %Y")
   end
 
   def calendar_item_row_classes(item)

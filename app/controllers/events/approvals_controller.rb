@@ -1,7 +1,7 @@
 module Events
   class ApprovalsController < ApplicationController
     before_action :set_event
-    before_action :set_approval, only: %i[show edit update destroy]
+    before_action :set_approval, only: %i[show edit update destroy clear_response]
 
     def index
       @approvals = @event.approvals.ordered
@@ -36,6 +36,13 @@ module Events
     def destroy
       @approval.destroy
       redirect_to event_approvals_path(@event), notice: "Approval removed."
+    end
+
+    def clear_response
+      @approval.update!(client_name: nil, client_note: nil)
+      redirect_to event_approval_path(@event, @approval), notice: "Client response cleared."
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to event_approval_path(@event, @approval), alert: e.record.errors.full_messages.to_sentence
     end
 
     private

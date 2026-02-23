@@ -34,10 +34,12 @@
       components/calendar-grid
       components/documents-table
       pages/client-portal
-    pages/client-designs
-    pages/client-financials
-    pages/client-questionnaires
-    pages/client-decision-calendar
+      pages/client-designs
+      pages/client-packets
+      pages/client-approvals
+      pages/client-financials
+      pages/client-questionnaires
+      pages/client-decision-calendar
     ] %>
     <% client_stylesheets.each do |logical_path| %>
       <%= stylesheet_link_tag logical_path, "data-turbo-track": "reload" %>
@@ -82,5 +84,8 @@
     </main>
 
     <%= yield :scripts %>
+    <% if defined?(RailsAgentAnnotator) %>
+      <%= rails_agent_annotator %>
+    <% end %>
   </body>
 </html>

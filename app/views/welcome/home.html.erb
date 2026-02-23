@@ -10,9 +10,9 @@
           <div>
             <p class="event-section__eyebrow">Dashboard</p>
             <h1 class="event-section__title">Your Active Events</h1>
-            <p class="event-section__lead">Track progress across every engagement and jump back into planning.</p>
           </div>
-          <div class="event-section__actions">
+          <div class="event-section__actions event-section__actions--row">
+            <%= link_to "All Events", events_path, class: "event-section__cta" %>
             <%= link_to "New Event", new_event_path, class: "event-section__cta" %>
           </div>
         </header>
@@ -33,9 +33,6 @@
             </div>
           <% end %>
 
-          <p class="event-section__note">
-            Need questionnaire patterns? Visit the <%= link_to "template library", questionnaire_templates_path %>.
-          </p>
         </div>
       </section>
     </div>

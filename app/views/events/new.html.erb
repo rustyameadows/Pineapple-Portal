@@ -1,5 +1,29 @@
-<h1>New Event</h1>
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
 
-<%= render "form" %>
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
 
-<p><%= link_to "Back", events_path %></p>
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Events</p>
+            <h1 class="event-section__title">Create Event</h1>
+            <p class="event-section__lead">Set the core details for your new event.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Back to events", events_path, class: "event-section__link" %>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <%= render "form",
+                    submit_label: "Create Event",
+                    cancel_path: events_path,
+                    cancel_label: "Cancel" %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

@@ -183,13 +183,33 @@
     </div>
     <div class="calendar-item-form__grid calendar-item-form__grid--logistics">
       <div class="calendar-item-form__stack">
-        <div class="event-form__group">
+        <div class="event-form__group calendar-item-form__autocomplete"
+             data-controller="custom-select"
+             data-custom-select-url-value="<%= event_venue_options_path(@event) %>"
+             data-custom-select-link-url-value="<%= ensure_event_venue_links_path(@event) %>"
+             data-custom-select-link-kind-value="venue">
           <%= form.label :location_name, "Location" %>
-          <%= form.text_field :location_name %>
+          <%= form.text_field :location_name,
+                              autocomplete: "off",
+                              data: {
+                                custom_select_target: "input",
+                                action: "input->custom-select#search focus->custom-select#search blur->custom-select#deferClose keydown->custom-select#focusFirst"
+                              } %>
+          <div class="calendar-item-form__autocomplete-menu" data-custom-select-target="menu" role="listbox" hidden></div>
         </div>
-        <div class="event-form__group">
+        <div class="event-form__group calendar-item-form__autocomplete"
+             data-controller="custom-select"
+             data-custom-select-url-value="<%= event_vendor_options_path(@event) %>"
+             data-custom-select-link-url-value="<%= ensure_event_vendor_links_path(@event) %>"
+             data-custom-select-link-kind-value="vendor">
           <%= form.label :vendor_name, "Vendor" %>
-          <%= form.text_field :vendor_name %>
+          <%= form.text_field :vendor_name,
+                              autocomplete: "off",
+                              data: {
+                                custom_select_target: "input",
+                                action: "input->custom-select#search focus->custom-select#search blur->custom-select#deferClose keydown->custom-select#focusFirst"
+                              } %>
+          <div class="calendar-item-form__autocomplete-menu" data-custom-select-target="menu" role="listbox" hidden></div>
         </div>
       </div>
       <div class="calendar-item-form__stack">

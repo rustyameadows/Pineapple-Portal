@@ -15,9 +15,11 @@
         </select>
       </div>
 
-      <div class="decision-modal__field">
+      <div class="decision-modal__field"
+           data-controller="remote-options"
+           data-remote-options-url-value="<%= event_vendor_options_path(event) %>">
         <%= form.label :vendor_name, "Vendor" %>
-        <input type="text" name="calendar_item[vendor_name]" data-decision-modal-target="vendorInput">
+        <input type="text" name="calendar_item[vendor_name]" data-decision-modal-target="vendorInput" data-remote-options-target="input">
       </div>
 
       <div class="decision-modal__field">

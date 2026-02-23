@@ -78,6 +78,15 @@
                             class: "button button--tiny button--ghost",
                             target: "_blank",
                             rel: "noopener" %>
+                <%= button_to(compiled_version.packets_portal_visible? ? "Hide from portal" : "Show on portal",
+                              event_document_path(event, compiled_version, return_to: event_documents_generated_path(event, document.logical_id)),
+                              method: :patch,
+                              params: {
+                                document: {
+                                  packets_portal_visible: compiled_version.packets_portal_visible? ? "0" : "1"
+                                }
+                              },
+                              class: "button button--tiny button--ghost") %>
               <% elsif placeholder_note.present? %>
                 <span class="generated-builder__build-progress generated-builder__build-progress--hint"><%= placeholder_note %></span>
               <% end %>

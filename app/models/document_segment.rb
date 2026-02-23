@@ -6,6 +6,153 @@ class DocumentSegment < ApplicationRecord
 
   TIMELINE_VIEW_KEY = "timeline".freeze
   RUN_OF_SHOW_VIEW_KEY = "run_of_show_timeline".freeze
+  TEXT_PAGE_VIEW_KEY = "text_page".freeze
+  EVENT_OVERVIEW_VIEW_KEY = "event_overview".freeze
+  EVENT_OVERVIEW_DEFAULT_BODY_MARKDOWN = <<~MARKDOWN.freeze
+    ### Important Information
+
+    **Date** | Sunday, August 31, 2025
+    **Ceremony** | La Caille
+    **Reception** | La Caille
+    **Guest Count** | 171 guests
+
+
+    **Bride** | Hannah Isakowitz
+    **Groom** | Dan Greener
+    **Parents of the Bride** | Missy and Mark Isakowitz
+    **Parents of the Groom** | Ruth and Jeﬀ Greener
+
+
+    **Attire** | Black Tie
+    **Color Palette** | White, Ivory, Cool Blue, Sage, Pine & Touches of Pastels
+
+    ### Timeline
+
+    #### Friday, August 29
+
+    :::columns
+    :::column
+    **Ceremony Rehearsal**  
+    Le Meridien - Pierce Arrow Board Room  
+    5:30 PM  
+    :::
+    :::column
+    **Rehearsal Dinner**  
+    Provisions  
+    7:00 PM to 10:00 PM
+    :::
+    :::
+
+    #### Saturday, August 30
+
+    **Welcome Party**  
+    Salt & Olive  
+    6:00 PM to 9:00 PM
+
+    #### Sunday, August 31
+    :::columns
+    :::column
+    **Ceremony**  
+    La Caille  
+    4:30 PM to 5:00 PM  
+
+    **Dinner & Dancing**  
+    La Caille  
+    6:00 PM to 10:00 PM  
+    :::
+    :::column
+    **Cocktails**  
+    La Caille  
+    5:00 PM to 6:00 PM  
+
+    **After Party**  
+    Le Meridien - Van Ryder  
+    10:00 PM to 12:00 AM
+    :::
+    :::
+
+    ### Planner Contact
+
+    **Lead Planner:** Jordan Lee  
+    **Cell:** (555) 010-2200  
+    **Email:** jordan@pineapple.test  
+
+    **Assistant Planner:** Sam Rivera  
+    **Cell:** (555) 010-2233  
+    **Email:** sam@pineapple.test
+
+    ### Vendor Contacts
+
+    :::columns
+    :::column
+    **Venue**
+    :::
+    :::column
+    **Grand Ballroom** - Maria Stone  
+      (555) 777-8888 | maria@grandballroom.test | @grandballroom
+
+    ---
+
+
+    **Grand Ballroom** - Maria Stone  
+      (555) 777-8888 | maria@grandballroom.test | @grandballroom
+    :::
+    :::
+    ---
+    :::columns
+    :::column
+    **Catering**
+    :::
+    :::column
+    **Sunshine Catering** - Leo Park  
+      (555) 123-4567 | leo@sunshine.test | @sunshinecatering
+    :::
+    :::
+    ---
+    :::columns
+    :::column
+    **Floral**
+    :::
+    :::column
+    **Bloom Studio** - Ana Flores  
+      (555) 990-1133 | ana@bloomstudio.test | @bloomstudio
+    :::
+    :::
+    ---
+    :::columns
+    :::column
+    **Photo + Video**
+    :::
+    :::column
+    **Northlight Films** - Chris Lane  
+      (555) 331-4400 | chris@northlight.test | @northlightfilms
+
+
+    ---
+
+    **Bright Lights Production** - Devon Reed  
+      (555) 998-1200 | devon@brightlights.test | @brightlights
+    :::
+    :::
+    ---
+    :::columns
+    :::column
+    **Transportation**
+    :::
+    :::column
+    **City Shuttle Co.** - Taylor Brooks  
+      (555) 222-8899 | dispatch@cityshuttle.test | @cityshuttle
+    :::
+    :::
+
+    ### Social Media
+
+    No photos or videos of the couple, their guests, or any wedding details (including setup and behind-the-scenes) may be posted on social media before or during the wedding on any public-facing platforms. Pineapple Productions will make the first public social media post on our main feed as a collaborative eﬀort, inviting the key vendors involved. After Pineapple Productions has made this initial post are vendors welcome to share their own images and videos, always ensuring they tag all other relevant vendors who contributed to the wedding.
+
+    ### Parking
+
+    See La Caille property map for delivery details. Please park vehicles in lot 3B once finished unloading. Self parking is available at all other event locations.
+  MARKDOWN
 
   belongs_to :document,
              foreign_key: :document_logical_id,
@@ -17,10 +164,10 @@ class DocumentSegment < ApplicationRecord
            dependent: :destroy
 
   HTML_VIEWS = {
-    "event_overview" => {
+    EVENT_OVERVIEW_VIEW_KEY => {
       label: "Event Overview",
       template: "generated_documents/sections/event_overview",
-      description: "Hero block with event dates, venue, and key facts."
+      description: "Structured event overview with starter copy using Markdown syntax."
     },
     "planning_team" => {
       label: "Planning Team",
@@ -36,6 +183,11 @@ class DocumentSegment < ApplicationRecord
       label: "Run of Show",
       template: "generated_documents/sections/timeline",
       description: "Full run-of-show schedule from the master calendar."
+    },
+    TEXT_PAGE_VIEW_KEY => {
+      label: "Text Page",
+      template: "generated_documents/sections/text_page",
+      description: "General-purpose formatted text section using Markdown syntax."
     },
     "section_break" => {
       label: "Section Break",
@@ -75,6 +227,12 @@ class DocumentSegment < ApplicationRecord
 
     def html_view(key)
       HTML_VIEWS[key.to_s]
+    end
+
+    def default_body_markdown_for(view_key)
+      return EVENT_OVERVIEW_DEFAULT_BODY_MARKDOWN if view_key.to_s == EVENT_OVERVIEW_VIEW_KEY
+
+      ""
     end
 
     def html_view_options

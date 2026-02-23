@@ -59,6 +59,7 @@ module Documents
           version: 1,
           is_latest: false,
           client_visible: false,
+          packets_portal_visible: false,
           source: "packet"
         )
 
@@ -117,6 +118,14 @@ module Documents
         assert_equal :right, options[:text_align]
 
         assert_nil options[:font]
+      end
+
+      test "compiler defaults compiled packets visibility to hidden" do
+        @definition_document.update!(packets_portal_visible: true)
+
+        result = execute_compiler(page_numbers: false)
+
+        assert_not result.compiled_document.packets_portal_visible?
       end
 
       private

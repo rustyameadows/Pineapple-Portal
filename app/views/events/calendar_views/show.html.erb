@@ -1,4 +1,5 @@
 <% provide :page_shell do %>
+  <% decision_view = @view.slug == "decision-calendar" %>
   <div class="event-layout">
     <%= render "events/sidebar_navigation", event: @event %>
 
@@ -15,7 +16,16 @@
             </p>
           </div>
           <div class="event-calendars__schedule-actions">
-            <%= link_to "Preview Timeline", timeline_preview_event_calendar_view_path(@event, @view), class: "event-section__cta event-section__cta--secondary" %>
+            <% if decision_view %>
+              <%= link_to "Add Item",
+                          new_event_calendar_item_path(@event, return_to: request.fullpath, default_tag_name: "Decisions"),
+                          class: "event-section__cta event-section__cta--secondary" %>
+              <% if @view.client_visible? %>
+                <%= link_to "View in Portal",
+                            client_event_calendar_path(@event.portal_slug.presence || @event.id, "decision-calendar"),
+                            class: "event-section__cta event-section__cta--secondary" %>
+              <% end %>
+            <% end %>
             <%= link_to "Edit View", edit_event_calendar_view_path(@event, @view), class: "event-section__cta" %>
           </div>
         </header>
@@ -33,11 +43,14 @@
               Locked items are hidden in this view.
             <% end %>
           </p>
+          <% if decision_view && !@view.client_visible? %>
+            <p class="event-section__note">Set this timeline to visible in client portal to enable the portal decision calendar link.</p>
+          <% end %>
 
           <% if @items.any? %>
-            <% custom_group_label = if @view.slug == "decision-calendar"
+            <% custom_group_label = if decision_view
                                       ->(item) {
-                                        item.time_caption.presence || calendar_item_date_bucket(item, @calendar.timezone)
+                                        item.time_caption.presence || calendar_item_month_year_label(item, @calendar.timezone)
                                       }
                                     end %>
             <%= render "events/calendars/schedule_table",
@@ -45,6 +58,7 @@
                        calendar: @calendar,
                        group_by_date: true,
                        group_label_proc: custom_group_label,
+                       show_status_first: decision_view,
                        show_tags: false,
                        item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@event, item, return_to: request.fullpath)] } %>
           <% else %>
@@ -53,9 +67,6 @@
             </div>
           <% end %>
 
-          <div class="event-section__actions">
-            <%= link_to "Back to Run of Show", event_calendar_path(@event), class: "event-section__link" %>
-          </div>
         </div>
       </section>
     </div>

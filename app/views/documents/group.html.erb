@@ -33,6 +33,16 @@
                     documents: @documents,
                     title_link: ->(document) { event_document_path(@event, document) },
                     empty_message: "No documents in this category yet." %>
+
+          <% if @packet_component_document_count.to_i.positive? %>
+            <% show_url = url_for(params: request.query_parameters.merge("include_packet_components" => "1")) %>
+            <% hide_url = url_for(params: request.query_parameters.except("include_packet_components")) %>
+            <p class="event-section__lead">
+              <%= pluralize(@packet_component_document_count, "packet source document") %>
+              <%= @show_packet_component_documents ? "included." : "hidden from this list." %>
+              <%= link_to(@show_packet_component_documents ? "Hide packet source documents" : "Show packet source documents", @show_packet_component_documents ? hide_url : show_url) %>
+            </p>
+          <% end %>
         </div>
       </section>
     </div>

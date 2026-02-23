@@ -115,8 +115,9 @@ module Client
       raw_items = ::Calendars::ViewFilter.new(calendar: @calendar, view: @active_view).items
       grouped = raw_items.group_by { |item| helpers.calendar_item_date_bucket(item, @calendar.timezone) }
 
-      grouped.map do |segment, items|
-        label = items.find { |item| item.time_caption.present? }&.time_caption || segment
+      grouped.map do |_segment, items|
+        label = items.find { |item| item.time_caption.present? }&.time_caption ||
+                helpers.calendar_item_month_year_label(items.first, @calendar.timezone)
         {
           label: label,
           items: items.sort_by { |it| it.title.to_s.downcase },

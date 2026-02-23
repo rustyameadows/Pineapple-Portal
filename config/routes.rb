@@ -16,11 +16,21 @@ end
 
 namespace :settings do
   get "run_of_show_defaults", to: "run_of_show_defaults#show", as: :run_of_show_defaults
+  resources :global_vendors, only: %i[index new edit create update destroy]
+  resources :global_venues, only: %i[index new edit create update destroy]
 end
 
 post "global_assets/presign", to: "global_asset_uploads#create", as: :global_assets_presign
 
   resources :events do
+    member do
+      patch :archive
+      patch :restore
+    end
+
+    get :vendor_options, to: "events/vendor_options#index"
+    get :venue_options, to: "events/venue_options#index"
+
     resource :settings, only: [:show], module: :events, controller: :settings do
       get :client_portal
       get :clients
@@ -34,7 +44,11 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
     resources :event_photo_documents, only: :create, module: :events
 
     resources :payments, module: :events
-    resources :approvals, module: :events
+    resources :approvals, module: :events do
+      member do
+        patch :clear_response
+      end
+    end
 
     resources :calendars, only: :index, module: :events, controller: :calendars
 
@@ -107,12 +121,22 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
       end
     end
 
+    resources :vendor_links, only: [], module: :events do
+      collection { post :ensure }
+    end
+
+    resources :venue_links, only: [], module: :events do
+      collection { post :ensure }
+    end
+
     resources :team_members, only: %i[create update destroy], module: :events do
       member { post :issue_reset }
     end
 
     get "questionnaires/import", to: "questionnaire_imports#new", as: :questionnaire_import
     post "questionnaires/import", to: "questionnaire_imports#create"
+    get "calendar/import", to: "calendar_item_imports#new", as: :calendar_item_import
+    post "calendar/import", to: "calendar_item_imports#create"
 
     resources :questionnaires do
       member do
@@ -205,6 +229,13 @@ post "global_assets/presign", to: "global_asset_uploads#create", as: :global_ass
         end
       end
       resources :designs, only: %i[index create]
+      resources :approvals, only: %i[index show] do
+        member do
+          patch :accept
+          patch :respond
+        end
+      end
+      resources :packets, only: :index
       resources :financials, only: :index
       resources :payments, only: :show do
         member do
