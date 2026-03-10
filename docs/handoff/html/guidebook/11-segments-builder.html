@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Segments (Builder Rules)</title><style>body{font-family:Arial,sans-serif;max-width:900px;margin:2rem auto;line-height:1.5;padding:0 1rem}pre{white-space:pre-wrap}a{color:#0b5fff}</style></head><body><p><a href='00-guidebook-index.html'>← Guidebook index</a></p><pre># Segments (Builder Rules)
+
+## Segment types
+- `pdf_asset`
+- `html_view`
+
+## Builder behavior
+- Segment list supports reorder.
+- Each segment supports preview and render status.
+- HTML sections expose section-specific options.
+
+## Text Page + Event Overview behavior from tests
+- Markdown formatting is rendered (headings/lists/emphasis).
+- Unsafe scripts and javascript links are sanitized.
+- Custom `:::columns` directives render two-column layouts when valid.
+- Malformed column directives are left as literal markdown text.
+- Event Overview has starter fallback content when body markdown is blank.
+</pre></body></html>

@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Client Portal</title><style>body{font-family:Arial,sans-serif;max-width:900px;margin:2rem auto;line-height:1.5;padding:0 1rem}pre{white-space:pre-wrap}a{color:#0b5fff}</style></head><body><p><a href='00-guidebook-index.html'>← Guidebook index</a></p><pre># Client Portal
+
+## Purpose
+The client portal is the client-facing surface for schedule, approvals, packets, payments, questionnaires, and shared links.
+
+## Access model
+- Uses event slug route namespace: `/client/&lt;event-slug&gt;/...`
+- Client login/session required.
+
+## Core portal areas
+- Event homepage
+- Decision Calendar + Run of Show calendar views
+- Approvals
+- Financials + individual payment pages
+- Packets
+- Questionnaires
+
+## Publishing behavior highlights
+- Calendars only show if run-of-show and/or client-visible derived views are available.
+- Hidden or unavailable areas redirect with a “not yet published” style message.
+
+## Decision Calendar behavior
+- Segment-based list presentation.
+- Click row to edit title/status/vendor/notes (modal flow).
+</pre></body></html>

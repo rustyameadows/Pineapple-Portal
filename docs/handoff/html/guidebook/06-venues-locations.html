@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Venues / Locations (Global + Event)</title><style>body{font-family:Arial,sans-serif;max-width:900px;margin:2rem auto;line-height:1.5;padding:0 1rem}pre{white-space:pre-wrap}a{color:#0b5fff}</style></head><body><p><a href='00-guidebook-index.html'>← Guidebook index</a></p><pre># Venues / Locations (Global + Event)
+
+## Global Locations (Global Venues)
+Purpose: reusable shared location records.
+
+Manage:
+- name
+- contacts
+
+Delete rule:
+- cannot remove while linked to event venues.
+
+## Event Locations
+Purpose: event-specific location list used by operations and visibility rules.
+
+Manage:
+- name
+- client visible toggle
+- contacts
+- order (move up/down)
+
+## Linking behavior
+- Event location can link to global location (`global_venue_id`).
+- Duplicate global venue links in same event are blocked.
+</pre></body></html>
