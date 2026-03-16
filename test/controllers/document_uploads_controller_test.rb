@@ -17,13 +17,8 @@ class DocumentUploadsControllerTest < ActionDispatch::IntegrationTest
 
   test "returns presigned data for new document" do
     storage = StubStorage.new
-    original_new = R2::Storage.method(:new)
-
-    begin
-      R2::Storage.define_singleton_method(:new) { storage }
+    R2::Storage.stub :new, storage do
       post presign_event_documents_url(@event), params: { filename: "contract.pdf" }, as: :json
-    ensure
-      R2::Storage.define_singleton_method(:new, &original_new)
     end
 
     assert_response :success
@@ -39,17 +34,12 @@ class DocumentUploadsControllerTest < ActionDispatch::IntegrationTest
   test "returns next version when logical id provided" do
     existing = documents(:contract_v1)
     storage = StubStorage.new
-    original_new = R2::Storage.method(:new)
-
-    begin
-      R2::Storage.define_singleton_method(:new) { storage }
+    R2::Storage.stub :new, storage do
       post presign_event_documents_url(@event), params: {
         filename: "contract.pdf",
         logical_id: existing.logical_id,
         content_type: "application/pdf"
       }, as: :json
-    ensure
-      R2::Storage.define_singleton_method(:new, &original_new)
     end
 
     assert_response :success
@@ -58,5 +48,20 @@ class DocumentUploadsControllerTest < ActionDispatch::IntegrationTest
     assert_equal existing.logical_id, body["logical_id"]
     assert_equal 2, body["version"]
     assert_equal "application/pdf", body["content_type"]
+  end
+
+  test "sanitizes filename in storage key" do
+    storage = StubStorage.new
+
+    R2::Storage.stub :new, storage do
+      post presign_event_documents_url(@event), params: {
+        filename: "Wholesale Prospecting Report?.pdf"
+      }, as: :json
+    end
+
+    assert_response :success
+    body = JSON.parse(response.body)
+
+    assert_includes body["storage_uri"], "Wholesale-Prospecting-Report-.pdf"
   end
 end

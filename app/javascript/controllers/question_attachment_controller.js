@@ -1,10 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
-
-const checksumHex = async (file) => {
-  const buffer = await file.arrayBuffer()
-  const digest = await crypto.subtle.digest("SHA-256", buffer)
-  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("")
-}
+import {
+  buildUploadError,
+  performDirectUpload,
+  reportUploadFailureForError
+} from "controllers/shared/direct_upload"
 
 export default class extends Controller {
   static targets = [
@@ -83,33 +82,13 @@ export default class extends Controller {
 
     try {
       this.setStatus(`Preparing ${file.name}...`)
-      const presignResponse = await fetch(this.presignUrlValue, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": this.csrfToken
-        },
-        body: JSON.stringify({ filename: file.name, content_type: file.type || "application/octet-stream" })
+      const { presignData, checksum } = await performDirectUpload({
+        scope: "question_attachment",
+        presignUrl: this.presignUrlValue,
+        file,
+        csrfToken: this.csrfToken,
+        onProgress: () => this.setStatus(`Uploading ${file.name}...`)
       })
-
-      if (!presignResponse.ok) {
-        throw new Error("Could not prepare upload")
-      }
-
-      const presignData = await presignResponse.json()
-
-      this.setStatus(`Uploading ${file.name}...`)
-      const uploadResponse = await fetch(presignData.upload_url, {
-        method: "PUT",
-        headers: { "Content-Type": presignData.content_type },
-        body: file
-      })
-
-      if (!uploadResponse.ok) {
-        throw new Error("Upload failed")
-      }
-
-      const checksum = await checksumHex(file)
 
       const formData = new FormData()
       formData.append("attachment[entity_type]", this.entityTypeValue)
@@ -139,11 +118,32 @@ export default class extends Controller {
         payload = await response.clone().json()
       } catch (parseError) {
         console.error("Failed to parse attachment response", parseError)
-        throw new Error("Could not save attachment")
+        payload = null
       }
 
       if (!response.ok) {
-        throw new Error(payload.error || "Could not save attachment")
+        const error = buildUploadError({
+          stage: "metadata_save",
+          status: response.status,
+          responseText: payload?.error || "",
+          message: payload?.error ? `The file uploaded, but saving it in Pineapple failed (HTTP ${response.status}). Details: ${payload.error}` : null
+        })
+
+        await reportUploadFailureForError({
+          error,
+          csrfToken: this.csrfToken,
+          scope: "question_attachment",
+          presignUrl: this.presignUrlValue,
+          storageUri: presignData.storage_uri,
+          logicalId: presignData.logical_id,
+          extra: {
+            attachments_path: this.attachmentsPathValue,
+            entity_type: this.entityTypeValue,
+            entity_id: this.entityIdValue
+          }
+        })
+
+        throw error
       }
 
       if (payload.html) {

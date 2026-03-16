@@ -48,7 +48,7 @@
         </header>
 
         <div class="event-section__body">
-          <%= render "form", item: @item %>
+          <%= render "form", item: @item, has_dependent_items: @dependent_items.present? %>
         </div>
       </section>
 
@@ -97,7 +97,7 @@
             ready(function() {
               var form = document.querySelector(".calendar-item-form");
               var panel = document.getElementById("relative-impact-panel");
-              var deleteLink = document.querySelector("[data-impact-delete]");
+              var deleteTrigger = document.querySelector("[data-impact-delete]");
               if (!form || !panel) return;
 
               var confirmBtn = panel.querySelector("[data-impact-confirm]");
@@ -112,11 +112,11 @@
                 panel.style.display = "flex";
               });
 
-              if (deleteLink) {
-                deleteLink.addEventListener("click", function(event) {
+              if (deleteTrigger) {
+                deleteTrigger.addEventListener("click", function(event) {
                   if (bypass) return;
                   event.preventDefault();
-                  lastSubmitter = deleteLink;
+                  lastSubmitter = deleteTrigger;
                   panel.style.display = "flex";
                 });
               }
@@ -132,7 +132,9 @@
                 confirmBtn.addEventListener("click", function() {
                   bypass = true;
                   panel.style.display = "none";
-                  if (lastSubmitter && typeof lastSubmitter.click === "function") {
+                  if (lastSubmitter && lastSubmitter.form && typeof lastSubmitter.form.requestSubmit === "function") {
+                    lastSubmitter.form.requestSubmit(lastSubmitter);
+                  } else if (lastSubmitter && typeof lastSubmitter.click === "function") {
                     lastSubmitter.click();
                   } else {
                     form.submit();

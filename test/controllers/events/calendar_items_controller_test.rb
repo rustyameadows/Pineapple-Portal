@@ -26,5 +26,40 @@ module Events
       assert_equal existing_tag_count, @calendar.event_calendar_tags.count
       assert_select "input[type='checkbox'][name='calendar_item[event_calendar_tag_ids][]'][checked]", count: 0
     end
+
+    test "edit renders form-backed delete controls for persisted items" do
+      item = calendar_items(:ceremony)
+      return_to = event_calendar_path(@event)
+
+      get edit_event_calendar_item_url(@event, item), params: { return_to: return_to }
+
+      assert_response :success
+      assert_select "a[data-turbo-method='delete'][data-impact-delete]", count: 0
+      assert_select "button[data-impact-delete][form='calendar-item-delete-form-#{item.id}']", count: 1
+      assert_select "form#calendar-item-delete-form-#{item.id}[data-turbo-confirm]", count: 0
+      assert_select "form#calendar-item-delete-form-#{item.id}[action='#{event_calendar_item_path(@event, item)}'][method='post']" do
+        assert_select "input[name='_method'][value='delete']", count: 1
+        assert_select "input[name='return_to'][value='#{return_to}']", count: 1
+      end
+    end
+
+    test "edit keeps turbo confirm on delete form when no dependents exist" do
+      item = calendar_items(:afterparty)
+
+      get edit_event_calendar_item_url(@event, item)
+
+      assert_response :success
+      assert_select "form#calendar-item-delete-form-#{item.id}[data-turbo-confirm='Remove this calendar item?']", count: 1
+    end
+
+    test "destroy removes item and respects safe return path" do
+      item = calendar_items(:afterparty)
+
+      assert_difference("CalendarItem.count", -1) do
+        delete event_calendar_item_url(@event, item), params: { return_to: event_calendar_path(@event) }
+      end
+
+      assert_redirected_to event_calendar_path(@event)
+    end
   end
 end
