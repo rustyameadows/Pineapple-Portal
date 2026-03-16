@@ -1,30 +1,6 @@
 <% content_for :scripts do %>
   <script type="module">
-    const uploadWithProgress = (url, file, contentType, onProgress) => {
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("PUT", url, true);
-        xhr.setRequestHeader("Content-Type", contentType);
-
-        xhr.upload.addEventListener("progress", (event) => {
-          onProgress(event.loaded, event.total, event.lengthComputable);
-        });
-
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error("Upload failed"));
-          }
-        });
-
-        xhr.addEventListener("error", () => {
-          reject(new Error("Upload failed"));
-        });
-
-        xhr.send(file);
-      });
-    };
+    import { performDirectUpload } from "controllers/shared/direct_upload";
 
     const initDocumentUploads = () => {
       document.querySelectorAll("[data-document-upload-form]").forEach((form) => {
@@ -63,12 +39,6 @@
           if (progressEl) progressEl.hidden = true;
         };
 
-        const hexDigest = async (file) => {
-          const buffer = await file.arrayBuffer();
-          const digest = await crypto.subtle.digest("SHA-256", buffer);
-          return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
-        };
-
         fileInput?.addEventListener("change", async () => {
           const file = fileInput.files?.[0];
           if (!file) {
@@ -77,29 +47,10 @@
           }
 
           if (submitButton) submitButton.disabled = true;
-          if (statusEl) statusEl.textContent = "Preparing upload...";
           resetStatus();
+          if (statusEl) statusEl.textContent = "Preparing upload...";
 
           try {
-            const body = {
-              filename: file.name,
-              content_type: file.type || "application/octet-stream",
-              logical_id: logicalIdInput?.value || null
-            };
-
-            const presignResponse = await fetch(form.dataset.presignUrl, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-Token": csrfToken || ""
-              },
-              body: JSON.stringify(body)
-            });
-
-            if (!presignResponse.ok) throw new Error("Unable to get upload URL");
-
-            const presignData = await presignResponse.json();
-
             const showProgress = (label, percent) => {
               if (uiContainer) uiContainer.classList.add("is-uploading");
               if (progressEl) progressEl.hidden = false;
@@ -111,17 +62,22 @@
             if (statusEl) statusEl.textContent = "Uploading to storage...";
             showProgress("Uploading", 0);
 
-            await uploadWithProgress(presignData.upload_url, file, presignData.content_type, (loaded, total, computable) => {
-              if (!computable) {
-                showProgress("Uploading", 25);
-                return;
+            const { presignData, checksum } = await performDirectUpload({
+              scope: "document_form",
+              presignUrl: form.dataset.presignUrl,
+              file,
+              logicalId: logicalIdInput?.value || null,
+              csrfToken: csrfToken || "",
+              onProgress: (loaded, total, computable) => {
+                if (!computable) {
+                  showProgress("Uploading", 25);
+                  return;
+                }
+
+                const percent = total > 0 ? (loaded / total) * 100 : 0;
+                showProgress("Uploading", Math.min(99, percent));
               }
-
-              const percent = total > 0 ? (loaded / total) * 100 : 0;
-              showProgress("Uploading", Math.min(99, percent));
             });
-
-            const checksum = await hexDigest(file);
 
             if (titleInput && !titleInput.value) titleInput.value = file.name;
             if (storageUriInput) storageUriInput.value = presignData.storage_uri;
@@ -135,7 +91,7 @@
             if (submitButton) submitButton.disabled = false;
           } catch (error) {
             console.error(error);
-            setError("Upload failed. Please try again.");
+            setError(error.message || "Upload failed.");
           }
         });
       });

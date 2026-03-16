@@ -21,6 +21,7 @@ namespace :settings do
 end
 
 post "global_assets/presign", to: "global_asset_uploads#create", as: :global_assets_presign
+post "upload_failures", to: "upload_failures#create"
 
   resources :events do
     member do

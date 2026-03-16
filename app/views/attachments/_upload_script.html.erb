@@ -1,35 +1,5 @@
 <script type="module">
-  const checksumHex = async (file) => {
-    const buffer = await file.arrayBuffer();
-    const digest = await crypto.subtle.digest("SHA-256", buffer);
-    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
-  };
-
-  const uploadWithProgress = (url, file, contentType, onProgress) => {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", url, true);
-      xhr.setRequestHeader("Content-Type", contentType);
-
-      xhr.upload.addEventListener("progress", (event) => {
-        onProgress(event.loaded, event.total, event.lengthComputable);
-      });
-
-      xhr.addEventListener("load", () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve();
-        } else {
-          reject(new Error("Upload failed"));
-        }
-      });
-
-      xhr.addEventListener("error", () => {
-        reject(new Error("Upload failed"));
-      });
-
-      xhr.send(file);
-    });
-  };
+  import { performDirectUpload } from "controllers/shared/direct_upload";
 
   const initAttachmentUploads = () => {
     document.querySelectorAll("[data-attachment-upload-form]").forEach((form) => {
@@ -82,51 +52,42 @@
 
         if (submitButton) submitButton.disabled = true;
         if (selectExisting) selectExisting.value = "";
-        if (statusEl) statusEl.textContent = "Preparing upload...";
         resetProgress();
+        if (statusEl) statusEl.textContent = "Preparing upload...";
 
         try {
-          const response = await fetch(form.dataset.presignUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRF-Token": csrfToken || ""
-            },
-            body: JSON.stringify({ filename: file.name, content_type: file.type || "application/octet-stream" })
-          });
-
-          if (!response.ok) throw new Error("Could not prepare upload");
-
-          const data = await response.json();
-
           if (statusEl) statusEl.textContent = "Uploading file...";
           showProgress("Uploading", 0);
 
-          await uploadWithProgress(data.upload_url, file, data.content_type, (loaded, total, computable) => {
-            if (!computable) {
-              showProgress("Uploading", 25);
-              return;
-            }
+          const { presignData, checksum } = await performDirectUpload({
+            scope: "attachment_form",
+            presignUrl: form.dataset.presignUrl,
+            file,
+            csrfToken: csrfToken || "",
+            onProgress: (loaded, total, computable) => {
+              if (!computable) {
+                showProgress("Uploading", 25);
+                return;
+              }
 
-            const percent = total > 0 ? (loaded / total) * 100 : 0;
-            showProgress("Uploading", Math.min(99, percent));
+              const percent = total > 0 ? (loaded / total) * 100 : 0;
+              showProgress("Uploading", Math.min(99, percent));
+            }
           });
 
-          const checksum = await checksumHex(file);
-
-          if (storageUriInput) storageUriInput.value = data.storage_uri;
+          if (storageUriInput) storageUriInput.value = presignData.storage_uri;
           if (checksumInput) checksumInput.value = checksum;
           if (sizeInput) sizeInput.value = file.size;
-          if (contentTypeInput) contentTypeInput.value = data.content_type;
+          if (contentTypeInput) contentTypeInput.value = presignData.content_type;
           if (titleInput) titleInput.value = file.name;
-          if (logicalIdInput) logicalIdInput.value = data.logical_id;
+          if (logicalIdInput) logicalIdInput.value = presignData.logical_id;
 
           showProgress("Processing", 100);
           if (statusEl) statusEl.textContent = "File uploaded. Add notes and click Add Attachment.";
           if (submitButton) submitButton.disabled = false;
         } catch (error) {
           console.error(error);
-          if (statusEl) statusEl.textContent = "Upload failed. Please try again.";
+          if (statusEl) statusEl.textContent = error.message || "Upload failed.";
           if (submitButton) submitButton.disabled = true;
           resetProgress();
         }

@@ -100,6 +100,38 @@ module Client
       assert_select ".client-pill", text: "Returned with comments"
     end
 
+    test "show renders approved approval without responded timestamp" do
+      approval = @event.approvals.create!(
+        title: "Final Layout",
+        summary: "Marked approved from imported data.",
+        client_visible: true,
+        status: :approved,
+        acknowledged_at: nil
+      )
+
+      get client_event_approval_url(@event, approval)
+
+      assert_response :success
+      assert_select "h1", text: approval.title
+      assert_select "p", text: "Approved"
+    end
+
+    test "show renders returned approval without responded timestamp" do
+      approval = @event.approvals.create!(
+        title: "Audio Notes",
+        summary: "Marked returned from imported data.",
+        client_visible: true,
+        status: :acknowledged,
+        acknowledged_at: nil
+      )
+
+      get client_event_approval_url(@event, approval)
+
+      assert_response :success
+      assert_select "h1", text: approval.title
+      assert_select "p", text: "Returned with comments"
+    end
+
     test "accept approves pending approval" do
       approval = @event.approvals.create!(
         title: "Band Contract",
