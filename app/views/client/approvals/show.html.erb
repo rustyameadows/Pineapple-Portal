@@ -5,9 +5,17 @@
       <% if @approval.pending? %>
         <p>Awaiting your response</p>
       <% elsif @approval.approved? %>
-        <p>Approved <%= l(@approval.acknowledged_at, format: :long) %></p>
+        <% if @approval.acknowledged_at.present? %>
+          <p>Approved <%= l(@approval.acknowledged_at, format: :long) %></p>
+        <% else %>
+          <p>Approved</p>
+        <% end %>
       <% else %>
-        <p>Returned with comments <%= l(@approval.acknowledged_at, format: :long) %></p>
+        <% if @approval.acknowledged_at.present? %>
+          <p>Returned with comments <%= l(@approval.acknowledged_at, format: :long) %></p>
+        <% else %>
+          <p>Returned with comments</p>
+        <% end %>
       <% end %>
     </div>
     <div class="client-page__actions">
