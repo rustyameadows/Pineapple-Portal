@@ -300,6 +300,12 @@
   position: relative;
 }
 
+.event-calendars__bulk-field--input .calendar-item-form__autocomplete-menu {
+  top: auto;
+  bottom: calc(100% + 0.35rem);
+  max-height: min(16rem, calc(100vh - 10rem));
+}
+
 .event-calendars__bulk-tag-list {
   display: flex;
   align-items: center;

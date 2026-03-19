@@ -14,12 +14,12 @@ class CalendarBulkEditTest < ApplicationSystemTestCase
 
     assert_no_selector ".event-calendars__bulk-toolbar", visible: true
 
-    find("input.event-calendars__bulk-checkbox[value='#{@ceremony.id}']").check
+    find("input.event-calendars__bulk-checkbox[value='#{@ceremony.id}']", visible: :all).set(true)
 
     assert_selector ".event-calendars__bulk-toolbar", visible: true
-    assert_text "1 item(s) selected"
+    assert_selector ".event-calendars__bulk-count", text: /1\s+selected/
 
-    select "Set vendor", from: "Action"
+    find("select[name='bulk[bulk_action]']").select("Set vendor")
     fill_in "Vendor", with: "Golden Pine Events"
 
     click_button "Apply"
@@ -45,9 +45,9 @@ class CalendarBulkEditTest < ApplicationSystemTestCase
     assert_text "Reception"
     assert_no_text "Afterparty"
 
-    find("input.event-calendars__bulk-checkbox[value='#{@reception.id}']").check
-    select "Remove tags", from: "Action"
-    find("select[name='bulk[tag_ids][]']").find("option", text: "Vendor").select_option
+    find("input.event-calendars__bulk-checkbox[value='#{@reception.id}']", visible: :all).set(true)
+    find("select[name='bulk[bulk_action]']").select("Remove tags")
+    find("input#bulk_tag_#{event_calendar_tags(:vendor).id}", visible: :all).set(true)
 
     click_button "Apply"
     within "dialog[open]" do
@@ -66,5 +66,6 @@ class CalendarBulkEditTest < ApplicationSystemTestCase
     fill_in "Email", with: users(:one).email
     fill_in "Password", with: "password123"
     click_button "Log In"
+    assert_text "Your Active Events"
   end
 end
