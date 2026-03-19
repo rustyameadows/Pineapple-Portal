@@ -95,7 +95,7 @@ class TextPageSectionTest < ActionView::TestCase
 
     assert_equal 2, columns.size
     assert_includes columns.first.text, "Only first column content"
-    assert_equal "", columns.second.text.strip
+    assert_equal "", columns[1].text.strip
   end
 
   test "treats malformed column directives as plain markdown text" do

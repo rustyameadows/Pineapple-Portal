@@ -66,4 +66,17 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to grid_event_calendar_url(@event)
     assert_includes @item.reload.event_calendar_tag_ids, event_calendar_tags(:day_of).id
   end
+
+  test "applies bulk lock update" do
+    patch grid_bulk_event_calendar_url(@event), params: {
+      item_ids: [@item.id],
+      bulk: {
+        bulk_action: "set_locked",
+        locked: "1"
+      }
+    }
+
+    assert_redirected_to grid_event_calendar_url(@event)
+    assert_predicate @item.reload, :locked?
+  end
 end
