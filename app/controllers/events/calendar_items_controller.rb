@@ -60,6 +60,19 @@ module Events
       end
     end
 
+    def bulk_update
+      ids = Array(params[:item_ids]).map(&:to_i).reject(&:zero?)
+      result = Calendars::GridBulkUpdater.new(
+        calendar: @calendar,
+        item_ids: ids,
+        params: bulk_params
+      ).call
+
+      flash_key = result.success? ? :notice : :alert
+      redirect_to safe_return_to(fallback: event_calendar_path(@event)),
+                  flash: { flash_key => result.message }
+    end
+
     def destroy
       @item.destroy
       run_scheduler
@@ -152,6 +165,10 @@ module Events
         :time_caption,
         team_member_ids: []
       )
+    end
+
+    def bulk_params
+      params.fetch(:bulk, {}).permit(:bulk_action, :vendor_name, :location_name, tag_ids: [])
     end
 
     def assign_tags(item)

@@ -61,5 +61,66 @@ module Events
 
       assert_redirected_to event_calendar_path(@event)
     end
+
+    test "bulk update adds tags to selected items only" do
+      ceremony = calendar_items(:ceremony)
+      reception = calendar_items(:reception)
+      tag = event_calendar_tags(:day_of)
+
+      patch bulk_update_event_calendar_items_url(@event), params: {
+        item_ids: [ceremony.id],
+        bulk: {
+          bulk_action: "add_tags",
+          tag_ids: [tag.id]
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      assert_includes ceremony.reload.event_calendar_tag_ids, tag.id
+      assert_not_includes reception.reload.event_calendar_tag_ids, tag.id
+    end
+
+    test "bulk update clears vendor for selected items" do
+      item = calendar_items(:decision_flowers)
+
+      patch bulk_update_event_calendar_items_url(@event), params: {
+        item_ids: [item.id],
+        bulk: {
+          bulk_action: "clear_vendor"
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      assert_nil item.reload.vendor_name
+    end
+
+    test "bulk update deletes selected items and respects safe return path" do
+      item = calendar_items(:reception)
+      return_to = event_calendar_view_path(@event, event_calendar_views(:vendor_view))
+
+      assert_difference("CalendarItem.count", -1) do
+        patch bulk_update_event_calendar_items_url(@event), params: {
+          item_ids: [item.id],
+          bulk: {
+            bulk_action: "delete_items"
+          },
+          return_to:
+        }
+      end
+
+      assert_redirected_to return_to
+    end
+
+    test "bulk update requires a selected item" do
+      patch bulk_update_event_calendar_items_url(@event), params: {
+        bulk: {
+          bulk_action: "delete_items"
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      follow_redirect!
+      assert_includes response.body, "Select at least one item."
+    end
   end
 end

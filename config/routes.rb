@@ -61,6 +61,9 @@ post "upload_failures", to: "upload_failures#create"
       resources :items,
                 controller: "calendar_items",
                 except: :index do
+        collection do
+          patch :bulk_update
+        end
         member do
           patch :mark_completed
           patch :mark_planned

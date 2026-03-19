@@ -20,6 +20,16 @@ module Calendars
                     apply_tag_additions
                   when "remove_tags"
                     apply_tag_removals
+                  when "set_vendor"
+                    apply_vendor_update
+                  when "clear_vendor"
+                    apply_vendor_clear
+                  when "set_location"
+                    apply_location_update
+                  when "clear_location"
+                    apply_location_clear
+                  when "delete_items"
+                    apply_deletions
                   else
                     return Result.new(success?: false, message: "Choose a bulk action.")
                   end
@@ -79,6 +89,39 @@ module Calendars
         item.update!(event_calendar_tag_ids: remaining)
       end
       @success_message = "Tags removed from #{items.count} item#{'s' if items.count != 1}."
+    end
+
+    def apply_vendor_update
+      vendor_name = params[:vendor_name].to_s.strip
+      return "Enter a vendor." if vendor_name.blank?
+
+      items.find_each { |item| item.update!(vendor_name:) }
+      @success_message = "Vendor updated for #{items.count} item#{'s' if items.count != 1}."
+    end
+
+    def apply_vendor_clear
+      items.find_each { |item| item.update!(vendor_name: nil) }
+      @success_message = "Vendor cleared for #{items.count} item#{'s' if items.count != 1}."
+    end
+
+    def apply_location_update
+      location_name = params[:location_name].to_s.strip
+      return "Enter a location." if location_name.blank?
+
+      items.find_each { |item| item.update!(location_name:) }
+      @success_message = "Location updated for #{items.count} item#{'s' if items.count != 1}."
+    end
+
+    def apply_location_clear
+      items.find_each { |item| item.update!(location_name: nil) }
+      @success_message = "Location cleared for #{items.count} item#{'s' if items.count != 1}."
+    end
+
+    def apply_deletions
+      count = items.count
+      items.destroy_all
+      @items = CalendarItem.none
+      @success_message = "#{count} item#{'s' if count != 1} removed."
     end
 
     def permitted_tag_ids

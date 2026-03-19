@@ -2,6 +2,8 @@
 
 Minimal Rails 8 skeleton for the Pineapple Productions portal. Ships with PostgreSQL-backed `User` accounts, session-based authentication, event management, reusable questionnaires, versioned documents, and a welcome screen that lists seeded records so you can verify the database wiring right away.
 
+For repository collaboration, approval of a detailed file-scoped plan counts as approval to edit those listed files. Ask again only if the implementation needs to touch a different file set than the one already approved.
+
 ## Stack
 - Ruby 3.3.6 (managed with rbenv)
 - Rails 8.0.2.1

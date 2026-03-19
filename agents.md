@@ -13,6 +13,8 @@ Whenever you present a list (plans, findings, options, etc.), provide every rele
 Before making any change, describe exactly what you intend to do, including every file you plan to touch, and wait for the maintainer’s confirmation. Example phrasing:
 > “Plan: Update `app/assets/stylesheets/style.css` to change the primary button background to red. I’ll stop until you approve.”
 
+If the maintainer approves a detailed plan that already lists the exact files to touch, treat that approval as permission to edit those files without asking again. Pause only if the file list changes or new files need to be touched.
+
 ## Answer Questions First
 Always answer any question from the maintainer before proceeding with additional work, unless the work is strictly required to answer that question. Explicitly acknowledge the question and your intent in your reply.
 

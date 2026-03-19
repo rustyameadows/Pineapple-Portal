@@ -6,99 +6,267 @@
 <% show_relative = !!local_assigns[:show_relative] %>
 <% show_status_first = !!local_assigns[:show_status_first] %>
 <% show_edit_button = !!local_assigns[:show_edit_button] %>
+<% bulk_edit = !!local_assigns[:bulk_edit] %>
 <% render_actions = local_assigns[:render_actions] %>
 <% actions_header = local_assigns[:actions_header] || "" %>
 <% item_link_proc = local_assigns[:item_link_proc] || ->(item) { [item.title, edit_event_calendar_item_path(calendar.event, item, return_to: request.fullpath)] } %>
+<% bulk_form_id = local_assigns[:bulk_form_id] || "calendar-bulk-edit-form" %>
+<% bulk_form_url = local_assigns[:bulk_form_url] || bulk_update_event_calendar_items_path(calendar.event) %>
+<% bulk_return_to = local_assigns[:bulk_return_to] || request.fullpath %>
 <% base_column_count = show_relative ? 3 : 5 %>
 <% base_column_count += 1 if show_status_first %>
+<% bulk_action_options = [
+     ["Choose action", ""],
+     ["Add tags", "add_tags"],
+     ["Remove tags", "remove_tags"],
+     ["Set vendor", "set_vendor"],
+     ["Clear vendor", "clear_vendor"],
+     ["Set location", "set_location"],
+     ["Clear location", "clear_location"],
+     ["Delete items", "delete_items"]
+   ] %>
 
-<table class="event-table event-calendars__table">
-  <thead>
-    <tr>
-      <% if show_status_first %>
-        <th class="event-calendars__status-column">Status</th>
-      <% end %>
-      <th class="event-calendars__schedule-column">Schedule</th>
-      <th class="event-calendars__title-column">Title</th>
-      <% if show_relative %>
-        <th>Relation</th>
-      <% else %>
-        <th>Vendor</th>
-        <th>Location</th>
-        <th>Team</th>
-      <% end %>
-      <% if show_tags %>
-        <th>Tags</th>
-      <% end %>
-      <% if show_edit_button %>
-        <th class="event-calendars__actions-column"></th>
-      <% end %>
-      <% if render_actions %>
-        <th><%= actions_header %></th>
-      <% end %>
-    </tr>
-  </thead>
-  <tbody>
-    <% current_bucket = nil %>
-    <% items.each do |item| %>
-      <% bucket_key = calendar_item_date_bucket(item, calendar.timezone) %>
-      <% bucket_label = group_label_proc ? group_label_proc.call(item) : bucket_key %>
-      <% if group_by_date && bucket_key != current_bucket %>
-        <% current_bucket = bucket_key %>
-        <tr class="event-calendars__date-row">
-          <td colspan="<%= base_column_count + (show_tags ? 1 : 0) + (show_edit_button ? 1 : 0) + (render_actions ? 1 : 0) %>"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
-        </tr>
-      <% end %>
+<div class="event-calendars__table-shell <%= 'event-calendars__table-shell--bulk' if bulk_edit %>"<%= ' data-calendar-bulk-edit-target="tableShell" id="calendar-bulk-edit-table"'.html_safe if bulk_edit %>>
+  <% if bulk_edit %>
+    <div class="event-calendars__bulk-toolbar" data-calendar-bulk-edit-target="panel" hidden>
+      <%= form_with url: bulk_form_url,
+                    method: :patch,
+                    scope: :bulk,
+                    local: true,
+                    html: {
+                      id: bulk_form_id,
+                      class: "event-calendars__bulk-form",
+                      data: { calendar_bulk_edit_target: "form" }
+                    } do |form| %>
+        <%= hidden_field_tag :return_to, bulk_return_to %>
 
-      <% title_text, title_path = item_link_proc.call(item) %>
-      <tr class="event-calendars__row <%= calendar_item_row_classes(item) %>">
-        <% tooltip = calendar_item_relative_tooltip(item) %>
+        <div class="event-calendars__bulk-count">
+          <strong><span data-calendar-bulk-edit-target="selectionCount">0</span></strong>
+          <span>selected</span>
+        </div>
+
+        <div class="event-calendars__bulk-shortcuts" aria-label="Bulk selection shortcuts">
+          <button type="button"
+                  class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
+                  data-action="calendar-bulk-edit#selectAll">
+            Select all
+          </button>
+          <button type="button"
+                  class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
+                  data-action="calendar-bulk-edit#clearSelection">
+            Unselect all
+          </button>
+        </div>
+
+        <div class="event-calendars__bulk-control">
+          <%= form.select :bulk_action,
+                          options_for_select(bulk_action_options),
+                          {},
+                          class: "event-form__select event-calendars__bulk-select",
+                          aria: { label: "Bulk action" },
+                          data: {
+                            action: "change->calendar-bulk-edit#actionChanged",
+                            calendar_bulk_edit_target: "actionSelect"
+                          } %>
+        </div>
+
+        <div class="event-calendars__bulk-field event-calendars__bulk-field--tags"
+             data-calendar-bulk-edit-target="tagsRow"
+             hidden>
+          <%= hidden_field_tag "bulk[tag_ids][]", "", id: nil %>
+          <div class="event-calendars__bulk-tag-list" role="group" aria-label="Tags">
+            <% calendar.event_calendar_tags.order(:position, :name).each do |tag| %>
+              <% field_id = "bulk_tag_#{tag.id}" %>
+              <label class="calendar-item-form__pill calendar-item-form__pill--tag" style="<%= calendar_tag_style(tag) %>">
+                <%= check_box_tag "bulk[tag_ids][]", tag.id, false, id: field_id %>
+                <span><%= tag.name %></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="calendar-item-form__autocomplete event-calendars__bulk-field event-calendars__bulk-field--input"
+             data-calendar-bulk-edit-target="vendorRow"
+             data-controller="custom-select"
+             data-custom-select-url-value="<%= event_vendor_options_path(calendar.event) %>"
+             data-custom-select-link-url-value="<%= ensure_event_vendor_links_path(calendar.event) %>"
+             data-custom-select-link-kind-value="vendor"
+             hidden>
+          <%= form.text_field :vendor_name,
+                              placeholder: "Vendor",
+                              autocomplete: "off",
+                              aria: { label: "Vendor" },
+                              class: "event-calendars__bulk-input",
+                              data: {
+                                custom_select_target: "input",
+                                action: "input->custom-select#search focus->custom-select#search blur->custom-select#deferClose keydown->custom-select#focusFirst"
+                              } %>
+          <div class="calendar-item-form__autocomplete-menu" data-custom-select-target="menu" role="listbox" hidden></div>
+        </div>
+
+        <div class="calendar-item-form__autocomplete event-calendars__bulk-field event-calendars__bulk-field--input"
+             data-calendar-bulk-edit-target="locationRow"
+             data-controller="custom-select"
+             data-custom-select-url-value="<%= event_venue_options_path(calendar.event) %>"
+             data-custom-select-link-url-value="<%= ensure_event_venue_links_path(calendar.event) %>"
+             data-custom-select-link-kind-value="venue"
+             hidden>
+          <%= form.text_field :location_name,
+                              placeholder: "Location",
+                              autocomplete: "off",
+                              aria: { label: "Location" },
+                              class: "event-calendars__bulk-input",
+                              data: {
+                                custom_select_target: "input",
+                                action: "input->custom-select#search focus->custom-select#search blur->custom-select#deferClose keydown->custom-select#focusFirst"
+                              } %>
+          <div class="calendar-item-form__autocomplete-menu" data-custom-select-target="menu" role="listbox" hidden></div>
+        </div>
+
+        <div class="event-calendars__bulk-actions">
+          <button type="button"
+                  class="event-calendars__bulk-button"
+                  data-action="calendar-bulk-edit#confirm"
+                  data-calendar-bulk-edit-target="applyButton"
+                  disabled>
+            Apply
+          </button>
+        </div>
+      <% end %>
+    </div>
+
+    <dialog class="event-calendars__bulk-dialog"
+            data-calendar-bulk-edit-target="dialog"
+            data-action="click->calendar-bulk-edit#backdropClose">
+      <div class="event-calendars__bulk-dialog-content">
+        <header class="event-calendars__bulk-dialog-header">
+          <p class="event-calendars__bulk-eyebrow">Confirm Changes</p>
+          <h2 class="event-calendars__bulk-dialog-title">Apply bulk edit?</h2>
+          <p class="event-calendars__bulk-dialog-copy">
+            This will apply <strong data-calendar-bulk-edit-target="actionLabel">the selected action</strong>
+            to <strong><span data-calendar-bulk-edit-target="selectionCount">0</span> item(s)</strong>.
+          </p>
+        </header>
+        <div class="event-calendars__bulk-dialog-actions">
+          <button type="button"
+                  class="event-section__cta event-section__cta--secondary"
+                  data-action="calendar-bulk-edit#closeDialog">
+            Cancel
+          </button>
+          <button type="button"
+                  class="event-section__cta"
+                  data-action="calendar-bulk-edit#submitConfirmed">
+            Confirm changes
+          </button>
+        </div>
+      </div>
+    </dialog>
+  <% end %>
+
+  <table class="event-table event-calendars__table">
+    <thead>
+      <tr>
         <% if show_status_first %>
-          <td class="event-calendars__status-value"><%= calendar_item_status_label(item) %></td>
+          <th class="event-calendars__status-column">Status</th>
         <% end %>
-        <td class="event-calendars__schedule-column" title="<%= tooltip.to_s %>"><%= calendar_item_time_only_label_with_marker(item, calendar.timezone) %></td>
-        <td class="event-calendars__title-column">
-          <%= link_to title_text, title_path, class: "event-calendars__title-link" %>
-          <% if item.notes.present? %>
-            <%= simple_format(item.notes, class: "event-calendars__note") %>
-          <% end %>
-        </td>
+        <th class="event-calendars__schedule-column">Schedule</th>
+        <th class="event-calendars__title-column">Title</th>
         <% if show_relative %>
-          <td><%= calendar_item_relative_label(item) || "—" %></td>
+          <th>Relation</th>
         <% else %>
-          <td><%= item.vendor_name.presence || "—" %></td>
-          <td><%= item.location_name.presence || "—" %></td>
-          <td>
-            <% team_names = item.team_members.order(:name).pluck(:name) %>
-            <% extras = item.additional_team_members.to_s.strip %>
-            <% combined_team = [team_names.join(', '), extras].reject(&:blank?).join('; ') %>
-            <%= combined_team.presence || "—" %>
-          </td>
+          <th>Vendor</th>
+          <th>Location</th>
+          <th>Team</th>
         <% end %>
         <% if show_tags %>
-          <td>
-            <% if item.event_calendar_tags.any? %>
-              <div class="event-tag-list">
-                <% item.event_calendar_tags.each do |tag| %>
-                  <span class="event-tag-pill" style="<%= calendar_tag_style(tag) %>"><%= tag.name %></span>
-                <% end %>
-              </div>
-            <% else %>
-              <span class="event-table__status">None</span>
-            <% end %>
-          </td>
+          <th>Tags</th>
         <% end %>
         <% if show_edit_button %>
-          <td class="event-calendars__row-action">
-            <%= link_to "Edit",
-                        edit_event_calendar_item_path(calendar.event, item, return_to: request.fullpath),
-                        class: "event-calendars__edit-link" %>
-          </td>
+          <th class="event-calendars__actions-column"></th>
         <% end %>
         <% if render_actions %>
-          <td class="event-settings__milestone-row-actions"><%= render_actions.call(item) %></td>
+          <th><%= actions_header %></th>
+        <% end %>
+        <% if bulk_edit %>
+          <th class="event-calendars__bulk-select-column">Select</th>
         <% end %>
       </tr>
-    <% end %>
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      <% current_bucket = nil %>
+      <% items.each do |item| %>
+        <% bucket_key = calendar_item_date_bucket(item, calendar.timezone) %>
+        <% bucket_label = group_label_proc ? group_label_proc.call(item) : bucket_key %>
+        <% if group_by_date && bucket_key != current_bucket %>
+          <% current_bucket = bucket_key %>
+          <tr class="event-calendars__date-row">
+            <td colspan="<%= base_column_count + (show_tags ? 1 : 0) + (show_edit_button ? 1 : 0) + (render_actions ? 1 : 0) + (bulk_edit ? 1 : 0) %>"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
+          </tr>
+        <% end %>
+
+        <% title_text, title_path = item_link_proc.call(item) %>
+        <tr class="event-calendars__row <%= calendar_item_row_classes(item) %>">
+          <% tooltip = calendar_item_relative_tooltip(item) %>
+          <% if show_status_first %>
+            <td class="event-calendars__status-value"><%= calendar_item_status_label(item) %></td>
+          <% end %>
+          <td class="event-calendars__schedule-column" title="<%= tooltip.to_s %>"><%= calendar_item_time_only_label_with_marker(item, calendar.timezone) %></td>
+          <td class="event-calendars__title-column">
+            <%= link_to title_text, title_path, class: "event-calendars__title-link" %>
+            <% if item.notes.present? %>
+              <%= simple_format(item.notes, class: "event-calendars__note") %>
+            <% end %>
+          </td>
+          <% if show_relative %>
+            <td><%= calendar_item_relative_label(item) || "—" %></td>
+          <% else %>
+            <td><%= item.vendor_name.presence || "—" %></td>
+            <td><%= item.location_name.presence || "—" %></td>
+            <td>
+              <% team_names = item.team_members.order(:name).pluck(:name) %>
+              <% extras = item.additional_team_members.to_s.strip %>
+              <% combined_team = [team_names.join(', '), extras].reject(&:blank?).join('; ') %>
+              <%= combined_team.presence || "—" %>
+            </td>
+          <% end %>
+          <% if show_tags %>
+            <td>
+              <% if item.event_calendar_tags.any? %>
+                <div class="event-tag-list">
+                  <% item.event_calendar_tags.each do |tag| %>
+                    <span class="event-tag-pill" style="<%= calendar_tag_style(tag) %>"><%= tag.name %></span>
+                  <% end %>
+                </div>
+              <% else %>
+                <span class="event-table__status">None</span>
+              <% end %>
+            </td>
+          <% end %>
+          <% if show_edit_button %>
+            <td class="event-calendars__row-action">
+              <%= link_to "Edit",
+                          edit_event_calendar_item_path(calendar.event, item, return_to: request.fullpath),
+                          class: "event-calendars__edit-link" %>
+            </td>
+          <% end %>
+          <% if render_actions %>
+            <td class="event-settings__milestone-row-actions"><%= render_actions.call(item) %></td>
+          <% end %>
+          <% if bulk_edit %>
+            <td class="event-calendars__bulk-select-cell">
+              <%= check_box_tag "item_ids[]",
+                                item.id,
+                                false,
+                                form: bulk_form_id,
+                                class: "event-calendars__bulk-checkbox",
+                                data: {
+                                  action: "change->calendar-bulk-edit#selectionChanged",
+                                  calendar_bulk_edit_target: "checkbox"
+                                } %>
+            </td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
