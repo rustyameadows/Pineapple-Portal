@@ -32,9 +32,10 @@ class DirectUploadsTest < ApplicationSystemTestCase
       within "[data-document-upload-form]" do
         click_button "Create Document"
       end
+
+      assert_text "Document saved."
     end
 
-    assert_text "Document saved."
     assert_equal "upload-sample.txt", Document.order(:created_at).last.title
   end
 
@@ -64,9 +65,10 @@ class DirectUploadsTest < ApplicationSystemTestCase
       within "[data-attachment-upload-form]" do
         click_button "Add Attachment"
       end
+
+      assert_text "Attachment added."
     end
 
-    assert_text "Attachment added."
     attachment = Attachment.order(:created_at).last
     assert_equal approval, attachment.entity
     assert_equal @event, attachment.document.event
@@ -113,6 +115,7 @@ class DirectUploadsTest < ApplicationSystemTestCase
     fill_in "Email", with: @user.email
     fill_in "Password", with: "password123"
     click_button "Log In"
+    assert_text "Your Active Events"
   end
 
   def install_direct_upload_mocks(presignPath:, uploadUrl:, storageUri:, logicalId:, failUpload: false)

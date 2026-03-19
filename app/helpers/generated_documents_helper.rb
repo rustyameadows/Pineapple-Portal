@@ -156,7 +156,8 @@ module GeneratedDocumentsHelper
   end
 
   def render_generated_markdown_fragment(markdown_text)
-    html = Commonmarker.to_html(markdown_text.to_s)
+    normalized_markdown = markdown_text.to_s.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+    html = Commonmarker.to_html(normalized_markdown)
     sanitize(
       html,
       tags: MARKDOWN_ALLOWED_TAGS,

@@ -98,8 +98,8 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert @event.archived?
 
     get events_url
-    assert_select ".events-all__row--active", text: @event.name, count: 0
-    assert_select ".events-all__row--archived", text: @event.name
+    assert_select ".events-all__row--active .events-all__event-link", text: @event.name, count: 0
+    assert_select ".events-all__row--archived .events-all__event-link", text: @event.name, count: 1
   end
 
   test "restores archived event" do
