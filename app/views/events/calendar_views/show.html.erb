@@ -6,7 +6,7 @@
     <div class="event-layout__main">
       <%= render "shared/flash" %>
 
-      <section class="event-section" data-controller="calendar-bulk-edit">
+      <section class="event-section" data-controller="calendar-bulk-edit anchor-scroll">
         <header class="event-section__header">
           <div>
             <p class="event-section__eyebrow"></p>
@@ -62,7 +62,10 @@
                        group_label_proc: custom_group_label,
                        show_status_first: decision_view,
                        show_tags: false,
-                       item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@event, item, return_to: request.fullpath)] } %>
+                       item_link_proc: ->(item) {
+                         row_id = dom_id(item, :timeline_row)
+                         [item.title, edit_event_calendar_item_path(@event, item, return_to: "#{request.fullpath}##{row_id}")]
+                       } %>
           <% else %>
             <div class="event-section__empty">
               <p>No items match this view yet.</p>

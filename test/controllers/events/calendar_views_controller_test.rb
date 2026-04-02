@@ -42,6 +42,18 @@ module Events
       assert_select "table.event-calendars__table thead tr th:first-child", text: "Schedule"
     end
 
+    test "derived timeline links return to the edited row anchor" do
+      item = calendar_items(:reception)
+      row_anchor = ActionView::RecordIdentifier.dom_id(item, :timeline_row)
+      return_to = "#{event_calendar_view_path(@event, @non_decision_view)}##{row_anchor}"
+      expected_href = edit_event_calendar_item_path(@event, item, return_to: return_to)
+
+      get event_calendar_view_url(@event, @non_decision_view)
+
+      assert_response :success
+      assert_select "a.event-calendars__title-link[href='#{expected_href}']", text: item.title, count: 1
+    end
+
     test "decision view uses month year segment labels when no caption exists" do
       get event_calendar_view_url(@event, @decision_view)
 
