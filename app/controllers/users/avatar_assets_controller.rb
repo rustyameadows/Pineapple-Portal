@@ -13,20 +13,20 @@ module Users
 
       if @asset.errors.none? && @asset.save
         if @user.update(avatar_global_asset: @asset)
-          redirect_to edit_user_path(@user), notice: "Avatar updated."
+          redirect_to safe_return_to(fallback: edit_user_path(@user)), notice: "Avatar updated."
         else
           warnings = @user.errors.full_messages
           if warnings.any? && warnings.all? { |msg| msg =~ /Password digest can't be blank/i }
             @user.update_columns(avatar_global_asset_id: @asset.id, updated_at: Time.current)
-            redirect_to edit_user_path(@user), notice: "Avatar updated."
+            redirect_to safe_return_to(fallback: edit_user_path(@user)), notice: "Avatar updated."
           else
             message = warnings.to_sentence.presence || "Image uploaded, but could not assign avatar."
-            redirect_to edit_user_path(@user), alert: message
+            redirect_to safe_return_to(fallback: edit_user_path(@user)), alert: message
           end
         end
       else
         message = @asset.errors.full_messages.to_sentence.presence || "Unable to upload image."
-        redirect_to edit_user_path(@user), alert: message
+        redirect_to safe_return_to(fallback: edit_user_path(@user)), alert: message
       end
     end
 
@@ -55,7 +55,7 @@ module Users
       return if current_user&.planner?
       return if current_user == @user
 
-      redirect_to edit_user_path(@user), alert: "You’re not allowed to update this avatar."
+      redirect_to safe_return_to(fallback: edit_user_path(@user)), alert: "You’re not allowed to update this avatar."
     end
   end
 end

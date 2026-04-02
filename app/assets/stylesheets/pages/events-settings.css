@@ -474,6 +474,37 @@
   color: var(--color-dark-brown);
 }
 
+.event-settings__access-actions,
+.event-settings__reset-column,
+.event-table__actions--stack {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: start;
+  align-content: start;
+}
+
+.event-settings__access-actions {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: start;
+  align-content: start;
+  min-width: 16rem;
+}
+
+.event-settings__reset-column {
+  min-width: 18rem;
+}
+
+.event-settings__access-actions .button,
+.event-settings__reset-column .button,
+.event-table__actions--stack .button {
+  white-space: nowrap;
+}
+
+.event-settings__access-actions .event-settings__inline-form {
+  margin: 0;
+}
+
 .event-settings__reset-card {
   border: 1px solid var(--color-sea-foam);
   border-radius: var(--radius-md);

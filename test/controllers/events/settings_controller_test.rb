@@ -20,6 +20,15 @@ module Events
       get clients_event_settings_url(@event)
       assert_response :success
       assert_select "h1", text: "Client Access"
+      assert_select "th", text: "Access"
+      assert_select "th", text: "Portal Access", count: 0
+      assert_select "th", text: "Financial Access", count: 0
+      assert_select ".button.button--small", text: "Revoke Portal Access"
+      assert_select ".button.button--small.button--ghost", text: "Grant Financial Access"
+      assert_select ".button.button--small.button--ghost", text: "Generate Reset Link"
+      assert_select "td.event-table__actions", text: /Generate Reset Link/, count: 0
+      assert_select ".button.button--small.button--ghost", text: "Edit"
+      assert_select ".button.button--small.button--danger", text: "Remove"
     end
 
     test "renders client portal page" do
