@@ -1,4 +1,6 @@
 class EventsController < ApplicationController
+  include EventsSettingsPageSupport
+
   before_action :set_event, only: %i[show edit update destroy archive restore]
 
   def index
@@ -30,6 +32,8 @@ class EventsController < ApplicationController
   def update
     if @event.update(event_params)
       redirect_to safe_return_to(fallback: event_path(@event)), notice: "Event updated."
+    elsif render_settings_page_for(params[:return_to])
+      nil
     else
       render :edit, status: :unprocessable_content
     end

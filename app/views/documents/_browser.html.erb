@@ -8,6 +8,7 @@
   empty_message = local_assigns.fetch(:empty_message, "No documents available yet.")
   search_placeholder = local_assigns.fetch(:search_placeholder, "Search by file name")
   title_heading = local_assigns.fetch(:title_heading, "Document")
+  title_sort_key = local_assigns.fetch(:title_sort_key, "title")
 %>
 
 <% if items.any? %>
@@ -47,20 +48,58 @@
         <table class="documents-browser__table">
           <thead>
             <tr>
-              <th scope="col"><%= title_heading %></th>
+              <th scope="col"
+                  data-document-browser-target="sortHeader"
+                  data-sort-key="<%= title_sort_key %>"
+                  aria-sort="none">
+                <button type="button"
+                        class="documents-browser__sort-button"
+                        data-document-browser-target="sortButton"
+                        data-sort-key="<%= title_sort_key %>"
+                        data-action="click->document-browser#sort">
+                  <span><%= title_heading %></span>
+                  <span class="documents-browser__sort-indicator" aria-hidden="true"></span>
+                </button>
+              </th>
               <% table_columns.each do |column| %>
-                <th scope="col"><%= column[:label] %></th>
+                <% sort_key = column[:sort_key].to_s.presence %>
+                <% if sort_key %>
+                  <th scope="col"
+                      data-document-browser-target="sortHeader"
+                      data-sort-key="<%= sort_key %>"
+                      aria-sort="none">
+                    <button type="button"
+                            class="documents-browser__sort-button"
+                            data-document-browser-target="sortButton"
+                            data-sort-key="<%= sort_key %>"
+                            data-action="click->document-browser#sort">
+                      <span><%= column[:label] %></span>
+                      <span class="documents-browser__sort-indicator" aria-hidden="true"></span>
+                    </button>
+                  </th>
+                <% else %>
+                  <th scope="col"><%= column[:label] %></th>
+                <% end %>
               <% end %>
             </tr>
           </thead>
-          <tbody>
-            <% items.each do |item| %>
+          <tbody data-document-browser-target="tableBody">
+            <% items.each_with_index do |item, index| %>
               <% title = title_for.call(item).to_s %>
               <% href = href_for.call(item) %>
+              <% sort_values = { title_sort_key => title.downcase } %>
+              <% table_columns.each do |column| %>
+                <% sort_key = column[:sort_key].to_s.presence %>
+                <% next unless sort_key %>
+                <% sort_value = column[:sort_value].respond_to?(:call) ? column[:sort_value].call(item) : nil %>
+                <% sort_values[sort_key] = sort_value %>
+              <% end %>
               <tr class="documents-browser__row"
                   tabindex="0"
                   data-document-browser-target="tableRow"
+                  data-item-key="item-<%= index %>"
                   data-search-text="<%= title.downcase %>"
+                  data-sort-values="<%= ERB::Util.json_escape(sort_values.to_json) %>"
                   data-url="<%= href %>"
                   data-action="click->document-browser#navigate keydown.enter->document-browser#navigate keydown.space->document-browser#navigate">
                 <th scope="row" class="documents-browser__title-cell">
@@ -82,15 +121,24 @@
     </div>
 
     <div class="documents-browser__view" data-document-browser-target="gridPane" hidden>
-      <div class="documents-browser__grid">
-        <% items.each do |item| %>
+      <div class="documents-browser__grid" data-document-browser-target="gridList">
+        <% items.each_with_index do |item, index| %>
           <% title = title_for.call(item).to_s %>
           <% href = href_for.call(item) %>
+          <% sort_values = { title_sort_key => title.downcase } %>
+          <% table_columns.each do |column| %>
+            <% sort_key = column[:sort_key].to_s.presence %>
+            <% next unless sort_key %>
+            <% sort_value = column[:sort_value].respond_to?(:call) ? column[:sort_value].call(item) : nil %>
+            <% sort_values[sort_key] = sort_value %>
+          <% end %>
           <% card_media = card_media_for.respond_to?(:call) ? card_media_for.call(item) : nil %>
           <article class="documents-browser__card"
                    tabindex="0"
                    data-document-browser-target="gridCard"
+                   data-item-key="item-<%= index %>"
                    data-search-text="<%= title.downcase %>"
+                   data-sort-values="<%= ERB::Util.json_escape(sort_values.to_json) %>"
                    data-url="<%= href %>"
                    data-action="click->document-browser#navigate keydown.enter->document-browser#navigate keydown.space->document-browser#navigate">
             <% if card_media.present? %>

@@ -12,6 +12,8 @@ module Events
 
       assert_response :success
       assert_select "h1", text: @event.name
+      assert_select "p", text: "Keep the basics fresh so the client portal stays on message.", count: 0
+      assert_select "input[name='event[portal_slug]']", count: 0
     end
 
     test "renders clients page" do
@@ -23,9 +25,12 @@ module Events
     test "renders client portal page" do
       get client_portal_event_settings_url(@event)
       assert_response :success
+      assert_select "h1", text: "Portal URL"
       assert_select "h1", text: "Planning Links"
       assert_select "h1", text: "Quick Links"
       assert_select "h2", text: "Planner links in portal"
+      assert_select "h2", text: "Hidden planner links", count: 0
+      assert_select "input[name='event[portal_slug]']", count: 1
     end
 
     test "renders planners page" do

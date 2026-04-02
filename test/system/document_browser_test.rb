@@ -19,6 +19,34 @@ class DocumentBrowserTest < ApplicationSystemTestCase
       updated_at: 2.days.ago
     )
 
+    @zebra_generated_document = @event.documents.create!(
+      title: "Zebra Packet",
+      doc_kind: Document::DOC_KINDS[:generated],
+      logical_id: SecureRandom.uuid,
+      version: 1,
+      is_latest: false,
+      source: "packet",
+      client_visible: false,
+      built_by_user: users(:one)
+    )
+
+    @event.documents.create!(
+      title: "Zebra Packet",
+      doc_kind: Document::DOC_KINDS[:generated],
+      logical_id: @zebra_generated_document.logical_id,
+      version: 2,
+      is_latest: true,
+      source: "packet",
+      client_visible: false,
+      built_by_user: users(:one),
+      storage_uri: "documents/zebra-packet-v2.pdf",
+      checksum: "zebra-packet-checksum-v2",
+      checksum_sha256: "zebra-packet-sha256-v2",
+      size_bytes: 3072,
+      content_type: "application/pdf",
+      updated_at: 4.days.ago
+    )
+
     @generated_document = @event.documents.create!(
       title: "Client Packet",
       doc_kind: Document::DOC_KINDS[:generated],
@@ -35,18 +63,28 @@ class DocumentBrowserTest < ApplicationSystemTestCase
     login_as_planner
     visit staff_uploads_event_documents_path(@event)
 
-    assert_selector ".documents-browser__row", text: "Production Contract"
-    assert_selector ".documents-browser__row", text: "Budget Sheet"
+    assert_equal ["Production Contract", "Budget Sheet"], visible_table_titles
     assert_no_selector ".documents-browser__card", text: "Production Contract"
 
+    find("button[data-sort-key='size']").click
+    assert_selector "th[data-sort-key='size'][aria-sort='ascending']"
+    assert_equal ["Budget Sheet", "Production Contract"], visible_table_titles
+
+    find("button[data-sort-key='size']").click
+    assert_selector "th[data-sort-key='size'][aria-sort='descending']"
+    assert_equal ["Production Contract", "Budget Sheet"], visible_table_titles
+
+    click_button "Grid"
+    assert_equal ["Production Contract", "Budget Sheet"], visible_grid_titles
+
+    click_button "Table"
     fill_in "Search", with: "PRODUCTION"
-    assert_selector ".documents-browser__row", text: "Production Contract"
+    assert_equal ["Production Contract"], visible_table_titles
     assert_no_selector ".documents-browser__row", text: "Budget Sheet"
     assert_highlight_state(expected_present: true, minimum_range_count: 2)
 
     fill_in "Search", with: ""
-    assert_selector ".documents-browser__row", text: "Production Contract"
-    assert_selector ".documents-browser__row", text: "Budget Sheet"
+    assert_equal ["Production Contract", "Budget Sheet"], visible_table_titles
     assert_highlight_state(expected_present: false)
 
     fill_in "Search", with: "PRODUCTION"
@@ -56,7 +94,7 @@ class DocumentBrowserTest < ApplicationSystemTestCase
 
     visit staff_uploads_event_documents_path(@event)
     click_button "Grid"
-    assert_selector ".documents-browser__card", text: "Production Contract"
+    assert_equal ["Production Contract", "Budget Sheet"], visible_grid_titles
 
     fill_in "Search", with: "production"
     assert_highlight_state(expected_present: true, minimum_range_count: 2)
@@ -68,11 +106,32 @@ class DocumentBrowserTest < ApplicationSystemTestCase
     login_as_planner
     visit event_documents_generated_index_path(@event)
 
-    assert_selector ".documents-browser__row", text: "Client Packet"
+    assert_equal ["Client Packet", "Zebra Packet"], visible_table_titles
     assert_no_selector ".documents-browser__card", text: "Client Packet"
 
+    find("button[data-sort-key='title']").click
+    assert_selector "th[data-sort-key='title'][aria-sort='ascending']"
+    assert_equal ["Client Packet", "Zebra Packet"], visible_table_titles
+
+    find("button[data-sort-key='title']").click
+    assert_selector "th[data-sort-key='title'][aria-sort='descending']"
+    assert_equal ["Zebra Packet", "Client Packet"], visible_table_titles
+
+    find("button[data-sort-key='compiled_versions']").click
+    assert_selector "th[data-sort-key='compiled_versions'][aria-sort='ascending']"
+    assert_equal ["Client Packet", "Zebra Packet"], visible_table_titles
+
+    find("button[data-sort-key='compiled_versions']").click
+    assert_selector "th[data-sort-key='compiled_versions'][aria-sort='descending']"
+    assert_equal ["Zebra Packet", "Client Packet"], visible_table_titles
+
+    click_button "Grid"
+    assert_equal ["Zebra Packet", "Client Packet"], visible_grid_titles
+
+    click_button "Table"
+
     fill_in "Search", with: "client"
-    assert_selector ".documents-browser__row", text: "Client Packet"
+    assert_equal ["Client Packet"], visible_table_titles
     assert_highlight_state(expected_present: true, minimum_range_count: 2)
 
     find(".documents-browser__row", text: "Client Packet").click
@@ -96,6 +155,18 @@ class DocumentBrowserTest < ApplicationSystemTestCase
     fill_in "Password", with: "password123"
     click_button "Log In"
     assert_text "Your Active Events"
+  end
+
+  def visible_table_titles
+    all(".documents-browser__row", visible: :visible).map do |row|
+      row.find("[data-document-browser-target='titleText']", visible: :visible).text
+    end
+  end
+
+  def visible_grid_titles
+    all(".documents-browser__card", visible: :visible).map do |card|
+      card.find("[data-document-browser-target='titleText']", visible: :visible).text
+    end
   end
 
   def assert_highlight_state(expected_present:, minimum_range_count: 1)

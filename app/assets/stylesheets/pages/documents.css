@@ -963,6 +963,41 @@
   color: inherit;
 }
 
+.documents-browser__sort-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.documents-browser__sort-button:hover,
+.documents-browser__sort-button:focus-visible {
+  color: white;
+}
+
+.documents-browser__sort-button--active {
+  color: white;
+}
+
+.documents-browser__sort-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.4rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
 .documents-browser__row {
   cursor: pointer;
 }

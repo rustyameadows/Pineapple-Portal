@@ -23,38 +23,29 @@
   <% end %>
 
   <div class="event-settings__details-grid">
-    <div class="event-settings__field">
+    <div class="event-settings__field event-settings__field--primary">
       <%= form.label :name, "Event Title" %>
       <%= form.text_field :name, required: true %>
     </div>
 
-    <div class="event-settings__field"
+    <div class="event-settings__field event-settings__field--location"
          data-controller="remote-options"
          data-remote-options-url-value="<%= event_venue_options_path(event) %>">
       <%= form.label :location, "Location" %>
       <%= form.text_field :location, data: { remote_options_target: "input" } %>
     </div>
 
-    <div class="event-settings__field">
+    <div class="event-settings__field event-settings__field--full-width">
       <%= form.label :location_secondary, "Secondary location line" %>
       <%= form.text_field :location_secondary, placeholder: "City, State" %>
     </div>
 
-    <div class="event-settings__field">
-      <%= form.label :portal_slug, "Client portal slug" %>
-      <%= form.text_field :portal_slug, placeholder: "john-and-susie-wedding" %>
-      <p class="event-settings__hint">
-        Vanity URL:
-        <%= "#{request.base_url}/client/#{event.portal_slug.presence || 'your-slug'}" %>
-      </p>
-    </div>
-
-    <div class="event-settings__field">
+    <div class="event-settings__field event-settings__field--date">
       <%= form.label :starts_on, "Start Date" %>
       <%= form.date_field :starts_on %>
     </div>
 
-    <div class="event-settings__field">
+    <div class="event-settings__field event-settings__field--date">
       <%= form.label :ends_on, "End Date" %>
       <%= form.date_field :ends_on %>
     </div>
@@ -68,8 +59,8 @@
     </div>
   </div>
 
-  <div class="event-settings__form-actions">
-    <%= form.submit "Save Event Details", class: "event-section__cta" %>
+  <div class="event-settings__form-actions event-settings__form-actions--details">
+    <%= form.submit "Save Event Details", class: "event-section__cta event-settings__save-button" %>
   </div>
 <% end %>
 
@@ -112,7 +103,7 @@
       <%= upload_form.hidden_field :client_visible, value: false %>
 
       <div class="event-settings__upload-actions">
-        <%= upload_form.submit "Upload image", class: "button button--small", disabled: true %>
+        <%= upload_form.submit "Upload image", class: "button button--small event-settings__upload-button", disabled: true %>
       </div>
     <% end %>
     <p class="event-settings__hint">Uploads appear in the selector above once saved.</p>

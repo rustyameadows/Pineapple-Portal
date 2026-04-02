@@ -31,11 +31,15 @@
                       table_columns: [
                         {
                           label: "Uploaded",
-                          value: ->(document) { document.created_at&.to_fs(:short) }
+                          value: ->(document) { document.created_at&.to_fs(:short) },
+                          sort_key: "uploaded",
+                          sort_value: ->(document) { document.created_at&.to_i }
                         },
                         {
                           label: "Size",
-                          value: ->(document) { number_to_human_size(document.size_bytes) if document.size_bytes.present? }
+                          value: ->(document) { number_to_human_size(document.size_bytes) if document.size_bytes.present? },
+                          sort_key: "size",
+                          sort_value: ->(document) { document.size_bytes }
                         },
                         {
                           label: "Visibility",
@@ -45,7 +49,9 @@
                               document.client_visible? ? "Client-visible" : "Planner only",
                               class: "documents-browser__pill #{document.client_visible? ? "documents-browser__pill--visible" : "documents-browser__pill--muted"}"
                             )
-                          end
+                          end,
+                          sort_key: "visibility",
+                          sort_value: ->(document) { document.client_visible? ? 1 : 0 }
                         }
                       ],
                       card_fields: [
@@ -65,7 +71,8 @@
                       card_media_for: ->(document) { inline_document_image_data_uri(document) },
                       empty_message: "No documents in this category yet.",
                       search_placeholder: "Search by file name",
-                      title_heading: "Title" %>
+                      title_heading: "Title",
+                      title_sort_key: "title" %>
           <% else %>
             <%= render "documents/table",
                       documents: @documents,

@@ -9,7 +9,7 @@
         <header class="event-section__header">
           <div>
             <p class="event-section__eyebrow">Generated documents</p>
-            <h1 class="event-section__title">Assemble branded packets for <%= @event.name %></h1>
+            <h1 class="event-section__title">Packets for <%= @event.name %></h1>
           </div>
           <%= link_to "New generated document", new_event_documents_generated_path(@event), class: "event-section__cta" %>
         </header>
@@ -25,11 +25,18 @@
                         value: ->(entry) do
                           latest = entry[:latest]
                           latest.present? && latest.storage_uri.present? ? latest.updated_at.to_fs(:short) : "Not yet compiled"
+                        end,
+                        sort_key: "last_compiled",
+                        sort_value: ->(entry) do
+                          latest = entry[:latest]
+                          latest.present? && latest.storage_uri.present? ? latest.updated_at.to_i : nil
                         end
                       },
                       {
                         label: "Compiled versions",
-                        value: ->(entry) { entry[:versions].count(&:storage_uri) }
+                        value: ->(entry) { entry[:versions].count(&:storage_uri) },
+                        sort_key: "compiled_versions",
+                        sort_value: ->(entry) { entry[:versions].count(&:storage_uri) }
                       },
                       {
                         label: "Visibility",
@@ -40,7 +47,9 @@
                             definition.client_visible? ? "Client visible" : "Internal only",
                             class: "documents-browser__pill #{definition.client_visible? ? "documents-browser__pill--visible" : "documents-browser__pill--muted"}"
                           )
-                        end
+                        end,
+                        sort_key: "visibility",
+                        sort_value: ->(entry) { entry[:definition].client_visible? ? 1 : 0 }
                       }
                     ],
                     card_fields: [
@@ -62,7 +71,8 @@
                     ],
                     empty_message: "No generated documents yet.",
                     search_placeholder: "Search by file name",
-                    title_heading: "Title" %>
+                    title_heading: "Title",
+                    title_sort_key: "title" %>
         </div>
       </section>
     </div>
