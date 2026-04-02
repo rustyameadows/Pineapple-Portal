@@ -16,6 +16,7 @@ export default class extends Controller {
   disconnect() {
     window.removeEventListener("hashchange", this.boundScrollToHash)
     if (this.timeout) clearTimeout(this.timeout)
+    if (this.cleanupTimeout) clearTimeout(this.cleanupTimeout)
   }
 
   scrollToHash() {
@@ -23,11 +24,23 @@ export default class extends Controller {
     if (!hash || hash.length <= 1) return
 
     const target = document.getElementById(hash.slice(1))
-    if (!target) return
+    if (!target || !this.element.contains(target)) return
 
     requestAnimationFrame(() => {
       const top = target.getBoundingClientRect().top + window.scrollY - this.offsetValue
       window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" })
+      this.scheduleHashCleanup(hash)
     })
+  }
+
+  scheduleHashCleanup(hash) {
+    if (this.cleanupTimeout) clearTimeout(this.cleanupTimeout)
+
+    this.cleanupTimeout = setTimeout(() => {
+      if (window.location.hash !== hash) return
+
+      const cleanUrl = `${window.location.pathname}${window.location.search}`
+      window.history.replaceState(window.history.state, "", cleanUrl)
+    }, 250)
   }
 }

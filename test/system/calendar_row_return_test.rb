@@ -23,7 +23,7 @@ class CalendarRowReturnTest < ApplicationSystemTestCase
     )
   end
 
-  test "editing a run of show item returns to the edited row" do
+  test "editing a run of show item returns to the edited row and clears the helper hash" do
     login_as_planner
     visit event_calendar_path(@event)
 
@@ -38,7 +38,6 @@ class CalendarRowReturnTest < ApplicationSystemTestCase
 
     assert_text "Calendar item updated."
     assert_text "Anchor target item updated"
-    assert_equal "##{row_anchor}", page.evaluate_script("window.location.hash")
     assert_operator page.evaluate_script("window.scrollY"), :>, 0
     assert page.evaluate_script(<<~JS)
       (() => {
@@ -48,6 +47,10 @@ class CalendarRowReturnTest < ApplicationSystemTestCase
         const rect = row.getBoundingClientRect()
         return rect.top >= 0 && rect.top < window.innerHeight && rect.bottom > 0
       })()
+    JS
+    assert_equal "", page.evaluate_async_script(<<~JS)
+      const done = arguments[0]
+      setTimeout(() => done(window.location.hash), 350)
     JS
   end
 
