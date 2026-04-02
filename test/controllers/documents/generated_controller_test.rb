@@ -71,6 +71,55 @@ module Documents
 
       assert_response :success
       assert_select "input[type='checkbox'][name='document[packets_portal_visible]']", count: 0
+      assert_select "a", text: "New generated document", count: 1
+      assert_select "form.generated-doc__form", count: 0
+      assert_select "[data-controller='document-browser']", count: 1
+    end
+
+    test "new renders create form and template list" do
+      @event.documents.create!(
+        title: "Cover Sheet Template",
+        doc_kind: Document::DOC_KINDS[:generated],
+        logical_id: SecureRandom.uuid,
+        version: 1,
+        is_latest: false,
+        source: "packet",
+        built_by_user: @user,
+        is_template: true
+      )
+
+      get new_event_documents_generated_url(@event)
+
+      assert_response :success
+      assert_select "h1", text: "Create a generated document"
+      assert_select "form.generated-doc__form", count: 1
+      assert_select "h2", text: "Templates"
+      assert_select "li", text: "Cover Sheet Template"
+    end
+
+    test "failed create re-renders new with templates" do
+      @event.documents.create!(
+        title: "Timeline Template",
+        doc_kind: Document::DOC_KINDS[:generated],
+        logical_id: SecureRandom.uuid,
+        version: 1,
+        is_latest: false,
+        source: "packet",
+        built_by_user: @user,
+        is_template: true
+      )
+
+      post event_documents_generated_index_url(@event), params: {
+        document: {
+          title: ""
+        }
+      }
+
+      assert_response :unprocessable_content
+      assert_select "h1", text: "Create a generated document"
+      assert_select "form.generated-doc__form", count: 1
+      assert_select ".form-errors", count: 1
+      assert_select "li", text: "Timeline Template"
     end
 
     test "show renders per-version portal actions for compiled versions" do

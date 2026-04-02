@@ -1,0 +1,123 @@
+<%
+  items = Array.wrap(local_assigns.fetch(:items))
+  title_for = local_assigns.fetch(:title_for)
+  href_for = local_assigns.fetch(:href_for)
+  table_columns = Array.wrap(local_assigns.fetch(:table_columns))
+  card_fields = Array.wrap(local_assigns.fetch(:card_fields))
+  empty_message = local_assigns.fetch(:empty_message, "No documents available yet.")
+  search_placeholder = local_assigns.fetch(:search_placeholder, "Search by file name")
+  title_heading = local_assigns.fetch(:title_heading, "Document")
+%>
+
+<% if items.any? %>
+  <section class="documents-browser" data-controller="document-browser">
+    <div class="documents-browser__toolbar">
+      <div class="documents-browser__search">
+        <label class="documents-browser__search-label" for="documents-browser-search">Search</label>
+        <input id="documents-browser-search"
+               type="search"
+               class="documents-browser__search-input"
+               placeholder="<%= search_placeholder %>"
+               autocomplete="off"
+               data-document-browser-target="searchInput"
+               data-action="input->document-browser#filter" />
+      </div>
+
+      <div class="documents-browser__toggle" role="group" aria-label="Document view mode">
+        <button type="button"
+                class="documents-browser__toggle-button"
+                data-document-browser-target="tableButton"
+                data-action="click->document-browser#showTable"
+                aria-pressed="true">
+          Table
+        </button>
+        <button type="button"
+                class="documents-browser__toggle-button"
+                data-document-browser-target="gridButton"
+                data-action="click->document-browser#showGrid"
+                aria-pressed="false">
+          Grid
+        </button>
+      </div>
+    </div>
+
+    <div class="documents-browser__view" data-document-browser-target="tablePane">
+      <div class="documents-browser__table-shell">
+        <table class="documents-browser__table">
+          <thead>
+            <tr>
+              <th scope="col"><%= title_heading %></th>
+              <% table_columns.each do |column| %>
+                <th scope="col"><%= column[:label] %></th>
+              <% end %>
+            </tr>
+          </thead>
+          <tbody>
+            <% items.each do |item| %>
+              <% title = title_for.call(item).to_s %>
+              <% href = href_for.call(item) %>
+              <tr class="documents-browser__row"
+                  tabindex="0"
+                  data-document-browser-target="tableRow"
+                  data-search-text="<%= title.downcase %>"
+                  data-url="<%= href %>"
+                  data-action="click->document-browser#navigate keydown.enter->document-browser#navigate keydown.space->document-browser#navigate">
+                <th scope="row" class="documents-browser__title-cell">
+                  <%= link_to title, href, class: "documents-browser__title-link" %>
+                </th>
+                <% table_columns.each do |column| %>
+                  <% value = column[:value].respond_to?(:call) ? column[:value].call(item) : column[:value] %>
+                  <td class="documents-browser__cell <%= column[:class] %>">
+                    <%= value.presence || "—" %>
+                  </td>
+                <% end %>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="documents-browser__view" data-document-browser-target="gridPane" hidden>
+      <div class="documents-browser__grid">
+        <% items.each do |item| %>
+          <% title = title_for.call(item).to_s %>
+          <% href = href_for.call(item) %>
+          <article class="documents-browser__card"
+                   tabindex="0"
+                   data-document-browser-target="gridCard"
+                   data-search-text="<%= title.downcase %>"
+                   data-url="<%= href %>"
+                   data-action="click->document-browser#navigate keydown.enter->document-browser#navigate keydown.space->document-browser#navigate">
+            <div class="documents-browser__card-art" aria-hidden="true"></div>
+            <div class="documents-browser__card-body">
+              <h3 class="documents-browser__card-title">
+                <%= link_to title, href, class: "documents-browser__title-link" %>
+              </h3>
+
+              <dl class="documents-browser__card-meta">
+                <% card_fields.each do |field| %>
+                  <% value = field[:value].respond_to?(:call) ? field[:value].call(item) : field[:value] %>
+                  <div class="documents-browser__card-field">
+                    <dt><%= field[:label] %></dt>
+                    <dd><%= value.presence || "—" %></dd>
+                  </div>
+                <% end %>
+              </dl>
+            </div>
+          </article>
+        <% end %>
+      </div>
+    </div>
+
+    <p class="documents-browser__search-empty"
+       data-document-browser-target="searchEmpty"
+       hidden>
+      No documents match that file name.
+    </p>
+  </section>
+<% else %>
+  <div class="documents-browser__empty">
+    <p><%= empty_message %></p>
+  </div>
+<% end %>

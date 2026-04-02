@@ -13,6 +13,18 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Files for #{@event.name}"
   end
 
+  test "staff and client upload pages render the shared document browser" do
+    get staff_uploads_event_documents_url(@event)
+    assert_response :success
+    assert_select "[data-controller='document-browser']", count: 1
+    assert_select ".documents-browser__row", text: /Production Contract/
+
+    get client_uploads_event_documents_url(@event)
+    assert_response :success
+    assert_select "[data-controller='document-browser']", count: 1
+    assert_select ".documents-browser__row", text: /Mood Board/
+  end
+
   test "hides packet source documents by default and allows explicit toggle" do
     definition = @event.documents.create!(
       title: "Packet Builder",

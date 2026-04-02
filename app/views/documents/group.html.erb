@@ -13,26 +13,74 @@
             <p class="event-section__lead">Showing files uploaded as <%= @label.downcase %>. Use the summary to navigate to other categories.</p>
           </div>
           <div class="event-section__actions">
-            <%= link_to "Create generated document", event_documents_generated_index_path(@event), class: "button button--ghost" %>
+            <%= link_to "Create generated document", new_event_documents_generated_path(@event), class: "button button--ghost" %>
             <%= link_to "Upload Document", new_event_document_path(@event), class: "event-section__cta" %>
           </div>
         </header>
 
         <div class="event-section__body">
-          <div class="event-docs__panel">
-            <%= render "documents/summary_table", event: @event, groups: @document_groups, active_key: @source_key %>
-          </div>
-
           <% if @source_key == "packet" %>
             <%= render "documents/generated_panel",
                        event: @event,
                        generated_documents: @generated_documents %>
           <% end %>
 
-          <%= render "documents/table",
-                    documents: @documents,
-                    title_link: ->(document) { event_document_path(@event, document) },
-                    empty_message: "No documents in this category yet." %>
+          <% if %w[staff_upload client_upload].include?(@source_key) %>
+            <%= render "documents/browser",
+                      items: @documents,
+                      title_for: ->(document) { document.title },
+                      href_for: ->(document) { event_document_path(@event, document) },
+                      table_columns: [
+                        {
+                          label: "Uploaded",
+                          value: ->(document) { document.created_at&.to_fs(:short) }
+                        },
+                        {
+                          label: "Updated",
+                          value: ->(document) { document.updated_at&.to_fs(:short) }
+                        },
+                        {
+                          label: "Size",
+                          value: ->(document) { number_to_human_size(document.size_bytes) if document.size_bytes.present? }
+                        },
+                        {
+                          label: "Visibility",
+                          value: ->(document) do
+                            content_tag(
+                              :span,
+                              document.client_visible? ? "Client-visible" : "Planner only",
+                              class: "documents-browser__pill #{document.client_visible? ? "documents-browser__pill--visible" : "documents-browser__pill--muted"}"
+                            )
+                          end
+                        }
+                      ],
+                      card_fields: [
+                        {
+                          label: "Uploaded",
+                          value: ->(document) { document.created_at&.to_fs(:short) }
+                        },
+                        {
+                          label: "Updated",
+                          value: ->(document) { document.updated_at&.to_fs(:short) }
+                        },
+                        {
+                          label: "Size",
+                          value: ->(document) { number_to_human_size(document.size_bytes) if document.size_bytes.present? }
+                        },
+                        {
+                          label: "Visibility",
+                          value: ->(document) { document.client_visible? ? "Client-visible" : "Planner only" }
+                        }
+                      ],
+                      empty_message: "No documents in this category yet.",
+                      search_placeholder: "Search by file name",
+                      title_heading: "Title" %>
+          <% else %>
+            <%= render "documents/table",
+                      documents: @documents,
+                      title_link: ->(document) { event_document_path(@event, document) },
+                      empty_message: "No documents in this category yet." %>
+          <% end %>
 
           <% if @packet_component_document_count.to_i.positive? %>
             <% show_url = url_for(params: request.query_parameters.merge("include_packet_components" => "1")) %>
