@@ -1,2 +1,4 @@
 #!/usr/bin/env ruby
+ENV["PORT"] ||= "3100"
+
 exec "./bin/rails", "server", *ARGV

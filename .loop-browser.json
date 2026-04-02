@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "chrome": {
+    "chromeColor": "#FAD000",
+    "accentColor": "#000000",
+    "projectIconPath": "./public/pineapple-favicon.png"
+  },
+  "startup": {
+    "defaultUrl": "http://127.0.0.1:3100/"
+  }
+}

@@ -37,3 +37,4 @@
 # Ignore bundler config.
 /agent/uploads/
 .cache/
+.loop-browser.local.json
