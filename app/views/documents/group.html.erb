@@ -9,11 +9,9 @@
         <header class="event-section__header">
           <div>
             <p class="event-section__eyebrow">Documents</p>
-            <h1 class="event-section__title"><%= @label %></h1>
-            <p class="event-section__lead">Showing files uploaded as <%= @label.downcase %>. Use the summary to navigate to other categories.</p>
+            <h1 class="event-section__title"><%= @source_key == "staff_upload" ? "Your Uploads" : @label %></h1>
           </div>
           <div class="event-section__actions">
-            <%= link_to "Create generated document", new_event_documents_generated_path(@event), class: "button button--ghost" %>
             <%= link_to "Upload Document", new_event_document_path(@event), class: "event-section__cta" %>
           </div>
         </header>
@@ -36,10 +34,6 @@
                           value: ->(document) { document.created_at&.to_fs(:short) }
                         },
                         {
-                          label: "Updated",
-                          value: ->(document) { document.updated_at&.to_fs(:short) }
-                        },
-                        {
                           label: "Size",
                           value: ->(document) { number_to_human_size(document.size_bytes) if document.size_bytes.present? }
                         },
@@ -60,10 +54,6 @@
                           value: ->(document) { document.created_at&.to_fs(:short) }
                         },
                         {
-                          label: "Updated",
-                          value: ->(document) { document.updated_at&.to_fs(:short) }
-                        },
-                        {
                           label: "Size",
                           value: ->(document) { number_to_human_size(document.size_bytes) if document.size_bytes.present? }
                         },
@@ -72,6 +62,7 @@
                           value: ->(document) { document.client_visible? ? "Client-visible" : "Planner only" }
                         }
                       ],
+                      card_media_for: ->(document) { inline_document_image_data_uri(document) },
                       empty_message: "No documents in this category yet.",
                       search_placeholder: "Search by file name",
                       title_heading: "Title" %>

@@ -42,6 +42,14 @@ class DocumentBrowserTest < ApplicationSystemTestCase
     fill_in "Search", with: "PRODUCTION"
     assert_selector ".documents-browser__row", text: "Production Contract"
     assert_no_selector ".documents-browser__row", text: "Budget Sheet"
+    assert_highlight_state(expected_present: true, minimum_range_count: 2)
+
+    fill_in "Search", with: ""
+    assert_selector ".documents-browser__row", text: "Production Contract"
+    assert_selector ".documents-browser__row", text: "Budget Sheet"
+    assert_highlight_state(expected_present: false)
+
+    fill_in "Search", with: "PRODUCTION"
 
     find(".documents-browser__row", text: "Production Contract").click
     assert_current_path event_document_path(@event, @upload_document)
@@ -51,6 +59,7 @@ class DocumentBrowserTest < ApplicationSystemTestCase
     assert_selector ".documents-browser__card", text: "Production Contract"
 
     fill_in "Search", with: "production"
+    assert_highlight_state(expected_present: true, minimum_range_count: 2)
     find(".documents-browser__card", text: "Production Contract").click
     assert_current_path event_document_path(@event, @upload_document)
   end
@@ -64,6 +73,7 @@ class DocumentBrowserTest < ApplicationSystemTestCase
 
     fill_in "Search", with: "client"
     assert_selector ".documents-browser__row", text: "Client Packet"
+    assert_highlight_state(expected_present: true, minimum_range_count: 2)
 
     find(".documents-browser__row", text: "Client Packet").click
     assert_current_path event_documents_generated_path(@event, @generated_document.logical_id)
@@ -73,6 +83,7 @@ class DocumentBrowserTest < ApplicationSystemTestCase
     assert_selector ".documents-browser__card", text: "Client Packet"
 
     fill_in "Search", with: "CLIENT"
+    assert_highlight_state(expected_present: true, minimum_range_count: 2)
     find(".documents-browser__card", text: "Client Packet").click
     assert_current_path event_documents_generated_path(@event, @generated_document.logical_id)
   end
@@ -85,5 +96,20 @@ class DocumentBrowserTest < ApplicationSystemTestCase
     fill_in "Password", with: "password123"
     click_button "Log In"
     assert_text "Your Active Events"
+  end
+
+  def assert_highlight_state(expected_present:, minimum_range_count: 1)
+    supported = page.evaluate_script(<<~JS)
+      Boolean(window.CSS && CSS.highlights && typeof CSS.highlights.has === "function" && typeof window.Highlight === "function")
+    JS
+
+    return unless supported
+
+    if expected_present
+      assert page.evaluate_script("CSS.highlights.has('document-browser-search-match')")
+      assert_operator page.evaluate_script("CSS.highlights.get('document-browser-search-match').size"), :>=, minimum_range_count
+    else
+      assert_not page.evaluate_script("CSS.highlights.has('document-browser-search-match')")
+    end
   end
 end

@@ -90,7 +90,7 @@ module EventsHelper
     sections << {
       id: :uploads,
       label: "Uploads",
-      path: event_documents_path(event),
+      path: staff_uploads_event_documents_path(event),
       sub_links: upload_sub_links,
       match_paths: [
         event_documents_path(event),
