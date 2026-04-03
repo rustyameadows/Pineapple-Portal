@@ -7,6 +7,7 @@ import GeneratedSegmentsController from "controllers/generated_segments_controll
 import GeneratedMarkdownEditorController from "controllers/generated_markdown_editor_controller"
 import EventSidebarController from "controllers/event_sidebar_controller"
 import CalendarBulkEditController from "controllers/calendar_bulk_edit_controller"
+import CalendarItemImportController from "controllers/calendar_item_import_controller"
 import AnchorScrollController from "controllers/anchor_scroll_controller"
 import FlashToastController from "controllers/flash_toast_controller"
 import RemoteOptionsController from "controllers/remote_options_controller"
@@ -20,6 +21,7 @@ application.register("generated-segments", GeneratedSegmentsController)
 application.register("generated-markdown-editor", GeneratedMarkdownEditorController)
 application.register("event-sidebar", EventSidebarController)
 application.register("calendar-bulk-edit", CalendarBulkEditController)
+application.register("calendar-item-import", CalendarItemImportController)
 application.register("anchor-scroll", AnchorScrollController)
 application.register("flash-toast", FlashToastController)
 application.register("remote-options", RemoteOptionsController)
