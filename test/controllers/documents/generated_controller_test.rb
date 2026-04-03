@@ -177,6 +177,36 @@ module Documents
       assert_includes response.body, "No packet pages yet. Add a canonical, page, or upload to start the live PDF."
     end
 
+    test "show renders a loading shell for the live pdf frame" do
+      get event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select "[data-controller='generated-pdf-frame']", count: 1
+      assert_select ".generated-builder__pdf-loading", count: 1
+      assert_select "[data-generated-pdf-frame-target='message']", text: /Preparing live PDF|Refreshing live PDF/
+      assert_select "iframe.generated-builder__pdf-frame[data-action='load->generated-pdf-frame#frameLoaded']", count: 1
+    end
+
+    test "edit renders packet settings and delete controls" do
+      get edit_event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select "h1", text: "Packet Settings"
+      assert_select "form", count: 2
+      assert_select "button", text: "Delete packet", count: 1
+    end
+
+    test "destroy removes the generated packet definition" do
+      logical_id = @document.logical_id
+
+      assert_difference("Document.where(logical_id: logical_id).count", -1) do
+        delete event_documents_generated_url(@event, logical_id)
+      end
+
+      assert_redirected_to event_documents_generated_index_url(@event)
+      assert_nil Document.where(logical_id: logical_id).first
+    end
+
     test "snapshot requires at least one page" do
       post snapshot_event_documents_generated_url(@event, @document.logical_id)
 

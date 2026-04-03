@@ -1,0 +1,66 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Generated packets</p>
+            <h1 class="event-section__title">Packet Settings</h1>
+            <p class="event-section__lead">Update packet details here and keep the builder focused on pages, previews, and snapshots.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Back to packet", event_documents_generated_path(@event, @document.logical_id), class: "event-section__cta event-section__cta--secondary" %>
+          </div>
+        </header>
+
+        <div class="event-section__body generated-doc__create-layout">
+          <section class="documents-form__panel">
+            <h2 class="documents-form__heading">Packet details</h2>
+            <p class="generated-doc__help">These settings apply to the packet definition and future snapshots.</p>
+
+            <%= render "form",
+                       form_url: event_documents_generated_path(@event, @document.logical_id),
+                       form_method: :patch,
+                       submit_label: "Save packet settings" %>
+          </section>
+
+          <section class="documents-form__panel">
+            <div class="generated-doc__panel-header">
+              <div>
+                <h2 class="documents-form__heading">Delete packet</h2>
+                <p class="generated-doc__help">Deleting removes the live packet, its saved snapshots, and all packet-specific placements for this event.</p>
+              </div>
+            </div>
+
+            <dl class="generated-builder__build-details">
+              <div>
+                <dt>Packet pages</dt>
+                <dd><%= @packet_pages_count %></dd>
+              </div>
+              <div>
+                <dt>Saved snapshots</dt>
+                <dd><%= @compiled_versions_count %></dd>
+              </div>
+              <div>
+                <dt>Latest snapshot</dt>
+                <dd><%= @latest_version.present? ? @latest_version.updated_at.to_fs(:short) : "None yet" %></dd>
+              </div>
+            </dl>
+
+            <div class="form-actions">
+              <%= button_to "Delete packet",
+                            event_documents_generated_path(@event, @document.logical_id),
+                            method: :delete,
+                            class: "button button--danger",
+                            form: { data: { turbo_confirm: "Delete this packet and all saved snapshots?" } } %>
+            </div>
+          </section>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

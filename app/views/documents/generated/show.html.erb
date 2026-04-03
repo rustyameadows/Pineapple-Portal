@@ -17,6 +17,7 @@
             <% end %>
           </div>
           <div class="generated-builder__actions">
+            <%= link_to "Packet settings", edit_event_documents_generated_path(@event, @document.logical_id), class: "button button--ghost" %>
             <%= link_to "Packet library", library_event_documents_generated_index_path(@event), class: "button button--ghost" %>
             <%= link_to "Back to documents", event_documents_path(@event), class: "button button--ghost" %>
             <% if @latest_version.present? %>
@@ -44,9 +45,28 @@
                             rel: "noopener" %>
               </div>
             </div>
-            <iframe src="<%= working_pdf_event_documents_generated_path(@event, @document.logical_id) %>"
-                    title="Live working packet PDF"
-                    style="width: 100%; min-height: 60rem; border: 1px solid rgba(0,0,0,0.08); border-radius: 0.75rem; background: #fff;"></iframe>
+            <div class="generated-builder__pdf-shell" data-controller="generated-pdf-frame">
+              <div class="generated-builder__pdf-loading" data-generated-pdf-frame-target="loading">
+                <div class="generated-builder__pdf-loading-card">
+                  <div class="generated-builder__pdf-loading-indicator" aria-hidden="true"></div>
+                  <div class="generated-builder__pdf-loading-copy">
+                    <% if @document.working_rendered_at.present? %>
+                      <strong data-generated-pdf-frame-target="message">Refreshing live PDF...</strong>
+                      <p data-generated-pdf-frame-target="detail">We’re rebuilding the working preview with the latest packet content.</p>
+                    <% else %>
+                      <strong data-generated-pdf-frame-target="message">Preparing live PDF...</strong>
+                      <p data-generated-pdf-frame-target="detail">This packet is building its first working preview. It should appear here automatically.</p>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+
+              <iframe src="<%= working_pdf_event_documents_generated_path(@event, @document.logical_id) %>"
+                      title="Live working packet PDF"
+                      class="generated-builder__pdf-frame"
+                      data-generated-pdf-frame-target="frame"
+                      data-action="load->generated-pdf-frame#frameLoaded"></iframe>
+            </div>
           </div>
 
           <%= render "documents/generated/segment_list",
@@ -62,32 +82,6 @@
                      segment_warnings: @segment_warnings,
                      reorder_url: reorder_event_documents_generated_segments_path(@event, @document.logical_id),
                      csrf_token: form_authenticity_token %>
-
-          <div class="generated-builder__workspace-card">
-            <div class="generated-builder__workspace-head">
-              <div>
-                <h2>Packet settings</h2>
-                <p class="generated-builder__hint">Rename the packet to control how it appears in navigation, snapshots, and downloads.</p>
-              </div>
-            </div>
-
-            <%= form_with model: @document,
-                          url: event_documents_generated_path(@event, @document.logical_id),
-                          method: :patch,
-                          scope: :document,
-                          class: "generated-builder__inline-form" do |form| %>
-              <div class="form-field">
-                <%= form.label :title, "Packet name" %>
-                <%= form.text_field :title, required: true %>
-              </div>
-
-              <%= form.hidden_field :client_visible, value: (@document.client_visible? ? 1 : 0) %>
-
-              <div class="form-actions">
-                <%= form.submit "Save name", class: "button button--primary button--small" %>
-              </div>
-            <% end %>
-          </div>
 
           <div class="generated-builder__workspace-card">
             <div class="generated-builder__workspace-head">

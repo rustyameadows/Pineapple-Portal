@@ -30,6 +30,24 @@ module Documents
       )
     end
 
+    test "packet settings and delete routes resolve" do
+      assert_routing(
+        { method: "get", path: edit_event_documents_generated_path(@event, @logical_id) },
+        controller: "documents/generated",
+        action: "edit",
+        event_id: @event.id.to_s,
+        logical_id: @logical_id
+      )
+
+      assert_routing(
+        { method: "delete", path: event_documents_generated_path(@event, @logical_id) },
+        controller: "documents/generated",
+        action: "destroy",
+        event_id: @event.id.to_s,
+        logical_id: @logical_id
+      )
+    end
+
     test "working pdf and snapshot routes resolve to the generated packet builder" do
       assert_routing(
         { method: "get", path: working_pdf_event_documents_generated_path(@event, @logical_id) },

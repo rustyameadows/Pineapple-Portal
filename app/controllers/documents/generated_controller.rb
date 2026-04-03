@@ -1,8 +1,8 @@
 module Documents
   class GeneratedController < ApplicationController
     before_action :set_event
-    before_action :set_generated_document, only: %i[show update compile working_pdf]
-    before_action :ensure_source_backed_document!, only: %i[show update compile working_pdf]
+    before_action :set_generated_document, only: %i[show edit update destroy compile working_pdf]
+    before_action :ensure_source_backed_document!, only: %i[show edit update compile working_pdf]
 
     def index
       @manifest_entries = build_manifest_entries
@@ -40,12 +40,30 @@ module Documents
       load_document_context
     end
 
+    def edit
+      @packet_pages_count = current_segments.count
+      @compiled_versions_count = generated_scope.where(logical_id: @document.logical_id).where.not(storage_uri: nil).count
+      @latest_version = generated_scope.where(logical_id: @document.logical_id).where.not(storage_uri: nil).order(version: :desc).first
+    end
+
     def update
       if @document.update(definition_params)
         redirect_to event_documents_generated_path(@event, @document.logical_id), notice: "Packet updated."
       else
-        redirect_to event_documents_generated_path(@event, @document.logical_id), alert: @document.errors.full_messages.to_sentence
+        redirect_to edit_event_documents_generated_path(@event, @document.logical_id), alert: @document.errors.full_messages.to_sentence
       end
+    end
+
+    def destroy
+      title = @document.title
+
+      Document.transaction do
+        generated_scope.where(logical_id: @document.logical_id).to_a.each(&:destroy!)
+      end
+
+      redirect_to event_documents_generated_index_path(@event), notice: "#{title} deleted."
+    rescue StandardError => e
+      redirect_to edit_event_documents_generated_path(@event, @document.logical_id), alert: "Unable to delete packet: #{e.message}"
     end
 
     def working_pdf
@@ -56,7 +74,7 @@ module Documents
 
       result = Documents::Generated::WorkingCopyBuilder.new(definition_document: @document).call
       url = R2::Storage.new.presigned_download_url(key: result.storage_key)
-      redirect_to url, allow_other_host: true
+      redirect_to pdf_viewer_url(url), allow_other_host: true
     rescue Documents::Generated::Compiler::CompileError => e
       render_working_placeholder(e.message)
     rescue StandardError => e
@@ -287,6 +305,10 @@ module Documents
           <p><%= ERB::Util.html_escape(@message) %></p>
         </section>
       ERB
+    end
+
+    def pdf_viewer_url(url)
+      "#{url}#view=Fit"
     end
   end
 end

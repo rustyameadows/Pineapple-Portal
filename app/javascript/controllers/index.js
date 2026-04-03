@@ -6,6 +6,7 @@ import QuestionAttachmentController from "controllers/question_attachment_contro
 import GeneratedSegmentsController from "controllers/generated_segments_controller"
 import GeneratedMarkdownEditorController from "controllers/generated_markdown_editor_controller"
 import GeneratedPacketUploadController from "controllers/generated_packet_upload_controller"
+import GeneratedPdfFrameController from "controllers/generated_pdf_frame_controller"
 import EventSidebarController from "controllers/event_sidebar_controller"
 import CalendarBulkEditController from "controllers/calendar_bulk_edit_controller"
 import CalendarItemImportController from "controllers/calendar_item_import_controller"
@@ -21,6 +22,7 @@ application.register("question-attachment", QuestionAttachmentController)
 application.register("generated-segments", GeneratedSegmentsController)
 application.register("generated-markdown-editor", GeneratedMarkdownEditorController)
 application.register("generated-packet-upload", GeneratedPacketUploadController)
+application.register("generated-pdf-frame", GeneratedPdfFrameController)
 application.register("event-sidebar", EventSidebarController)
 application.register("calendar-bulk-edit", CalendarBulkEditController)
 application.register("calendar-item-import", CalendarItemImportController)
