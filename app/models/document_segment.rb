@@ -167,7 +167,7 @@ class DocumentSegment < ApplicationRecord
     EVENT_OVERVIEW_VIEW_KEY => {
       label: "Event Overview",
       template: "generated_documents/sections/event_overview",
-      description: "Structured event overview with starter copy using Markdown syntax."
+      description: "Structured event overview powered by live event and contact data."
     },
     "planning_team" => {
       label: "Planning Team",
@@ -230,8 +230,6 @@ class DocumentSegment < ApplicationRecord
     end
 
     def default_body_markdown_for(view_key)
-      return EVENT_OVERVIEW_DEFAULT_BODY_MARKDOWN if view_key.to_s == EVENT_OVERVIEW_VIEW_KEY
-
       ""
     end
 

@@ -86,6 +86,8 @@ module Documents
           cover_payload
         when "planning_team"
           planning_team_payload
+        when DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
+          event_overview_payload
         when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
           timeline_payload(run_of_show: true)
         when DocumentSegment::TIMELINE_VIEW_KEY
@@ -125,6 +127,56 @@ module Documents
             user_updated_at: user.updated_at&.utc&.iso8601
           }
         end
+      end
+
+      def event_overview_payload
+        {
+          event: {
+            name: segment.event.name,
+            starts_on: segment.event.starts_on,
+            ends_on: segment.event.ends_on,
+            location: segment.event.location
+          },
+          planners: segment.event.planner_team_members.includes(:user).ordered_for_display.filter_map do |member|
+            user = member.user
+            next unless user
+
+            {
+              member_id: member.id,
+              position: member.position,
+              lead_planner: member.lead_planner?,
+              user_id: user.id,
+              name: user.name,
+              title: user.title,
+              email: user.display_email,
+              phone_number: user.phone_number,
+              user_updated_at: user.updated_at&.utc&.iso8601
+            }
+          end,
+          vendors: segment.event.event_vendors.includes(:global_vendor).ordered.filter_map do |vendor|
+            contacts = Array(vendor.contacts).filter_map do |contact|
+              normalized_contact = contact.to_h.stringify_keys.slice("name", "title", "email", "phone").transform_values do |value|
+                value.to_s.strip.presence
+              end
+
+              next if normalized_contact.values.all?(&:blank?)
+
+              normalized_contact
+            end
+
+            next if contacts.empty?
+
+            {
+              vendor_id: vendor.id,
+              position: vendor.position,
+              global_vendor_id: vendor.global_vendor_id,
+              name: resolved_vendor_name(vendor),
+              vendor_type: resolved_vendor_type(vendor),
+              social_handle: normalized_social_handle(resolved_vendor_social_handle(vendor)),
+              contacts: contacts
+            }
+          end
+        }
       end
 
       def timeline_payload(run_of_show:)
@@ -177,6 +229,25 @@ module Documents
         else
           value
         end
+      end
+
+      def resolved_vendor_name(vendor)
+        vendor.global_vendor&.name.to_s.strip.presence || vendor.name.to_s.strip
+      end
+
+      def resolved_vendor_type(vendor)
+        vendor.vendor_type.to_s.strip.presence || vendor.global_vendor&.default_vendor_type.to_s.strip.presence
+      end
+
+      def resolved_vendor_social_handle(vendor)
+        vendor.social_handle.to_s.strip.presence || vendor.global_vendor&.default_social_handle.to_s.strip.presence
+      end
+
+      def normalized_social_handle(value)
+        handle = value.to_s.strip
+        return if handle.blank?
+
+        handle.start_with?("@") ? handle : "@#{handle}"
       end
     end
   end

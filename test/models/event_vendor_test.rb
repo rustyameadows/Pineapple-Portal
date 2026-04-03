@@ -67,4 +67,15 @@ class EventVendorTest < ActiveSupport::TestCase
     assert_equal "Entertainment", vendor.vendor_type
     assert_equal "@djcollective", vendor.social_handle
   end
+
+  test "updates enqueue packet refreshes for the event" do
+    vendor = event_vendors(:catering)
+    enqueued_event_ids = []
+
+    Documents::Generated::RefreshEventPacketCachesJob.stub :perform_later, ->(event_id) { enqueued_event_ids << event_id } do
+      vendor.update!(social_handle: "@sunshineplus")
+    end
+
+    assert_equal [@event.id], enqueued_event_ids
+  end
 end

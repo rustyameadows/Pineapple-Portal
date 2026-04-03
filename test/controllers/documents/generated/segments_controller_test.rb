@@ -74,40 +74,14 @@ module Documents
         assert_equal({ "body_markdown" => "Updated\nnotes" }, @placement.source.html_options)
       end
 
-      test "creates event overview packet page with default markdown when body is blank" do
-        assert_difference("GeneratedPacketSource.count", 1) do
-          assert_difference("GeneratedPacketPlacement.count", 1) do
-            post event_documents_generated_segments_url(@event, @document.logical_id), params: {
-              segment: {
-                view_key: DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
-                title: "Event Overview",
-                options: {
-                  body_markdown: "",
-                  ignored_key: "ignore me"
-                }
-              }
-            }
-          end
-        end
-
-        assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
-        created = GeneratedPacketSource.order(:id).last
-
-        assert_equal DocumentSegment::EVENT_OVERVIEW_VIEW_KEY, created.html_view_key
-        assert_equal(
-          { "body_markdown" => DocumentSegment.default_body_markdown_for(DocumentSegment::EVENT_OVERVIEW_VIEW_KEY) },
-          created.html_options
-        )
-      end
-
-      test "updates event overview packet page and drops unknown option keys" do
+      test "updates event overview packet page without persisting markdown options" do
         overview_placement = GeneratedPacketPlacement.create!(
           document_logical_id: @document.logical_id,
           source: GeneratedPacketSource.build_page_source(
             event: @event,
             view_key: DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
             title: "Event Overview",
-            options: { "body_markdown" => "Initial overview content" }
+            options: {}
           ).tap(&:save!),
           position: 2
         )
@@ -117,8 +91,8 @@ module Documents
             title: "Event Overview Updated",
             view_key: DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
             options: {
-              body_markdown: "Updated\rnotes",
-              extra: "remove me"
+              body_markdown: "ignore this",
+              extra: "ignore this too"
             }
           }
         }
@@ -127,8 +101,9 @@ module Documents
         overview_placement.reload
 
         assert_equal "Event Overview Updated", overview_placement.source.title
-        assert_equal({ "body_markdown" => "Updated\nnotes" }, overview_placement.source.html_options)
+        assert_equal({}, overview_placement.source.html_options)
       end
+
     end
   end
 end

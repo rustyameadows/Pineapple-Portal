@@ -38,7 +38,79 @@ module GeneratedDocumentsHelper
     fragment.to_html.html_safe
   end
 
+  def generated_event_overview_date_range(event)
+    return "Date TBD" unless event.starts_on.present? || event.ends_on.present?
+
+    if event.starts_on.present? && event.ends_on.present? && event.ends_on != event.starts_on
+      "#{event.starts_on.to_fs(:long)} - #{event.ends_on.to_fs(:long)}"
+    else
+      event.starts_on.presence&.to_fs(:long) || event.ends_on.to_fs(:long)
+    end
+  end
+
+  def generated_event_overview_planners(event)
+    event.planner_team_members.includes(:user).ordered_for_display.filter_map do |member|
+      user = member.user
+      next unless user
+
+      {
+        lead: member.lead_planner?,
+        name: user.name.to_s.strip,
+        title: user.title.to_s.strip.presence,
+        email: user.display_email.to_s.strip.presence,
+        phone: user.phone_number.to_s.strip.presence
+      }
+    end
+  end
+
+  def generated_event_overview_vendors(event)
+    event.event_vendors.includes(:global_vendor).ordered.filter_map do |vendor|
+      contacts = Array(vendor.contacts).filter_map do |contact|
+        contact_hash = contact.to_h.stringify_keys
+
+        normalized_contact = {
+          name: contact_hash["name"].to_s.strip.presence,
+          title: contact_hash["title"].to_s.strip.presence,
+          email: contact_hash["email"].to_s.strip.presence,
+          phone: contact_hash["phone"].to_s.strip.presence
+        }
+
+        next if normalized_contact.values.all?(&:blank?)
+
+        normalized_contact
+      end
+
+      next if contacts.empty?
+
+      {
+        name: generated_event_overview_vendor_name(vendor),
+        vendor_type: generated_event_overview_vendor_type(vendor),
+        social_handle: generated_event_overview_social_handle(generated_event_overview_vendor_social_handle(vendor)),
+        contacts: contacts
+      }
+    end
+  end
+
   private
+
+  def generated_event_overview_vendor_name(vendor)
+    vendor.global_vendor&.name.to_s.strip.presence || vendor.name.to_s.strip
+  end
+
+  def generated_event_overview_vendor_type(vendor)
+    vendor.vendor_type.to_s.strip.presence || vendor.global_vendor&.default_vendor_type.to_s.strip.presence
+  end
+
+  def generated_event_overview_vendor_social_handle(vendor)
+    vendor.social_handle.to_s.strip.presence || vendor.global_vendor&.default_social_handle.to_s.strip.presence
+  end
+
+  def generated_event_overview_social_handle(value)
+    handle = value.to_s.strip
+    return if handle.blank?
+
+    handle.start_with?("@") ? handle : "@#{handle}"
+  end
 
   def render_generated_markdown_segments(markdown_text)
     split_generated_markdown_segments(markdown_text).map do |segment|

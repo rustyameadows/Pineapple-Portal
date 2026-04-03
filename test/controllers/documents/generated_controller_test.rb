@@ -38,7 +38,7 @@ module Documents
       assert_select "textarea.generated-builder__overlay-textarea[data-generated-markdown-editor-target='overlay'][name]", count: 0
     end
 
-    test "show renders markdown overlay controls for text and event overview packet pages" do
+    test "show renders markdown overlay controls only for text page packet pages" do
       create_page_placement(
         view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
         title: "Text One",
@@ -47,9 +47,9 @@ module Documents
       )
       create_page_placement(
         view_key: DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
-        title: "Overview",
+        title: "Event Overview",
         position: 2,
-        options: { "body_markdown" => "Overview content" }
+        options: {}
       )
       create_page_placement(
         view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
@@ -61,10 +61,11 @@ module Documents
       get event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
-      assert_select "[data-controller='generated-markdown-editor']", count: 3
-      assert_select "[data-generated-markdown-editor-target='openButton']", count: 3
-      assert_select "textarea[name='segment[options][body_markdown]'][data-generated-markdown-editor-target='source']", count: 3
+      assert_select "[data-controller='generated-markdown-editor']", count: 2
+      assert_select "[data-generated-markdown-editor-target='openButton']", count: 2
+      assert_select "textarea[name='segment[options][body_markdown]'][data-generated-markdown-editor-target='source']", count: 2
       assert_select "textarea.generated-builder__overlay-textarea[data-generated-markdown-editor-target='overlay'][name]", count: 0
+      assert_select ".generated-builder__hint", text: /live event, planner, and vendor data/, minimum: 1
     end
 
     test "index renders packet actions without portal visibility checkbox" do

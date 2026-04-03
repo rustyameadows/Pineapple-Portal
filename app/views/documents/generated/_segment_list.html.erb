@@ -166,7 +166,7 @@
                         </label>
                       </fieldset>
                     <% end %>
-                  <% elsif [DocumentSegment::TEXT_PAGE_VIEW_KEY, DocumentSegment::EVENT_OVERVIEW_VIEW_KEY].include?(segment.html_view_key) %>
+                  <% elsif segment.html_view_key == DocumentSegment::TEXT_PAGE_VIEW_KEY %>
                     <% text_options = segment.html_options.stringify_keys %>
                     <% body_markdown = generated_segment_body_markdown(segment) %>
                     <%= form.hidden_field :view_key, value: segment.html_view_key %>
@@ -218,6 +218,9 @@
                         </dialog>
                       </div>
                     <% end %>
+                  <% elsif segment.html_view_key == DocumentSegment::EVENT_OVERVIEW_VIEW_KEY %>
+                    <%= form.hidden_field :view_key, value: segment.html_view_key %>
+                    <p class="generated-builder__hint">This page is powered by live event, planner, and vendor data. Update those records in the app to change the sheet.</p>
                   <% end %>
                 <% end %>
 

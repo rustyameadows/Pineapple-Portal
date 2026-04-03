@@ -3,257 +3,316 @@
 <% end %>
 
 <style>
-  .generated-template--text-page {
+  .generated-template--event-overview {
     --generated-document-content-padding-x: 0.26in;
     --generated-document-content-padding-top: 0.24in;
     --generated-document-content-padding-bottom: 0.24in;
-    gap: 0.5rem;
+    gap: 0.6rem;
     background: var(--color-white, #ffffff);
     border: none;
   }
 
-  .generated-template--text-page .generated-template__page-header {
+  .generated-template--event-overview .generated-template__page-header {
     gap: 0.38rem;
   }
 
-  .generated-template--text-page .generated-template__page-header-logo {
+  .generated-template--event-overview .generated-template__page-header-logo {
     display: none;
   }
 
-  .generated-template--text-page .generated-template__page-header-title {
+  .generated-template--event-overview .generated-template__page-header-title {
     margin-bottom: 0.02rem;
     font-size: 20px;
     letter-spacing: 1.25px;
   }
 
-  .generated-template--text-page__content {
+  .generated-template--event-overview__layout {
     display: grid;
-    gap: 0.16rem;
-    line-height: 1.18;
-    font-size: 0.86rem;
+    gap: 0.45rem;
     color: var(--color-dark-brown, #3f2211);
   }
 
-  .generated-template--text-page__content .generated-text-columns {
+  .generated-template--event-overview__hero {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 0.16in;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 0.2in;
     align-items: start;
-    margin: 0.12rem 0 0.18rem;
+    padding: 0.12in 0.16in 0.16in;
+    border: 1px solid color-mix(in srgb, var(--color-gold, #be9c72) 28%, white);
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--color-sand, #f3e4d2) 70%, white), white 55%);
   }
 
-  .generated-template--text-page__content .generated-text-column {
+  .generated-template--event-overview__hero-copy {
+    display: grid;
+    gap: 0.1rem;
+  }
+
+  .generated-template--event-overview__eyebrow {
+    margin: 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-brown, #5b4639) 84%, white);
+  }
+
+  .generated-template--event-overview__event-name {
+    margin: 0;
+    font-size: 1.65rem;
+    line-height: 1.05;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .generated-template--event-overview__hero-note {
+    margin: 0.06rem 0 0;
+    font-size: 0.88rem;
+    line-height: 1.35;
+    color: color-mix(in srgb, var(--color-brown, #5b4639) 88%, white);
+  }
+
+  .generated-template--event-overview__snapshot {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .generated-template--event-overview__snapshot-item {
+    display: grid;
+    gap: 0.08rem;
+    padding: 0.12in 0.14in;
+    border: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 58%, white);
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .generated-template--event-overview__snapshot-label {
+    margin: 0;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-brown, #5b4639) 84%, white);
+  }
+
+  .generated-template--event-overview__snapshot-value {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.28;
+  }
+
+  .generated-template--event-overview__sections {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    gap: 0.18in;
+    align-items: start;
+  }
+
+  .generated-template--event-overview__section {
     min-width: 0;
     display: grid;
+    gap: 0.12in;
     align-content: start;
-    gap: 0.06rem;
   }
 
-  .generated-template--text-page__content .generated-text-columns ul {
-    list-style: none;
-    padding-left: 0;
-  }
-
-  .generated-template--text-page__content .generated-text-columns li {
-    margin: 0.02rem 0;
-  }
-
-  .generated-template--text-page__content .generated-text-column > *:first-child {
-    margin-top: 0;
-  }
-
-  .generated-template--text-page__content .generated-text-column > *:last-child {
-    margin-bottom: 0;
-  }
-
-  .generated-template--text-page__content h2 {
-    margin: 0.02rem 0 0.18rem;
-    font-size: 1.36rem;
-    letter-spacing: 0.01em;
-    text-transform: none;
-    border-bottom: 2px solid color-mix(in srgb, var(--color-gold, #be9c72) 65%, white);
-    padding-bottom: 0.08rem;
-  }
-
-  .generated-template--text-page__content h3 {
-    margin: 0.3rem 0 0.02rem;
-    padding: 0.15rem 0.4rem 0.16rem;
-    width: 100%;
-    box-sizing: border-box;
+  .generated-template--event-overview__section-title {
+    margin: 0;
+    padding: 0.09in 0.12in 0.08in;
     background: var(--color-gold, #be9c72);
     color: var(--color-dark-brown, #3f2211);
-    border: none;
     font-size: 0.9rem;
-    letter-spacing: 0.035em;
-    line-height: 1.15;
+    line-height: 1.1;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
-  .generated-template--text-page__content > h3 {
-    text-align: center;
+  .generated-template--event-overview__grid {
+    display: grid;
+    gap: 0.12in;
   }
 
-  .generated-template--text-page__content > h3 {
-    padding: 8px;
-    font-size: 16px;
-    line-height: 16px;
-    letter-spacing: 1.5px;
+  .generated-template--event-overview__planner-card,
+  .generated-template--event-overview__vendor-card {
+    display: grid;
+    gap: 0.1in;
+    padding: 0.12in 0.14in 0.14in;
+    border: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 58%, white);
+    background: white;
+    break-inside: avoid;
   }
 
-  .generated-template--text-page__content p:last-child {
-    margin-bottom: 0;
+  .generated-template--event-overview__planner-head,
+  .generated-template--event-overview__vendor-head {
+    display: grid;
+    gap: 0.04in;
   }
 
-  .generated-template--text-page__content h4,
-  .generated-template--text-page__content h5 {
-    margin: 0.14rem 0 0.03rem;
-    font-family: var(--font-family-display, 'Didot', 'Times New Roman', serif);
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    line-height: 1.2;
-    color: var(--color-dark-brown, #3f2211);
-  }
-
-  .generated-template--text-page__content h4 {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 7px 0 6px 6px;
-    background: var(--color-sand, #f3e4d2);
-    border: none;
-    font-size: 12px;
-    line-height: 12px;
-    letter-spacing: 1px;
-  }
-
-  .generated-template--text-page__content .generated-text-columns .generated-text-column > h3 {
-    padding: 5px 0 4px 6px;
-    font-size: 14px;
-    letter-spacing: 1px;
-  }
-
-  .generated-template--text-page__content h5 {
-    font-size: 0.84rem;
-    margin: 0.08rem 0 0;
-    padding: 0.02rem 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 60%, white);
-    line-height: 1.14;
-    letter-spacing: 0.01em;
-  }
-
-  .generated-template--text-page__content ul,
-  .generated-template--text-page__content ol {
-    margin: 0.02rem 0 0.12rem;
-    padding-left: 0.88rem;
-  }
-
-  .generated-template--text-page__content li {
+  .generated-template--event-overview__planner-name,
+  .generated-template--event-overview__vendor-name {
     margin: 0;
+    font-size: 1rem;
+    line-height: 1.18;
+    letter-spacing: 0.02em;
   }
 
-  .generated-template--text-page__content hr {
-    border: 0;
-    border-top: 1px solid color-mix(in srgb, var(--color-gold, #be9c72) 70%, var(--color-brown, #5b4639));
-    margin: 0.22rem 0 0.18rem;
+  .generated-template--event-overview__planner-role,
+  .generated-template--event-overview__vendor-meta {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.28;
+    color: color-mix(in srgb, var(--color-brown, #5b4639) 88%, white);
   }
 
-  .generated-template--text-page__content blockquote {
-    margin: 0.08rem 0;
-    padding: 0.28rem 0.45rem;
-    border-left: 2px solid var(--color-gold, #be9c72);
-    background: color-mix(in srgb, var(--color-sand, #f3e4d2) 55%, white);
+  .generated-template--event-overview__planner-lead {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    padding: 0.03in 0.08in;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-sand, #f3e4d2) 78%, white);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     color: var(--color-brown, #5b4639);
   }
 
-  .generated-template--text-page__content p {
+  .generated-template--event-overview__contact-list,
+  .generated-template--event-overview__vendor-contacts {
+    display: grid;
+    gap: 0.06in;
+  }
+
+  .generated-template--event-overview__contact-line {
     margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.35;
   }
 
-  .generated-template--text-page__content > p {
-    font-size: 14px;
-    line-height: 17px;
-    padding: 6px 4px 8px 4px;
-  }
-
-  .generated-template--text-page__content .generated-text-columns .generated-text-column > p {
-    font-size: 14px;
-    line-height: 17px;
-    padding: 6px 4px 8px 4px;
-  }
-
-  .generated-template--text-page__content p + p {
-    margin-top: 0.05rem;
-  }
-
-  .generated-template--text-page__content p strong:first-child {
-    letter-spacing: 0.01em;
-  }
-
-  .generated-template--text-page__content > p > strong {
+  .generated-template--event-overview__contact-line strong {
     font-weight: 600;
   }
 
-  .generated-template--text-page__content .generated-text-columns .generated-text-column > p > strong {
-    font-weight: 600;
+  .generated-template--event-overview__vendor-contact {
+    display: grid;
+    gap: 0.03in;
+    padding-top: 0.08in;
+    border-top: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 62%, white);
   }
 
-  .generated-template--text-page__content li + li {
-    margin-top: 0.05rem;
+  .generated-template--event-overview__vendor-contact:first-child {
+    padding-top: 0;
+    border-top: none;
   }
 
-  .generated-template--text-page__content a {
-    color: var(--color-dark-brown, #2f2a26);
-    text-decoration: underline;
-    text-decoration-color: var(--color-gold, #be9c72);
-    text-underline-offset: 2px;
-  }
-
-  .generated-template--text-page__content p,
-  .generated-template--text-page__content li {
-    border-bottom: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 34%, white);
-    padding-bottom: 0.035rem;
-  }
-
-  .generated-template--text-page__content p:not(:has(+ p)) {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .generated-template--text-page__content h3 + p,
-  .generated-template--text-page__content h4 + p,
-  .generated-template--text-page__content h5 + p {
-    margin-top: 0;
-  }
-
-  .generated-template--text-page__content > h4 {
-    margin-top: 0.34rem;
-  }
-
-  .generated-template--text-page__content h3 + h4,
-  .generated-template--text-page__content h3 + h5,
-  .generated-template--text-page__content h4 + h3,
-  .generated-template--text-page__content h4 + h4,
-  .generated-template--text-page__content h4 + h5,
-  .generated-template--text-page__content h5 + h3,
-  .generated-template--text-page__content h5 + h4,
-  .generated-template--text-page__content h5 + h5 {
-    margin-top: 0.06rem;
-  }
-
-  .generated-template--text-page__empty {
+  .generated-template--event-overview__empty {
+    margin: 0;
+    padding: 0.16in;
+    border: 1px dashed color-mix(in srgb, var(--color-dark-sand, #dccbb3) 80%, white);
+    color: var(--color-brown, #5b4639);
     font-style: italic;
+  }
+
+  @media (max-width: 720px) {
+    .generated-template--event-overview__hero,
+    .generated-template--event-overview__sections {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 
-<% body_markdown = generated_segment_body_markdown(@segment) %>
+<% event_date_range = generated_event_overview_date_range(@event) %>
+<% planners = generated_event_overview_planners(@event) %>
+<% vendors = generated_event_overview_vendors(@event) %>
 
-<section class="generated-template generated-template--text-page">
+<section class="generated-template generated-template--event-overview">
   <%= render "generated_documents/sections/page_header", segment: @segment %>
 
-  <% if body_markdown.present? %>
-    <div class="generated-template--text-page__content">
-      <%= render_generated_markdown(body_markdown) %>
+  <div class="generated-template--event-overview__layout">
+    <section class="generated-template--event-overview__hero">
+      <div class="generated-template--event-overview__hero-copy">
+        <p class="generated-template--event-overview__eyebrow">Event Snapshot</p>
+        <h2 class="generated-template--event-overview__event-name"><%= @event.name %></h2>
+        <p class="generated-template--event-overview__hero-note">Live details from the planner workspace for fast packet reference.</p>
+      </div>
+
+      <div class="generated-template--event-overview__snapshot">
+        <div class="generated-template--event-overview__snapshot-item">
+          <p class="generated-template--event-overview__snapshot-label">Date</p>
+          <p class="generated-template--event-overview__snapshot-value generated-template--event-overview__dates"><%= event_date_range %></p>
+        </div>
+        <div class="generated-template--event-overview__snapshot-item">
+          <p class="generated-template--event-overview__snapshot-label">Location</p>
+          <p class="generated-template--event-overview__snapshot-value generated-template--event-overview__location"><%= @event.location.presence || "Location TBD" %></p>
+        </div>
+      </div>
+    </section>
+
+    <div class="generated-template--event-overview__sections">
+      <section class="generated-template--event-overview__section">
+        <h3 class="generated-template--event-overview__section-title">Planner Contacts</h3>
+        <% if planners.any? %>
+          <div class="generated-template--event-overview__grid">
+            <% planners.each do |planner| %>
+              <article class="generated-template--event-overview__planner-card">
+                <div class="generated-template--event-overview__planner-head">
+                  <% if planner[:lead] %>
+                    <span class="generated-template--event-overview__planner-lead">Lead Planner</span>
+                  <% end %>
+                  <p class="generated-template--event-overview__planner-name"><%= planner[:name] %></p>
+                  <% if planner[:title].present? %>
+                    <p class="generated-template--event-overview__planner-role generated-template--event-overview__planner-title"><%= planner[:title] %></p>
+                  <% end %>
+                </div>
+                <div class="generated-template--event-overview__contact-list">
+                  <% if planner[:email].present? %>
+                    <p class="generated-template--event-overview__contact-line generated-template--event-overview__planner-email"><strong>Email:</strong> <%= planner[:email] %></p>
+                  <% end %>
+                  <% if planner[:phone].present? %>
+                    <p class="generated-template--event-overview__contact-line generated-template--event-overview__planner-phone"><strong>Phone:</strong> <%= planner[:phone] %></p>
+                  <% end %>
+                </div>
+              </article>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="generated-template--event-overview__empty">No planner contacts are linked to this event yet.</p>
+        <% end %>
+      </section>
+
+      <section class="generated-template--event-overview__section">
+        <h3 class="generated-template--event-overview__section-title">Vendor Contacts</h3>
+        <% if vendors.any? %>
+          <div class="generated-template--event-overview__grid">
+            <% vendors.each do |vendor| %>
+              <article class="generated-template--event-overview__vendor-card">
+                <div class="generated-template--event-overview__vendor-head">
+                  <p class="generated-template--event-overview__vendor-name"><%= vendor[:name] %></p>
+                  <% meta_parts = [vendor[:vendor_type], vendor[:social_handle]].compact %>
+                  <% if meta_parts.any? %>
+                    <p class="generated-template--event-overview__vendor-meta"><%= meta_parts.join(" · ") %></p>
+                  <% end %>
+                </div>
+                <div class="generated-template--event-overview__vendor-contacts">
+                  <% vendor[:contacts].each do |contact| %>
+                    <div class="generated-template--event-overview__vendor-contact">
+                      <% if contact[:name].present? %>
+                        <p class="generated-template--event-overview__contact-line generated-template--event-overview__vendor-contact-name"><strong><%= contact[:name] %></strong><%= contact[:title].present? ? " · #{contact[:title]}" : "" %></p>
+                      <% elsif contact[:title].present? %>
+                        <p class="generated-template--event-overview__contact-line generated-template--event-overview__vendor-contact-name"><strong><%= contact[:title] %></strong></p>
+                      <% end %>
+                      <% if contact[:email].present? %>
+                        <p class="generated-template--event-overview__contact-line generated-template--event-overview__vendor-contact-email"><strong>Email:</strong> <%= contact[:email] %></p>
+                      <% end %>
+                      <% if contact[:phone].present? %>
+                        <p class="generated-template--event-overview__contact-line generated-template--event-overview__vendor-contact-phone"><strong>Phone:</strong> <%= contact[:phone] %></p>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+              </article>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="generated-template--event-overview__empty">No vendor contacts are available for this event yet.</p>
+        <% end %>
+      </section>
     </div>
-  <% else %>
-    <p class="generated-template__muted generated-template--text-page__empty">Add text in segment settings to populate this page.</p>
-  <% end %>
+  </div>
 </section>

@@ -21,9 +21,7 @@ class GeneratedPacketSource < ApplicationRecord
       label: "Event Overview",
       description: "Shared event overview page for this event.",
       view_key: DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
-      options: lambda { |_event|
-        { "body_markdown" => DocumentSegment.default_body_markdown_for(DocumentSegment::EVENT_OVERVIEW_VIEW_KEY) }
-      }
+      options: ->(_event) { {} }
     },
     CANONICAL_KEYS[:planning_team] => {
       label: "Planning Team",

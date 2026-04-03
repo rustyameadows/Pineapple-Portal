@@ -174,10 +174,6 @@ module Documents
           options: sanitize_html_view_options(attrs[:view_key], normalize_options(attrs[:options]))
         )
 
-        if attrs[:view_key].to_s == DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
-          source.assign_html_view(attrs[:view_key], options: apply_default_html_view_options(attrs[:view_key], source.html_options))
-        end
-
         source.save
         source
       end
@@ -309,21 +305,17 @@ module Documents
           sanitize_timeline_options(options)
         when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
           sanitize_run_of_show_options(options)
-        when DocumentSegment::TEXT_PAGE_VIEW_KEY, DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
+        when DocumentSegment::TEXT_PAGE_VIEW_KEY
           sanitize_markdown_body_options(options)
+        when DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
+          {}
         else
           options
         end
       end
 
       def apply_default_html_view_options(view_key, options)
-        return options unless view_key.to_s == DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
-
-        source = options.to_h.stringify_keys
-        body_markdown = source["body_markdown"].to_s
-        return source if body_markdown.present?
-
-        source.merge("body_markdown" => DocumentSegment.default_body_markdown_for(view_key))
+        options
       end
 
       def sanitize_timeline_options(options)

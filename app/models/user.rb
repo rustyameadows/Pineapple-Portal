@@ -97,6 +97,8 @@ class User < ApplicationRecord
 
   def generated_packet_refresh_needed?
     saved_change_to_name? ||
+      saved_change_to_email? ||
+      saved_change_to_phone_number? ||
       saved_change_to_title? ||
       saved_change_to_avatar_global_asset_id?
   end

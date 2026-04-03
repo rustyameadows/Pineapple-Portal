@@ -5,9 +5,11 @@ class GlobalVendor < ApplicationRecord
 
   attr_writer :contacts_attributes
 
+  before_destroy :store_linked_event_ids
   before_validation :normalize_name_fields
   before_validation :apply_contacts_attributes
   before_validation :ensure_contacts_default
+  after_commit :enqueue_generated_packet_refresh, on: %i[update destroy], if: :generated_packet_refresh_needed?
 
   validates :name, presence: true
   validates :normalized_name, presence: true, uniqueness: { case_sensitive: true }
@@ -73,5 +75,29 @@ class GlobalVendor < ApplicationRecord
     return if contacts_jsonb.is_a?(Array) && contacts_jsonb.all? { |item| item.is_a?(Hash) }
 
     errors.add(:contacts_jsonb, "must be an array of contact hashes")
+  end
+
+  def store_linked_event_ids
+    @linked_event_ids_before_destroy = event_vendors.pluck(:event_id).uniq
+  end
+
+  def generated_packet_refresh_needed?
+    destroyed? ||
+      saved_change_to_name? ||
+      saved_change_to_default_vendor_type? ||
+      saved_change_to_default_social_handle? ||
+      saved_change_to_contacts_jsonb?
+  end
+
+  def enqueue_generated_packet_refresh
+    linked_event_ids.each do |event_id|
+      Documents::Generated::RefreshEventPacketCachesJob.perform_later(event_id)
+    end
+  end
+
+  def linked_event_ids
+    return Array(@linked_event_ids_before_destroy) if destroyed?
+
+    event_vendors.pluck(:event_id).uniq
   end
 end
