@@ -23,7 +23,7 @@ class CalendarRowReturnTest < ApplicationSystemTestCase
     )
   end
 
-  test "editing a run of show item returns to the edited row and clears the helper hash" do
+  test "editing a run of show item returns to the edited row, highlights it, and clears the helper hash" do
     login_as_planner
     visit event_calendar_path(@event)
 
@@ -48,9 +48,22 @@ class CalendarRowReturnTest < ApplicationSystemTestCase
         return rect.top >= 0 && rect.top < window.innerHeight && rect.bottom > 0
       })()
     JS
+    assert page.evaluate_script(<<~JS)
+      (() => {
+        const row = document.getElementById("#{row_anchor}")
+        return row ? row.classList.contains("event-calendars__row--return-highlight") : false
+      })()
+    JS
     assert_equal "", page.evaluate_async_script(<<~JS)
       const done = arguments[0]
       setTimeout(() => done(window.location.hash), 350)
+    JS
+    assert_equal false, page.evaluate_async_script(<<~JS)
+      const done = arguments[0]
+      setTimeout(() => {
+        const row = document.getElementById("#{row_anchor}")
+        done(row ? row.classList.contains("event-calendars__row--return-highlight") : false)
+      }, 3200)
     JS
   end
 

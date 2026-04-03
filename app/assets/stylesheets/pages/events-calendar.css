@@ -438,6 +438,11 @@
   transition: filter 120ms ease-in-out;
 }
 
+.event-calendars__row--return-highlight td,
+.event-calendars__row--return-highlight th {
+  animation: event-calendars-row-return-highlight 3s ease-out;
+}
+
 .event-calendars__row:hover {
   filter: none;
 }
@@ -445,6 +450,16 @@
 .event-calendars__row:hover td,
 .event-calendars__row:hover th {
   background: rgba(0, 0, 0, 0.03);
+}
+
+@keyframes event-calendars-row-return-highlight {
+  from {
+    background: rgba(191, 219, 254, 0.95);
+  }
+
+  to {
+    background: transparent;
+  }
 }
 
 .event-calendars__date-label {
