@@ -17,7 +17,7 @@ class CalendarItemImportsTest < ApplicationSystemTestCase
 
     within ".event-calendars__import-preview-table-shell" do
       assert_text "Ceremony"
-      assert_text "Nov 15 • 10:00 AM – 10:45 AM"
+      assert_text "Nov 15 • 11:00 AM – 11:45 AM"
     end
 
     page.execute_script(<<~JS)
@@ -28,7 +28,7 @@ class CalendarItemImportsTest < ApplicationSystemTestCase
     JS
 
     within ".event-calendars__import-preview-table-shell" do
-      assert_text "Nov 20 • 10:00 AM – 10:45 AM"
+      assert_text "Nov 20 • 11:00 AM – 11:45 AM"
       assert_text "Oct 1 • 11:00 AM – 11:45 AM"
       assert_text "Absolute time retained"
     end
@@ -37,7 +37,7 @@ class CalendarItemImportsTest < ApplicationSystemTestCase
     assert_selector "dialog[open]"
 
     within "dialog[open]" do
-      assert_text "Nov 20 • 10:00 AM – 10:45 AM"
+      assert_text "Nov 20 • 11:00 AM – 11:45 AM"
       assert_text "Oct 1 • 11:00 AM – 11:45 AM"
       assert_text "Absolute time retained"
       click_button "Cancel"
@@ -68,6 +68,90 @@ class CalendarItemImportsTest < ApplicationSystemTestCase
     within ".event-calendars__import-preview" do
       assert_text "Select items to preview the projected import schedule."
     end
+  end
+
+  test "planner preview distinguishes fallback relative items from preserved relative links" do
+    reception = calendar_items(:reception)
+
+    login_as_planner
+    visit event_calendar_item_import_path(@destination_event, source_event_id: @source_event.id, source_timeline_ref: "run_of_show")
+
+    find("input##{ActionView::RecordIdentifier.dom_id(reception, :import_selection)}", visible: :all).set(true)
+
+    within ".event-calendars__import-preview-table-shell" do
+      assert_text "Reception"
+      assert_text "Will convert to absolute time"
+    end
+
+    find("input##{ActionView::RecordIdentifier.dom_id(@ceremony, :import_selection)}", visible: :all).set(true)
+
+    within ".event-calendars__import-preview-table-shell" do
+      assert_text "Ceremony"
+      assert_text "Reception"
+      assert_text "Relative link preserved"
+      assert_no_text "Will convert to absolute time"
+    end
+  end
+
+  test "planner all-listed mode previews the filtered timeline and disables row checkboxes" do
+    vendor_view = event_calendar_views(:vendor_view)
+
+    login_as_planner
+    visit event_calendar_item_import_path(@destination_event, source_event_id: @source_event.id, source_timeline_ref: "view:#{vendor_view.id}")
+
+    choose "All listed items"
+
+    assert_text "All 1 listed item will be imported."
+    assert_selector "input[name='item_ids[]'][disabled]", count: 1, visible: :all
+
+    within ".event-calendars__import-preview-table-shell" do
+      assert_text "Reception"
+      assert_no_text "Ceremony"
+      assert_no_text "Afterparty"
+    end
+  end
+
+  test "planner preview always shows midnight timestamps explicitly" do
+    @destination_event.event_calendars.create!(name: "Run of Show", timezone: "UTC")
+    midnight_item = event_calendars(:run_of_show).calendar_items.create!(
+      title: "Midnight load-in",
+      starts_at: Time.utc(2025, 10, 1, 0, 0, 0),
+      duration_minutes: 30,
+      position: 10
+    )
+
+    login_as_planner
+    visit event_calendar_item_import_path(@destination_event, source_event_id: @source_event.id, source_timeline_ref: "run_of_show")
+
+    find("input##{ActionView::RecordIdentifier.dom_id(midnight_item, :import_selection)}", visible: :all).set(true)
+
+    within ".event-calendars__import-preview-table-shell" do
+      assert_text "Oct 1 • 12:00 AM – 12:30 AM"
+      assert_text "Nov 15 • 12:00 AM – 12:30 AM"
+    end
+
+    click_button "Review import"
+
+    within "dialog[open]" do
+      assert_text "Nov 15 • 12:00 AM – 12:30 AM"
+    end
+  end
+
+  test "planner can confirm an import without batch tagging" do
+    login_as_planner
+    visit event_calendar_item_import_path(@destination_event, source_event_id: @source_event.id, source_timeline_ref: "run_of_show")
+
+    find("input##{ActionView::RecordIdentifier.dom_id(@ceremony, :import_selection)}", visible: :all).set(true)
+    click_button "Review import"
+
+    within "dialog[open]" do
+      assert_text "Not added"
+      click_button "Confirm import"
+    end
+
+    assert_current_path event_calendar_path(@destination_event)
+    assert_no_text "Tagged this import batch as"
+    assert_empty @destination_event.run_of_show_calendar.calendar_items.find_by!(title: "Ceremony").event_calendar_tags.where("lower(name) LIKE ?", "imported%")
   end
 
   test "batch tagging is optional and off by default" do

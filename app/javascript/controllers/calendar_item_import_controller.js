@@ -389,8 +389,21 @@ export default class extends Controller {
 
   shiftIso(value, shiftDays) {
     if (!value) return null
+    if (shiftDays === 0) return value
 
-    return new Date(new Date(value).getTime() + (shiftDays * DAY_IN_MS)).toISOString()
+    const sourceDate = new Date(value)
+    const localParts = this.dateTimePartsInTimeZone(sourceDate, this.destinationTimezoneValue)
+    const localDate = new Date(Date.UTC(localParts.year, localParts.month - 1, localParts.day))
+    localDate.setUTCDate(localDate.getUTCDate() + shiftDays)
+
+    return this.zonedDateTimeToIso({
+      year: localDate.getUTCFullYear(),
+      month: localDate.getUTCMonth() + 1,
+      day: localDate.getUTCDate(),
+      hour: localParts.hour,
+      minute: localParts.minute,
+      second: localParts.second
+    }, this.destinationTimezoneValue)
   }
 
   computeNextBatchTagName() {
@@ -468,8 +481,6 @@ export default class extends Controller {
   }
 
   formatDateTime(date) {
-    if (this.isMidnight(date)) return this.formatMonthDay(date)
-
     return `${this.formatMonthDay(date)} • ${this.formatTimeOnly(date)}`
   }
 
@@ -490,13 +501,54 @@ export default class extends Controller {
     }).format(date)
   }
 
-  isMidnight(date) {
-    return new Intl.DateTimeFormat("en-US", {
+  dateTimePartsInTimeZone(date, timeZone) {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false,
-      timeZone: this.destinationTimezoneValue
-    }).format(date) === "00:00"
+      second: "2-digit",
+      hourCycle: "h23",
+      timeZone
+    }).formatToParts(date)
+
+    return parts.reduce((accumulator, part) => {
+      if (part.type !== "literal") accumulator[part.type] = Number(part.value)
+      return accumulator
+    }, {})
+  }
+
+  timeZoneOffset(date, timeZone) {
+    const parts = this.dateTimePartsInTimeZone(date, timeZone)
+    const asUtc = Date.UTC(
+      parts.year,
+      parts.month - 1,
+      parts.day,
+      parts.hour,
+      parts.minute,
+      parts.second
+    )
+
+    return asUtc - date.getTime()
+  }
+
+  zonedDateTimeToIso(parts, timeZone) {
+    const utcGuess = Date.UTC(
+      parts.year,
+      parts.month - 1,
+      parts.day,
+      parts.hour || 0,
+      parts.minute || 0,
+      parts.second || 0
+    )
+    let offset = this.timeZoneOffset(new Date(utcGuess), timeZone)
+    let corrected = utcGuess - offset
+    const correctedOffset = this.timeZoneOffset(new Date(corrected), timeZone)
+
+    if (correctedOffset !== offset) corrected = utcGuess - correctedOffset
+
+    return new Date(corrected).toISOString()
   }
 
   escapeHtml(value) {

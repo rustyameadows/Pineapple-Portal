@@ -120,7 +120,19 @@ module Calendars
       return nil if time_value.blank?
       return time_value unless anchor_shift_supported? && anchor_date.present?
 
-      time_value + shift_minutes.minutes
+      timezone = ActiveSupport::TimeZone[destination_calendar.timezone] || Time.zone || ActiveSupport::TimeZone["UTC"]
+      local_time = time_value.in_time_zone(timezone)
+      shifted_date = local_time.to_date + (anchor_date - source_event.starts_on).to_i
+
+      timezone.local(
+        shifted_date.year,
+        shifted_date.month,
+        shifted_date.day,
+        local_time.hour,
+        local_time.min,
+        local_time.sec,
+        local_time.usec
+      ).utc
     end
 
     def preserve_relative_anchor?(source_item, selected_source_ids)
