@@ -97,7 +97,13 @@
           <section class="documents-show__panel documents-show__panel--danger">
             <h2 class="documents-show__heading">Remove document</h2>
             <p>Deleting removes this version and all prior versions from the event.</p>
-            <%= button_to "Delete document", event_document_path(@event, @document), method: :delete, data: { confirm: "Delete this document?" }, class: "documents-show__delete" %>
+            <%= button_to event_document_path(@event, @document),
+                          method: :delete,
+                          data: { confirm: "Delete this document?" },
+                          form: { class: "documents-show__delete-form" },
+                          class: "documents-show__delete-button danger-red-fucking-button" do %>
+              Delete document
+            <% end %>
           </section>
         </div>
       </section>
