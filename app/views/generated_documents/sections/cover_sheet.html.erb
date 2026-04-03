@@ -103,7 +103,7 @@
 </style>
 
 <% footer_logo = inline_asset_data_uri('portal-footer-logo.png') %>
-<% document_title = @segment.document.title %>
+<% document_title = @segment.display_title.presence || "Packet" %>
 <% event_photo_uri = inline_document_image_data_uri(@event.event_photo_document) %>
 <% start_on = @event.starts_on %>
 <% end_on = @event.ends_on %>

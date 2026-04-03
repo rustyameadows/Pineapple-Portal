@@ -24,6 +24,7 @@ class EventCalendar < ApplicationRecord
 
   before_validation :set_default_timezone
   before_validation :generate_slug, if: -> { slug.blank? && name.present? }
+  after_commit :enqueue_generated_packet_refresh, on: %i[create update destroy], if: :generated_packet_refresh_needed?
 
   scope :master, -> { where(kind: KINDS[:master]) }
   scope :derived, -> { where(kind: KINDS[:derived]) }
@@ -67,5 +68,15 @@ class EventCalendar < ApplicationRecord
     return if template_source.present?
 
     errors.add(:template_source_id, "must reference an existing calendar template")
+  end
+
+  def generated_packet_refresh_needed?
+    master? || saved_change_to_kind?
+  end
+
+  def enqueue_generated_packet_refresh
+    return unless event_id.present?
+
+    Documents::Generated::RefreshEventPacketCachesJob.perform_later(event_id)
   end
 end

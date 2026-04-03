@@ -2,6 +2,7 @@ class Event < ApplicationRecord
   has_many :questionnaires, dependent: :destroy
   has_many :questions, through: :questionnaires
   has_many :documents, dependent: :destroy
+  has_many :generated_packet_sources, dependent: :destroy
   has_many :attachments, as: :entity, dependent: :destroy
   has_many :event_links, -> { order(:position, :id) }, dependent: :destroy
   has_many :event_vendors,
@@ -41,6 +42,7 @@ class Event < ApplicationRecord
   validate :event_photo_document_must_be_image
   before_validation :sanitize_planning_link_tokens
   validate :planning_link_keys_must_be_known
+  after_commit :enqueue_generated_packet_refresh, on: :update, if: :generated_packet_refresh_needed?
 
   PlanningLinkEntry = Struct.new(:token, :kind, :record, keyword_init: true)
 
@@ -256,5 +258,17 @@ class Event < ApplicationRecord
     return token if token.include?(":")
 
     PlanningLinkToken.built_in(token)
+  end
+
+  def generated_packet_refresh_needed?
+    saved_change_to_name? ||
+      saved_change_to_starts_on? ||
+      saved_change_to_ends_on? ||
+      saved_change_to_location? ||
+      saved_change_to_event_photo_document_id?
+  end
+
+  def enqueue_generated_packet_refresh
+    Documents::Generated::RefreshEventPacketCachesJob.perform_later(id)
   end
 end

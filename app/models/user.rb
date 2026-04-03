@@ -40,6 +40,7 @@ class User < ApplicationRecord
   validate :avatar_must_be_image
   validate :password_required_for_account
   validate :password_confirmation_matches
+  after_commit :enqueue_generated_packet_refresh, on: :update, if: :generated_packet_refresh_needed?
 
   scope :planners, -> { where(role: ROLES[:planner]) }
   scope :clients, -> { where(role: ROLES[:client]) }
@@ -92,5 +93,21 @@ class User < ApplicationRecord
     return if password == password_confirmation
 
     errors.add(:password_confirmation, "doesn't match Password")
+  end
+
+  def generated_packet_refresh_needed?
+    saved_change_to_name? ||
+      saved_change_to_title? ||
+      saved_change_to_avatar_global_asset_id?
+  end
+
+  def enqueue_generated_packet_refresh
+    event_team_members
+      .where(member_role: EventTeamMember::TEAM_ROLES[:planner])
+      .pluck(:event_id)
+      .uniq
+      .each do |event_id|
+        Documents::Generated::RefreshEventPacketCachesJob.perform_later(event_id)
+      end
   end
 end

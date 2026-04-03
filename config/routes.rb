@@ -161,11 +161,15 @@ post "upload_failures", to: "upload_failures#create"
       resources :generated, param: :logical_id, controller: :generated do
         member do
           post :compile
+          post :snapshot, action: :compile
+          get :working_pdf
           post :duplicate
           post :mark_template
           delete :unmark_template
         end
         collection do
+          get :library
+          post :add_default_packets
           post :create_from_template
         end
 
@@ -185,7 +189,7 @@ post "upload_failures", to: "upload_failures#create"
           end
 
           member do
-            post :render_pdf
+            post :duplicate
             get :preview
             get :cached_pdf
           end

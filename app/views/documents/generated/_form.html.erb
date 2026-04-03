@@ -4,7 +4,7 @@
               class: "generated-doc__form" do |form| %>
   <% if form.object.errors.any? %>
     <div class="form-errors">
-      <p><strong><%= pluralize(form.object.errors.count, "error") %></strong> prevented the document from being saved:</p>
+      <p><strong><%= pluralize(form.object.errors.count, "error") %></strong> prevented the packet from being saved:</p>
       <ul>
         <% form.object.errors.full_messages.each do |message| %>
           <li><%= message %></li>
@@ -14,7 +14,7 @@
   <% end %>
 
   <div class="form-field">
-    <%= form.label :title, "Document title" %>
+    <%= form.label :title, "Packet title" %>
     <%= form.text_field :title, required: true, autofocus: true %>
   </div>
 
@@ -24,6 +24,6 @@
   </div>
 
   <div class="form-actions">
-    <%= form.submit "Create generated document", class: "button button--primary" %>
+    <%= form.submit "Create packet", class: "button button--primary" %>
   </div>
 <% end %>

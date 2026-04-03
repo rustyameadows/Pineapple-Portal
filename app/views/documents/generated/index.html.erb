@@ -8,10 +8,17 @@
       <section class="event-section">
         <header class="event-section__header">
           <div>
-            <p class="event-section__eyebrow">Generated documents</p>
+            <p class="event-section__eyebrow">Generated packets</p>
             <h1 class="event-section__title">Packets for <%= @event.name %></h1>
           </div>
-          <%= link_to "New generated document", new_event_documents_generated_path(@event), class: "event-section__cta" %>
+          <div class="event-section__actions">
+            <%= button_to "Add default packets",
+                          add_default_packets_event_documents_generated_index_path(@event),
+                          method: :post,
+                          class: "event-section__cta event-section__cta--secondary" %>
+            <%= link_to "Packet library", library_event_documents_generated_index_path(@event), class: "event-section__cta event-section__cta--secondary" %>
+            <%= link_to "New generated packet", new_event_documents_generated_path(@event), class: "event-section__cta" %>
+          </div>
         </header>
 
         <div class="event-section__body">
@@ -21,10 +28,10 @@
                     href_for: ->(entry) { event_documents_generated_path(@event, entry[:logical_id]) },
                     table_columns: [
                       {
-                        label: "Last compiled",
+                        label: "Last snapshot",
                         value: ->(entry) do
                           latest = entry[:latest]
-                          latest.present? && latest.storage_uri.present? ? latest.updated_at.to_fs(:short) : "Not yet compiled"
+                          latest.present? && latest.storage_uri.present? ? latest.updated_at.to_fs(:short) : "No snapshots yet"
                         end,
                         sort_key: "last_compiled",
                         sort_value: ->(entry) do
@@ -33,7 +40,7 @@
                         end
                       },
                       {
-                        label: "Compiled versions",
+                        label: "Saved snapshots",
                         value: ->(entry) { entry[:versions].count(&:storage_uri) },
                         sort_key: "compiled_versions",
                         sort_value: ->(entry) { entry[:versions].count(&:storage_uri) }
@@ -54,14 +61,14 @@
                     ],
                     card_fields: [
                       {
-                        label: "Last compiled",
+                        label: "Last snapshot",
                         value: ->(entry) do
                           latest = entry[:latest]
-                          latest.present? && latest.storage_uri.present? ? latest.updated_at.to_fs(:short) : "Not yet compiled"
+                          latest.present? && latest.storage_uri.present? ? latest.updated_at.to_fs(:short) : "No snapshots yet"
                         end
                       },
                       {
-                        label: "Compiled versions",
+                        label: "Saved snapshots",
                         value: ->(entry) { entry[:versions].count(&:storage_uri) }
                       },
                       {
@@ -69,7 +76,7 @@
                         value: ->(entry) { entry[:definition].client_visible? ? "Client visible" : "Internal only" }
                       }
                     ],
-                    empty_message: "No generated documents yet.",
+                    empty_message: "No packets yet.",
                     search_placeholder: "Search by file name",
                     title_heading: "Title",
                     title_sort_key: "title" %>

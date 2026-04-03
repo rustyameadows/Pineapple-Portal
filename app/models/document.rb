@@ -4,6 +4,11 @@ class Document < ApplicationRecord
     generated: "generated"
   }.freeze
 
+  PACKET_SCHEMA_VERSIONS = {
+    legacy: 1,
+    source_backed: 2
+  }.freeze
+
   UUID_REGEX = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i.freeze
 
   belongs_to :event
@@ -19,6 +24,15 @@ class Document < ApplicationRecord
            foreign_key: :document_logical_id,
            primary_key: :logical_id,
            dependent: :destroy
+  has_many :packet_placements,
+           -> { order(:position) },
+           class_name: "GeneratedPacketPlacement",
+           foreign_key: :document_logical_id,
+           primary_key: :logical_id,
+           dependent: :destroy
+  has_many :generated_packet_sources,
+           through: :packet_placements,
+           source: :source
   has_many :document_dependencies,
            class_name: "DocumentDependency",
            foreign_key: :document_logical_id,
@@ -113,6 +127,10 @@ class Document < ApplicationRecord
     doc_kind == DOC_KINDS[:generated] && !requires_file_metadata?
   end
 
+  def packet_source_backed?
+    packet_schema_version.to_i >= PACKET_SCHEMA_VERSIONS[:source_backed]
+  end
+
   def requires_file_metadata?
     doc_kind != DOC_KINDS[:generated] || storage_uri.present?
   end
@@ -134,6 +152,7 @@ class Document < ApplicationRecord
     if doc_kind == DOC_KINDS[:generated]
       self.source ||= "packet"
       self.is_latest = false if definition_placeholder?
+      self.packet_schema_version ||= PACKET_SCHEMA_VERSIONS[:legacy]
     else
       self.source ||= "staff_upload"
     end

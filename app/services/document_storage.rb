@@ -6,6 +6,11 @@ class DocumentStorage
     [ROOT, event.id, logical_id, "v#{version}", sanitized].join("/")
   end
 
+  def self.build_working_key(event:, logical_id:, filename:)
+    sanitized = sanitize_filename(filename)
+    [ROOT, event.id, logical_id, "working", sanitized].join("/")
+  end
+
   def self.sanitize_filename(filename)
     base = File.basename(filename.to_s)
     parameterized = base.gsub(/[^\w\.\-]+/, "-")

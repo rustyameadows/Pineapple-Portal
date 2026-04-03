@@ -16,50 +16,47 @@ module Documents
           is_latest: false,
           client_visible: false,
           source: "packet",
-          built_by_user: @user
+          built_by_user: @user,
+          packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed]
         )
 
-        @segment = DocumentSegment.create!(
+        @placement = GeneratedPacketPlacement.create!(
           document_logical_id: @document.logical_id,
-          position: 1,
-          kind: DocumentSegment::KINDS[:html_view],
-          title: "Text Page",
-          source_ref: {
-            "view_key" => DocumentSegment::TEXT_PAGE_VIEW_KEY,
-            "options" => { "body_markdown" => "Initial content" }
-          },
-          spec: {
-            "label" => "Text Page",
-            "kind" => DocumentSegment::KINDS[:html_view],
-            "view_key" => DocumentSegment::TEXT_PAGE_VIEW_KEY
-          }
+          source: GeneratedPacketSource.build_page_source(
+            event: @event,
+            view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+            title: "Text Page",
+            options: { "body_markdown" => "Initial content" }
+          ).tap(&:save!),
+          position: 1
         )
       end
 
-      test "creates text page segment with normalized markdown option" do
-        assert_difference("DocumentSegment.count", 1) do
-          post event_documents_generated_segments_url(@event, @document.logical_id), params: {
-            segment: {
-              kind: DocumentSegment::KINDS[:html_view],
-              view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
-              title: "General Notes",
-              options: {
-                body_markdown: "Line 1\r\nLine 2",
-                ignored_key: "ignore me"
+      test "creates text page packet page with normalized markdown option" do
+        assert_difference("GeneratedPacketSource.count", 1) do
+          assert_difference("GeneratedPacketPlacement.count", 1) do
+            post event_documents_generated_segments_url(@event, @document.logical_id), params: {
+              segment: {
+                view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+                title: "General Notes",
+                options: {
+                  body_markdown: "Line 1\r\nLine 2",
+                  ignored_key: "ignore me"
+                }
               }
             }
-          }
+          end
         end
 
         assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
-        created = DocumentSegment.order(:id).last
+        created = GeneratedPacketSource.order(:id).last
 
         assert_equal DocumentSegment::TEXT_PAGE_VIEW_KEY, created.html_view_key
         assert_equal({ "body_markdown" => "Line 1\nLine 2" }, created.html_options)
       end
 
-      test "updates text page segment and drops unknown option keys" do
-        patch event_documents_generated_segment_url(@event, @document.logical_id, @segment), params: {
+      test "updates text page packet page and drops unknown option keys" do
+        patch event_documents_generated_segment_url(@event, @document.logical_id, @placement), params: {
           segment: {
             title: "General Notes Updated",
             view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
@@ -71,29 +68,30 @@ module Documents
         }
 
         assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
-        @segment.reload
+        @placement.reload
 
-        assert_equal "General Notes Updated", @segment.title
-        assert_equal({ "body_markdown" => "Updated\nnotes" }, @segment.html_options)
+        assert_equal "General Notes Updated", @placement.source.title
+        assert_equal({ "body_markdown" => "Updated\nnotes" }, @placement.source.html_options)
       end
 
-      test "creates event overview segment with default markdown when body is blank" do
-        assert_difference("DocumentSegment.count", 1) do
-          post event_documents_generated_segments_url(@event, @document.logical_id), params: {
-            segment: {
-              kind: DocumentSegment::KINDS[:html_view],
-              view_key: DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
-              title: "Event Overview",
-              options: {
-                body_markdown: "",
-                ignored_key: "ignore me"
+      test "creates event overview packet page with default markdown when body is blank" do
+        assert_difference("GeneratedPacketSource.count", 1) do
+          assert_difference("GeneratedPacketPlacement.count", 1) do
+            post event_documents_generated_segments_url(@event, @document.logical_id), params: {
+              segment: {
+                view_key: DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
+                title: "Event Overview",
+                options: {
+                  body_markdown: "",
+                  ignored_key: "ignore me"
+                }
               }
             }
-          }
+          end
         end
 
         assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
-        created = DocumentSegment.order(:id).last
+        created = GeneratedPacketSource.order(:id).last
 
         assert_equal DocumentSegment::EVENT_OVERVIEW_VIEW_KEY, created.html_view_key
         assert_equal(
@@ -102,24 +100,19 @@ module Documents
         )
       end
 
-      test "updates event overview segment and drops unknown option keys" do
-        overview_segment = DocumentSegment.create!(
+      test "updates event overview packet page and drops unknown option keys" do
+        overview_placement = GeneratedPacketPlacement.create!(
           document_logical_id: @document.logical_id,
-          position: 2,
-          kind: DocumentSegment::KINDS[:html_view],
-          title: "Event Overview",
-          source_ref: {
-            "view_key" => DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
-            "options" => { "body_markdown" => "Initial overview content" }
-          },
-          spec: {
-            "label" => "Event Overview",
-            "kind" => DocumentSegment::KINDS[:html_view],
-            "view_key" => DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
-          }
+          source: GeneratedPacketSource.build_page_source(
+            event: @event,
+            view_key: DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
+            title: "Event Overview",
+            options: { "body_markdown" => "Initial overview content" }
+          ).tap(&:save!),
+          position: 2
         )
 
-        patch event_documents_generated_segment_url(@event, @document.logical_id, overview_segment), params: {
+        patch event_documents_generated_segment_url(@event, @document.logical_id, overview_placement), params: {
           segment: {
             title: "Event Overview Updated",
             view_key: DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
@@ -131,10 +124,10 @@ module Documents
         }
 
         assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
-        overview_segment.reload
+        overview_placement.reload
 
-        assert_equal "Event Overview Updated", overview_segment.title
-        assert_equal({ "body_markdown" => "Updated\nnotes" }, overview_segment.html_options)
+        assert_equal "Event Overview Updated", overview_placement.source.title
+        assert_equal({ "body_markdown" => "Updated\nnotes" }, overview_placement.source.html_options)
       end
     end
   end

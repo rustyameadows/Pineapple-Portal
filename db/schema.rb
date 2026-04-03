@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_03_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -45,7 +45,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
     t.index ["document_logical_id"], name: "index_attachments_on_document_logical_id"
     t.index ["entity_type", "entity_id", "context", "position"], name: "index_attachments_on_entity_scope", unique: true
     t.index ["entity_type", "entity_id"], name: "index_attachments_on_entity"
-    t.check_constraint "context::text = ANY (ARRAY['prompt'::character varying, 'help_text'::character varying, 'answer'::character varying, 'other'::character varying]::text[])", name: "attachments_context_valid"
+    t.check_constraint "context::text = ANY (ARRAY['prompt'::character varying::text, 'help_text'::character varying::text, 'answer'::character varying::text, 'other'::character varying::text])", name: "attachments_context_valid"
     t.check_constraint "document_id IS NOT NULL AND document_logical_id IS NULL OR document_id IS NULL AND document_logical_id IS NOT NULL", name: "attachments_exactly_one_document_reference"
   end
 
@@ -241,15 +241,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
     t.integer "compiled_page_count"
     t.boolean "financial_portal_visible", default: false, null: false
     t.boolean "packets_portal_visible", default: false, null: false
+    t.integer "packet_schema_version", default: 1, null: false
+    t.string "working_storage_uri"
+    t.string "working_manifest_hash"
+    t.string "working_checksum_sha256"
+    t.integer "working_page_count"
+    t.integer "working_file_size"
+    t.datetime "working_rendered_at"
     t.index ["build_id"], name: "index_documents_on_build_id"
     t.index ["client_visible"], name: "index_documents_on_client_visible"
     t.index ["doc_kind"], name: "index_documents_on_doc_kind"
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["logical_id", "version"], name: "index_documents_on_logical_id_and_version", unique: true
     t.index ["logical_id"], name: "index_documents_on_logical_id_latest", unique: true, where: "(is_latest = true)"
+    t.index ["packet_schema_version"], name: "index_documents_on_packet_schema_version"
     t.index ["packets_portal_visible"], name: "index_documents_on_packets_portal_visible"
     t.index ["source"], name: "index_documents_on_source"
     t.index ["template_source_logical_id"], name: "index_documents_on_template_source_logical_id"
+    t.index ["working_manifest_hash"], name: "index_documents_on_working_manifest_hash"
     t.check_constraint "size_bytes > 0", name: "documents_size_positive"
     t.check_constraint "version > 0", name: "documents_version_positive"
   end
@@ -299,7 +308,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
     t.index ["event_id"], name: "index_event_calendars_on_event_id_and_master", unique: true, where: "((kind)::text = 'master'::text)"
     t.index ["kind"], name: "index_event_calendars_on_kind"
     t.index ["template_source_id"], name: "index_event_calendars_on_template_source_id"
-    t.check_constraint "kind::text = ANY (ARRAY['master'::character varying, 'derived'::character varying]::text[])", name: "event_calendars_kind_check"
+    t.check_constraint "kind::text = ANY (ARRAY['master'::character varying::text, 'derived'::character varying::text])", name: "event_calendars_kind_check"
   end
 
   create_table "event_links", force: :cascade do |t|
@@ -386,6 +395,39 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
     t.index ["name"], name: "index_events_on_name"
     t.index ["portal_slug"], name: "index_events_on_portal_slug", unique: true
     t.check_constraint "jsonb_typeof(planning_link_keys) = 'array'::text", name: "events_planning_link_keys_array"
+  end
+
+  create_table "generated_packet_placements", force: :cascade do |t|
+    t.uuid "document_logical_id", null: false
+    t.bigint "generated_packet_source_id", null: false
+    t.integer "position", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_logical_id", "position"], name: "index_generated_packet_placements_on_document_and_position", unique: true
+    t.index ["document_logical_id"], name: "index_generated_packet_placements_on_document_logical_id"
+    t.index ["generated_packet_source_id"], name: "idx_on_generated_packet_source_id_886ca84844"
+    t.check_constraint "\"position\" > 0", name: "generated_packet_placements_position_positive"
+  end
+
+  create_table "generated_packet_sources", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "kind", null: false
+    t.string "source_category", null: false
+    t.string "canonical_key"
+    t.string "title", default: "", null: false
+    t.jsonb "source_ref", default: {}, null: false
+    t.jsonb "spec", default: {}, null: false
+    t.string "render_hash"
+    t.string "cached_pdf_key"
+    t.datetime "cached_pdf_generated_at"
+    t.integer "cached_page_count"
+    t.integer "cached_file_size"
+    t.string "last_render_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id", "canonical_key"], name: "index_generated_packet_sources_on_event_and_canonical", unique: true, where: "(canonical_key IS NOT NULL)"
+    t.index ["event_id"], name: "index_generated_packet_sources_on_event_id"
+    t.index ["render_hash"], name: "index_generated_packet_sources_on_render_hash"
   end
 
   create_table "global_assets", force: :cascade do |t|
@@ -557,6 +599,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
   add_foreign_key "event_venues", "events"
   add_foreign_key "event_venues", "global_venues"
   add_foreign_key "events", "documents", column: "event_photo_document_id"
+  add_foreign_key "generated_packet_placements", "generated_packet_sources"
   add_foreign_key "global_assets", "users", column: "uploaded_by_id"
   add_foreign_key "password_reset_tokens", "users"
   add_foreign_key "password_reset_tokens", "users", column: "issued_by_id"

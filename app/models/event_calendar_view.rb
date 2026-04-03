@@ -8,6 +8,7 @@ class EventCalendarView < ApplicationRecord
 
   before_validation :generate_slug, if: -> { slug.blank? && name.present? }
   before_validation :normalize_tag_filter
+  after_commit :enqueue_generated_packet_refresh, on: %i[create update destroy], if: :generated_packet_refresh_needed?
 
   scope :client_visible, -> { where(client_visible: true) }
 
@@ -49,5 +50,16 @@ class EventCalendarView < ApplicationRecord
     valid_ids = event_calendar.event_calendar_tags.pluck(:id)
     invalid_ids = tag_filter - valid_ids
     errors.add(:tag_filter, "contains unknown tags") if invalid_ids.any?
+  end
+
+  def generated_packet_refresh_needed?
+    event_calendar&.master?
+  end
+
+  def enqueue_generated_packet_refresh
+    event_id = event_calendar&.event_id
+    return unless event_id.present?
+
+    Documents::Generated::RefreshEventPacketCachesJob.perform_later(event_id)
   end
 end

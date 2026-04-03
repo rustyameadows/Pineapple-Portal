@@ -22,12 +22,25 @@ module Documents
       attr_reader :segment
 
       def payload
+        unless segment.is_a?(GeneratedPacketSource)
+          return {
+            document_logical_id: segment.document_logical_id,
+            kind: segment.kind,
+            title: segment.title,
+            source_ref: canonical_source_ref,
+            spec: canonical_spec
+          }
+        end
+
         {
-          document_logical_id: segment.document_logical_id,
+          event_id: segment.event_id,
           kind: segment.kind,
+          source_category: segment.source_category,
+          canonical_key: segment.canonical_key,
           title: segment.title,
           source_ref: canonical_source_ref,
-          spec: canonical_spec
+          spec: canonical_spec,
+          dynamic: deep_sort(dynamic_payload)
         }
       end
 
@@ -37,6 +50,120 @@ module Documents
 
       def canonical_spec
         deep_sort(segment.spec)
+      end
+
+      def dynamic_payload
+        case segment.kind
+        when GeneratedPacketSource::KINDS[:pdf_asset]
+          pdf_document_payload
+        when GeneratedPacketSource::KINDS[:html_view]
+          html_view_payload
+        else
+          {}
+        end
+      end
+
+      def pdf_document_payload
+        logical_id = segment.pdf_logical_id
+        document = segment.event.documents.latest.find_by(logical_id: logical_id) if logical_id.present?
+        document ||= segment.event.documents.find_by(id: segment.pdf_document_id) if segment.pdf_document_id.present?
+        return {} unless document
+
+        {
+          document_id: document.id,
+          logical_id: document.logical_id,
+          version: document.version,
+          checksum: document.checksum,
+          checksum_sha256: document.checksum_sha256,
+          storage_uri: document.storage_uri,
+          updated_at: document.updated_at&.utc&.iso8601
+        }
+      end
+
+      def html_view_payload
+        case segment.html_view_key
+        when "cover_sheet"
+          cover_payload
+        when "planning_team"
+          planning_team_payload
+        when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
+          timeline_payload(run_of_show: true)
+        when DocumentSegment::TIMELINE_VIEW_KEY
+          timeline_payload(run_of_show: false)
+        else
+          {}
+        end
+      end
+
+      def cover_payload
+        photo = segment.event.event_photo_document
+
+        {
+          event_name: segment.event.name,
+          starts_on: segment.event.starts_on,
+          ends_on: segment.event.ends_on,
+          location: segment.event.location,
+          event_photo: photo && {
+            logical_id: photo.logical_id,
+            checksum_sha256: photo.checksum_sha256,
+            updated_at: photo.updated_at&.utc&.iso8601
+          }
+        }
+      end
+
+      def planning_team_payload
+        segment.event.planner_team_members.includes(:user).ordered_for_display.map do |member|
+          user = member.user
+          {
+            member_id: member.id,
+            position: member.position,
+            lead_planner: member.lead_planner?,
+            user_id: user.id,
+            name: user.name,
+            title: user.title,
+            avatar_global_asset_id: user.avatar_global_asset_id,
+            user_updated_at: user.updated_at&.utc&.iso8601
+          }
+        end
+      end
+
+      def timeline_payload(run_of_show:)
+        calendar = segment.event.run_of_show_calendar
+        return { error: "run_of_show_missing" } unless calendar
+
+        items = if run_of_show
+                  calendar.calendar_items.includes(:team_members).ordered.reject { |item| item.tagged_with?("decisions") }
+                else
+                  view_ref = segment.html_options["view_ref"].presence
+                  view = calendar.event_calendar_views.find_by(id: view_ref)
+                  return { error: "view_missing", view_ref: view_ref } unless view
+
+                  filter = Calendars::ViewFilter.new(calendar: calendar, view: view)
+                  filtered = filter.items
+                  filtered = filtered.reject { |item| item.tagged_with?("decisions") } unless view.slug == "decision-calendar"
+                  filtered
+                end
+
+        {
+          run_of_show: run_of_show,
+          items: Array(items).map do |item|
+            {
+              id: item.id,
+              title: item.title,
+              notes: item.notes,
+              starts_at: item.starts_at&.utc&.iso8601,
+              effective_starts_at: item.effective_starts_at&.utc&.iso8601,
+              duration_minutes: item.duration_minutes,
+              location_name: item.location_name,
+              vendor_name: item.vendor_name,
+              additional_team_members: item.additional_team_members,
+              time_caption: item.time_caption,
+              status: item.status,
+              tag_summary: Array(item.tag_summary),
+              team_members: item.team_members.map { |member| member.name.to_s.split.first }
+            }
+          end
+        }
       end
 
       def deep_sort(value)

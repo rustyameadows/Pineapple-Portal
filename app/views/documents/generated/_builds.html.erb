@@ -33,12 +33,12 @@
       <% reference_time = build.created_at || build.updated_at || Time.current %>
       <% summary_parts << "Queued #{time_ago_in_words(reference_time)} ago" %>
       <% meta_lines << "Requested #{reference_time.to_fs(:short)} · #{time_ago_in_words(reference_time)} ago" if reference_time.present? %>
-      <% placeholder_note = "Detailed progress coming soon" %>
+      <% placeholder_note = "Snapshot is being prepared" %>
     <% when "running" %>
       <% reference_time = started_at || build.created_at || build.updated_at || Time.current %>
       <% started_phrase = started_at.present? ? "started" : "queued" %>
-      <% summary_parts << "Rendering – #{started_phrase} #{time_ago_in_words(reference_time)} ago" %>
-      <% placeholder_note = "Detailed progress coming soon" %>
+      <% summary_parts << "Creating snapshot · #{started_phrase} #{time_ago_in_words(reference_time)} ago" %>
+      <% placeholder_note = "Snapshot is being prepared" %>
     <% when "succeeded" %>
       <% summary_parts << (finished_at.present? ? "Finished #{time_ago_in_words(finished_at)} ago" : "Finished") %>
       <% summary_parts.concat(stats_parts) if stats_parts.any? %>
