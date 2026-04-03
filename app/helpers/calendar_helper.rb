@@ -154,35 +154,25 @@ module CalendarHelper
   def calendar_item_time_label(item, timezone)
     return item.time_caption if item.time_caption.present?
 
-    start_time = item.effective_starts_at&.in_time_zone(timezone)
-    finish_time = item.effective_ends_at&.in_time_zone(timezone)
-
-    if start_time
-      if finish_time
-        "#{format_time_or_date(start_time)} – #{format_time_only(finish_time)}"
-      else
-        format_time_or_date(start_time)
-      end
-    else
-      calendar_item_relative_label(item) || "Exact time coming soon"
-    end
+    effective_time_label(item.effective_starts_at, item.effective_ends_at, timezone) ||
+      calendar_item_relative_label(item) ||
+      "Exact time coming soon"
   end
 
   def calendar_item_time_only_label(item, timezone)
     return item.time_caption if item.time_caption.present?
 
-    start_time = item.effective_starts_at&.in_time_zone(timezone)
-    finish_time = item.effective_ends_at&.in_time_zone(timezone)
+    effective_time_only_label(item.effective_starts_at, item.effective_ends_at, timezone) ||
+      calendar_item_relative_label(item) ||
+      "Exact time coming soon"
+  end
 
-    if start_time
-      if finish_time
-        "#{format_clock_time(start_time)} – #{format_clock_time(finish_time)}"
-      else
-        format_clock_time(start_time)
-      end
-    else
-      calendar_item_relative_label(item) || "Exact time coming soon"
-    end
+  def calendar_item_effective_time_label(item, timezone)
+    effective_time_label(item.effective_starts_at, item.effective_ends_at, timezone) || "No computable start time"
+  end
+
+  def calendar_item_effective_time_only_label(item, timezone)
+    effective_time_only_label(item.effective_starts_at, item.effective_ends_at, timezone) || "No computable start time"
   end
 
   def calendar_item_time_label_with_marker(item, timezone)
@@ -498,5 +488,29 @@ module CalendarHelper
 
   def midnight?(time)
     time.strftime("%H:%M") == "00:00"
+  end
+
+  def effective_time_label(start_time, finish_time, timezone)
+    start_time = start_time&.in_time_zone(timezone)
+    finish_time = finish_time&.in_time_zone(timezone)
+    return unless start_time
+
+    if finish_time
+      "#{format_time_or_date(start_time)} – #{format_time_only(finish_time)}"
+    else
+      format_time_or_date(start_time)
+    end
+  end
+
+  def effective_time_only_label(start_time, finish_time, timezone)
+    start_time = start_time&.in_time_zone(timezone)
+    finish_time = finish_time&.in_time_zone(timezone)
+    return unless start_time
+
+    if finish_time
+      "#{format_clock_time(start_time)} – #{format_clock_time(finish_time)}"
+    else
+      format_clock_time(start_time)
+    end
   end
 end

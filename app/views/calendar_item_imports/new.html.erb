@@ -1,4 +1,7 @@
 <% selected_mode = @selection_mode.presence || "selected" %>
+<% anchor_shift_available = @source_event&.starts_on.present? %>
+<% preview_items_json = json_escape(@preview_items_payload.to_json) %>
+<% destination_tag_names_json = json_escape(@destination_tag_names.to_json) %>
 
 <% provide :page_shell do %>
   <div class="event-layout">
@@ -12,7 +15,7 @@
           <div>
             <p class="event-section__eyebrow">Run of Show</p>
             <h1 class="event-section__title">Import timeline items</h1>
-            <p class="event-section__lead">Copy Run of Show or filtered timeline items from another event.</p>
+            <p class="event-section__lead">Bring over another event’s Run of Show or a filtered timeline view, tune the date anchor, and confirm the projected schedule before anything is imported.</p>
           </div>
           <div class="event-section__actions">
             <%= link_to "Back to run of show", event_calendar_path(@event), class: "event-section__link" %>
@@ -20,25 +23,35 @@
         </header>
 
         <div class="event-section__body">
-          <%= form_with url: event_calendar_item_import_path(@event), method: :get, local: true, html: { class: "event-settings__form" } do |form| %>
-            <div>
-              <%= form.label :source_event_id, "Source event" %><br>
-              <%= form.select :source_event_id,
-                              options_from_collection_for_select(@source_events, :id, :name, @source_event&.id),
-                              include_blank: "Select an event" %>
-            </div>
+          <%= form_with url: event_calendar_item_import_path(@event), method: :get, local: true, html: { class: "event-settings__form event-calendars__import-load-form" } do |form| %>
+            <div class="event-calendars__import-picker-grid">
+              <div class="event-calendars__import-picker-field">
+                <%= form.label :source_event_id, "Source event" %>
+                <%= form.select :source_event_id,
+                                options_from_collection_for_select(@source_events, :id, :name, @source_event&.id),
+                                { include_blank: "Select an event" },
+                                class: "event-calendars__import-select" %>
+              </div>
 
-            <div>
-              <%= form.label :source_timeline_ref, "Source timeline" %><br>
-              <% if @timeline_options.any? %>
-                <%= form.select :source_timeline_ref, options_for_select(@timeline_options, @source_timeline_ref) %>
-              <% else %>
-                <%= form.select :source_timeline_ref, options_for_select([]), { include_blank: "Select a timeline" }, disabled: true %>
-              <% end %>
+              <div class="event-calendars__import-picker-field">
+                <%= form.label :source_timeline_ref, "Source timeline" %>
+                <% if @timeline_options.any? %>
+                  <%= form.select :source_timeline_ref,
+                                  options_for_select(@timeline_options, @source_timeline_ref),
+                                  {},
+                                  class: "event-calendars__import-select" %>
+                <% else %>
+                  <%= form.select :source_timeline_ref,
+                                  options_for_select([]),
+                                  { include_blank: "Select a timeline" },
+                                  class: "event-calendars__import-select",
+                                  disabled: true %>
+                <% end %>
+              </div>
             </div>
 
             <div class="event-settings__form-actions">
-              <%= form.submit "Load items" %>
+              <%= form.submit "Load items", class: "event-section__cta" %>
             </div>
           <% end %>
 
@@ -51,52 +64,291 @@
           <% end %>
 
           <% if @source_items.any? %>
-            <%= form_with url: event_calendar_item_import_path(@event), method: :post, local: true, html: { class: "event-settings__form" } do |form| %>
-              <%= form.hidden_field :source_event_id, value: @source_event.id %>
-              <%= form.hidden_field :source_timeline_ref, value: @source_timeline_ref %>
+            <div class="event-calendars__import-workspace"
+                 data-controller="calendar-item-import"
+                 data-calendar-item-import-items-value="<%= preview_items_json %>"
+                 data-calendar-item-import-source-event-start-value="<%= @source_event&.starts_on&.iso8601 %>"
+                 data-calendar-item-import-destination-timezone-value="<%= @destination_calendar.timezone %>"
+                 data-calendar-item-import-destination-timezone-label-value="<%= @destination_timezone_label %>"
+                 data-calendar-item-import-destination-tag-names-value="<%= destination_tag_names_json %>"
+                 data-calendar-item-import-expected-batch-tag-name-value="<%= @expected_batch_tag_name %>"
+                 data-calendar-item-import-anchor-required-value="<%= anchor_shift_available %>">
+              <%= form_with url: event_calendar_item_import_path(@event), method: :post, local: true, html: { class: "event-settings__form event-calendars__import-form", data: { calendar_item_import_target: "form" } } do |form| %>
+                <%= form.hidden_field :source_event_id, value: @source_event.id %>
+                <%= form.hidden_field :source_timeline_ref, value: @source_timeline_ref %>
 
-              <fieldset>
-                <legend>Import mode</legend>
-                <div>
-                  <%= form.radio_button :selection_mode, "selected", checked: selected_mode == "selected" %>
-                  <%= form.label :selection_mode_selected, "Selected items" %>
+                <section class="event-calendars__import-context">
+                  <div class="event-calendars__import-context-chip">
+                    <span class="event-calendars__import-context-label">Source</span>
+                    <strong><%= @source_event.name %></strong>
+                  </div>
+                  <div class="event-calendars__import-context-chip">
+                    <span class="event-calendars__import-context-label">Timeline</span>
+                    <strong><%= @timeline_options.find { |(_label, value)| value == @source_timeline_ref }&.first || "Run of Show" %></strong>
+                  </div>
+                  <div class="event-calendars__import-context-chip">
+                    <span class="event-calendars__import-context-label">Destination timezone</span>
+                    <strong><%= @destination_timezone_label %></strong>
+                  </div>
+                </section>
+
+                <section class="event-calendars__import-controls">
+                  <article class="event-calendars__import-control-card">
+                    <header>
+                      <p class="event-calendars__import-card-eyebrow">Selection</p>
+                      <h2>Choose what to import</h2>
+                    </header>
+
+                    <fieldset class="event-calendars__import-mode-group">
+                      <legend>Import mode</legend>
+                      <label class="event-calendars__import-mode-option">
+                        <%= form.radio_button :selection_mode,
+                                              "selected",
+                                              checked: selected_mode == "selected",
+                                              data: {
+                                                calendar_item_import_target: "selectionModeInput",
+                                                action: "change->calendar-item-import#controlsChanged"
+                                              } %>
+                        <span>
+                          <strong>Selected items</strong>
+                          <small>Only bring over checked rows from the source list.</small>
+                        </span>
+                      </label>
+
+                      <label class="event-calendars__import-mode-option">
+                        <%= form.radio_button :selection_mode,
+                                              "all",
+                                              checked: selected_mode == "all",
+                                              data: {
+                                                calendar_item_import_target: "selectionModeInput",
+                                                action: "change->calendar-item-import#controlsChanged"
+                                              } %>
+                        <span>
+                          <strong>All listed items</strong>
+                          <small>Import every row currently shown in the source timeline.</small>
+                        </span>
+                      </label>
+                    </fieldset>
+
+                    <p class="event-section__note" data-calendar-item-import-target="selectionHint"></p>
+                  </article>
+
+                  <article class="event-calendars__import-control-card">
+                    <header>
+                      <p class="event-calendars__import-card-eyebrow">Anchor</p>
+                      <h2>Choose the target date anchor</h2>
+                    </header>
+
+                    <div class="event-calendars__import-field">
+                      <%= form.label :anchor_date, "Anchor date" %>
+                      <%= form.date_field :anchor_date,
+                                          value: @anchor_date_value,
+                                          disabled: !anchor_shift_available,
+                                          class: "event-calendars__import-date-input",
+                                          data: {
+                                            calendar_item_import_target: "anchorDateInput",
+                                            action: "change->calendar-item-import#controlsChanged input->calendar-item-import#controlsChanged"
+                                          } %>
+                    </div>
+
+                    <p class="event-section__note" data-calendar-item-import-target="anchorHelp">
+                      <% if anchor_shift_available %>
+                        Source times will be shifted from <strong><%= @source_event.starts_on.strftime("%B %-d, %Y") %></strong> onto the date you choose here.
+                      <% else %>
+                        This source event does not have a start date, so scheduled items will keep their original dates and times.
+                      <% end %>
+                    </p>
+                  </article>
+
+                  <article class="event-calendars__import-control-card">
+                    <header>
+                      <p class="event-calendars__import-card-eyebrow">Batch tag</p>
+                      <h2>Optionally mark this import round</h2>
+                    </header>
+
+                    <label class="event-calendars__import-checkbox-row">
+                      <%= check_box_tag :batch_tag_enabled,
+                                        "1",
+                                        @batch_tag_enabled,
+                                        data: {
+                                          calendar_item_import_target: "batchTagCheckbox",
+                                          action: "change->calendar-item-import#controlsChanged"
+                                        } %>
+                      <span>
+                        <strong>Add batch tag</strong>
+                        <small>Give this import run its own tag so planners can isolate it later.</small>
+                      </span>
+                    </label>
+
+                    <p class="event-section__note">
+                      Expected batch tag:
+                      <strong data-calendar-item-import-target="batchTagLabel">Not added</strong>
+                    </p>
+                  </article>
+                </section>
+
+                <section class="event-calendars__import-source-table">
+                  <div class="event-calendars__import-section-header">
+                    <div>
+                      <p class="event-calendars__import-card-eyebrow">Source Items</p>
+                      <h2>Source timeline</h2>
+                      <div class="event-calendars__bulk-shortcuts" aria-label="Import selection shortcuts">
+                        <button type="button"
+                                class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
+                                data-action="calendar-item-import#selectAll"
+                                data-calendar-item-import-target="selectAllButton">
+                          Select all
+                        </button>
+                        <button type="button"
+                                class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
+                                data-action="calendar-item-import#deselectAll"
+                                data-calendar-item-import-target="deselectAllButton">
+                          Deselect all
+                        </button>
+                      </div>
+                    </div>
+                    <p class="event-section__note">The source list stays unchanged. Use it to choose items, then review the projected destination schedule below.</p>
+                  </div>
+
+                  <% import_actions = lambda do |item|
+                       check_box_tag(
+                         "item_ids[]",
+                         item.id,
+                         @selected_item_ids.include?(item.id),
+                         id: dom_id(item, :import_selection),
+                         data: {
+                           calendar_item_import_target: "itemCheckbox",
+                           action: "change->calendar-item-import#selectionChanged"
+                         }
+                       )
+                     end %>
+
+                  <%= render "events/calendars/schedule_table",
+                             items: @source_items,
+                             calendar: @source_calendar,
+                             group_by_date: true,
+                             show_tags: true,
+                             show_edit_button: false,
+                             actions_header: "Import",
+                             item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@source_event, item, return_to: request.fullpath)] },
+                             render_actions: import_actions %>
+                </section>
+
+                <section class="event-calendars__import-preview">
+                  <div class="event-calendars__import-section-header event-calendars__import-section-header--spread">
+                    <div>
+                      <p class="event-calendars__import-card-eyebrow">Projected Import</p>
+                      <h2>Projected import</h2>
+                      <p class="event-section__note">Times shown here are projected in <strong><%= @destination_timezone_label %></strong> before anything is imported.</p>
+                    </div>
+
+                    <div class="event-calendars__import-stats">
+                      <article class="event-calendars__import-stat">
+                        <span class="event-calendars__import-stat-label">Items</span>
+                        <strong data-calendar-item-import-target="selectionCount">0</strong>
+                      </article>
+                      <article class="event-calendars__import-stat">
+                        <span class="event-calendars__import-stat-label">Fallbacks</span>
+                        <strong data-calendar-item-import-target="fallbackCount">0</strong>
+                      </article>
+                      <article class="event-calendars__import-stat">
+                        <span class="event-calendars__import-stat-label">Missing times</span>
+                        <strong data-calendar-item-import-target="missingCount">0</strong>
+                      </article>
+                    </div>
+                  </div>
+
+                  <p class="event-calendars__import-preview-empty" data-calendar-item-import-target="previewEmpty"></p>
+
+                  <div class="event-calendars__import-preview-content" data-calendar-item-import-target="previewContent" hidden>
+                    <div class="event-calendars__import-preview-meta">
+                      <div>
+                        <span class="event-calendars__import-meta-label">Anchor date</span>
+                        <strong data-calendar-item-import-target="anchorLabel"><%= @anchor_date_value.presence || "Not set" %></strong>
+                      </div>
+                      <div>
+                        <span class="event-calendars__import-meta-label">Batch tag</span>
+                        <strong data-calendar-item-import-target="batchTagMeta">Not added</strong>
+                      </div>
+                    </div>
+
+                    <div class="event-calendars__import-preview-table-shell" data-calendar-item-import-target="previewTable"></div>
+                  </div>
+                </section>
+
+                <div class="event-settings__form-actions event-calendars__import-actions">
+                  <button type="button"
+                          class="event-section__cta"
+                          data-action="calendar-item-import#openDialog"
+                          data-calendar-item-import-target="reviewButton">
+                    Review import
+                  </button>
                 </div>
-                <div>
-                  <%= form.radio_button :selection_mode, "all", checked: selected_mode == "all" %>
-                  <%= form.label :selection_mode_all, "All listed items" %>
-                </div>
-              </fieldset>
 
-              <% import_actions = lambda do |item|
-                   check_box_tag(
-                     "item_ids[]",
-                     item.id,
-                     @selected_item_ids.include?(item.id),
-                     id: dom_id(item, :import_selection)
-                   )
-                 end %>
+                <dialog class="event-calendars__bulk-dialog event-calendars__bulk-dialog--wide"
+                        data-calendar-item-import-target="dialog"
+                        data-action="click->calendar-item-import#backdropClose">
+                  <div class="event-calendars__bulk-dialog-content event-calendars__import-dialog-content">
+                    <header class="event-calendars__bulk-dialog-header">
+                      <p class="event-calendars__bulk-eyebrow">Confirm Import</p>
+                      <h2 class="event-calendars__bulk-dialog-title">Import this timeline batch?</h2>
+                      <p class="event-calendars__bulk-dialog-copy">Review the projected destination schedule and confirm when it looks right.</p>
+                    </header>
 
-              <%= render "events/calendars/schedule_table",
-                         items: @source_items,
-                         calendar: @source_calendar,
-                         group_by_date: true,
-                         show_tags: true,
-                         show_edit_button: false,
-                         actions_header: "Import",
-                         item_link_proc: ->(item) { [item.title, edit_event_calendar_item_path(@source_event, item, return_to: request.fullpath)] },
-                         render_actions: import_actions %>
+                    <div class="event-calendars__import-dialog-summary">
+                      <article>
+                        <span class="event-calendars__import-meta-label">Items</span>
+                        <strong data-calendar-item-import-target="selectionCount">0</strong>
+                      </article>
+                      <article>
+                        <span class="event-calendars__import-meta-label">Fallbacks</span>
+                        <strong data-calendar-item-import-target="fallbackCount">0</strong>
+                      </article>
+                      <article>
+                        <span class="event-calendars__import-meta-label">Missing times</span>
+                        <strong data-calendar-item-import-target="missingCount">0</strong>
+                      </article>
+                      <article>
+                        <span class="event-calendars__import-meta-label">Anchor date</span>
+                        <strong data-calendar-item-import-target="anchorLabel"><%= @anchor_date_value.presence || "Not set" %></strong>
+                      </article>
+                      <article>
+                        <span class="event-calendars__import-meta-label">Timezone</span>
+                        <strong><%= @destination_timezone_label %></strong>
+                      </article>
+                      <article>
+                        <span class="event-calendars__import-meta-label">Batch tag</span>
+                        <strong data-calendar-item-import-target="batchTagMeta">Not added</strong>
+                      </article>
+                    </div>
 
-              <div class="event-settings__form-actions">
-                <%= form.submit "Import items" %>
-              </div>
-            <% end %>
+                    <p class="event-calendars__import-preview-empty" data-calendar-item-import-target="dialogEmpty"></p>
+                    <div class="event-calendars__import-preview-table-shell" data-calendar-item-import-target="dialogTable"></div>
+
+                    <div class="event-calendars__bulk-dialog-actions">
+                      <button type="button"
+                              class="event-section__cta event-section__cta--secondary"
+                              data-action="calendar-item-import#closeDialog">
+                        Cancel
+                      </button>
+                      <button type="button"
+                              class="event-section__cta"
+                              data-action="calendar-item-import#submitConfirmed">
+                        Confirm import
+                      </button>
+                    </div>
+                  </div>
+                </dialog>
+              <% end %>
+            </div>
           <% end %>
 
           <section>
             <h2 class="event-section__subtitle">Copy behavior</h2>
             <p class="event-section__note">Copies title, notes, duration, schedule timing, time caption, and tags.</p>
             <p class="event-section__note">Resets status to planned, unlocks the item, and clears vendor, location, and team assignments.</p>
-            <p class="event-section__note">Relative timing is preserved when the anchor is also imported. If an anchor is missing, the item is converted to absolute time using the source effective start when available.</p>
+            <p class="event-section__note">Relative timing is preserved when the anchor item is also imported. If an anchor is missing, the item is converted to absolute time using the source effective start when available.</p>
+            <p class="event-section__note">Batch tags are optional and off by default. When enabled, each import round gets the next available tag name such as <strong>imported</strong>, <strong>imported-2</strong>, or <strong>imported-3</strong>.</p>
           </section>
         </div>
       </section>

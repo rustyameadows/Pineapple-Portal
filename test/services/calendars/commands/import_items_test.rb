@@ -67,7 +67,7 @@ module Calendars
         source_item = calendar_items(:reception)
         result = import_items(selected_item_ids: [source_item.id])
         imported = @destination_calendar.calendar_items.find_by!(title: source_item.title)
-        expected_start = source_item.effective_starts_at + shift_minutes.minutes
+        expected_start = shifted_time(source_item.effective_starts_at)
 
         assert_equal 1, result.imported_count
         assert_equal 1, result.fallback_to_absolute_count
@@ -83,7 +83,16 @@ module Calendars
         import_items(selected_item_ids: [source_item.id])
         imported = @destination_calendar.calendar_items.find_by!(title: source_item.title)
 
-        assert_in_delta source_item.starts_at + shift_minutes.minutes, imported.starts_at, 1
+        assert_in_delta shifted_time(source_item.starts_at), imported.starts_at, 1
+      end
+
+      test "shifts absolute times by custom anchor date" do
+        source_item = calendar_items(:ceremony)
+        custom_anchor_date = Date.new(2025, 11, 20)
+        import_items(selected_item_ids: [source_item.id], anchor_date: custom_anchor_date)
+        imported = @destination_calendar.calendar_items.find_by!(title: source_item.title)
+
+        assert_in_delta shifted_time(source_item.starts_at, anchor_date: custom_anchor_date), imported.starts_at, 1
       end
 
       test "maps existing tags and creates missing tags by name" do
@@ -125,21 +134,53 @@ module Calendars
         assert_nil imported.relative_anchor_id
       end
 
+      test "does not create a batch tag when batch tagging is disabled" do
+        source_item = calendar_items(:ceremony)
+
+        result = import_items(selected_item_ids: [source_item.id], batch_tag_enabled: false)
+        imported = @destination_calendar.calendar_items.find_by!(title: source_item.title)
+
+        assert_nil result.batch_tag_name
+        assert_empty imported.event_calendar_tags.where("lower(name) LIKE ?", "imported%")
+      end
+
+      test "creates incremented batch tags across import rounds when enabled" do
+        source_item = calendar_items(:ceremony)
+
+        first_result = import_items(selected_item_ids: [source_item.id], batch_tag_enabled: true)
+        first_imported = @destination_calendar.calendar_items.find_by!(title: source_item.title)
+
+        assert_equal "imported", first_result.batch_tag_name
+        assert_includes first_imported.event_calendar_tags.pluck(:name), "imported"
+
+        second_source_item = calendar_items(:decision_flowers)
+        second_result = import_items(selected_item_ids: [second_source_item.id], batch_tag_enabled: true)
+        second_imported = @destination_calendar.calendar_items.find_by!(title: second_source_item.title)
+
+        assert_equal "imported-2", second_result.batch_tag_name
+        assert_includes second_imported.event_calendar_tags.pluck(:name), "imported-2"
+      end
+
       private
 
-      def import_items(source_timeline_ref: "run_of_show", selection_mode: "selected", selected_item_ids: [])
+      def import_items(source_timeline_ref: "run_of_show", selection_mode: "selected", selected_item_ids: [], anchor_date: @destination_event.starts_on, batch_tag_enabled: false)
         ImportItems.new(
           destination_event: @destination_event,
           destination_calendar: @destination_calendar,
           source_event: @source_event,
           source_timeline_ref: source_timeline_ref,
           selection_mode: selection_mode,
-          selected_item_ids: selected_item_ids
+          selected_item_ids: selected_item_ids,
+          anchor_date: anchor_date,
+          batch_tag_enabled: batch_tag_enabled
         ).call
       end
 
-      def shift_minutes
-        ((@destination_event.starts_on - @source_event.starts_on).to_i * 24 * 60)
+      def shifted_time(time_value, anchor_date: @destination_event.starts_on)
+        return nil if time_value.blank?
+
+        shift_minutes = ((anchor_date - @source_event.starts_on).to_i * 24 * 60)
+        time_value + shift_minutes.minutes
       end
 
       def next_source_position
