@@ -93,6 +93,60 @@ class CalendarItemImportsTest < ApplicationSystemTestCase
     end
   end
 
+  test "planner preview counts unscheduled absolute items as missing time" do
+    unscheduled_item = event_calendars(:run_of_show).calendar_items.create!(
+      title: "Unscheduled walkthrough",
+      starts_at: nil,
+      duration_minutes: 30,
+      position: 11
+    )
+
+    login_as_planner
+    visit event_calendar_item_import_path(@destination_event, source_event_id: @source_event.id, source_timeline_ref: "run_of_show")
+
+    find("input##{ActionView::RecordIdentifier.dom_id(unscheduled_item, :import_selection)}", visible: :all).set(true)
+
+    within ".event-calendars__import-preview" do
+      assert_selector "[data-calendar-item-import-target='missingCount']", text: "1"
+    end
+
+    within ".event-calendars__import-preview-table-shell" do
+      assert_text "DATE TBD"
+      assert_text "Time TBD"
+      assert_text "No computable start time"
+    end
+  end
+
+  test "planner preview computes preserved relative times even when the anchor appears later in the list" do
+    source_calendar = event_calendars(:run_of_show)
+    late_anchor = source_calendar.calendar_items.create!(
+      title: "Late anchor",
+      starts_at: Time.utc(2025, 10, 1, 15, 0, 0),
+      duration_minutes: 30,
+      position: 20
+    )
+    early_relative = source_calendar.calendar_items.create!(
+      title: "Early relative",
+      relative_anchor: late_anchor,
+      relative_offset_minutes: 15,
+      duration_minutes: 20,
+      position: 19
+    )
+
+    login_as_planner
+    visit event_calendar_item_import_path(@destination_event, source_event_id: @source_event.id, source_timeline_ref: "run_of_show")
+
+    find("input##{ActionView::RecordIdentifier.dom_id(early_relative, :import_selection)}", visible: :all).set(true)
+    find("input##{ActionView::RecordIdentifier.dom_id(late_anchor, :import_selection)}", visible: :all).set(true)
+
+    within ".event-calendars__import-preview-table-shell" do
+      assert_text "Early relative"
+      assert_text "Nov 15 • 11:15 AM – 11:35 AM"
+      assert_text "Relative link preserved"
+      assert_no_text "Time TBD"
+    end
+  end
+
   test "planner all-listed mode previews the filtered timeline and disables row checkboxes" do
     vendor_view = event_calendar_views(:vendor_view)
 

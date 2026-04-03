@@ -234,53 +234,12 @@ export default class extends Controller {
       : 0
 
     const selectedIds = new Set(selectedItems.map((item) => Number(item.id)))
+    const selectedItemsById = new Map(selectedItems.map((item) => [Number(item.id), item]))
     const plansById = new Map()
-    const plans = []
-    let fallbackCount = 0
-    let missingCount = 0
-
-    selectedItems.forEach((item) => {
-      const relativeAnchorId = Number(item.relative_anchor_id || 0)
-      const preservesRelative = relativeAnchorId > 0 && selectedIds.has(relativeAnchorId)
-      let projectedStart = null
-      let projectedEnd = null
-      let status = ""
-
-      if (preservesRelative) {
-        const anchorPlan = plansById.get(relativeAnchorId)
-        projectedStart = this.projectRelativeStart(item, anchorPlan)
-        projectedEnd = this.projectedEnd(item, projectedStart)
-        status = projectedStart ? "Relative link preserved" : "Relative link preserved • time TBD"
-      } else if (relativeAnchorId > 0) {
-        projectedStart = this.shiftIso(item.source_effective_start, shiftDays)
-        projectedEnd = this.shiftIso(item.source_effective_end, shiftDays) || this.projectedEnd(item, projectedStart)
-        fallbackCount += 1
-        if (projectedStart) {
-          status = "Will convert to absolute time"
-        } else {
-          status = "No computable start time"
-          missingCount += 1
-        }
-      } else {
-        projectedStart = this.shiftIso(item.source_starts_at, shiftDays)
-        projectedEnd = this.shiftIso(item.source_effective_end, shiftDays) || this.projectedEnd(item, projectedStart)
-        status = projectedStart ? "Absolute time retained" : "No computable start time"
-      }
-
-      const plan = {
-        id: Number(item.id),
-        itemTitle: item.title,
-        sourceLabel: this.formatRange(item.source_effective_start, item.source_effective_end),
-        sourceCaption: item.time_caption || "",
-        projectedLabel: this.formatRange(projectedStart, projectedEnd),
-        projectedCaption: item.time_caption || "",
-        projectedStart,
-        status
-      }
-
-      plansById.set(plan.id, plan)
-      plans.push(plan)
-    })
+    const projectionContext = { plansById, selectedIds, selectedItemsById, shiftDays }
+    const plans = selectedItems.map((item) => this.buildPlan(item, projectionContext))
+    const fallbackCount = plans.filter((plan) => plan.fallbackToAbsolute).length
+    const missingCount = plans.filter((plan) => plan.missingTime).length
 
     return {
       anchorLabel: anchorDateValue ? this.formatDateOnly(anchorDateValue) : "Not set",
@@ -294,6 +253,78 @@ export default class extends Controller {
       reason: null,
       selectedCount,
       selectionHint
+    }
+  }
+
+  buildPlan(item, context, stack = new Set()) {
+    const itemId = Number(item.id)
+    if (context.plansById.has(itemId)) return context.plansById.get(itemId)
+
+    const relativeAnchorId = Number(item.relative_anchor_id || 0)
+    const preservesRelative = relativeAnchorId > 0 && context.selectedIds.has(relativeAnchorId)
+    const missingTime = !item.source_effective_start
+
+    if (stack.has(itemId)) {
+      const circularPlan = this.composePlan(item, {
+        missingTime,
+        projectedEnd: null,
+        projectedStart: null,
+        status: preservesRelative ? "Relative link preserved • time TBD" : "No computable start time"
+      })
+      context.plansById.set(itemId, circularPlan)
+      return circularPlan
+    }
+
+    stack.add(itemId)
+
+    let projectedStart = null
+    let projectedEnd = null
+    let status = ""
+    let fallbackToAbsolute = false
+
+    if (preservesRelative) {
+      const anchorItem = context.selectedItemsById.get(relativeAnchorId)
+      const anchorPlan = anchorItem ? this.buildPlan(anchorItem, context, stack) : null
+      projectedStart = this.projectRelativeStart(item, anchorPlan)
+      projectedEnd = this.projectedEnd(item, projectedStart)
+      status = projectedStart ? "Relative link preserved" : "Relative link preserved • time TBD"
+    } else if (relativeAnchorId > 0) {
+      projectedStart = this.shiftIso(item.source_effective_start, context.shiftDays)
+      projectedEnd = this.shiftIso(item.source_effective_end, context.shiftDays) || this.projectedEnd(item, projectedStart)
+      fallbackToAbsolute = true
+      status = projectedStart ? "Will convert to absolute time" : "No computable start time"
+    } else {
+      projectedStart = this.shiftIso(item.source_starts_at, context.shiftDays)
+      projectedEnd = this.shiftIso(item.source_effective_end, context.shiftDays) || this.projectedEnd(item, projectedStart)
+      status = projectedStart ? "Absolute time retained" : "No computable start time"
+    }
+
+    stack.delete(itemId)
+
+    const plan = this.composePlan(item, {
+      fallbackToAbsolute,
+      missingTime,
+      projectedEnd,
+      projectedStart,
+      status
+    })
+    context.plansById.set(itemId, plan)
+    return plan
+  }
+
+  composePlan(item, { fallbackToAbsolute = false, missingTime = false, projectedEnd = null, projectedStart = null, status }) {
+    return {
+      fallbackToAbsolute,
+      id: Number(item.id),
+      itemTitle: item.title,
+      missingTime,
+      projectedCaption: item.time_caption || "",
+      projectedEnd,
+      projectedLabel: this.formatRange(projectedStart, projectedEnd),
+      projectedStart,
+      sourceCaption: item.time_caption || "",
+      sourceLabel: this.formatRange(item.source_effective_start, item.source_effective_end),
+      status
     }
   }
 
