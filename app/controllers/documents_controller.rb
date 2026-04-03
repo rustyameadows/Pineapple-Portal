@@ -25,8 +25,7 @@ class DocumentsController < ApplicationController
   end
 
   def show
-    @attachments = @document.attachments.includes(:entity).order(:context, :position)
-    @available_entities = available_entities_for(@event)
+    @attachments = @document.attachments.includes(document: :event).order(:context, :position)
   end
 
   def new
@@ -111,12 +110,6 @@ class DocumentsController < ApplicationController
 
   def edit_document_params
     params.require(:document).permit(:title, :content_type, :client_visible, :financial_portal_visible, :packets_portal_visible, :source)
-  end
-
-  def available_entities_for(event)
-    [event] + event.questionnaires.includes(:questions).flat_map do |questionnaire|
-      [questionnaire] + questionnaire.questions
-    end
   end
 
   def render_grouped_documents(source_key)

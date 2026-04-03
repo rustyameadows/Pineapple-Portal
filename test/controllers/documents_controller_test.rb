@@ -25,6 +25,19 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".documents-browser__row", text: /Mood Board/
   end
 
+  test "document show keeps attachments list but omits attachment creation UI" do
+    get event_document_url(@event, @document)
+
+    assert_response :success
+    assert_select ".documents-show__heading", text: "Attachments"
+    assert_select ".documents-show__heading", text: "Attach to…", count: 0
+    assert_select "input[name='attachment[entity_type]']", count: 0
+    assert_select "input[name='attachment[file_upload_title]']", count: 0
+    assert_select "input[type='submit'][value='Add Attachment']", count: 0
+    assert_no_match(/data-attachment-upload-form/, response.body)
+    assert_no_match(/performDirectUpload/, response.body)
+  end
+
   test "client upload page defers image media until grid mode is used" do
     expected_media_url = download_event_document_path(@event, documents(:client_inspo_board))
     download_calls = 0
