@@ -10,6 +10,7 @@ export default class extends Controller {
     "gridList",
     "tableRow",
     "gridCard",
+    "gridImage",
     "titleText",
     "searchEmpty",
     "sortHeader",
@@ -20,6 +21,7 @@ export default class extends Controller {
 
   connect() {
     this.activeSortKey = null
+    this.currentView = "table"
     this.sortDirection = "asc"
     this.setView("table")
     this.filter()
@@ -45,6 +47,8 @@ export default class extends Controller {
       card.hidden = !this.matchesQuery(card, normalizedQuery)
     })
 
+    if (this.isGridActive()) this.hydrateVisibleGridMedia()
+
     if (this.hasSearchEmptyTarget) {
       this.searchEmptyTarget.hidden = visibleRows > 0
     }
@@ -60,6 +64,7 @@ export default class extends Controller {
   showGrid(event) {
     if (event) event.preventDefault()
     this.setView("grid")
+    this.hydrateVisibleGridMedia()
   }
 
   sort(event) {
@@ -87,6 +92,7 @@ export default class extends Controller {
 
   setView(view) {
     const tableActive = view !== "grid"
+    this.currentView = tableActive ? "table" : "grid"
 
     if (this.hasTablePaneTarget) this.tablePaneTarget.hidden = !tableActive
     if (this.hasGridPaneTarget) this.gridPaneTarget.hidden = tableActive
@@ -98,6 +104,27 @@ export default class extends Controller {
       this.gridButtonTarget.classList.toggle("documents-browser__toggle-button--active", !tableActive)
       this.gridButtonTarget.setAttribute("aria-pressed", tableActive ? "false" : "true")
     }
+  }
+
+  hydrateVisibleGridMedia() {
+    this.gridImageTargets.forEach((image) => {
+      const card = image.closest(".documents-browser__card")
+      if (card?.hidden) return
+      if (!image) return
+      if (image.dataset.mediaLoaded === "true" || image.getAttribute("src")) return
+
+      const mediaUrl = image.dataset.mediaUrl
+      if (!mediaUrl) return
+
+      image.loading = "lazy"
+      image.decoding = "async"
+      image.src = mediaUrl
+      image.dataset.mediaLoaded = "true"
+    })
+  }
+
+  isGridActive() {
+    return this.currentView === "grid"
   }
 
   matchesQuery(element, query) {

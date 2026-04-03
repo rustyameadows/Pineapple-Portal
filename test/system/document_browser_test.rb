@@ -4,6 +4,7 @@ class DocumentBrowserTest < ApplicationSystemTestCase
   setup do
     @event = events(:one)
     @upload_document = documents(:contract_v1)
+    @client_image_document = documents(:client_inspo_board)
 
     @event.documents.create!(
       title: "Budget Sheet",
@@ -100,6 +101,31 @@ class DocumentBrowserTest < ApplicationSystemTestCase
     assert_highlight_state(expected_present: true, minimum_range_count: 2)
     find(".documents-browser__card", text: "Production Contract").click
     assert_current_path event_document_path(@event, @upload_document)
+  end
+
+  test "image upload grid card defers src until grid mode is shown" do
+    login_as_planner
+    visit client_uploads_event_documents_path(@event)
+
+    card = find(".documents-browser__card", text: @client_image_document.title, visible: :all)
+    image = card.find("img", visible: :all)
+    expected_media_url = download_event_document_path(@event, @client_image_document)
+
+    assert_equal expected_media_url, image[:'data-media-url']
+    assert_nil image[:src]
+
+    click_button "Grid"
+
+    card = find(".documents-browser__card", text: @client_image_document.title, visible: :all)
+    image = card.find("img", visible: :all)
+
+    assert_equal expected_media_url, image[:'data-media-url']
+    assert_equal expected_media_url, page.evaluate_script(<<~JS)
+      (() => {
+        const image = document.querySelector("img[data-media-url=#{expected_media_url.inspect}]")
+        return image ? image.getAttribute("src") : null
+      })()
+    JS
   end
 
   test "generated packet browser defaults to table, toggles to grid, and opens the builder page" do

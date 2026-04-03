@@ -4,7 +4,7 @@
   href_for = local_assigns.fetch(:href_for)
   table_columns = Array.wrap(local_assigns.fetch(:table_columns))
   card_fields = Array.wrap(local_assigns.fetch(:card_fields))
-  card_media_for = local_assigns[:card_media_for]
+  card_media_url_for = local_assigns[:card_media_url_for]
   empty_message = local_assigns.fetch(:empty_message, "No documents available yet.")
   search_placeholder = local_assigns.fetch(:search_placeholder, "Search by file name")
   title_heading = local_assigns.fetch(:title_heading, "Document")
@@ -132,7 +132,7 @@
             <% sort_value = column[:sort_value].respond_to?(:call) ? column[:sort_value].call(item) : nil %>
             <% sort_values[sort_key] = sort_value %>
           <% end %>
-          <% card_media = card_media_for.respond_to?(:call) ? card_media_for.call(item) : nil %>
+          <% card_media_url = card_media_url_for.respond_to?(:call) ? card_media_url_for.call(item) : nil %>
           <article class="documents-browser__card"
                    tabindex="0"
                    data-document-browser-target="gridCard"
@@ -141,11 +141,15 @@
                    data-sort-values="<%= ERB::Util.json_escape(sort_values.to_json) %>"
                    data-url="<%= href %>"
                    data-action="click->document-browser#navigate keydown.enter->document-browser#navigate keydown.space->document-browser#navigate">
-            <% if card_media.present? %>
+            <% if card_media_url.present? %>
               <div class="documents-browser__card-art">
-                <%= image_tag card_media,
-                              alt: "",
-                              style: "display:block;width:100%;height:100%;object-fit:cover;" %>
+                <%= tag.img alt: "",
+                            class: "documents-browser__card-image",
+                            style: "display:block;width:100%;height:100%;object-fit:cover;",
+                            data: {
+                              document_browser_target: "gridImage",
+                              media_url: card_media_url
+                            } %>
               </div>
             <% else %>
               <div class="documents-browser__card-art" aria-hidden="true"></div>

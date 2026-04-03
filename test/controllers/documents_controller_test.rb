@@ -25,6 +25,29 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".documents-browser__row", text: /Mood Board/
   end
 
+  test "client upload page defers image media until grid mode is used" do
+    expected_media_url = download_event_document_path(@event, documents(:client_inspo_board))
+    download_calls = 0
+    storage = Object.new
+    storage.define_singleton_method(:download) do |*|
+      download_calls += 1
+      nil
+    end
+    storage.define_singleton_method(:presigned_download_url) do |**|
+      "https://files.example.com/mood-board.png"
+    end
+
+    R2::Storage.stub :new, storage do
+      get client_uploads_event_documents_url(@event)
+    end
+
+    assert_response :success
+    assert_equal 0, download_calls
+    assert_select ".documents-browser__card-art img.documents-browser__card-image[data-media-url='#{expected_media_url}']", count: 1
+    assert_select ".documents-browser__card-art img[src]", count: 0
+    assert_no_match(/data:image\//, response.body)
+  end
+
   test "hides packet source documents by default and allows explicit toggle" do
     definition = @event.documents.create!(
       title: "Packet Builder",

@@ -68,7 +68,9 @@
                           value: ->(document) { document.client_visible? ? "Client-visible" : "Planner only" }
                         }
                       ],
-                      card_media_for: ->(document) { inline_document_image_data_uri(document) },
+                      card_media_url_for: ->(document) do
+                        download_event_document_path(@event, document) if document.content_type.to_s.start_with?("image/")
+                      end,
                       empty_message: "No documents in this category yet.",
                       search_placeholder: "Search by file name",
                       title_heading: "Title",
