@@ -5,12 +5,11 @@ module Documents
 
     def index
       @manifest_entries = build_manifest_entries
-      @document = build_definition
-      @templates = template_scope.order(:title)
     end
 
     def new
       @document = build_definition
+      @templates = template_scope.order(:title)
     end
 
     def create
@@ -20,10 +19,9 @@ module Documents
       if @document.save
         redirect_to event_documents_generated_path(@event, @document.logical_id), notice: "Generated document created."
       else
-        @manifest_entries = build_manifest_entries
         @templates = template_scope.order(:title)
         flash.now[:alert] = "Could not create generated document. Please review the errors below."
-        render :index, status: :unprocessable_content
+        render :new, status: :unprocessable_content
       end
     end
 

@@ -2,7 +2,11 @@
 <% form_url = item.persisted? ? event_calendar_item_path(@event, item) : event_calendar_items_path(@event) %>
 <% has_dependent_items = local_assigns.fetch(:has_dependent_items, false) %>
 <% delete_form_id = "calendar-item-delete-form-#{item.id}" if item.persisted? %>
-<%= form_with model: item, url: form_url, class: "event-form calendar-item-form", method: (item.persisted? ? :patch : :post) do |form| %>
+<%= form_with model: item,
+              url: form_url,
+              class: "event-form calendar-item-form",
+              method: (item.persisted? ? :patch : :post),
+              data: { turbo: false } do |form| %>
   <%= hidden_field_tag :return_to, return_to if return_to.present? %>
   <% if item.errors.any? %>
     <div class="event-form__errors">
@@ -195,7 +199,7 @@
                               autocomplete: "off",
                               data: {
                                 custom_select_target: "input",
-                                action: "input->custom-select#search focus->custom-select#search blur->custom-select#deferClose keydown->custom-select#focusFirst"
+                                action: "input->custom-select#search focus->custom-select#search keydown->custom-select#handleInputKeydown"
                               } %>
           <div class="calendar-item-form__autocomplete-menu" data-custom-select-target="menu" role="listbox" hidden></div>
         </div>
@@ -209,7 +213,7 @@
                               autocomplete: "off",
                               data: {
                                 custom_select_target: "input",
-                                action: "input->custom-select#search focus->custom-select#search blur->custom-select#deferClose keydown->custom-select#focusFirst"
+                                action: "input->custom-select#search focus->custom-select#search keydown->custom-select#handleInputKeydown"
                               } %>
           <div class="calendar-item-form__autocomplete-menu" data-custom-select-target="menu" role="listbox" hidden></div>
         </div>

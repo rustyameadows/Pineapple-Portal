@@ -1,0 +1,137 @@
+<% user = local_assigns.fetch(:user) %>
+<% event = local_assigns.fetch(:event) %>
+<% return_to = local_assigns.fetch(:return_to, clients_event_settings_path(event)) %>
+
+<%= form_with model: user, url: event_client_user_path(event, user), local: true, class: "event-form event-form--stack" do |form| %>
+  <div class="event-form__section">
+    <div class="event-form__grid">
+      <div class="event-form__group">
+        <%= form.label :name, "Client name" %>
+        <%= form.text_field :name, required: true %>
+      </div>
+
+      <div class="event-form__group">
+        <%= form.label :email %>
+        <%= form.email_field :email, required: true, autocomplete: "email" %>
+        <p class="event-form__hint">This is the email they use to sign in and receive portal access.</p>
+      </div>
+
+      <div class="event-form__group">
+        <%= form.label :phone_number, "Phone" %>
+        <%= form.telephone_field :phone_number, placeholder: "555-123-4567" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="event-form__section">
+    <div class="event-form__grid">
+      <div class="event-form__group">
+        <%= form.label :can_view_financials, "Financial access" %>
+        <label class="event-form__checkbox">
+          <%= form.check_box :can_view_financials %>
+          <span>Allow this client to view payments and financial information in the portal.</span>
+        </label>
+        <p class="event-form__hint">Clients without this stay blocked from financial-only links and pages.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="event-form__section">
+    <div class="event-form__grid">
+      <div class="event-form__group">
+        <%= form.label :general_notes, "General notes" %>
+        <%= form.text_area :general_notes, rows: 3, placeholder: "Internal notes for this client" %>
+      </div>
+
+      <div class="event-form__group">
+        <%= form.label :dietary_restrictions, "Dietary restrictions" %>
+        <%= form.text_area :dietary_restrictions, rows: 3, placeholder: "Allergies or dietary needs" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="event-form__section">
+    <div class="event-form__grid">
+      <div class="event-form__group">
+        <%= form.label :password, "New password" %>
+        <%= form.password_field :password, autocomplete: "off" %>
+        <p class="event-form__hint">Leave blank to keep the current password.</p>
+      </div>
+
+      <div class="event-form__group">
+        <%= form.label :password_confirmation, "Confirm new password" %>
+        <%= form.password_field :password_confirmation, autocomplete: "off" %>
+      </div>
+    </div>
+  </div>
+
+  <%= hidden_field_tag :return_to, return_to %>
+
+  <div class="event-form__actions">
+    <%= form.submit "Save Changes", class: "event-form__submit" %>
+    <%= link_to "Cancel", return_to, class: "event-form__cancel" %>
+  </div>
+<% end %>
+
+<% if user.persisted? %>
+  <section class="user-avatar-section">
+    <div class="user-avatar-section__preview">
+      <h3 class="user-avatar-section__heading">Current Photo</h3>
+      <% if user.avatar_global_asset.present? %>
+        <% avatar_uri = inline_global_asset_data_uri(user.avatar_global_asset) %>
+        <% if avatar_uri.present? %>
+          <img src="<%= avatar_uri %>" alt="<%= user.name %> avatar" class="user-avatar-section__image">
+        <% else %>
+          <div class="user-avatar-section__placeholder">Image unavailable. Re-upload below.</div>
+        <% end %>
+      <% else %>
+        <div class="user-avatar-section__placeholder">No photo yet.</div>
+      <% end %>
+    </div>
+
+    <div class="user-avatar-section__upload">
+      <h3 class="user-avatar-section__heading">Upload New Photo</h3>
+      <%= form_with scope: :document,
+                    url: user_avatar_assets_path(user),
+                    method: :post,
+                    local: true,
+                    data: { document_upload_form: true, presign_url: global_assets_presign_path },
+                    html: { class: "user-avatar-upload" } do |upload_form| %>
+        <%= hidden_field_tag :return_to, return_to %>
+
+        <div class="user-avatar-upload__picker">
+          <label class="user-avatar-upload__label" for="document_file">Choose image</label>
+          <input type="file" id="document_file" accept="image/*" data-document-upload-target="file">
+        </div>
+
+        <div class="document-upload" data-document-upload-target="ui">
+          <div class="document-upload__progress" data-document-upload-target="progress" hidden>
+            <div class="document-upload__progress-track" aria-hidden="true">
+              <div class="document-upload__progress-bar" data-document-upload-target="progressBar"></div>
+            </div>
+            <div class="document-upload__progress-status">
+              <span data-document-upload-target="progressLabel">Uploading…</span>
+              <span class="document-upload__progress-percent" data-document-upload-target="progressPercent">0%</span>
+            </div>
+          </div>
+
+          <p class="document-upload__status" data-document-upload-target="status">Select a file to upload to R2.</p>
+        </div>
+
+        <%= upload_form.hidden_field :title %>
+        <%= upload_form.hidden_field :storage_uri %>
+        <%= upload_form.hidden_field :checksum %>
+        <%= upload_form.hidden_field :size_bytes %>
+        <%= upload_form.hidden_field :content_type %>
+        <%= upload_form.hidden_field :logical_id %>
+
+        <div class="user-avatar-upload__actions">
+          <%= upload_form.submit "Upload image", class: "button button--small", disabled: true %>
+        </div>
+      <% end %>
+      <p class="user-avatar-upload__hint">Uploading a new image will replace the current photo.</p>
+    </div>
+  </section>
+
+  <%= render "documents/upload_script" %>
+<% end %>

@@ -13,6 +13,54 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Files for #{@event.name}"
   end
 
+  test "staff and client upload pages render the shared document browser" do
+    get staff_uploads_event_documents_url(@event)
+    assert_response :success
+    assert_select "[data-controller='document-browser']", count: 1
+    assert_select ".documents-browser__row", text: /Production Contract/
+
+    get client_uploads_event_documents_url(@event)
+    assert_response :success
+    assert_select "[data-controller='document-browser']", count: 1
+    assert_select ".documents-browser__row", text: /Mood Board/
+  end
+
+  test "document show keeps attachments list but omits attachment creation UI" do
+    get event_document_url(@event, @document)
+
+    assert_response :success
+    assert_select ".documents-show__heading", text: "Attachments"
+    assert_select ".documents-show__heading", text: "Attach to…", count: 0
+    assert_select "input[name='attachment[entity_type]']", count: 0
+    assert_select "input[name='attachment[file_upload_title]']", count: 0
+    assert_select "input[type='submit'][value='Add Attachment']", count: 0
+    assert_no_match(/data-attachment-upload-form/, response.body)
+    assert_no_match(/performDirectUpload/, response.body)
+  end
+
+  test "client upload page defers image media until grid mode is used" do
+    expected_media_url = download_event_document_path(@event, documents(:client_inspo_board))
+    download_calls = 0
+    storage = Object.new
+    storage.define_singleton_method(:download) do |*|
+      download_calls += 1
+      nil
+    end
+    storage.define_singleton_method(:presigned_download_url) do |**|
+      "https://files.example.com/mood-board.png"
+    end
+
+    R2::Storage.stub :new, storage do
+      get client_uploads_event_documents_url(@event)
+    end
+
+    assert_response :success
+    assert_equal 0, download_calls
+    assert_select ".documents-browser__card-art img.documents-browser__card-image[data-media-url='#{expected_media_url}']", count: 1
+    assert_select ".documents-browser__card-art img[src]", count: 0
+    assert_no_match(/data:image\//, response.body)
+  end
+
   test "hides packet source documents by default and allows explicit toggle" do
     definition = @event.documents.create!(
       title: "Packet Builder",

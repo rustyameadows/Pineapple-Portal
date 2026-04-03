@@ -12,11 +12,37 @@
             <h1 class="event-section__title">Create a generated document</h1>
             <p class="event-section__lead">Configure the basics now and we will take you to the builder to add segments.</p>
           </div>
-          <%= link_to "Back", event_documents_generated_index_path(@event), class: "event-section__cta" %>
+          <%= link_to "Back to generated packets", event_documents_generated_index_path(@event), class: "event-section__cta" %>
         </header>
 
-        <div class="event-section__body generated-doc__single-form">
-          <%= render "form" %>
+        <div class="event-section__body generated-doc__create-layout">
+          <section class="documents-form__panel">
+            <h2 class="documents-form__heading">New generated document</h2>
+            <p class="generated-doc__help">Define the shell now, then we will take you to the builder to add segments and compile versions.</p>
+            <%= render "form" %>
+          </section>
+
+          <section class="documents-form__panel">
+            <div class="generated-doc__panel-header">
+              <div>
+                <h2 class="documents-form__heading">Templates</h2>
+                <p class="generated-doc__help">Preview every branded section before inserting it into a packet.</p>
+              </div>
+              <%= link_to "Open template gallery",
+                          event_documents_templates_path(@event),
+                          class: "button button--small" %>
+            </div>
+
+            <% if @templates.any? %>
+              <ul class="generated-doc__template-list">
+                <% @templates.each do |template| %>
+                  <li><%= template.title %></li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="generated-doc__empty">No templates have been defined yet.</p>
+            <% end %>
+          </section>
         </div>
       </section>
     </div>

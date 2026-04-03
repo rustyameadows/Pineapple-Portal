@@ -99,18 +99,19 @@ Node.js 24.8.0 (or any current LTS) is sufficient—no extra configuration neede
 bundle install
 bin/rails db:setup   # creates databases, runs migrations, seeds sample users
 npm install          # installs Puppeteer dependency for Grover
-bin/rails server     # or bin/dev for the foreman/dev server
+bin/rails server     # starts on http://localhost:3000
+bin/dev              # starts on http://localhost:3100 by default
 ```
 
 Chromium for Grover/Puppeteer downloads automatically via the `postinstall` script. If you prefer to run it manually, execute `npx puppeteer browsers install chrome` after `npm install`.
 
-Visit http://localhost:3000 after boot (you’ll be redirected to log in first). The seed data creates two demo accounts with password `password123`, a sample event with questionnaires (including a template), and a placeholder document.
+Visit http://localhost:3100 after `bin/dev` boot (or http://localhost:3000 after `bin/rails server`). You’ll be redirected to log in first. The seed data creates two demo accounts with password `password123`, a sample event with questionnaires (including a template), and a placeholder document.
 
 ### Authentication & First User
-- Log in at http://localhost:3000/login using any seeded account (`ada@example.com` / `password123`).
-- If the database is empty, visit http://localhost:3000/users/new to create the first account; the app automatically signs you in after that.
+- Log in at http://localhost:3100/login when using `bin/dev` (or http://localhost:3000/login when using `bin/rails server`) with any seeded account (`ada@example.com` / `password123`).
+- If the database is empty, visit http://localhost:3100/users/new when using `bin/dev` (or http://localhost:3000/users/new when using `bin/rails server`) to create the first account; the app automatically signs you in after that.
 - Once signed in, you’ll land on the event dashboard. Head to `/users` (linked in the sidebar) whenever you need to invite more teammates.
-- Client users sign in at http://localhost:3000/portal/login. Create a client user via `/users` (set the role to “client”), then grant event access from **Event → Settings → Planning Team → Client Access**.
+- Client users sign in at http://localhost:3100/portal/login when using `bin/dev` (or http://localhost:3000/portal/login when using `bin/rails server`). Create a client user via `/users` (set the role to “client”), then grant event access from **Event → Settings → Planning Team → Client Access**.
 - Need to help a client who forgot their password? From that same Client Access table, hit “Generate Reset Link” to mint a shareable URL. Links stay valid for 30 days (or until used) and surface right in the table so you can copy them any time.
 
 ### Tests

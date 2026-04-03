@@ -70,6 +70,41 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form.event-create-form", count: 1
   end
 
+  test "updates portal slug from client portal settings" do
+    patch event_url(@event), params: {
+      event: { portal_slug: "launch-weekend" },
+      return_to: client_portal_event_settings_path(@event)
+    }
+
+    assert_redirected_to client_portal_event_settings_url(@event)
+    assert_equal "launch-weekend", @event.reload.portal_slug
+  end
+
+  test "rerenders client portal settings when portal slug is taken" do
+    patch event_url(@event), params: {
+      event: { portal_slug: @other_event.portal_slug },
+      return_to: client_portal_event_settings_path(@event)
+    }
+
+    assert_response :unprocessable_content
+    assert_select "h1", text: "Portal URL"
+    assert_select "div.event-settings__form-errors li", text: "Portal slug has already been taken"
+    assert_select "input[name='event[portal_slug]'][value='#{@other_event.portal_slug}']", count: 1
+  end
+
+  test "rerenders general settings when event details update is invalid" do
+    patch event_url(@event), params: {
+      event: { name: "" },
+      return_to: event_settings_path(@event)
+    }
+
+    assert_response :unprocessable_content
+    assert_select "form.event-settings__details-form", count: 1
+    assert_select "div.event-settings__form-errors li", text: "Name can't be blank"
+    assert_select "input[name='event[name]'][value='']", count: 1
+    assert_select "h1", text: "Edit Event", count: 0
+  end
+
   test "creates event" do
     assert_difference("Event.count") do
       post events_url, params: { event: { name: "Rehearsal", starts_on: "2025-12-01" } }

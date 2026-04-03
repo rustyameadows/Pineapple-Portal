@@ -5,6 +5,56 @@
     <div class="event-layout__main">
       <%= render "shared/flash" %>
 
+      <% portal_url = "#{request.base_url}/client/#{@event.portal_slug.presence || 'your-slug'}" %>
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Client Portal</p>
+            <h1 class="event-section__title">Portal URL</h1>
+            <p class="event-section__lead">Set the shareable link clients use to access this portal.</p>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <div class="event-settings__portal-card">
+            <%= form_with model: @event,
+                          url: event_path(@event),
+                          method: :patch,
+                          local: true,
+                          html: { class: "event-settings__portal-form" } do |form| %>
+              <%= hidden_field_tag :return_to, request.fullpath %>
+              <% if @event.errors.any? %>
+                <div class="event-settings__form-errors">
+                  <h3><%= pluralize(@event.errors.count, "error") %> prevented saving:</h3>
+                  <ul>
+                    <% @event.errors.full_messages.each do |message| %>
+                      <li><%= message %></li>
+                    <% end %>
+                  </ul>
+                </div>
+              <% end %>
+
+              <div class="event-settings__portal-grid">
+                <div class="event-settings__field">
+                  <%= form.label :portal_slug, "Client portal slug" %>
+                  <%= form.text_field :portal_slug, placeholder: "john-and-susie-wedding" %>
+                  <p class="event-settings__hint">Clients can use a custom slug instead of the event ID.</p>
+                </div>
+
+                <div class="event-settings__portal-preview">
+                  <p class="event-settings__portal-preview-label">Vanity URL</p>
+                  <p class="event-settings__portal-preview-url"><%= portal_url %></p>
+                </div>
+              </div>
+
+              <div class="event-settings__form-actions">
+                <%= form.submit "Save portal URL" %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </section>
+
       <section class="event-section">
         <header class="event-section__header">
           <div>
@@ -20,8 +70,8 @@
               <h2 class="event-settings__subheading">Planner links in portal</h2>
               <p class="event-settings__description">Reorder published cards and manage their visibility.</p>
 
-              <% if @planning_link_entries.any? %>
-                <ul class="event-settings__link-list">
+              <% if @planning_link_entries.any? || @hidden_planning_links.any? %>
+                <ul class="event-settings__link-list event-settings__link-list--planning-grid">
                   <% @planning_link_entries.each_with_index do |entry, index| %>
                     <% is_first = index.zero? %>
                     <% is_last = index == @planning_link_entries.length - 1 %>
@@ -104,20 +154,9 @@
                       <% end %>
                     </li>
                   <% end %>
-                </ul>
-              <% else %>
-                <p class="event-settings__empty">No planner links published yet.</p>
-              <% end %>
-            </div>
 
-            <div class="event-settings__planning-hidden">
-              <h2 class="event-settings__subheading">Hidden planner links</h2>
-              <p class="event-settings__description">Toggle built-in cards back on whenever you need them.</p>
-
-              <% if @hidden_planning_links.any? %>
-                <ul class="event-settings__link-list">
                   <% @hidden_planning_links.each do |link| %>
-                    <li class="event-settings__link-item">
+                    <li class="event-settings__link-item event-settings__link-item--hidden">
                       <div class="event-settings__link-content">
                         <h3><%= link.title %></h3>
                         <% if link.description.present? %>
@@ -136,7 +175,7 @@
                   <% end %>
                 </ul>
               <% else %>
-                <p class="event-settings__empty">No planner links are hidden.</p>
+                <p class="event-settings__empty">No planner links available yet.</p>
               <% end %>
             </div>
 

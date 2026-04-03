@@ -52,6 +52,25 @@ module Events
       assert_select "form#calendar-item-delete-form-#{item.id}[data-turbo-confirm='Remove this calendar item?']", count: 1
     end
 
+    test "update respects anchored return_to" do
+      item = calendar_items(:ceremony)
+      row_anchor = ActionView::RecordIdentifier.dom_id(item, :timeline_row)
+      return_to = "#{event_calendar_path(@event)}##{row_anchor}"
+
+      patch event_calendar_item_url(@event, item), params: {
+        return_to:,
+        calendar_item: {
+          title: "Ceremony Updated",
+          starts_at: "2025-10-01T15:00",
+          duration_value: 45,
+          duration_unit: "minutes"
+        }
+      }
+
+      assert_redirected_to return_to
+      assert_equal "Ceremony Updated", item.reload.title
+    end
+
     test "destroy removes item and respects safe return path" do
       item = calendar_items(:afterparty)
 

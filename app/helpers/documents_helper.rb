@@ -30,19 +30,6 @@ module DocumentsHelper
     number_to_human_size(document.size_bytes)
   end
 
-  def entity_label(entity)
-    case entity
-    when Event
-      "Event: #{entity.name}"
-    when Questionnaire
-      "Questionnaire: #{entity.title}"
-    when Question
-      "Question: #{entity.prompt.truncate(40)}"
-    else
-      entity.class.name
-    end
-  end
-
   def documents_for_entity(entity)
     event = case entity
             when Event

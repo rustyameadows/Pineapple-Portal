@@ -45,6 +45,7 @@ post "upload_failures", to: "upload_failures#create"
     resources :event_photo_documents, only: :create, module: :events
 
     resources :payments, module: :events
+    resources :client_users, only: %i[edit update], module: :events
     resources :approvals, module: :events do
       member do
         patch :clear_response

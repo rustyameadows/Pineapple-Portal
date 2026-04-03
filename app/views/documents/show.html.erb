@@ -94,29 +94,19 @@
             <%= render "attachments/list", attachments: @attachments %>
           </section>
 
-          <section class="documents-show__panel">
-            <h2 class="documents-show__heading">Attach to…</h2>
-            <% if @available_entities.any? %>
-              <% @available_entities.each do |entity| %>
-                <h3 class="documents-show__subheading"><%= entity_label(entity) %></h3>
-                <%= render "attachments/form", entity: entity, documents: documents_for_entity(entity) %>
-              <% end %>
-            <% else %>
-              <p>No available entities to attach.</p>
-            <% end %>
-          </section>
-
           <section class="documents-show__panel documents-show__panel--danger">
             <h2 class="documents-show__heading">Remove document</h2>
             <p>Deleting removes this version and all prior versions from the event.</p>
-            <%= button_to "Delete document", event_document_path(@event, @document), method: :delete, data: { confirm: "Delete this document?" }, class: "documents-show__delete" %>
+            <%= button_to event_document_path(@event, @document),
+                          method: :delete,
+                          data: { confirm: "Delete this document?" },
+                          form: { class: "documents-show__delete-form" },
+                          class: "documents-show__delete-button danger-red-fucking-button" do %>
+              Delete document
+            <% end %>
           </section>
         </div>
       </section>
     </div>
   </div>
-<% end %>
-
-<% content_for :scripts do %>
-  <%= render "attachments/upload_script" %>
 <% end %>

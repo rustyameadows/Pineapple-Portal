@@ -99,7 +99,7 @@
                               class: "event-calendars__bulk-input",
                               data: {
                                 custom_select_target: "input",
-                                action: "input->custom-select#search focus->custom-select#search blur->custom-select#deferClose keydown->custom-select#focusFirst"
+                                action: "input->custom-select#search focus->custom-select#search keydown->custom-select#handleInputKeydown"
                               } %>
           <div class="calendar-item-form__autocomplete-menu" data-custom-select-target="menu" role="listbox" hidden></div>
         </div>
@@ -118,7 +118,7 @@
                               class: "event-calendars__bulk-input",
                               data: {
                                 custom_select_target: "input",
-                                action: "input->custom-select#search focus->custom-select#search blur->custom-select#deferClose keydown->custom-select#focusFirst"
+                                action: "input->custom-select#search focus->custom-select#search keydown->custom-select#handleInputKeydown"
                               } %>
           <div class="calendar-item-form__autocomplete-menu" data-custom-select-target="menu" role="listbox" hidden></div>
         </div>
@@ -204,8 +204,9 @@
           </tr>
         <% end %>
 
+        <% timeline_row_id = dom_id(item, :timeline_row) %>
         <% title_text, title_path = item_link_proc.call(item) %>
-        <tr class="event-calendars__row <%= calendar_item_row_classes(item) %>">
+        <tr id="<%= timeline_row_id %>" class="event-calendars__row <%= calendar_item_row_classes(item) %>">
           <% tooltip = calendar_item_relative_tooltip(item) %>
           <% if show_status_first %>
             <td class="event-calendars__status-value"><%= calendar_item_status_label(item) %></td>
@@ -245,7 +246,7 @@
           <% if show_edit_button %>
             <td class="event-calendars__row-action">
               <%= link_to "Edit",
-                          edit_event_calendar_item_path(calendar.event, item, return_to: request.fullpath),
+                          edit_event_calendar_item_path(calendar.event, item, return_to: "#{request.fullpath}##{timeline_row_id}"),
                           class: "event-calendars__edit-link" %>
             </td>
           <% end %>

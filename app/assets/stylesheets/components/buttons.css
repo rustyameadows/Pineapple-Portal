@@ -58,27 +58,6 @@
   background: var(--color-accent-strong);
 }
 
-.documents-show__delete {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  border: none;
-  background: var(--color-light-cream0);
-  color: var(--color-light-cream);
-  padding: 0.6rem 1.2rem;
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-size: var(--font-size-200);
-  transition: background-color 0.2s ease;
-}
-
-.documents-show__delete:hover,
-.documents-show__delete:focus {
-  background: var(--color-dark-brown);
-}
-
 .button {
   display: inline-flex;
   align-items: center;
@@ -139,6 +118,52 @@
 .button--danger:hover,
 .button--danger:focus {
   background: color-mix(in srgb, var(--color-ruby) 12%, white);
+}
+
+.documents-show__delete-form {
+  margin: 0;
+}
+
+.documents-show__delete-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-ruby);
+  padding: 0.6rem 1.4rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-ruby);
+  color: var(--color-light-cream);
+  cursor: pointer;
+  text-decoration: none;
+  opacity: 1;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.documents-show__delete-button:hover,
+.documents-show__delete-button:focus {
+  background: #111;
+  border-color: #111;
+  color: var(--color-light-cream);
+}
+
+.danger-red-fucking-button {
+  background: red !important;
+  border-color: red !important;
+  color: white !important;
+}
+
+.danger-red-fucking-button:hover,
+.danger-red-fucking-button:focus {
+  background: black !important;
+  border-color: black !important;
+  color: white !important;
 }
 
 .button--small {

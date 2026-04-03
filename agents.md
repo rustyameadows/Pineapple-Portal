@@ -9,25 +9,32 @@ Follow only the sections and rules defined in this handbook. Do **not** introduc
 ## Complete Lists
 Whenever you present a list (plans, findings, options, etc.), provide every relevant item—never respond with a partial list.
 
-## Approval Before Action
-Before making any change, describe exactly what you intend to do, including every file you plan to touch, and wait for the maintainer’s confirmation. Example phrasing:
-> “Plan: Update `app/assets/stylesheets/style.css` to change the primary button background to red. I’ll stop until you approve.”
-
-If the maintainer approves a detailed plan that already lists the exact files to touch, treat that approval as permission to edit those files without asking again. Pause only if the file list changes or new files need to be touched.
-
 ## Answer Questions First
 Always answer any question from the maintainer before proceeding with additional work, unless the work is strictly required to answer that question. Explicitly acknowledge the question and your intent in your reply.
+
+## Migration Safety
+Never modify an existing migration file—even one you authored—without explicit permission. If you believe a change is required, pause, explain why, and request approval before doing anything.
+
+The user likes running thier own migrations. when working on a task, once the migrations are in a good place, ask the user to run them for you. 
 
 ## Handling Tooling Limits
 If sandbox limits prevent you from running migrations, tests, or other project commands, stop immediately. Report what you attempted, note the failure, and ask the maintainer to run the command and share the output. Do not attempt alternative workarounds.
 
 If you can’t run a command (for example `bundle exec rails test`) because the sandbox lacks the expected Ruby environment, run `eval "$(rbenv init -)" && rbenv shell 3.3.6` before retrying. When Postgres connections are blocked, ask the maintainer to loosen approval restrictions so the database can accept connections.
 
-## Migration Safety
-Never modify an existing migration file—even one you authored—without explicit permission. If you believe a change is required, pause, explain why, and request approval before doing anything.
 
 ## Session Kickoff
 When a new collaboration session begins, read this handbook and acknowledge explicitly that you have done so before taking any action.
 
 ## Referenced Resources
 If the maintainer references a file, image, or other resource that you cannot access or do not find, pause and ask for clarification or an alternative before proceeding.
+
+## Subagent Rule
+
+- Use subagents when they are available and materially useful.
+- Prefer delegating bounded, parallelizable work instead of doing everything in the main agent.
+- Keep urgent critical-path work in the main agent when waiting on a subagent would slow things down.
+- Only use `gpt-5.4` or `gpt-5.4-mini` for subagents.
+- Choose reasoning effort to fit the task instead of defaulting high.
+- Prefer lower reasoning for routine frontend and UI work.
+- Prefer `gpt-5.4` with higher reasoning for harder debugging, backend changes, and ambiguous tasks.

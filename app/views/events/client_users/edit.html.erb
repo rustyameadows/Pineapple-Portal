@@ -1,0 +1,26 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Client Access</p>
+            <h1 class="event-section__title">Edit Client User</h1>
+            <p class="event-section__lead">Update the details this client uses to access the portal, including financial visibility and password settings.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Back to Client Access", (@return_to.presence || clients_event_settings_path(@event)), class: "event-section__link" %>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <%= render "form", event: @event, user: @user, return_to: @return_to %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>
