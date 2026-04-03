@@ -10,6 +10,7 @@ module Events
     def show
       @filter = Calendars::ViewFilter.new(calendar: @calendar, view: @view)
       @items = @filter.items
+      @filter_source_items = @calendar.calendar_items.includes(:team_members).ordered
     end
 
     def timeline_preview

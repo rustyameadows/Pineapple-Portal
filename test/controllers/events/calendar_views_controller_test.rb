@@ -42,13 +42,36 @@ module Events
       assert_select "table.event-calendars__table thead tr th:first-child", text: "Schedule"
     end
 
-    test "derived timeline links return to the edited row anchor" do
+    test "derived timeline shows shared search filters and master option lists" do
+      get event_calendar_view_url(@event, @non_decision_view)
+
+      assert_response :success
+      assert_select "input[aria-label='Search timeline']", count: 1
+      assert_select "button", text: "Clear search/filters", count: 1
+      assert_select ".event-calendars__filter-summary-label", text: "Tags", count: 1
+      assert_match(/Select all \d+ item(s)?/, response.body)
+      assert_includes response.body, "Grand Ballroom"
+      assert_includes response.body, "Ada Fixture"
+      assert_includes response.body, "Temp Contractor"
+      assert_select ".event-calendars__filter-menu label", text: "None", minimum: 4
+    end
+
+    test "derived timeline links preserve filtered return_to and row anchor" do
       item = calendar_items(:reception)
       row_anchor = ActionView::RecordIdentifier.dom_id(item, :timeline_row)
-      return_to = "#{event_calendar_view_path(@event, @non_decision_view)}##{row_anchor}"
+      filtered_path = event_calendar_view_path(
+        @event,
+        @non_decision_view,
+        q: "Reception",
+        vendors: [ "vendor" ],
+        locations: [ "grand-ballroom" ],
+        teams: [ "ada-fixture" ],
+        tags: [ "day-of" ]
+      )
+      return_to = "#{filtered_path}##{row_anchor}"
       expected_href = edit_event_calendar_item_path(@event, item, return_to: return_to)
 
-      get event_calendar_view_url(@event, @non_decision_view)
+      get filtered_path
 
       assert_response :success
       assert_select "a.event-calendars__title-link[href='#{expected_href}']", text: item.title, count: 1

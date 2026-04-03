@@ -1,4 +1,5 @@
 module CalendarHelper
+  CALENDAR_FILTER_NONE_VALUE = "__none__".freeze
   CSS_NAMED_COLORS = {
     "aliceblue" => "#f0f8ff",
     "antiquewhite" => "#faebd7",
@@ -221,6 +222,122 @@ module CalendarHelper
     status_key.humanize.titleize
   end
 
+  def calendar_item_team_values(item)
+    linked_names = Array(item.team_members)
+                     .map { |member| member.name.to_s.strip }
+                     .reject(&:blank?)
+                     .sort_by(&:downcase)
+    extra_names = item.additional_team_members.to_s
+                      .split(/[,\n;]+/)
+                      .map(&:strip)
+                      .reject(&:blank?)
+
+    (linked_names + extra_names).uniq
+  end
+
+  def calendar_item_team_label(item)
+    linked_names = Array(item.team_members)
+                     .map { |member| member.name.to_s.strip }
+                     .reject(&:blank?)
+                     .sort_by(&:downcase)
+    extras = item.additional_team_members.to_s.strip
+
+    [linked_names.join(", "), extras].reject(&:blank?).join("; ").presence || "—"
+  end
+
+  def calendar_item_search_text(item)
+    [
+      item.title,
+      item.vendor_name,
+      item.location_name,
+      item.notes,
+      calendar_item_team_label(item)
+    ]
+      .map { |value| normalize_calendar_filter_value(value) }
+      .reject(&:blank?)
+      .join(" ")
+  end
+
+  def calendar_item_filter_values(item, facet)
+    values = case facet.to_sym
+             when :vendor
+               value = item.vendor_name.to_s.strip
+               value.present? ? [ value ] : []
+             when :location
+               value = item.location_name.to_s.strip
+               value.present? ? [ value ] : []
+             when :team
+               calendar_item_team_values(item)
+             when :tag
+               Array(item.event_calendar_tags)
+                 .map { |tag| tag.name.to_s.strip }
+                 .reject(&:blank?)
+             else
+               []
+             end
+
+    normalized_values = values
+                          .map { |value| value.to_s.strip }
+                          .reject(&:blank?)
+                          .uniq
+
+    normalized_values.presence || [ CALENDAR_FILTER_NONE_VALUE ]
+  end
+
+  def calendar_filter_options(items, facet)
+    labels_by_token = {}
+
+    Array(items).each do |item|
+      calendar_item_filter_values(item, facet).each do |value|
+        next if value == CALENDAR_FILTER_NONE_VALUE
+
+        token = calendar_filter_token(value)
+        next if token.blank?
+
+        labels_by_token[token] ||= value
+      end
+    end
+
+    [
+      { label: "None", value: CALENDAR_FILTER_NONE_VALUE },
+      *labels_by_token.values
+                      .sort_by { |label| normalize_calendar_filter_value(label) }
+                      .map do |label|
+                        {
+                          label: label,
+                          value: calendar_filter_token(label)
+                        }
+                      end
+    ]
+  end
+
+  def calendar_tag_filter_options(calendar)
+    return [{ label: "None", value: CALENDAR_FILTER_NONE_VALUE }] unless calendar
+
+    [
+      { label: "None", value: CALENDAR_FILTER_NONE_VALUE },
+      *calendar.event_calendar_tags
+               .order(:position, :name)
+               .map do |tag|
+                 {
+                   label: tag.name,
+                   value: calendar_filter_token(tag.name)
+                 }
+               end
+    ]
+  end
+
+  def calendar_filter_none_value
+    CALENDAR_FILTER_NONE_VALUE
+  end
+
+  def calendar_item_filter_values_json(item, facet)
+    calendar_item_filter_values(item, facet)
+      .map { |value| value == CALENDAR_FILTER_NONE_VALUE ? value : calendar_filter_token(value) }
+      .uniq
+      .to_json
+  end
+
   def calendar_item_tags_label(item)
     names = item.event_calendar_tags.map(&:name).reject(&:blank?)
     names.any? ? names.join(', ') : "—"
@@ -289,6 +406,14 @@ module CalendarHelper
   end
 
   private
+
+  def normalize_calendar_filter_value(value)
+    value.to_s.downcase.squish
+  end
+
+  def calendar_filter_token(value)
+    normalize_calendar_filter_value(value).parameterize
+  end
 
   def css_color_to_rgb(value)
     token = value.to_s.strip

@@ -23,13 +23,33 @@ module Events
       assert_select "a", text: "Import Items"
     end
 
-    test "run of show timeline links return to the edited row anchor" do
+    test "shows run of show timeline search and bulk selection controls" do
+      get event_calendar_path(@event)
+
+      assert_response :success
+      assert_select "input[aria-label='Search timeline']", count: 1
+      assert_select "button", text: "Clear search/filters", count: 1
+      assert_select ".event-calendars__filter-summary-label", text: "Tags", count: 1
+      assert_match(/Select all \d+ item(s)?/, response.body)
+      assert_includes response.body, "Deselect all"
+      assert_select ".event-calendars__filter-menu label", text: "None", minimum: 4
+    end
+
+    test "run of show timeline links preserve filtered return_to and row anchor" do
       item = calendar_items(:ceremony)
       row_anchor = ActionView::RecordIdentifier.dom_id(item, :timeline_row)
-      return_to = "#{event_calendar_path(@event)}##{row_anchor}"
+      filtered_path = event_calendar_path(
+        @event,
+        q: "Ceremony",
+        vendors: [ "vendor" ],
+        locations: [ "grand-ballroom" ],
+        teams: [ "ada-fixture" ],
+        tags: [ "day-of" ]
+      )
+      return_to = "#{filtered_path}##{row_anchor}"
       expected_href = edit_event_calendar_item_path(@event, item, return_to: return_to)
 
-      get event_calendar_path(@event)
+      get filtered_path
 
       assert_response :success
       assert_select "a.event-calendars__title-link[href='#{expected_href}']", text: item.title, count: 1
