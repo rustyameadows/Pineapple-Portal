@@ -3,6 +3,7 @@ require "application_system_test_case"
 class CalendarRowReturnTest < ApplicationSystemTestCase
   setup do
     @event = events(:one)
+    @view = event_calendar_views(:vendor_view)
     calendar = event_calendars(:run_of_show)
     position = calendar.calendar_items.maximum(:position).to_i + 1
 
@@ -23,9 +24,9 @@ class CalendarRowReturnTest < ApplicationSystemTestCase
     )
   end
 
-  test "editing a run of show item returns to the edited row, highlights it, and clears the helper hash" do
+  test "editing a filtered run of show item returns to the edited row, preserves query params, highlights it, and clears the helper hash" do
     login_as_planner
-    visit event_calendar_path(@event)
+    visit event_calendar_path(@event, q: "Anchor")
 
     row_anchor = ActionView::RecordIdentifier.dom_id(@item, :timeline_row)
 
@@ -35,10 +36,11 @@ class CalendarRowReturnTest < ApplicationSystemTestCase
 
     fill_in "Title", with: "Anchor target item updated"
     find("input[type='submit']", visible: true).click
+    click_button "Confirm changes" if page.has_button?("Confirm changes", wait: 1)
 
     assert_text "Calendar item updated."
     assert_text "Anchor target item updated"
-    assert_operator page.evaluate_script("window.scrollY"), :>, 0
+    assert page.evaluate_script("window.location.search").include?("q=Anchor")
     assert page.evaluate_script(<<~JS)
       (() => {
         const row = document.getElementById("#{row_anchor}")
@@ -58,13 +60,46 @@ class CalendarRowReturnTest < ApplicationSystemTestCase
       const done = arguments[0]
       setTimeout(() => done(window.location.hash), 350)
     JS
-    assert_equal false, page.evaluate_async_script(<<~JS)
-      const done = arguments[0]
-      setTimeout(() => {
+    assert_no_selector "tr##{row_anchor}.event-calendars__row--return-highlight", wait: 4
+  end
+
+  test "editing a filtered derived view item returns to the edited row, preserves query params, highlights it, and clears the helper hash" do
+    login_as_planner
+    visit event_calendar_view_path(@event, @view, q: "Reception")
+
+    row_anchor = ActionView::RecordIdentifier.dom_id(calendar_items(:reception), :timeline_row)
+
+    within("tr##{row_anchor}") do
+      find("a.event-calendars__title-link", text: "Reception").click
+    end
+
+    fill_in "Title", with: "Reception Updated"
+    find("input[type='submit']", visible: true).click
+    click_button "Confirm changes" if page.has_button?("Confirm changes", wait: 1)
+
+    assert_text "Calendar item updated."
+    assert_text "Reception Updated"
+    assert page.evaluate_script("window.location.search").include?("q=Reception")
+    assert page.evaluate_script(<<~JS)
+      (() => {
         const row = document.getElementById("#{row_anchor}")
-        done(row ? row.classList.contains("event-calendars__row--return-highlight") : false)
-      }, 3200)
+        if (!row) return false
+
+        const rect = row.getBoundingClientRect()
+        return rect.top >= 0 && rect.top < window.innerHeight && rect.bottom > 0
+      })()
     JS
+    assert page.evaluate_script(<<~JS)
+      (() => {
+        const row = document.getElementById("#{row_anchor}")
+        return row ? row.classList.contains("event-calendars__row--return-highlight") : false
+      })()
+    JS
+    assert_equal "", page.evaluate_async_script(<<~JS)
+      const done = arguments[0]
+      setTimeout(() => done(window.location.hash), 350)
+    JS
+    assert_no_selector "tr##{row_anchor}.event-calendars__row--return-highlight", wait: 4
   end
 
   private

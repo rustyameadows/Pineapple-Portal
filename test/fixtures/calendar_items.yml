@@ -2,6 +2,7 @@ ceremony:
   event_calendar: run_of_show
   title: Ceremony
   notes: Exchange vows and rings.
+  location_name: Grand Ballroom
   duration_minutes: 45
   starts_at: 2025-10-01 15:00:00
   relative_offset_minutes: 0
@@ -20,6 +21,7 @@ reception:
 afterparty:
   event_calendar: run_of_show
   title: Afterparty
+  additional_team_members: Temp Contractor
   duration_minutes: 90
   relative_anchor: reception
   relative_offset_minutes: 60

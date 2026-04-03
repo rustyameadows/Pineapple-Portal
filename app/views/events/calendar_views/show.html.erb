@@ -6,7 +6,7 @@
     <div class="event-layout__main">
       <%= render "shared/flash" %>
 
-      <section class="event-section" data-controller="calendar-bulk-edit anchor-scroll">
+      <section class="event-section event-calendars__timeline-section" data-controller="calendar-bulk-edit anchor-scroll">
         <header class="event-section__header">
           <div>
             <p class="event-section__eyebrow"></p>
@@ -30,7 +30,7 @@
           </div>
         </header>
 
-        <div class="event-section__body">
+        <div class="event-section__body event-calendars__timeline-body">
           <p class="event-section__note">
             Showing
             <% if @view.tag_filter.present? %>
@@ -55,6 +55,7 @@
                                     end %>
             <%= render "events/calendars/schedule_table",
                        items: @items,
+                       filter_source_items: @filter_source_items,
                        calendar: @calendar,
                        group_by_date: true,
                        bulk_edit: true,

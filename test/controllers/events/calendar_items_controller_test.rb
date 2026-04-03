@@ -55,7 +55,7 @@ module Events
     test "update respects anchored return_to" do
       item = calendar_items(:ceremony)
       row_anchor = ActionView::RecordIdentifier.dom_id(item, :timeline_row)
-      return_to = "#{event_calendar_path(@event)}##{row_anchor}"
+      return_to = "#{event_calendar_path(@event, q: 'Ceremony', tags: [ 'day-of' ])}##{row_anchor}"
 
       patch event_calendar_item_url(@event, item), params: {
         return_to:,
@@ -115,7 +115,12 @@ module Events
 
     test "bulk update deletes selected items and respects safe return path" do
       item = calendar_items(:reception)
-      return_to = event_calendar_view_path(@event, event_calendar_views(:vendor_view))
+      return_to = event_calendar_view_path(
+        @event,
+        event_calendar_views(:vendor_view),
+        q: "Reception",
+        tags: [ "vendor" ]
+      )
 
       assert_difference("CalendarItem.count", -1) do
         patch bulk_update_event_calendar_items_url(@event), params: {
