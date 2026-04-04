@@ -18,6 +18,9 @@ class EventOverviewSectionTest < ActionView::TestCase
     render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
 
     assert_select ".generated-template--event-overview", count: 1
+    assert_select ".generated-template--event-overview__section-title", text: "Important Information"
+    assert_select ".generated-template--event-overview__section-title", text: "Planner Contact"
+    assert_select ".generated-template--event-overview__section-title", text: "Vendor Contacts"
     assert_select ".generated-template--event-overview__event-name", text: @event.name
     assert_select ".generated-template--event-overview__dates", text: "#{@event.starts_on.to_fs(:long)} - #{@event.ends_on.to_fs(:long)}"
     assert_select ".generated-template--event-overview__location", text: @event.location
@@ -33,7 +36,7 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__vendor-contact-email", text: /maria@sunshine.test/
     assert_select ".generated-template--event-overview__vendor-contact-phone", text: /555-123-4567/
     assert_no_match(/Client Contact|Gluten-free specialist/, rendered)
-    assert_no_match(/Important Information|Custom Heading|generated-text-columns/, rendered)
+    assert_no_match(/Custom Heading|generated-text-columns/, rendered)
   end
 
   test "ignores markdown options and still renders the live event data layout" do

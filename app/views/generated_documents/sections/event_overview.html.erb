@@ -4,16 +4,20 @@
 
 <style>
   .generated-template--event-overview {
-    --generated-document-content-padding-x: 0.26in;
-    --generated-document-content-padding-top: 0.24in;
-    --generated-document-content-padding-bottom: 0.24in;
-    gap: 0.6rem;
+    --generated-document-content-padding-x: 0.3in;
+    --generated-document-content-padding-top: 0.28in;
+    --generated-document-content-padding-bottom: 0.28in;
+    gap: 0.18in;
     background: var(--color-white, #ffffff);
-    border: none;
+    color: #604a37;
   }
 
   .generated-template--event-overview .generated-template__page-header {
-    gap: 0.38rem;
+    justify-items: start;
+    text-align: left;
+    gap: 0.06in;
+    padding-bottom: 0.07in;
+    border-bottom: 1px solid rgba(96, 74, 55, 0.55);
   }
 
   .generated-template--event-overview .generated-template__page-header-logo {
@@ -21,199 +25,144 @@
   }
 
   .generated-template--event-overview .generated-template__page-header-title {
-    margin-bottom: 0.02rem;
-    font-size: 20px;
-    letter-spacing: 1.25px;
+    font-family: var(--font-family-body, "BaskervilleNo2", "Times New Roman", serif);
+    font-size: 0.24in;
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    color: #6b523d;
   }
 
-  .generated-template--event-overview__layout {
+  .generated-template--event-overview__sheet {
     display: grid;
-    gap: 0.45rem;
-    color: var(--color-dark-brown, #3f2211);
-  }
-
-  .generated-template--event-overview__hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-    gap: 0.2in;
-    align-items: start;
-    padding: 0.12in 0.16in 0.16in;
-    border: 1px solid color-mix(in srgb, var(--color-gold, #be9c72) 28%, white);
-    background:
-      linear-gradient(135deg, color-mix(in srgb, var(--color-sand, #f3e4d2) 70%, white), white 55%);
-  }
-
-  .generated-template--event-overview__hero-copy {
-    display: grid;
-    gap: 0.1rem;
-  }
-
-  .generated-template--event-overview__eyebrow {
-    margin: 0;
-    font-size: 0.75rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--color-brown, #5b4639) 84%, white);
-  }
-
-  .generated-template--event-overview__event-name {
-    margin: 0;
-    font-size: 1.65rem;
-    line-height: 1.05;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-  }
-
-  .generated-template--event-overview__hero-note {
-    margin: 0.06rem 0 0;
-    font-size: 0.88rem;
-    line-height: 1.35;
-    color: color-mix(in srgb, var(--color-brown, #5b4639) 88%, white);
-  }
-
-  .generated-template--event-overview__snapshot {
-    display: grid;
-    gap: 0.55rem;
-  }
-
-  .generated-template--event-overview__snapshot-item {
-    display: grid;
-    gap: 0.08rem;
-    padding: 0.12in 0.14in;
-    border: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 58%, white);
-    background: rgba(255, 255, 255, 0.9);
-  }
-
-  .generated-template--event-overview__snapshot-label {
-    margin: 0;
-    font-size: 0.7rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--color-brown, #5b4639) 84%, white);
-  }
-
-  .generated-template--event-overview__snapshot-value {
-    margin: 0;
-    font-size: 1rem;
-    line-height: 1.28;
-  }
-
-  .generated-template--event-overview__sections {
-    display: grid;
-    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-    gap: 0.18in;
-    align-items: start;
+    gap: 0.14in;
   }
 
   .generated-template--event-overview__section {
-    min-width: 0;
     display: grid;
-    gap: 0.12in;
-    align-content: start;
+    gap: 0;
   }
 
   .generated-template--event-overview__section-title {
     margin: 0;
-    padding: 0.09in 0.12in 0.08in;
-    background: var(--color-gold, #be9c72);
-    color: var(--color-dark-brown, #3f2211);
-    font-size: 0.9rem;
-    line-height: 1.1;
-    letter-spacing: 0.08em;
+    padding: 0.035in 0.08in;
+    background: #bea075;
+    color: #5a4330;
+    font-family: var(--font-family-body, "BaskervilleNo2", "Times New Roman", serif);
+    font-size: 0.115in;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
     text-transform: uppercase;
   }
 
-  .generated-template--event-overview__grid {
+  .generated-template--event-overview__table {
     display: grid;
-    gap: 0.12in;
+    border-left: 1px solid rgba(194, 177, 160, 0.34);
+    border-right: 1px solid rgba(194, 177, 160, 0.34);
   }
 
-  .generated-template--event-overview__planner-card,
-  .generated-template--event-overview__vendor-card {
+  .generated-template--event-overview__row {
     display: grid;
-    gap: 0.1in;
-    padding: 0.12in 0.14in 0.14in;
-    border: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 58%, white);
-    background: white;
+    grid-template-columns: 1.05fr 2.1fr 1.15fr;
+    align-items: stretch;
+    min-height: 0.28in;
+    border-bottom: 1px solid rgba(194, 177, 160, 0.24);
     break-inside: avoid;
   }
 
-  .generated-template--event-overview__planner-head,
-  .generated-template--event-overview__vendor-head {
-    display: grid;
-    gap: 0.04in;
+  .generated-template--event-overview__row--two-column {
+    grid-template-columns: 1.05fr 3.25fr;
   }
 
-  .generated-template--event-overview__planner-name,
-  .generated-template--event-overview__vendor-name {
-    margin: 0;
-    font-size: 1rem;
+  .generated-template--event-overview__cell {
+    padding: 0.032in 0.07in 0.03in;
+    border-right: 1px solid rgba(194, 177, 160, 0.24);
+    font-size: 0.118in;
     line-height: 1.18;
-    letter-spacing: 0.02em;
+    color: #5f4836;
+    box-sizing: border-box;
   }
 
-  .generated-template--event-overview__planner-role,
-  .generated-template--event-overview__vendor-meta {
+  .generated-template--event-overview__row .generated-template--event-overview__cell:last-child {
+    border-right: none;
+  }
+
+  .generated-template--event-overview__label {
+    text-align: right;
+    color: #7a6551;
+    white-space: pre-line;
+  }
+
+  .generated-template--event-overview__value {
+    font-weight: 600;
+    white-space: pre-line;
+  }
+
+  .generated-template--event-overview__value p {
     margin: 0;
-    font-size: 0.82rem;
-    line-height: 1.28;
-    color: color-mix(in srgb, var(--color-brown, #5b4639) 88%, white);
   }
 
-  .generated-template--event-overview__planner-lead {
-    display: inline-flex;
-    align-items: center;
-    justify-self: start;
-    padding: 0.03in 0.08in;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--color-sand, #f3e4d2) 78%, white);
-    font-size: 0.68rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--color-brown, #5b4639);
+  .generated-template--event-overview__value p + p {
+    margin-top: 0.02in;
   }
 
-  .generated-template--event-overview__contact-list,
-  .generated-template--event-overview__vendor-contacts {
-    display: grid;
-    gap: 0.06in;
+  .generated-template--event-overview__detail {
+    color: #6f5a46;
+    white-space: pre-line;
+  }
+
+  .generated-template--event-overview__contact-name {
+    font-style: italic;
+    font-weight: 600;
   }
 
   .generated-template--event-overview__contact-line {
     margin: 0;
-    font-size: 0.84rem;
-    line-height: 1.35;
   }
 
-  .generated-template--event-overview__contact-line strong {
+  .generated-template--event-overview__contact-line + .generated-template--event-overview__contact-line {
+    margin-top: 0.015in;
+  }
+
+  .generated-template--event-overview__vendor-card,
+  .generated-template--event-overview__planner-card {
+    display: contents;
+  }
+
+  .generated-template--event-overview__event-name {
     font-weight: 600;
   }
 
-  .generated-template--event-overview__vendor-contact {
-    display: grid;
-    gap: 0.03in;
-    padding-top: 0.08in;
-    border-top: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 62%, white);
+  .generated-template--event-overview__dates,
+  .generated-template--event-overview__location,
+  .generated-template--event-overview__planner-name,
+  .generated-template--event-overview__planner-title,
+  .generated-template--event-overview__planner-email,
+  .generated-template--event-overview__planner-phone,
+  .generated-template--event-overview__vendor-name,
+  .generated-template--event-overview__vendor-contact-name,
+  .generated-template--event-overview__vendor-contact-email,
+  .generated-template--event-overview__vendor-contact-phone {
+    color: inherit;
   }
 
-  .generated-template--event-overview__vendor-contact:first-child {
-    padding-top: 0;
-    border-top: none;
+  .generated-template--event-overview__planner-lead {
+    font-size: 0.1in;
+    font-style: italic;
+    letter-spacing: 0.01em;
   }
 
   .generated-template--event-overview__empty {
     margin: 0;
-    padding: 0.16in;
-    border: 1px dashed color-mix(in srgb, var(--color-dark-sand, #dccbb3) 80%, white);
-    color: var(--color-brown, #5b4639);
+    padding: 0.08in;
+    border-left: 1px solid rgba(194, 177, 160, 0.34);
+    border-right: 1px solid rgba(194, 177, 160, 0.34);
+    border-bottom: 1px solid rgba(194, 177, 160, 0.24);
+    font-size: 0.118in;
     font-style: italic;
-  }
-
-  @media (max-width: 720px) {
-    .generated-template--event-overview__hero,
-    .generated-template--event-overview__sections {
-      grid-template-columns: 1fr;
-    }
+    color: #7a6551;
   }
 </style>
 
@@ -224,95 +173,124 @@
 <section class="generated-template generated-template--event-overview">
   <%= render "generated_documents/sections/page_header", segment: @segment %>
 
-  <div class="generated-template--event-overview__layout">
-    <section class="generated-template--event-overview__hero">
-      <div class="generated-template--event-overview__hero-copy">
-        <p class="generated-template--event-overview__eyebrow">Event Snapshot</p>
-        <h2 class="generated-template--event-overview__event-name"><%= @event.name %></h2>
-        <p class="generated-template--event-overview__hero-note">Live details from the planner workspace for fast packet reference.</p>
-      </div>
-
-      <div class="generated-template--event-overview__snapshot">
-        <div class="generated-template--event-overview__snapshot-item">
-          <p class="generated-template--event-overview__snapshot-label">Date</p>
-          <p class="generated-template--event-overview__snapshot-value generated-template--event-overview__dates"><%= event_date_range %></p>
+  <div class="generated-template--event-overview__sheet">
+    <section class="generated-template--event-overview__section">
+      <h2 class="generated-template--event-overview__section-title">Important Information</h2>
+      <div class="generated-template--event-overview__table">
+        <div class="generated-template--event-overview__row generated-template--event-overview__row--two-column">
+          <div class="generated-template--event-overview__cell generated-template--event-overview__label">Event</div>
+          <div class="generated-template--event-overview__cell generated-template--event-overview__value generated-template--event-overview__event-name"><%= @event.name %></div>
         </div>
-        <div class="generated-template--event-overview__snapshot-item">
-          <p class="generated-template--event-overview__snapshot-label">Location</p>
-          <p class="generated-template--event-overview__snapshot-value generated-template--event-overview__location"><%= @event.location.presence || "Location TBD" %></p>
+        <div class="generated-template--event-overview__row generated-template--event-overview__row--two-column">
+          <div class="generated-template--event-overview__cell generated-template--event-overview__label">Date</div>
+          <div class="generated-template--event-overview__cell generated-template--event-overview__value generated-template--event-overview__dates"><%= event_date_range %></div>
+        </div>
+        <div class="generated-template--event-overview__row generated-template--event-overview__row--two-column">
+          <div class="generated-template--event-overview__cell generated-template--event-overview__label">Location</div>
+          <div class="generated-template--event-overview__cell generated-template--event-overview__value generated-template--event-overview__location"><%= @event.location.presence || "Location TBD" %></div>
         </div>
       </div>
     </section>
 
-    <div class="generated-template--event-overview__sections">
-      <section class="generated-template--event-overview__section">
-        <h3 class="generated-template--event-overview__section-title">Planner Contacts</h3>
-        <% if planners.any? %>
-          <div class="generated-template--event-overview__grid">
-            <% planners.each do |planner| %>
-              <article class="generated-template--event-overview__planner-card">
-                <div class="generated-template--event-overview__planner-head">
-                  <% if planner[:lead] %>
-                    <span class="generated-template--event-overview__planner-lead">Lead Planner</span>
-                  <% end %>
+    <section class="generated-template--event-overview__section">
+      <h2 class="generated-template--event-overview__section-title">Planner Contact</h2>
+      <% if planners.any? %>
+        <div class="generated-template--event-overview__table">
+          <% planners.each do |planner| %>
+            <article class="generated-template--event-overview__planner-card">
+              <div class="generated-template--event-overview__row">
+                <div class="generated-template--event-overview__cell generated-template--event-overview__label">
+                  Planning, Design &amp; Coordination
+                </div>
+                <div class="generated-template--event-overview__cell generated-template--event-overview__value">
                   <p class="generated-template--event-overview__planner-name"><%= planner[:name] %></p>
                   <% if planner[:title].present? %>
-                    <p class="generated-template--event-overview__planner-role generated-template--event-overview__planner-title"><%= planner[:title] %></p>
+                    <p class="generated-template--event-overview__planner-title"><%= planner[:title] %></p>
+                  <% end %>
+                  <% if planner[:lead] %>
+                    <p class="generated-template--event-overview__planner-lead">Lead planner</p>
                   <% end %>
                 </div>
-                <div class="generated-template--event-overview__contact-list">
+                <div class="generated-template--event-overview__cell generated-template--event-overview__detail">
                   <% if planner[:email].present? %>
-                    <p class="generated-template--event-overview__contact-line generated-template--event-overview__planner-email"><strong>Email:</strong> <%= planner[:email] %></p>
+                    <p class="generated-template--event-overview__contact-line generated-template--event-overview__planner-email"><%= planner[:email] %></p>
                   <% end %>
                   <% if planner[:phone].present? %>
-                    <p class="generated-template--event-overview__contact-line generated-template--event-overview__planner-phone"><strong>Phone:</strong> <%= planner[:phone] %></p>
+                    <p class="generated-template--event-overview__contact-line generated-template--event-overview__planner-phone"><%= planner[:phone] %></p>
                   <% end %>
                 </div>
-              </article>
-            <% end %>
-          </div>
-        <% else %>
-          <p class="generated-template--event-overview__empty">No planner contacts are linked to this event yet.</p>
-        <% end %>
-      </section>
+              </div>
+            </article>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="generated-template--event-overview__empty">No planner contacts are linked to this event yet.</p>
+      <% end %>
+    </section>
 
-      <section class="generated-template--event-overview__section">
-        <h3 class="generated-template--event-overview__section-title">Vendor Contacts</h3>
-        <% if vendors.any? %>
-          <div class="generated-template--event-overview__grid">
-            <% vendors.each do |vendor| %>
-              <article class="generated-template--event-overview__vendor-card">
-                <div class="generated-template--event-overview__vendor-head">
-                  <p class="generated-template--event-overview__vendor-name"><%= vendor[:name] %></p>
-                  <% meta_parts = [vendor[:vendor_type], vendor[:social_handle]].compact %>
-                  <% if meta_parts.any? %>
-                    <p class="generated-template--event-overview__vendor-meta"><%= meta_parts.join(" · ") %></p>
-                  <% end %>
-                </div>
-                <div class="generated-template--event-overview__vendor-contacts">
-                  <% vendor[:contacts].each do |contact| %>
-                    <div class="generated-template--event-overview__vendor-contact">
-                      <% if contact[:name].present? %>
-                        <p class="generated-template--event-overview__contact-line generated-template--event-overview__vendor-contact-name"><strong><%= contact[:name] %></strong><%= contact[:title].present? ? " · #{contact[:title]}" : "" %></p>
-                      <% elsif contact[:title].present? %>
-                        <p class="generated-template--event-overview__contact-line generated-template--event-overview__vendor-contact-name"><strong><%= contact[:title] %></strong></p>
-                      <% end %>
-                      <% if contact[:email].present? %>
-                        <p class="generated-template--event-overview__contact-line generated-template--event-overview__vendor-contact-email"><strong>Email:</strong> <%= contact[:email] %></p>
-                      <% end %>
-                      <% if contact[:phone].present? %>
-                        <p class="generated-template--event-overview__contact-line generated-template--event-overview__vendor-contact-phone"><strong>Phone:</strong> <%= contact[:phone] %></p>
-                      <% end %>
-                    </div>
-                  <% end %>
-                </div>
-              </article>
+    <section class="generated-template--event-overview__section">
+      <h2 class="generated-template--event-overview__section-title">Vendor Contacts</h2>
+      <% if vendors.any? %>
+        <div class="generated-template--event-overview__table">
+          <% vendors.each do |vendor| %>
+            <% first_contact = vendor[:contacts].first %>
+            <% remaining_contacts = vendor[:contacts].drop(1) %>
+            <% label_text = vendor[:vendor_type].presence || "Vendor" %>
+            <% detail_lines = [] %>
+            <% detail_lines << vendor[:social_handle] if vendor[:social_handle].present? %>
+            <% if first_contact %>
+              <% detail_lines << first_contact[:email] if first_contact[:email].present? %>
+              <% detail_lines << first_contact[:phone] if first_contact[:phone].present? %>
             <% end %>
-          </div>
-        <% else %>
-          <p class="generated-template--event-overview__empty">No vendor contacts are available for this event yet.</p>
-        <% end %>
-      </section>
-    </div>
+
+            <article class="generated-template--event-overview__vendor-card">
+              <div class="generated-template--event-overview__row">
+                <div class="generated-template--event-overview__cell generated-template--event-overview__label"><%= label_text %></div>
+                <div class="generated-template--event-overview__cell generated-template--event-overview__value">
+                  <p class="generated-template--event-overview__vendor-name"><%= vendor[:name] %></p>
+                  <% if first_contact %>
+                    <p class="generated-template--event-overview__vendor-contact-name generated-template--event-overview__contact-name">
+                      <%= first_contact[:name].presence || first_contact[:title].presence || "Primary contact" %><%= first_contact[:title].present? && first_contact[:name].present? ? " | #{first_contact[:title]}" : "" %>
+                    </p>
+                  <% end %>
+                </div>
+                <div class="generated-template--event-overview__cell generated-template--event-overview__detail">
+                  <% if vendor[:social_handle].present? %>
+                    <p class="generated-template--event-overview__contact-line"><%= vendor[:social_handle] %></p>
+                  <% end %>
+                  <% if first_contact&.dig(:email).present? %>
+                    <p class="generated-template--event-overview__contact-line generated-template--event-overview__vendor-contact-email"><%= first_contact[:email] %></p>
+                  <% end %>
+                  <% if first_contact&.dig(:phone).present? %>
+                    <p class="generated-template--event-overview__contact-line generated-template--event-overview__vendor-contact-phone"><%= first_contact[:phone] %></p>
+                  <% end %>
+                </div>
+              </div>
+
+              <% remaining_contacts.each do |contact| %>
+                <div class="generated-template--event-overview__row">
+                  <div class="generated-template--event-overview__cell generated-template--event-overview__label"></div>
+                  <div class="generated-template--event-overview__cell generated-template--event-overview__value">
+                    <p class="generated-template--event-overview__vendor-contact-name generated-template--event-overview__contact-name">
+                      <%= contact[:name].presence || contact[:title].presence || "Additional contact" %><%= contact[:title].present? && contact[:name].present? ? " | #{contact[:title]}" : "" %>
+                    </p>
+                  </div>
+                  <div class="generated-template--event-overview__cell generated-template--event-overview__detail">
+                    <% if contact[:email].present? %>
+                      <p class="generated-template--event-overview__contact-line generated-template--event-overview__vendor-contact-email"><%= contact[:email] %></p>
+                    <% end %>
+                    <% if contact[:phone].present? %>
+                      <p class="generated-template--event-overview__contact-line generated-template--event-overview__vendor-contact-phone"><%= contact[:phone] %></p>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </article>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="generated-template--event-overview__empty">No vendor contacts are available for this event yet.</p>
+      <% end %>
+    </section>
   </div>
 </section>
