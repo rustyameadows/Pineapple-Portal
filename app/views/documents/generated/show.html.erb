@@ -11,7 +11,14 @@
             <p class="event-section__eyebrow">Generated packet</p>
             <h1 class="event-section__title"><%= @document.title %></h1>
             <% if @latest_version.present? && @latest_version.storage_uri.present? %>
-              <p class="event-section__meta">Latest snapshot <%= @latest_version.updated_at.to_fs(:long) %> · version <%= @latest_version.version %></p>
+              <p class="event-section__meta">
+                Latest snapshot
+                <time data-controller="local-time"
+                      data-local-time-iso-value="<%= @latest_version.updated_at.utc.iso8601 %>"
+                      data-local-time-format-value="long"
+                      datetime="<%= @latest_version.updated_at.utc.iso8601 %>"><%= @latest_version.updated_at.to_fs(:long) %></time>
+                · version <%= @latest_version.version %>
+              </p>
             <% else %>
               <p class="event-section__meta">No saved snapshots yet. The working PDF below stays live.</p>
             <% end %>
@@ -37,7 +44,12 @@
                 <h2>Live Working PDF</h2>
                 <p class="generated-builder__hint">
                   <% if @working_copy&.rendered_at.present? %>
-                    Last live update <%= @working_copy.rendered_at.to_fs(:long) %>. We’ll keep this preview current without creating a saved version.
+                    Last live update
+                    <time data-controller="local-time"
+                          data-local-time-iso-value="<%= @working_copy.rendered_at.utc.iso8601 %>"
+                          data-local-time-format-value="long"
+                          datetime="<%= @working_copy.rendered_at.utc.iso8601 %>"><%= @working_copy.rendered_at.to_fs(:long) %></time>.
+                    We’ll keep this preview current without creating a saved version.
                   <% else %>
                     This view reflects the current packet order and shared-source content without creating a saved version.
                   <% end %>
@@ -123,9 +135,22 @@
               <div>
                 <h2>Snapshots & downloads</h2>
                 <% if @active_build.present? %>
-                  <p class="generated-builder__hint">Latest snapshot job kicked off <%= time_ago_in_words(@active_build.created_at) %> ago.</p>
+                  <p class="generated-builder__hint">
+                    Latest snapshot job kicked off
+                    <time data-controller="local-time"
+                          data-local-time-iso-value="<%= @active_build.created_at.utc.iso8601 %>"
+                          data-local-time-format-value="short"
+                          datetime="<%= @active_build.created_at.utc.iso8601 %>"><%= @active_build.created_at.to_fs(:short) %></time>
+                    · <%= time_ago_in_words(@active_build.created_at) %> ago.
+                  </p>
                 <% elsif @compiled_versions.any? %>
-                  <p class="generated-builder__hint">Last saved snapshot <%= @compiled_versions.first.updated_at.to_fs(:long) %>.</p>
+                  <p class="generated-builder__hint">
+                    Last saved snapshot
+                    <time data-controller="local-time"
+                          data-local-time-iso-value="<%= @compiled_versions.first.updated_at.utc.iso8601 %>"
+                          data-local-time-format-value="long"
+                          datetime="<%= @compiled_versions.first.updated_at.utc.iso8601 %>"><%= @compiled_versions.first.updated_at.to_fs(:long) %></time>.
+                  </p>
                 <% else %>
                   <p class="generated-builder__hint">Create a snapshot when you want a saved, shareable PDF version.</p>
                 <% end %>

@@ -307,6 +307,69 @@ module Documents
       assert_select ".generated-builder__pdf-status", text: /Showing the last live version until the refreshed packet is ready/
     end
 
+    test "show renders the live update timestamp with browser local time hooks" do
+      create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+      rendered_at = Time.utc(2026, 4, 4, 0, 9)
+      @document.update!(
+        working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
+        working_manifest_hash: "live-manifest",
+        working_checksum_sha256: "working-sha",
+        working_page_count: 1,
+        working_file_size: 1024,
+        working_rendered_at: rendered_at,
+        working_status: Document::WORKING_STATUSES[:fresh]
+      )
+
+      get event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select "time[data-controller='local-time'][data-local-time-iso-value='#{rendered_at.iso8601}'][datetime='#{rendered_at.iso8601}']", count: 1
+    end
+
+    test "show renders browser local time hooks for latest snapshot and build history timestamps" do
+      create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+
+      build = @document.builds.create!(
+        status: DocumentBuild::STATUSES[:succeeded],
+        build_id: SecureRandom.uuid,
+        started_at: Time.utc(2026, 4, 4, 0, 10),
+        finished_at: Time.utc(2026, 4, 4, 0, 12)
+      )
+
+      latest_snapshot = @event.documents.create!(
+        title: @document.title,
+        doc_kind: Document::DOC_KINDS[:generated],
+        logical_id: @document.logical_id,
+        version: 2,
+        is_latest: true,
+        source: "packet",
+        storage_uri: "documents/generated-visible-v2.pdf",
+        checksum: "generated-visible-checksum-v2",
+        checksum_sha256: "generated-visible-sha256-v2",
+        size_bytes: 2048,
+        content_type: "application/pdf",
+        build_id: build.build_id,
+        packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed],
+        updated_at: Time.utc(2026, 4, 4, 0, 12)
+      )
+
+      get event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select "p.event-section__meta time[data-controller='local-time'][data-local-time-iso-value='#{latest_snapshot.updated_at.iso8601}'][data-local-time-format-value='long']", count: 1
+      assert_select ".generated-builder__build-meta time[data-controller='local-time'][data-local-time-format-value='short']", minimum: 2
+    end
+
     test "edit renders packet settings and delete controls" do
       get edit_event_documents_generated_url(@event, @document.logical_id)
 

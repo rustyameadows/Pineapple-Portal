@@ -9,43 +9,28 @@
     <% file_size = build.file_size %>
 
     <% summary_parts = [] %>
-    <% meta_lines = [] %>
     <% placeholder_note = nil %>
-
-    <% if started_at.present? %>
-      <% meta_lines << "Started #{started_at.to_fs(:short)} · #{time_ago_in_words(started_at)} ago" %>
-    <% end %>
-
-    <% if finished_at.present? %>
-      <% meta_lines << "Finished #{finished_at.to_fs(:short)} · #{time_ago_in_words(finished_at)} ago" %>
-    <% end %>
-
-    <% if started_at.present? && finished_at.present? %>
-      <% meta_lines << "Elapsed #{distance_of_time_in_words(started_at, finished_at)}" %>
-    <% end %>
 
     <% stats_parts = [] %>
     <% stats_parts << pluralize(pages, "page") if pages.present? %>
     <% stats_parts << number_to_human_size(file_size) if file_size.present? %>
 
-    <% case build.status %>
-    <% when "pending" %>
+    <% if build.status == "pending" %>
       <% reference_time = build.created_at || build.updated_at || Time.current %>
       <% summary_parts << "Queued #{time_ago_in_words(reference_time)} ago" %>
-      <% meta_lines << "Requested #{reference_time.to_fs(:short)} · #{time_ago_in_words(reference_time)} ago" if reference_time.present? %>
       <% placeholder_note = "Snapshot is being prepared" %>
-    <% when "running" %>
+    <% elsif build.status == "running" %>
       <% reference_time = started_at || build.created_at || build.updated_at || Time.current %>
       <% started_phrase = started_at.present? ? "started" : "queued" %>
       <% summary_parts << "Creating snapshot · #{started_phrase} #{time_ago_in_words(reference_time)} ago" %>
       <% placeholder_note = "Snapshot is being prepared" %>
-    <% when "succeeded" %>
+    <% elsif build.status == "succeeded" %>
       <% summary_parts << (finished_at.present? ? "Finished #{time_ago_in_words(finished_at)} ago" : "Finished") %>
       <% summary_parts.concat(stats_parts) if stats_parts.any? %>
-    <% when "failed" %>
+    <% elsif build.status == "failed" %>
       <% summary_parts << (finished_at.present? ? "Failed #{time_ago_in_words(finished_at)} ago" : "Failed") %>
       <% summary_parts.concat(stats_parts) if stats_parts.any? %>
-    <% when "cancelled" %>
+    <% elsif build.status == "cancelled" %>
       <% reference_time = finished_at || build.updated_at || build.created_at %>
       <% summary_parts << (reference_time.present? ? "Cancelled #{time_ago_in_words(reference_time)} ago" : "Cancelled") %>
       <% summary_parts.concat(stats_parts) if stats_parts.any? %>
@@ -62,8 +47,44 @@
               <p class="generated-builder__build-summary"><%= summary_parts.join(" · ") %></p>
             <% end %>
 
-            <% meta_lines.each do |line| %>
-              <p class="generated-builder__build-meta"><%= line %></p>
+            <% if build.pending? %>
+              <% reference_time = build.created_at || build.updated_at || Time.current %>
+              <% if reference_time.present? %>
+                <p class="generated-builder__build-meta">
+                  Requested
+                  <time data-controller="local-time"
+                        data-local-time-iso-value="<%= reference_time.utc.iso8601 %>"
+                        data-local-time-format-value="short"
+                        datetime="<%= reference_time.utc.iso8601 %>"><%= reference_time.to_fs(:short) %></time>
+                  · <%= time_ago_in_words(reference_time) %> ago
+                </p>
+              <% end %>
+            <% end %>
+
+            <% if started_at.present? %>
+              <p class="generated-builder__build-meta">
+                Started
+                <time data-controller="local-time"
+                      data-local-time-iso-value="<%= started_at.utc.iso8601 %>"
+                      data-local-time-format-value="short"
+                      datetime="<%= started_at.utc.iso8601 %>"><%= started_at.to_fs(:short) %></time>
+                · <%= time_ago_in_words(started_at) %> ago
+              </p>
+            <% end %>
+
+            <% if finished_at.present? %>
+              <p class="generated-builder__build-meta">
+                Finished
+                <time data-controller="local-time"
+                      data-local-time-iso-value="<%= finished_at.utc.iso8601 %>"
+                      data-local-time-format-value="short"
+                      datetime="<%= finished_at.utc.iso8601 %>"><%= finished_at.to_fs(:short) %></time>
+                · <%= time_ago_in_words(finished_at) %> ago
+              </p>
+            <% end %>
+
+            <% if started_at.present? && finished_at.present? %>
+              <p class="generated-builder__build-meta">Elapsed <%= distance_of_time_in_words(started_at, finished_at) %></p>
             <% end %>
           </div>
 
