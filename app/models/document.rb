@@ -9,6 +9,14 @@ class Document < ApplicationRecord
     source_backed: 2
   }.freeze
 
+  WORKING_STATUSES = {
+    missing: "missing",
+    fresh: "fresh",
+    refreshing: "refreshing",
+    failed: "failed"
+  }.freeze
+  WORKING_REFRESH_TIMEOUT = 10.minutes
+
   UUID_REGEX = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i.freeze
 
   belongs_to :event
@@ -60,6 +68,7 @@ class Document < ApplicationRecord
   validates :is_latest, inclusion: { in: [true, false] }
   validates :source, inclusion: { in: SOURCE_KEYS }
   validates :doc_kind, inclusion: { in: DOC_KINDS.values }
+  validates :working_status, inclusion: { in: WORKING_STATUSES.values }
 
   scope :generated, -> { where(doc_kind: DOC_KINDS[:generated]) }
   scope :templates, -> { where(is_template: true) }
@@ -115,6 +124,106 @@ class Document < ApplicationRecord
     end
   end
 
+  WORKING_STATUSES.each_key do |key|
+    define_method "working_#{key}?" do
+      working_status == WORKING_STATUSES[key]
+    end
+  end
+
+  def working_available?
+    working_storage_uri.present?
+  end
+
+  def working_status_key
+    status = self[:working_status].to_s
+    return WORKING_STATUSES[:fresh] if working_available? && status == WORKING_STATUSES[:missing]
+    return WORKING_STATUSES[:missing] if status.blank?
+
+    WORKING_STATUSES.value?(status) ? status : WORKING_STATUSES[:missing]
+  end
+
+  def working_refreshing?
+    working_status_key == WORKING_STATUSES[:refreshing]
+  end
+
+  def working_failed?
+    working_status_key == WORKING_STATUSES[:failed]
+  end
+
+  def working_fresh?
+    working_available? && working_status_key == WORKING_STATUSES[:fresh]
+  end
+
+  def working_viewer_token
+    [working_manifest_hash, working_rendered_at&.utc&.to_i].compact.join("-").presence || "missing"
+  end
+
+  def working_refresh_locked?
+    return false unless working_refreshing?
+
+    reference_time = working_refresh_started_at || working_refresh_requested_at
+    reference_time.present? && reference_time >= WORKING_REFRESH_TIMEOUT.ago
+  end
+
+  def request_working_refresh!
+    with_lock do
+      reload
+      return false if working_refresh_locked?
+
+      update_columns(
+        working_status: WORKING_STATUSES[:refreshing],
+        working_refresh_requested_at: Time.current,
+        working_refresh_started_at: nil,
+        working_refresh_error: nil
+      )
+    end
+
+    true
+  end
+
+  def mark_working_refresh_started!
+    update_columns(
+      working_status: WORKING_STATUSES[:refreshing],
+      working_refresh_started_at: Time.current,
+      working_refresh_error: nil
+    )
+  end
+
+  def mark_working_fresh!(attrs = {})
+    update_columns(
+      {
+        working_status: WORKING_STATUSES[:fresh],
+        working_refresh_requested_at: nil,
+        working_refresh_started_at: nil,
+        working_refresh_error: nil
+      }.merge(attrs)
+    )
+  end
+
+  def mark_working_failed!(message)
+    update_columns(
+      working_status: WORKING_STATUSES[:failed],
+      working_refresh_requested_at: nil,
+      working_refresh_started_at: nil,
+      working_refresh_error: message.to_s.presence
+    )
+  end
+
+  def clear_working_copy!
+    update_columns(
+      working_storage_uri: nil,
+      working_manifest_hash: nil,
+      working_checksum_sha256: nil,
+      working_page_count: nil,
+      working_file_size: nil,
+      working_rendered_at: nil,
+      working_status: WORKING_STATUSES[:missing],
+      working_refresh_requested_at: nil,
+      working_refresh_started_at: nil,
+      working_refresh_error: nil
+    )
+  end
+
   def self.next_version_for(logical_id)
     where(logical_id: logical_id).maximum(:version).to_i + 1
   end
@@ -153,6 +262,7 @@ class Document < ApplicationRecord
       self.source ||= "packet"
       self.is_latest = false if definition_placeholder?
       self.packet_schema_version ||= PACKET_SCHEMA_VERSIONS[:legacy]
+      self.working_status ||= WORKING_STATUSES[:missing]
     else
       self.source ||= "staff_upload"
     end

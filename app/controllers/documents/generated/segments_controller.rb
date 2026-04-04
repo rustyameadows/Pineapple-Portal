@@ -11,6 +11,7 @@ module Documents
         placement = placements_scope.new(source: source)
 
         if source.errors.none? && placement.save
+          enqueue_working_refresh_for_documents(@document)
           redirect_to builder_path, notice: "Packet page added."
         else
           message = source.errors.full_messages + placement.errors.full_messages
@@ -22,6 +23,7 @@ module Documents
         assign_source_payload(@placement.source, segment_params)
 
         if @placement.source.errors.empty? && @placement.source.save
+          enqueue_working_refresh_for_source(@placement.source)
           redirect_to builder_path, notice: "Packet page updated."
         else
           redirect_to builder_path, alert: @placement.source.errors.full_messages.to_sentence
@@ -31,6 +33,11 @@ module Documents
       def destroy
         @placement.destroy
         resequence_placements!
+        if placements_scope.exists?
+          enqueue_working_refresh_for_documents(@document)
+        else
+          @document.clear_working_copy!
+        end
         redirect_to builder_path, notice: "Packet page removed."
       end
 
@@ -43,6 +50,7 @@ module Documents
           placements_scope.create!(source: source, position: new_position)
           resequence_placements!
         end
+        enqueue_working_refresh_for_documents(@document)
 
         redirect_to builder_path, notice: "Page duplicated."
       end
@@ -65,6 +73,7 @@ module Documents
 
           resequence_placements!
         end
+        enqueue_working_refresh_for_documents(@document)
 
         head :ok
       end
@@ -372,6 +381,18 @@ module Documents
                               else
                                 []
                               end
+      end
+
+      def enqueue_working_refresh_for_documents(*documents)
+        Array(documents).flatten.compact.uniq.each do |document|
+          Documents::Generated::WorkingCopyRefresh.enqueue(document)
+        end
+      end
+
+      def enqueue_working_refresh_for_source(source)
+        document_logical_ids = source.packet_placements.pluck(:document_logical_id)
+        documents = @event.documents.generated.where(logical_id: document_logical_ids, storage_uri: nil)
+        enqueue_working_refresh_for_documents(documents)
       end
     end
   end

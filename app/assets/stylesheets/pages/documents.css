@@ -797,6 +797,32 @@
   overflow: hidden;
 }
 
+.generated-builder__pdf-status {
+  margin-bottom: 0.9rem;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 42%, white);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--color-light-cream) 86%, white);
+}
+
+.generated-builder__pdf-status[hidden] {
+  display: none;
+}
+
+.generated-builder__pdf-status strong {
+  color: var(--color-dark-brown);
+  font-size: 0.92rem;
+}
+
+.generated-builder__pdf-status p {
+  margin: 0;
+  color: var(--color-brown);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 .generated-builder__pdf-frame {
   width: 100%;
   min-height: 60rem;

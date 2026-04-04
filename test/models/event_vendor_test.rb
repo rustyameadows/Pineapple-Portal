@@ -68,7 +68,7 @@ class EventVendorTest < ActiveSupport::TestCase
     assert_equal "@djcollective", vendor.social_handle
   end
 
-  test "updates enqueue packet refreshes for the event" do
+  test "vendor updates no longer enqueue the broad event refresh job" do
     vendor = event_vendors(:catering)
     enqueued_event_ids = []
 
@@ -76,6 +76,6 @@ class EventVendorTest < ActiveSupport::TestCase
       vendor.update!(social_handle: "@sunshineplus")
     end
 
-    assert_equal [@event.id], enqueued_event_ids
+    assert_equal [], enqueued_event_ids
   end
 end

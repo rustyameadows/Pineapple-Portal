@@ -33,18 +33,22 @@ module Documents
       end
 
       test "creates text page packet page with normalized markdown option" do
+        enqueued_logical_ids = []
+
         assert_difference("GeneratedPacketSource.count", 1) do
           assert_difference("GeneratedPacketPlacement.count", 1) do
-            post event_documents_generated_segments_url(@event, @document.logical_id), params: {
-              segment: {
-                view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
-                title: "General Notes",
-                options: {
-                  body_markdown: "Line 1\r\nLine 2",
-                  ignored_key: "ignore me"
+            Documents::Generated::WorkingCopyRefresh.stub :enqueue, ->(document) { enqueued_logical_ids << document.logical_id; true } do
+              post event_documents_generated_segments_url(@event, @document.logical_id), params: {
+                segment: {
+                  view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+                  title: "General Notes",
+                  options: {
+                    body_markdown: "Line 1\r\nLine 2",
+                    ignored_key: "ignore me"
+                  }
                 }
               }
-            }
+            end
           end
         end
 
@@ -53,25 +57,31 @@ module Documents
 
         assert_equal DocumentSegment::TEXT_PAGE_VIEW_KEY, created.html_view_key
         assert_equal({ "body_markdown" => "Line 1\nLine 2" }, created.html_options)
+        assert_equal [@document.logical_id], enqueued_logical_ids
       end
 
       test "updates text page packet page and drops unknown option keys" do
-        patch event_documents_generated_segment_url(@event, @document.logical_id, @placement), params: {
-          segment: {
-            title: "General Notes Updated",
-            view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
-            options: {
-              body_markdown: "Updated\rnotes",
-              extra: "remove me"
+        enqueued_logical_ids = []
+
+        Documents::Generated::WorkingCopyRefresh.stub :enqueue, ->(document) { enqueued_logical_ids << document.logical_id; true } do
+          patch event_documents_generated_segment_url(@event, @document.logical_id, @placement), params: {
+            segment: {
+              title: "General Notes Updated",
+              view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+              options: {
+                body_markdown: "Updated\rnotes",
+                extra: "remove me"
+              }
             }
           }
-        }
+        end
 
         assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
         @placement.reload
 
         assert_equal "General Notes Updated", @placement.source.title
         assert_equal({ "body_markdown" => "Updated\nnotes" }, @placement.source.html_options)
+        assert_equal [@document.logical_id], enqueued_logical_ids
       end
 
       test "updates event overview packet page without persisting markdown options" do
@@ -86,22 +96,27 @@ module Documents
           position: 2
         )
 
-        patch event_documents_generated_segment_url(@event, @document.logical_id, overview_placement), params: {
-          segment: {
-            title: "Event Overview Updated",
-            view_key: DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
-            options: {
-              body_markdown: "ignore this",
-              extra: "ignore this too"
+        enqueued_logical_ids = []
+
+        Documents::Generated::WorkingCopyRefresh.stub :enqueue, ->(document) { enqueued_logical_ids << document.logical_id; true } do
+          patch event_documents_generated_segment_url(@event, @document.logical_id, overview_placement), params: {
+            segment: {
+              title: "Event Overview Updated",
+              view_key: DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
+              options: {
+                body_markdown: "ignore this",
+                extra: "ignore this too"
+              }
             }
           }
-        }
+        end
 
         assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
         overview_placement.reload
 
         assert_equal "Event Overview Updated", overview_placement.source.title
         assert_equal({}, overview_placement.source.html_options)
+        assert_equal [@document.logical_id], enqueued_logical_ids
       end
 
     end

@@ -4,6 +4,7 @@ require "digest"
 module Documents
   module Generated
     class PacketBundle
+      PreparedEntries = Struct.new(:entries, :rendered_entries, :manifest_hash, keyword_init: true)
       Result = Struct.new(
         :entries,
         :manifest_hash,
@@ -23,6 +24,27 @@ module Documents
       end
 
       def call
+        prepared = prepare
+        build_from_prepared(prepared)
+      end
+
+      def build_from_prepared(prepared)
+        compiled_pdf = stitch_segments(prepared.rendered_entries)
+        compiled_pdf = apply_page_numbers(compiled_pdf) if page_numbers
+        totals = derive_totals(compiled_pdf)
+
+        Result.new(
+          entries: prepared.entries,
+          manifest_hash: prepared.manifest_hash,
+          pdf_data: compiled_pdf,
+          page_count: totals[:page_count],
+          file_size: totals[:file_size],
+          checksum_md5: totals[:checksum_md5],
+          checksum_sha256: totals[:checksum_sha256]
+        )
+      end
+
+      def prepare
         check_cancelled!
         entries = ordered_entries
         raise Compiler::CompileError, "No segments configured" if entries.empty?
@@ -34,29 +56,10 @@ module Documents
 
         check_cancelled!
 
-        manifest = rendered_entries.map do |entry|
-          {
-            placement_id: placement_id_for(entry[:entry]),
-            source_id: source_for(entry[:entry]).id,
-            render_hash: entry[:render_hash],
-            page_count: entry[:page_count],
-            file_size: entry[:file_size]
-          }.compact
-        end
-        manifest_hash = Digest::SHA256.hexdigest(JSON.dump(manifest))
-
-        compiled_pdf = stitch_segments(rendered_entries)
-        compiled_pdf = apply_page_numbers(compiled_pdf) if page_numbers
-        totals = derive_totals(compiled_pdf)
-
-        Result.new(
+        PreparedEntries.new(
           entries: entries,
-          manifest_hash: manifest_hash,
-          pdf_data: compiled_pdf,
-          page_count: totals[:page_count],
-          file_size: totals[:file_size],
-          checksum_md5: totals[:checksum_md5],
-          checksum_sha256: totals[:checksum_sha256]
+          rendered_entries: rendered_entries,
+          manifest_hash: manifest_hash_for(rendered_entries)
         )
       end
 
@@ -102,10 +105,20 @@ module Documents
         {
           entry: entry,
           source: source,
-          render_hash: source.render_hash,
-          page_count: source.cached_page_count,
-          file_size: source.cached_file_size
+          render_hash: source.render_hash
         }
+      end
+
+      def manifest_hash_for(rendered_entries)
+        manifest = rendered_entries.map do |entry|
+          {
+            entry_key: entry_key_for(entry[:entry]),
+            source_key: source_key_for(source_for(entry[:entry])),
+            render_hash: entry[:render_hash]
+          }
+        end
+
+        Digest::SHA256.hexdigest(JSON.dump(manifest))
       end
 
       def stitch_segments(rendered_entries)
@@ -166,6 +179,18 @@ module Documents
 
       def placement_id_for(entry)
         entry.respond_to?(:source) ? entry.id : nil
+      end
+
+      def entry_key_for(entry)
+        if entry.respond_to?(:source)
+          "placement:#{entry.id}"
+        else
+          "segment:#{entry.id}"
+        end
+      end
+
+      def source_key_for(source)
+        "#{source.class.name}:#{source.id}"
       end
 
       def check_cancelled!

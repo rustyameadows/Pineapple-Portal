@@ -11,8 +11,6 @@ class EventTeamMember < ApplicationRecord
 
   before_validation :assign_position, on: :create
   before_validation :assign_role_from_user
-  after_commit :enqueue_generated_packet_refresh, on: %i[create update destroy], if: :generated_packet_refresh_needed?
-
   validates :user_id, uniqueness: { scope: :event_id }
   validates :position, numericality: { greater_than_or_equal_to: 0, allow_nil: false }
   validate :user_matches_member_role
@@ -80,18 +78,4 @@ class EventTeamMember < ApplicationRecord
     errors.add(:lead_planner, "is only available for planner team members")
   end
 
-  def generated_packet_refresh_needed?
-    destroyed? ||
-      previously_new_record? ||
-      saved_change_to_member_role? ||
-      saved_change_to_position? ||
-      saved_change_to_lead_planner? ||
-      saved_change_to_user_id?
-  end
-
-  def enqueue_generated_packet_refresh
-    return unless event_id.present?
-
-    Documents::Generated::RefreshEventPacketCachesJob.perform_later(event_id)
-  end
 end

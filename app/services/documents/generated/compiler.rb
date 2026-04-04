@@ -25,9 +25,9 @@ module Documents
 
       def call
         check_cancelled!
-        bundle = packet_bundle.call
-        totals = derive_totals(bundle.pdf_data)
-        storage_key = persist_compiled_pdf(bundle.pdf_data, totals[:version], totals[:filename])
+        compiled = compiled_snapshot_payload
+        totals = derive_totals(compiled[:pdf_data])
+        storage_key = persist_compiled_pdf(compiled[:pdf_data], totals[:version], totals[:filename])
 
         compiled_document = definition_document.event.documents.create!(
           logical_id: definition_document.logical_id,
@@ -42,7 +42,7 @@ module Documents
           content_type: "application/pdf",
           source: Document::SOURCE_KEYS.first,
           doc_kind: Document::DOC_KINDS[:generated],
-          manifest_hash: bundle.manifest_hash,
+          manifest_hash: compiled[:manifest_hash],
           build_id: build.build_id,
           built_by_user: built_by_user,
           compiled_page_count: totals[:page_count]
@@ -51,13 +51,13 @@ module Documents
         definition_document.update!(
           build_id: build.build_id,
           built_by_user: built_by_user,
-          manifest_hash: bundle.manifest_hash,
+          manifest_hash: compiled[:manifest_hash],
           compiled_page_count: totals[:page_count]
         )
 
         Result.new(
           compiled_document: compiled_document,
-          manifest_hash: bundle.manifest_hash,
+          manifest_hash: compiled[:manifest_hash],
           page_count: totals[:page_count],
           file_size: totals[:file_size],
           checksum_md5: totals[:checksum_md5],
@@ -68,6 +68,19 @@ module Documents
       private
 
       attr_reader :definition_document, :build, :built_by_user, :segment_storage, :document_storage, :page_numbers
+
+      def compiled_snapshot_payload
+        manifest = PacketManifest.new(definition_document: definition_document).call
+        live_pdf = current_working_pdf(manifest)
+
+        if live_pdf.present?
+          pdf_data = page_numbers ? apply_page_numbers(live_pdf) : live_pdf
+          return { pdf_data: pdf_data, manifest_hash: manifest.manifest_hash }
+        end
+
+        bundle = packet_bundle.call
+        { pdf_data: bundle.pdf_data, manifest_hash: bundle.manifest_hash }
+      end
 
       def build_filename
         base = definition_document.title.to_s.parameterize
@@ -123,6 +136,37 @@ module Documents
           page_numbers: page_numbers,
           check_cancelled: method(:check_cancelled!)
         )
+      end
+
+      def current_working_pdf(manifest)
+        return unless definition_document.working_available?
+        return unless definition_document.working_manifest_hash == manifest.manifest_hash
+
+        data = document_storage.download(definition_document.working_storage_uri)
+        buffer = data.respond_to?(:read) ? data.read : data
+        buffer = buffer.to_s
+        buffer.force_encoding(Encoding::BINARY)
+        buffer.presence
+      rescue StandardError
+        nil
+      end
+
+      def apply_page_numbers(compiled_pdf)
+        pdf = CombinePDF.parse(compiled_pdf)
+        pdf.number_pages(**page_number_options)
+        pdf.to_pdf
+      end
+
+      def page_number_options
+        {
+          start_at: 1,
+          number_format: "pg. %s",
+          location: :bottom_right,
+          font_size: 10,
+          margin_from_side: 10,
+          y: 12,
+          text_align: :right
+        }
       end
 
       class CompileError < StandardError; end

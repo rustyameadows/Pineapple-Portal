@@ -27,7 +27,11 @@ module Documents
             working_checksum_sha256: nil,
             working_page_count: nil,
             working_file_size: nil,
-            working_rendered_at: nil
+            working_rendered_at: nil,
+            working_status: Document::WORKING_STATUSES[:missing],
+            working_refresh_requested_at: nil,
+            working_refresh_started_at: nil,
+            working_refresh_error: nil
           )
         end
 

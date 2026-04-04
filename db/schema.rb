@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_03_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_03_123000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -248,6 +248,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_03_120000) do
     t.integer "working_page_count"
     t.integer "working_file_size"
     t.datetime "working_rendered_at"
+    t.string "working_status", default: "missing", null: false
+    t.datetime "working_refresh_requested_at"
+    t.datetime "working_refresh_started_at"
+    t.text "working_refresh_error"
     t.index ["build_id"], name: "index_documents_on_build_id"
     t.index ["client_visible"], name: "index_documents_on_client_visible"
     t.index ["doc_kind"], name: "index_documents_on_doc_kind"
@@ -259,6 +263,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_03_120000) do
     t.index ["source"], name: "index_documents_on_source"
     t.index ["template_source_logical_id"], name: "index_documents_on_template_source_logical_id"
     t.index ["working_manifest_hash"], name: "index_documents_on_working_manifest_hash"
+    t.index ["working_status"], name: "index_documents_on_working_status"
     t.check_constraint "size_bytes > 0", name: "documents_size_positive"
     t.check_constraint "version > 0", name: "documents_version_positive"
   end

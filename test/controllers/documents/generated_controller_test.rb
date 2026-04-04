@@ -178,6 +178,88 @@ module Documents
       assert_includes response.body, "No packet pages yet. Add a canonical, page, or upload to start the live PDF."
     end
 
+    test "working status returns the current live viewer path when the working copy is fresh" do
+      placement = create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+      source = placement.source
+      render_hash = "fresh-hash"
+      manifest_hash = placement_manifest_hash(placement, render_hash)
+
+      source.update!(
+        render_hash: render_hash,
+        cached_pdf_key: "segments/fresh.pdf",
+        cached_pdf_generated_at: Time.current,
+        cached_page_count: 1,
+        cached_file_size: 128
+      )
+      @document.update!(
+        working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
+        working_manifest_hash: manifest_hash,
+        working_checksum_sha256: "working-sha",
+        working_page_count: 1,
+        working_file_size: 1024,
+        working_rendered_at: Time.current,
+        working_status: Document::WORKING_STATUSES[:fresh]
+      )
+
+      SegmentHasher.stub :call, ->(_source) { render_hash } do
+        get working_status_event_documents_generated_url(@event, @document.logical_id)
+      end
+
+      assert_response :success
+      payload = JSON.parse(response.body)
+      assert_equal "fresh", payload["status"]
+      assert_equal true, payload["working_available"]
+      assert_includes payload["viewer_path"], working_pdf_event_documents_generated_path(@event, @document.logical_id)
+    end
+
+    test "working pdf redirects to the last live copy while a refresh is pending" do
+      placement = create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+      source = placement.source
+
+      source.update!(
+        render_hash: "stale-hash",
+        cached_pdf_key: "segments/stale.pdf",
+        cached_pdf_generated_at: Time.current,
+        cached_page_count: 1,
+        cached_file_size: 128
+      )
+      @document.update!(
+        working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
+        working_manifest_hash: "older-manifest",
+        working_checksum_sha256: "working-sha",
+        working_page_count: 1,
+        working_file_size: 1024,
+        working_rendered_at: Time.current,
+        working_status: Document::WORKING_STATUSES[:refreshing]
+      )
+
+      Documents::Generated::WorkingCopyRefresh.stub :enqueue, true do
+        SegmentHasher.stub :call, ->(_source) { "new-hash" } do
+          storage = Struct.new(:url) do
+            def presigned_download_url(key:)
+              url
+            end
+          end.new("https://example.test/live.pdf")
+
+          R2::Storage.stub :new, storage do
+            get working_pdf_event_documents_generated_url(@event, @document.logical_id)
+          end
+        end
+      end
+
+      assert_redirected_to "https://example.test/live.pdf#view=Fit"
+    end
+
     test "show renders a loading shell for the live pdf frame" do
       get event_documents_generated_url(@event, @document.logical_id)
 
@@ -186,6 +268,43 @@ module Documents
       assert_select ".generated-builder__pdf-loading", count: 1
       assert_select "[data-generated-pdf-frame-target='message']", text: /Preparing live PDF|Refreshing live PDF/
       assert_select "iframe.generated-builder__pdf-frame[data-action='load->generated-pdf-frame#frameLoaded']", count: 1
+      assert_select "[data-generated-pdf-frame-status-url-value]", count: 1
+    end
+
+    test "show renders a non blocking refresh banner while a newer live pdf is preparing" do
+      create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+      source = placement.source
+
+      source.update!(
+        render_hash: "stale-hash",
+        cached_pdf_key: "segments/stale.pdf",
+        cached_pdf_generated_at: Time.current,
+        cached_page_count: 1,
+        cached_file_size: 128
+      )
+      @document.update!(
+        working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
+        working_manifest_hash: "older-manifest",
+        working_checksum_sha256: "working-sha",
+        working_page_count: 1,
+        working_file_size: 1024,
+        working_rendered_at: Time.current,
+        working_status: Document::WORKING_STATUSES[:refreshing],
+        working_refresh_started_at: Time.current
+      )
+
+      SegmentHasher.stub :call, ->(_source) { "new-hash" } do
+        get event_documents_generated_url(@event, @document.logical_id)
+      end
+
+      assert_response :success
+      assert_select ".generated-builder__pdf-status", text: /A newer live PDF is being prepared/
+      assert_select ".generated-builder__pdf-status", text: /Showing the last live version until the refreshed packet is ready/
     end
 
     test "edit renders packet settings and delete controls" do
@@ -356,6 +475,16 @@ module Documents
         content_type: "application/pdf",
         built_by_user: @user
       )
+    end
+
+    def placement_manifest_hash(placement, render_hash)
+      Digest::SHA256.hexdigest(JSON.dump([
+        {
+          entry_key: "placement:#{placement.id}",
+          source_key: "#{placement.source.class.name}:#{placement.source.id}",
+          render_hash: render_hash
+        }
+      ]))
     end
   end
 end

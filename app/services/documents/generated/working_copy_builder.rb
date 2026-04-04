@@ -17,13 +17,15 @@ module Documents
       end
 
       def call
-        bundle = PacketBundle.new(
+        packet_bundle = PacketBundle.new(
           definition_document: definition_document,
           segment_storage: segment_storage,
           page_numbers: false
-        ).call
+        )
+        prepared = packet_bundle.prepare
 
-        if working_copy_current?(bundle.manifest_hash)
+        if working_copy_current?(prepared.manifest_hash)
+          definition_document.mark_working_fresh!
           return Result.new(
             storage_key: definition_document.working_storage_uri,
             manifest_hash: definition_document.working_manifest_hash,
@@ -38,9 +40,10 @@ module Documents
           logical_id: definition_document.logical_id,
           filename: build_filename
         )
+        bundle = packet_bundle.build_from_prepared(prepared)
         document_storage.upload_io(storage_key, bundle.pdf_data, content_type: "application/pdf")
 
-        definition_document.update!(
+        definition_document.mark_working_fresh!(
           working_storage_uri: storage_key,
           working_manifest_hash: bundle.manifest_hash,
           working_checksum_sha256: bundle.checksum_sha256,

@@ -1,8 +1,8 @@
 module Documents
   class GeneratedController < ApplicationController
     before_action :set_event
-    before_action :set_generated_document, only: %i[show edit update destroy compile working_pdf]
-    before_action :ensure_source_backed_document!, only: %i[show edit update compile working_pdf]
+    before_action :set_generated_document, only: %i[show edit update destroy compile working_pdf working_status]
+    before_action :ensure_source_backed_document!, only: %i[show edit update compile working_pdf working_status]
 
     def index
       @manifest_entries = build_manifest_entries
@@ -38,6 +38,7 @@ module Documents
 
     def show
       load_document_context
+      @working_copy = current_working_copy_access
     end
 
     def edit
@@ -67,18 +68,50 @@ module Documents
     end
 
     def working_pdf
-      if @document.packet_placements.none?
+      access = current_working_copy_access
+
+      if access.empty?
         render_working_placeholder("No packet pages yet. Add a canonical, page, or upload to start the live PDF.")
         return
       end
 
-      result = Documents::Generated::WorkingCopyBuilder.new(definition_document: @document).call
-      url = R2::Storage.new.presigned_download_url(key: result.storage_key)
-      redirect_to pdf_viewer_url(url), allow_other_host: true
-    rescue Documents::Generated::Compiler::CompileError => e
-      render_working_placeholder(e.message)
+      if access.working_available
+        url = R2::Storage.new.presigned_download_url(key: @document.working_storage_uri)
+        redirect_to pdf_viewer_url(url), allow_other_host: true
+        return
+      end
+
+      message = if access.failed?
+                  access.refresh_error.presence || "Unable to refresh the live PDF right now."
+                else
+                  "This packet is preparing its live PDF. Leave the page open and it will appear automatically."
+                end
+
+      render_working_placeholder(message)
     rescue StandardError => e
       render_working_placeholder("Unable to render the working PDF: #{e.message}")
+    end
+
+    def working_status
+      access = current_working_copy_access
+
+      render json: {
+        status: access.status,
+        working_available: access.working_available,
+        rendered_at: access.rendered_at&.utc&.iso8601,
+        refresh_error: access.refresh_error,
+        viewer_token: access.viewer_token,
+        viewer_path: (working_pdf_event_documents_generated_path(@event, @document.logical_id, v: access.viewer_token) if access.working_available)
+      }
+    rescue StandardError => e
+      render json: {
+        status: "failed",
+        working_available: @document.working_available?,
+        rendered_at: @document.working_rendered_at&.utc&.iso8601,
+        refresh_error: e.message,
+        viewer_token: @document.working_viewer_token,
+        viewer_path: (working_pdf_event_documents_generated_path(@event, @document.logical_id, v: @document.working_viewer_token) if @document.working_available?)
+      }
     end
 
     def compile
@@ -112,6 +145,7 @@ module Documents
 
     def add_default_packets
       created = Documents::Generated::DefaultPacketBuilder.new(event: @event, built_by_user: current_user).call
+      created.each { |packet| Documents::Generated::WorkingCopyRefresh.enqueue(packet) }
       message = if created.any?
                   "Added #{created.size} default packet#{'s' if created.size != 1}."
                 else
@@ -296,6 +330,12 @@ module Documents
 
       Documents::Generated::LegacyPacketMigrator.new(document: @document).call
       @document.reload
+    end
+
+    def current_working_copy_access
+      @current_working_copy_access ||= Documents::Generated::WorkingCopyAccess.new(
+        definition_document: @document
+      ).call
     end
 
     def render_working_placeholder(message)

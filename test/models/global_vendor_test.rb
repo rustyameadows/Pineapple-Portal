@@ -1,7 +1,7 @@
 require "test_helper"
 
 class GlobalVendorTest < ActiveSupport::TestCase
-  test "updates enqueue packet refreshes for linked event vendors" do
+  test "updates no longer enqueue the broad event refresh job" do
     event = events(:one)
     global_vendor = GlobalVendor.create!(
       name: "Global Vendor",
@@ -32,6 +32,6 @@ class GlobalVendorTest < ActiveSupport::TestCase
       global_vendor.update!(default_social_handle: "updatedvendor")
     end
 
-    assert_equal [event.id], enqueued_event_ids
+    assert_equal [], enqueued_event_ids
   end
 end

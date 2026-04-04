@@ -35,7 +35,13 @@
             <div class="generated-builder__workspace-head">
               <div>
                 <h2>Live Working PDF</h2>
-                <p class="generated-builder__hint">This view reflects the current packet order and shared-source content without creating a saved version.</p>
+                <p class="generated-builder__hint">
+                  <% if @working_copy&.rendered_at.present? %>
+                    Last live update <%= @working_copy.rendered_at.to_fs(:long) %>. We’ll keep this preview current without creating a saved version.
+                  <% else %>
+                    This view reflects the current packet order and shared-source content without creating a saved version.
+                  <% end %>
+                </p>
               </div>
               <div class="generated-builder__workspace-actions">
                 <%= link_to "Open live PDF",
@@ -45,12 +51,41 @@
                             rel: "noopener" %>
               </div>
             </div>
-            <div class="generated-builder__pdf-shell" data-controller="generated-pdf-frame">
-              <div class="generated-builder__pdf-loading" data-generated-pdf-frame-target="loading">
+            <div class="generated-builder__pdf-status"
+                 data-generated-pdf-frame-target="banner"
+                 <%= "hidden" unless @working_copy&.working_available && (@working_copy.refreshing? || @working_copy.failed?) %>>
+              <strong data-generated-pdf-frame-target="bannerMessage">
+                <% if @working_copy&.failed? %>
+                  Live PDF refresh failed.
+                <% else %>
+                  A newer live PDF is being prepared.
+                <% end %>
+              </strong>
+              <p data-generated-pdf-frame-target="bannerDetail">
+                <% if @working_copy&.failed? %>
+                  <%= @working_copy.refresh_error.presence || "Showing the last live version while we wait for another refresh." %>
+                <% else %>
+                  Showing the last live version until the refreshed packet is ready.
+                <% end %>
+              </p>
+            </div>
+            <div class="generated-builder__pdf-shell"
+                 data-controller="generated-pdf-frame"
+                 data-generated-pdf-frame-status-url-value="<%= working_status_event_documents_generated_path(@event, @document.logical_id) %>"
+                 data-generated-pdf-frame-initial-status-value="<%= @working_copy&.status || "missing" %>"
+                 data-generated-pdf-frame-initial-working-available-value="<%= @working_copy&.working_available ? "true" : "false" %>"
+                 data-generated-pdf-frame-initial-viewer-token-value="<%= @working_copy&.viewer_token %>"
+                 data-generated-pdf-frame-initial-refresh-error-value="<%= @working_copy&.refresh_error %>">
+              <div class="generated-builder__pdf-loading"
+                   data-generated-pdf-frame-target="loading"
+                   <%= "hidden" if @working_copy&.working_available %>>
                 <div class="generated-builder__pdf-loading-card">
                   <div class="generated-builder__pdf-loading-indicator" aria-hidden="true"></div>
                   <div class="generated-builder__pdf-loading-copy">
-                    <% if @document.working_rendered_at.present? %>
+                    <% if @working_copy&.failed? && !@working_copy&.working_available %>
+                      <strong data-generated-pdf-frame-target="message">Unable to prepare live PDF.</strong>
+                      <p data-generated-pdf-frame-target="detail"><%= @working_copy.refresh_error.presence || "Try again in a moment." %></p>
+                    <% elsif @working_copy&.rendered_at.present? && !@working_copy&.working_available %>
                       <strong data-generated-pdf-frame-target="message">Refreshing live PDF...</strong>
                       <p data-generated-pdf-frame-target="detail">We’re rebuilding the working preview with the latest packet content.</p>
                     <% else %>
@@ -61,7 +96,7 @@
                 </div>
               </div>
 
-              <iframe src="<%= working_pdf_event_documents_generated_path(@event, @document.logical_id) %>"
+              <iframe src="<%= @working_copy&.working_available ? working_pdf_event_documents_generated_path(@event, @document.logical_id, v: @working_copy.viewer_token) : "about:blank" %>"
                       title="Live working packet PDF"
                       class="generated-builder__pdf-frame"
                       data-generated-pdf-frame-target="frame"

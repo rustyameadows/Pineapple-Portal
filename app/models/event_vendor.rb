@@ -13,8 +13,6 @@ class EventVendor < ApplicationRecord
   before_validation :assign_position, on: :create
   before_validation :apply_contacts_attributes
   before_validation :ensure_contacts_default
-  after_commit :enqueue_generated_packet_refresh, on: %i[create update destroy], if: :generated_packet_refresh_needed?
-
   validates :name, presence: true, uniqueness: { scope: :event_id, case_sensitive: false }
   validates :position, numericality: { greater_than_or_equal_to: 0, allow_nil: false }
   validates :client_visible, inclusion: { in: [true, false] }
@@ -107,20 +105,4 @@ class EventVendor < ApplicationRecord
     errors.add(:contacts_jsonb, "must be an array of contact hashes")
   end
 
-  def generated_packet_refresh_needed?
-    destroyed? ||
-      previously_new_record? ||
-      saved_change_to_name? ||
-      saved_change_to_vendor_type? ||
-      saved_change_to_social_handle? ||
-      saved_change_to_contacts_jsonb? ||
-      saved_change_to_global_vendor_id? ||
-      saved_change_to_position?
-  end
-
-  def enqueue_generated_packet_refresh
-    return unless event_id.present?
-
-    Documents::Generated::RefreshEventPacketCachesJob.perform_later(event_id)
-  end
 end

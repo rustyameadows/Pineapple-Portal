@@ -24,8 +24,6 @@ class CalendarItem < ApplicationRecord
 
   before_validation :default_relative_offset
   before_save :sync_tag_summary
-  after_commit :enqueue_generated_packet_refresh, on: %i[create update destroy], if: :generated_packet_refresh_needed?
-
   STATUSES = {
     planned: "planned",
     to_be_confirmed: "to_be_confirmed",
@@ -150,14 +148,4 @@ class CalendarItem < ApplicationRecord
     value
   end
 
-  def generated_packet_refresh_needed?
-    event_calendar&.master?
-  end
-
-  def enqueue_generated_packet_refresh
-    event_id = event_calendar&.event_id
-    return unless event_id.present?
-
-    Documents::Generated::RefreshEventPacketCachesJob.perform_later(event_id)
-  end
 end

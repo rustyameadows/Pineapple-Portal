@@ -163,6 +163,7 @@ post "upload_failures", to: "upload_failures#create"
           post :compile
           post :snapshot, action: :compile
           get :working_pdf
+          get :working_status
           post :duplicate
           post :mark_template
           delete :unmark_template

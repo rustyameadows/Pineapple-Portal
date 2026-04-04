@@ -10,12 +10,18 @@ module Documents
       end
 
       class DocumentStorageStub
-        attr_reader :uploaded_key, :uploaded_data, :uploaded_content_type
+        attr_accessor :download_data
+        attr_reader :downloaded_key, :uploaded_key, :uploaded_data, :uploaded_content_type
 
         def upload_io(key, data, content_type:)
           @uploaded_key = key
           @uploaded_data = data
           @uploaded_content_type = content_type
+        end
+
+        def download(key)
+          @downloaded_key = key
+          StringIO.new(download_data.to_s)
         end
       end
 
@@ -128,6 +134,24 @@ module Documents
         assert_not result.compiled_document.packets_portal_visible?
       end
 
+      test "compiler promotes the current live working pdf into a snapshot when it is fresh" do
+        manifest_hash = segment_manifest_hash(@segment, "segment-hash")
+
+        @definition_document.update!(
+          working_storage_uri: "documents/#{@event.id}/#{@definition_document.logical_id}/working/generated-packet-working.pdf",
+          working_manifest_hash: manifest_hash,
+          working_rendered_at: Time.current,
+          working_status: Document::WORKING_STATUSES[:fresh]
+        )
+        @document_storage.download_data = "WORKING_PDF"
+
+        result = execute_compiler(page_numbers: false)
+
+        assert_equal @definition_document.working_storage_uri, @document_storage.downloaded_key
+        assert_equal "WORKING_PDF", @document_storage.uploaded_data
+        assert_equal manifest_hash, result.manifest_hash
+      end
+
       private
 
       def execute_compiler(page_numbers:)
@@ -158,6 +182,8 @@ module Documents
         case input
         when "segment-pdf"
           FakeCombinePDF.new(:segment)
+        when "WORKING_PDF"
+          FakeCombinePDF.new(:apply)
         when "PDF_WITHOUT_NUMBERS"
           FakeCombinePDF.new(:apply)
         when "PDF_WITH_NUMBERS"
@@ -165,6 +191,16 @@ module Documents
         else
           FakeCombinePDF.new(:other)
         end
+      end
+
+      def segment_manifest_hash(segment, render_hash)
+        Digest::SHA256.hexdigest(JSON.dump([
+          {
+            entry_key: "segment:#{segment.id}",
+            source_key: "#{segment.class.name}:#{segment.id}",
+            render_hash: render_hash
+          }
+        ]))
       end
     end
   end
