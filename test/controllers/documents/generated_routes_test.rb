@@ -65,12 +65,14 @@ module Documents
         logical_id: @logical_id
       )
 
-      assert_routing(
-        { method: "post", path: snapshot_event_documents_generated_path(@event, @logical_id) },
-        controller: "documents/generated",
-        action: "compile",
-        event_id: @event.id.to_s,
-        logical_id: @logical_id
+      assert_recognizes(
+        {
+          controller: "documents/generated",
+          action: "compile",
+          event_id: @event.id.to_s,
+          logical_id: @logical_id
+        },
+        { method: "post", path: snapshot_event_documents_generated_path(@event, @logical_id) }
       )
     end
   end

@@ -34,6 +34,14 @@ module Documents
         current_hash = "hash-1"
         manifest_hash = placement_manifest_hash(@placement, current_hash)
 
+        @source.update!(
+          render_hash: current_hash,
+          cached_pdf_key: "segments/current.pdf",
+          cached_pdf_generated_at: Time.current,
+          cached_page_count: 1,
+          cached_file_size: 64
+        )
+
         @document.update!(
           working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
           working_manifest_hash: manifest_hash,
@@ -70,7 +78,7 @@ module Documents
             assert result.refreshing?
             assert_equal true, result.working_available
             assert_equal [@document.id], refresh_calls
-            assert_equal Document::WORKING_STATUSES[:refreshing], @document.reload.working_status
+      assert_equal Document::WORKING_STATUSES[:refreshing], @document.reload.working_status
           end
         end
       end

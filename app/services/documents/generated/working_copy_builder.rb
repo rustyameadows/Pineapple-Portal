@@ -10,18 +10,14 @@ module Documents
         keyword_init: true
       )
 
-      def initialize(definition_document:, segment_storage: R2Storage.new, document_storage: R2::Storage.new)
+      def initialize(definition_document:, segment_storage: nil, document_storage: nil)
         @definition_document = definition_document
         @segment_storage = segment_storage
         @document_storage = document_storage
       end
 
       def call
-        packet_bundle = PacketBundle.new(
-          definition_document: definition_document,
-          segment_storage: segment_storage,
-          page_numbers: false
-        )
+        packet_bundle = build_packet_bundle
         prepared = packet_bundle.prepare
 
         if working_copy_current?(prepared.manifest_hash)
@@ -63,7 +59,24 @@ module Documents
 
       private
 
-      attr_reader :definition_document, :segment_storage, :document_storage
+      attr_reader :definition_document
+
+      def build_packet_bundle
+        kwargs = {
+          definition_document: definition_document,
+          page_numbers: false
+        }
+        kwargs[:segment_storage] = @segment_storage if @segment_storage
+        PacketBundle.new(**kwargs)
+      end
+
+      def segment_storage
+        @segment_storage ||= R2Storage.new
+      end
+
+      def document_storage
+        @document_storage ||= R2::Storage.new
+      end
 
       def working_copy_current?(manifest_hash)
         definition_document.working_storage_uri.present? &&
