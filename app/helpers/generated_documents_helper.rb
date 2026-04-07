@@ -258,6 +258,35 @@ module GeneratedDocumentsHelper
     WEDDING_PARTY_REFERENCE_CONTENT.deep_dup
   end
 
+  def generated_wedding_party_reference_milestones(event)
+    calendar = event.run_of_show_calendar
+    timezone = calendar&.timezone.presence || Time.zone.name
+    return { timezone:, groups: [] } unless calendar
+
+    milestone_items = calendar.calendar_items
+                             .includes(:event_calendar_tags, :relative_anchor)
+                             .to_a
+                             .select(&:milestone?)
+                             .sort_by do |item|
+      start_time = item.effective_starts_at&.in_time_zone(timezone)
+      [start_time&.to_f || Float::INFINITY, item.title.to_s.downcase]
+    end
+
+    groups = milestone_items
+               .group_by do |item|
+      start_time = item.effective_starts_at&.in_time_zone(timezone)
+      start_time ? start_time.strftime("%A, %B %-d, %Y") : "Date TBD"
+    end
+               .map do |date_label, items|
+      {
+        date_label:,
+        items:
+      }
+    end
+
+    { timezone:, groups: groups }
+  end
+
   private
 
   def generated_event_overview_vendor_name(vendor)

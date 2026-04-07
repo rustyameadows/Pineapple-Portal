@@ -1,7 +1,7 @@
 require "test_helper"
 
 class WeddingPartyReferenceSectionTest < ActionView::TestCase
-  fixtures :events
+  fixtures :events, :event_calendars, :calendar_items, :event_calendar_tags, :calendar_item_tags
 
   setup do
     @event = events(:one)
@@ -21,11 +21,17 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
 
     view.extend DocumentsHelper
     view.extend GeneratedDocumentsHelper
+    view.extend CalendarHelper
     view.assign(event: @event, segment: @segment)
     view.define_singleton_method(:inline_asset_data_uri) { |_path| "data:image/png;base64,stub" }
   end
 
-  test "renders the wedding party reference sheet structure with stubbed content" do
+  test "renders milestone tagged event items grouped by date in the top section" do
+    milestone_tag = @event.run_of_show_calendar.event_calendar_tags.create!(name: "Milestones", position: 9)
+    calendar_items(:decision_flowers).event_calendar_tags << milestone_tag
+    calendar_items(:ceremony).event_calendar_tags << milestone_tag
+    calendar_items(:afterparty).event_calendar_tags << milestone_tag
+
     render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
 
     assert_select ".generated-template--wedding-party-reference", count: 1
@@ -36,11 +42,31 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details & Transportation"
     assert_select ".generated-template--packet-sheet__section-title", text: "Bride's Side"
     assert_select ".generated-template--packet-sheet__section-title", text: "Groom's Side"
-    assert_select ".generated-template--packet-sheet__subsection-title", text: "Friday, August 29"
-    assert_match(/Ceremony Rehearsal/, rendered)
-    assert_match(/Pierce Arrow Board Room/, rendered)
+    assert_select ".generated-template--packet-sheet__subsection-title", text: "Monday, September 15, 2025"
+    assert_select ".generated-template--packet-sheet__subsection-title", text: "Wednesday, October 1, 2025"
+    assert_match(/Select Florist/, rendered)
+    assert_match(/Ceremony/, rendered)
+    assert_match(/Afterparty/, rendered)
+    assert_match(/Grand Ballroom/, rendered)
+    assert_match(/12:00 PM/, rendered)
+    assert_match(/3:00 PM/, rendered)
+    assert_match(/9:00 PM\*/, rendered)
+    assert_match(/Reviewing proposals/, rendered)
+    assert_match(/Exchange vows and rings\./, rendered)
     assert_match(/Hannah Isakowitz/, rendered)
     assert_match(/Dan Greener/, rendered)
     assert_no_match(/generated-text-columns|:::columns|### Wedding party reference sheet/, rendered)
+  end
+
+  test "shows an empty state when no milestone items are available" do
+    empty_event = Event.create!(name: "Quiet Event")
+
+    view.assign(event: empty_event, segment: @segment)
+    render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--packet-sheet__section-title", text: "Event Timelines"
+    assert_select ".generated-template--packet-sheet__empty", text: /No milestone items are available/
+    assert_select ".generated-template--packet-sheet__section-title", text: "Transportation Details"
+    assert_match(/Guests attending the Rehearsal should meet/, rendered)
   end
 end

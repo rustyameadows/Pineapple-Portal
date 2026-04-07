@@ -4,6 +4,9 @@
 <%= render "generated_documents/sections/packet_sheet_styles" %>
 
 <% content = generated_wedding_party_reference_content %>
+<% milestone_data = generated_wedding_party_reference_milestones(@event) %>
+<% milestone_groups = milestone_data[:groups] %>
+<% milestone_timezone = milestone_data[:timezone] %>
 
 <section class="generated-template generated-template--packet-sheet generated-template--wedding-party-reference">
   <%= render "generated_documents/sections/page_header", segment: @segment %>
@@ -12,30 +15,33 @@
     <div class="generated-template--packet-sheet__two-column">
       <section class="generated-template--packet-sheet__section">
         <h2 class="generated-template--packet-sheet__section-title">Event Timelines</h2>
-        <div class="generated-template--packet-sheet__content">
-          <% content[:event_timelines].each do |day| %>
-            <section class="generated-template--packet-sheet__subsection">
-              <h3 class="generated-template--packet-sheet__subsection-title"><%= day[:day] %></h3>
-              <div class="generated-template--packet-sheet__body">
-                <% day[:entries].each do |entry| %>
+        <% if milestone_groups.any? %>
+          <div class="generated-template--packet-sheet__content">
+            <% milestone_groups.each do |group| %>
+              <section class="generated-template--packet-sheet__subsection">
+                <h3 class="generated-template--packet-sheet__subsection-title"><%= group[:date_label] %></h3>
+                <div class="generated-template--packet-sheet__body">
+                  <% group[:items].each do |item| %>
                   <article>
                     <p class="generated-template--packet-sheet__text">
-                      <strong><%= entry[:title] %></strong><br>
-                      <%= entry[:venue] %><br>
-                      <% if entry[:sublocation].present? %>
-                        <em><%= entry[:sublocation] %></em><br>
+                      <strong><%= item.title %></strong><br>
+                      <% if item.location_name.present? %>
+                        <%= item.location_name %><br>
                       <% end %>
-                      <u><%= entry[:time] %></u>
+                      <u><%= calendar_item_time_only_label_with_marker(item, milestone_timezone) %></u>
                     </p>
-                    <% if entry[:note].present? %>
-                      <p class="generated-template--packet-sheet__text"><em><%= entry[:note] %></em></p>
+                    <% if item.notes.present? %>
+                      <p class="generated-template--packet-sheet__text"><em><%= item.notes %></em></p>
                     <% end %>
                   </article>
                 <% end %>
-              </div>
-            </section>
-          <% end %>
-        </div>
+                </div>
+              </section>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="generated-template--packet-sheet__empty">No milestone items are available for this event yet.</p>
+        <% end %>
       </section>
 
       <section class="generated-template--packet-sheet__section">
