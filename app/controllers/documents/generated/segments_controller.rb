@@ -317,6 +317,7 @@ module Documents
         when DocumentSegment::TEXT_PAGE_VIEW_KEY
           sanitize_markdown_body_options(options)
         when DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
+             DocumentSegment::VENDOR_CONTACTS_VIEW_KEY,
              DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY
           {}
         else

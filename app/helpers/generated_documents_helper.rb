@@ -258,6 +258,22 @@ module GeneratedDocumentsHelper
     end
   end
 
+  def generated_vendor_contacts_groups(event)
+    [
+      {
+        category: "Planning",
+        vendor_name: "Pineapple Productions",
+        rows: generated_vendor_contacts_planner_rows(event)
+      }
+    ] + event.event_vendors.includes(:global_vendor).ordered.map do |vendor|
+      {
+        category: generated_vendor_contacts_visible_value(generated_event_overview_vendor_type(vendor).presence),
+        vendor_name: generated_vendor_contacts_visible_value(generated_event_overview_vendor_name(vendor).presence),
+        rows: generated_vendor_contacts_vendor_rows(vendor)
+      }
+    end
+  end
+
   def generated_packet_rich_text_present?(text)
     text.to_s.strip.present?
   end
@@ -356,6 +372,45 @@ module GeneratedDocumentsHelper
     return if handle.blank?
 
     handle.start_with?("@") ? handle : "@#{handle}"
+  end
+
+  def generated_vendor_contacts_planner_rows(event)
+    rows = event.planner_team_members.includes(:user).ordered_for_display.filter_map do |member|
+      user = member.user
+      next unless user
+
+      {
+        contact: generated_vendor_contacts_visible_value(user.name.to_s.strip.presence),
+        phone: generated_vendor_contacts_visible_value(user.phone_number.to_s.strip.presence)
+      }
+    end
+
+    rows.presence || [ generated_vendor_contacts_blank_row ]
+  end
+
+  def generated_vendor_contacts_vendor_rows(vendor)
+    rows = Array(vendor.contacts).map do |contact|
+      contact_hash = contact.to_h.stringify_keys
+      contact_name = contact_hash["name"].to_s.strip.presence || contact_hash["title"].to_s.strip.presence
+
+      {
+        contact: generated_vendor_contacts_visible_value(contact_name),
+        phone: generated_vendor_contacts_visible_value(contact_hash["phone"].to_s.strip.presence)
+      }
+    end
+
+    rows.presence || [ generated_vendor_contacts_blank_row ]
+  end
+
+  def generated_vendor_contacts_blank_row
+    {
+      contact: "—",
+      phone: "—"
+    }
+  end
+
+  def generated_vendor_contacts_visible_value(value)
+    value.presence || "—"
   end
 
   def render_generated_markdown_segments(markdown_text)

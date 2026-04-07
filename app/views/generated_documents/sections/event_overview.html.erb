@@ -160,9 +160,6 @@
                   <% if vendor[:social_handle].present? %>
                     <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail"><%= vendor[:social_handle] %></p>
                   <% end %>
-                  <% if first_contact&.dig(:phone).present? %>
-                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail generated-template--event-overview__vendor-contact-phone"><%= first_contact[:phone] %></p>
-                  <% end %>
                 </div>
               </div>
 
@@ -179,9 +176,6 @@
                   <div class="generated-template--packet-sheet__grid-cell">
                     <% if vendor[:social_handle].present? %>
                       <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail"><%= vendor[:social_handle] %></p>
-                    <% end %>
-                    <% if contact[:phone].present? %>
-                      <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail generated-template--event-overview__vendor-contact-phone"><%= contact[:phone] %></p>
                     <% end %>
                   </div>
                 </div>

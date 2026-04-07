@@ -88,6 +88,8 @@ module Documents
           planning_team_payload
         when DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
           event_overview_payload
+        when DocumentSegment::VENDOR_CONTACTS_VIEW_KEY
+          vendor_contacts_payload
         when DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY
           wedding_party_reference_payload
         when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
@@ -196,6 +198,42 @@ module Documents
               vendor_type: resolved_vendor_type(vendor),
               social_handle: normalized_social_handle(resolved_vendor_social_handle(vendor)),
               contacts: contacts
+            }
+          end
+        }
+      end
+
+      def vendor_contacts_payload
+        {
+          template_version: DocumentSegment::VENDOR_CONTACTS_TEMPLATE_VERSION,
+          planners: segment.event.planner_team_members.includes(:user).ordered_for_display.filter_map do |member|
+            user = member.user
+            next unless user
+
+            {
+              member_id: member.id,
+              position: member.position,
+              lead_planner: member.lead_planner?,
+              user_id: user.id,
+              name: user.name,
+              title: user.title,
+              email: user.display_email,
+              phone_number: user.phone_number,
+              user_updated_at: user.updated_at&.utc&.iso8601
+            }
+          end,
+          vendors: segment.event.event_vendors.includes(:global_vendor).ordered.map do |vendor|
+            {
+              vendor_id: vendor.id,
+              position: vendor.position,
+              global_vendor_id: vendor.global_vendor_id,
+              vendor_type: resolved_vendor_type(vendor),
+              name: resolved_vendor_name(vendor),
+              contacts: Array(vendor.contacts).map do |contact|
+                contact.to_h.stringify_keys.slice("name", "title", "email", "phone", "notes").transform_values do |value|
+                  value.to_s.strip.presence
+                end
+              end
             }
           end
         }

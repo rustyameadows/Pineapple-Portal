@@ -63,6 +63,12 @@ module Documents
         position: 4,
         options: {}
       )
+      create_page_placement(
+        view_key: DocumentSegment::VENDOR_CONTACTS_VIEW_KEY,
+        title: "Vendor Contacts",
+        position: 5,
+        options: {}
+      )
 
       get event_documents_generated_url(@event, @document.logical_id)
 
@@ -72,6 +78,7 @@ module Documents
       assert_select "textarea[name='segment[options][body_markdown]'][data-generated-markdown-editor-target='source']", count: 2
       assert_select "textarea.generated-builder__overlay-textarea[data-generated-markdown-editor-target='overlay'][name]", count: 0
       assert_select ".generated-builder__hint", text: /live event, planner, and vendor data/, minimum: 1
+      assert_select ".generated-builder__hint", text: /live planner and vendor data/, minimum: 1
       assert_select ".generated-builder__hint", text: /wedding party reference layout with stubbed content/, minimum: 1
     end
 
@@ -148,6 +155,7 @@ module Documents
       assert_select "h2", text: "Reusable pages"
       assert_select "h2", text: "Uploaded packet assets"
       assert_select "td", text: "Event Overview", minimum: 1
+      assert_select "td", text: "Vendor Contacts", minimum: 1
       assert_select "td", text: "Shared Notes", count: 1
       assert_select "td", text: "Ceremony Inserts", count: 1
       assert_select "input[type='submit'][value='Insert into Generated Packet']", minimum: 1

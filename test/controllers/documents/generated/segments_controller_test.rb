@@ -154,6 +154,41 @@ module Documents
         assert_equal [@document.logical_id], enqueued_logical_ids
       end
 
+      test "updates vendor contacts packet page without persisting markdown options" do
+        vendor_contacts_placement = GeneratedPacketPlacement.create!(
+          document_logical_id: @document.logical_id,
+          source: GeneratedPacketSource.build_page_source(
+            event: @event,
+            view_key: DocumentSegment::VENDOR_CONTACTS_VIEW_KEY,
+            title: "Vendor Contacts",
+            options: {}
+          ).tap(&:save!),
+          position: 4
+        )
+
+        enqueued_logical_ids = []
+
+        Documents::Generated::WorkingCopyRefresh.stub :enqueue, ->(document) { enqueued_logical_ids << document.logical_id; true } do
+          patch event_documents_generated_segment_url(@event, @document.logical_id, vendor_contacts_placement), params: {
+            segment: {
+              title: "Vendor Contacts Updated",
+              view_key: DocumentSegment::VENDOR_CONTACTS_VIEW_KEY,
+              options: {
+                body_markdown: "ignore this",
+                extra: "ignore this too"
+              }
+            }
+          }
+        end
+
+        assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+        vendor_contacts_placement.reload
+
+        assert_equal "Vendor Contacts Updated", vendor_contacts_placement.source.title
+        assert_equal({}, vendor_contacts_placement.source.html_options)
+        assert_equal [@document.logical_id], enqueued_logical_ids
+      end
+
     end
   end
 end

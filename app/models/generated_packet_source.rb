@@ -10,6 +10,7 @@ class GeneratedPacketSource < ApplicationRecord
   CANONICAL_KEYS = {
     event_overview: "event_overview",
     planning_team: "planning_team",
+    vendor_contacts: "vendor_contacts",
     run_of_show: "run_of_show",
     family_timeline: "family_timeline",
     production_timeline: "production_timeline",
@@ -27,6 +28,12 @@ class GeneratedPacketSource < ApplicationRecord
       label: "Planning Team",
       description: "Shared planning team page for this event.",
       view_key: "planning_team",
+      options: ->(_event) { {} }
+    },
+    CANONICAL_KEYS[:vendor_contacts] => {
+      label: "Vendor Contacts",
+      description: "Shared vendor contacts page for this event.",
+      view_key: DocumentSegment::VENDOR_CONTACTS_VIEW_KEY,
       options: ->(_event) { {} }
     },
     CANONICAL_KEYS[:run_of_show] => {

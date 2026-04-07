@@ -221,6 +221,9 @@
                   <% elsif segment.html_view_key == DocumentSegment::EVENT_OVERVIEW_VIEW_KEY %>
                     <%= form.hidden_field :view_key, value: segment.html_view_key %>
                     <p class="generated-builder__hint">This page is powered by live event, planner, and vendor data. Update those records in the app to change the sheet.</p>
+                  <% elsif segment.html_view_key == DocumentSegment::VENDOR_CONTACTS_VIEW_KEY %>
+                    <%= form.hidden_field :view_key, value: segment.html_view_key %>
+                    <p class="generated-builder__hint">This page is powered by live planner and vendor data. Update those records in the app to change the sheet.</p>
                   <% elsif segment.html_view_key == DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY %>
                     <%= form.hidden_field :view_key, value: segment.html_view_key %>
                     <p class="generated-builder__hint">This page uses the packet wedding party reference layout with stubbed content for now. It does not use markdown editing.</p>

@@ -10,6 +10,10 @@ module Documents
           @event,
           GeneratedPacketSource::CANONICAL_KEYS[:wedding_party_reference]
         )
+        @vendor_contacts_source = GeneratedPacketSource.ensure_canonical!(
+          @event,
+          GeneratedPacketSource::CANONICAL_KEYS[:vendor_contacts]
+        )
       end
 
       test "event overview hash changes when exposed event metadata changes" do
@@ -115,6 +119,109 @@ module Documents
         calendar_items(:ceremony).update!(transportation_note: "Meet the shuttle at the east entrance.")
 
         refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
+      end
+
+      test "vendor contacts hash changes when planner contact fields change" do
+        original_hash = SegmentHasher.call(@vendor_contacts_source)
+
+        users(:one).update!(phone_number: "555-999-0000")
+
+        refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
+      end
+
+      test "vendor contacts hash changes when planner ordering changes" do
+        @event.event_team_members.create!(
+          user: users(:planner_two),
+          member_role: EventTeamMember::TEAM_ROLES[:planner],
+          lead_planner: false,
+          position: 2,
+          client_visible: false
+        )
+
+        original_hash = SegmentHasher.call(@vendor_contacts_source)
+
+        event_team_members(:two).update!(position: 5)
+        @event.event_team_members.find_by(user: users(:planner_two)).update!(position: 0)
+
+        refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
+      end
+
+      test "vendor contacts hash changes when vendor contact fields change" do
+        original_hash = SegmentHasher.call(@vendor_contacts_source)
+
+        event_vendors(:catering).update!(
+          contacts_jsonb: [
+            {
+              name: "Maria Cater",
+              title: "Account Manager",
+              email: "maria@sunshine.test",
+              phone: "555-999-0000",
+              notes: "Updated contact"
+            }
+          ]
+        )
+
+        refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
+      end
+
+      test "vendor contacts hash changes when vendor category changes" do
+        original_hash = SegmentHasher.call(@vendor_contacts_source)
+
+        event_vendors(:catering).update!(vendor_type: "Venue & Catering")
+
+        refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
+      end
+
+      test "vendor contacts hash changes when vendor ordering changes" do
+        original_hash = SegmentHasher.call(@vendor_contacts_source)
+
+        event_vendors(:catering).update!(position: 5)
+        event_vendors(:lighting).update!(position: 0)
+
+        refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
+      end
+
+      test "vendor contacts hash changes when linked global vendor data changes" do
+        global_vendor = GlobalVendor.create!(
+          name: "Northlight Films",
+          default_vendor_type: "Photo + Video",
+          default_social_handle: "northlightfilms",
+          contacts_jsonb: [
+            {
+              "name" => "Chris Lane",
+              "title" => "Producer",
+              "email" => "chris@northlight.test",
+              "phone" => "555-331-4400",
+              "notes" => "Primary contact"
+            }
+          ]
+        )
+
+        @event.event_vendors.create!(
+          name: "Northlight Films",
+          global_vendor: global_vendor,
+          contacts_jsonb: [],
+          position: 8,
+          client_visible: false
+        )
+
+        original_hash = SegmentHasher.call(@vendor_contacts_source)
+
+        global_vendor.update!(
+          name: "Northlight Studio",
+          default_social_handle: "northlightstudio",
+          contacts_jsonb: [
+            {
+              "name" => "Chris Lane",
+              "title" => "Executive Producer",
+              "email" => "hello@northlight.test",
+              "phone" => "555-888-4400",
+              "notes" => "Updated contact"
+            }
+          ]
+        )
+
+        refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
       end
     end
   end

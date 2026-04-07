@@ -87,6 +87,8 @@ module Documents
           GeneratedPacketSource::CANONICAL_KEYS[:event_overview]
         when "planning_team"
           GeneratedPacketSource::CANONICAL_KEYS[:planning_team]
+        when DocumentSegment::VENDOR_CONTACTS_VIEW_KEY
+          GeneratedPacketSource::CANONICAL_KEYS[:vendor_contacts]
         when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
           GeneratedPacketSource::CANONICAL_KEYS[:run_of_show]
         when DocumentSegment::TIMELINE_VIEW_KEY
