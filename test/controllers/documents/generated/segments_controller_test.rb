@@ -119,6 +119,41 @@ module Documents
         assert_equal [@document.logical_id], enqueued_logical_ids
       end
 
+      test "updates wedding party reference packet page without persisting markdown options" do
+        reference_placement = GeneratedPacketPlacement.create!(
+          document_logical_id: @document.logical_id,
+          source: GeneratedPacketSource.build_page_source(
+            event: @event,
+            view_key: DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY,
+            title: "Wedding Party Reference",
+            options: {}
+          ).tap(&:save!),
+          position: 3
+        )
+
+        enqueued_logical_ids = []
+
+        Documents::Generated::WorkingCopyRefresh.stub :enqueue, ->(document) { enqueued_logical_ids << document.logical_id; true } do
+          patch event_documents_generated_segment_url(@event, @document.logical_id, reference_placement), params: {
+            segment: {
+              title: "Wedding Party Reference Updated",
+              view_key: DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY,
+              options: {
+                body_markdown: "ignore this",
+                extra: "ignore this too"
+              }
+            }
+          }
+        end
+
+        assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+        reference_placement.reload
+
+        assert_equal "Wedding Party Reference Updated", reference_placement.source.title
+        assert_equal({}, reference_placement.source.html_options)
+        assert_equal [@document.logical_id], enqueued_logical_ids
+      end
+
     end
   end
 end

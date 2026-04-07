@@ -109,6 +109,11 @@ module Documents
       end
 
       def canonical_compatible?(canonical, segment)
+        if canonical.canonical_key == GeneratedPacketSource::CANONICAL_KEYS[:wedding_party_reference] &&
+           canonical_key_for(segment) == GeneratedPacketSource::CANONICAL_KEYS[:wedding_party_reference]
+          return true
+        end
+
         canonical.kind == segment.kind &&
           canonical.title == segment.title &&
           canonical.source_ref == segment.source_ref &&

@@ -57,6 +57,12 @@ module Documents
         position: 3,
         options: { "body_markdown" => "Two" }
       )
+      create_page_placement(
+        view_key: DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY,
+        title: "Wedding Party Reference",
+        position: 4,
+        options: {}
+      )
 
       get event_documents_generated_url(@event, @document.logical_id)
 
@@ -66,6 +72,7 @@ module Documents
       assert_select "textarea[name='segment[options][body_markdown]'][data-generated-markdown-editor-target='source']", count: 2
       assert_select "textarea.generated-builder__overlay-textarea[data-generated-markdown-editor-target='overlay'][name]", count: 0
       assert_select ".generated-builder__hint", text: /live event, planner, and vendor data/, minimum: 1
+      assert_select ".generated-builder__hint", text: /wedding party reference layout with stubbed content/, minimum: 1
     end
 
     test "index renders packet actions without portal visibility checkbox" do

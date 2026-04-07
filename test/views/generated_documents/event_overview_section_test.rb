@@ -18,9 +18,11 @@ class EventOverviewSectionTest < ActionView::TestCase
     render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
 
     assert_select ".generated-template--event-overview", count: 1
-    assert_select ".generated-template--event-overview__section-title", text: "Important Information"
-    assert_select ".generated-template--event-overview__section-title", text: "Planner Contact"
-    assert_select ".generated-template--event-overview__section-title", text: "Vendor Contacts"
+    assert_select ".generated-template--packet-sheet", count: 1
+    assert_select ".generated-template--packet-sheet__grid", minimum: 3
+    assert_select ".generated-template--packet-sheet__section-title", text: "Important Information"
+    assert_select ".generated-template--packet-sheet__section-title", text: "Planner Contact"
+    assert_select ".generated-template--packet-sheet__section-title", text: "Vendor Contacts"
     assert_select ".generated-template--event-overview__event-name", text: @event.name
     assert_select ".generated-template--event-overview__dates", text: "#{@event.starts_on.to_fs(:long)} - #{@event.ends_on.to_fs(:long)}"
     assert_select ".generated-template--event-overview__location", text: @event.location
@@ -77,8 +79,8 @@ class EventOverviewSectionTest < ActionView::TestCase
 
     assert_select ".generated-template--event-overview__dates", text: "Date TBD"
     assert_select ".generated-template--event-overview__location", text: "Location TBD"
-    assert_select ".generated-template--event-overview__empty", text: /No planner contacts are linked/
-    assert_select ".generated-template--event-overview__empty", text: /No vendor contacts are available/
+    assert_select ".generated-template--packet-sheet__empty", text: /No planner contacts are linked/
+    assert_select ".generated-template--packet-sheet__empty", text: /No vendor contacts are available/
   end
 
   private

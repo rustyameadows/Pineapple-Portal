@@ -1,0 +1,130 @@
+<% if local_assigns.fetch(:render_base_styles, true) %>
+  <%= render "generated_documents/sections/base_styles" %>
+<% end %>
+<%= render "generated_documents/sections/packet_sheet_styles" %>
+
+<% content = generated_wedding_party_reference_content %>
+
+<section class="generated-template generated-template--packet-sheet generated-template--wedding-party-reference">
+  <%= render "generated_documents/sections/page_header", segment: @segment %>
+
+  <div class="generated-template--packet-sheet__stack">
+    <div class="generated-template--packet-sheet__two-column">
+      <section class="generated-template--packet-sheet__section">
+        <h2 class="generated-template--packet-sheet__section-title">Event Timelines</h2>
+        <div class="generated-template--packet-sheet__content">
+          <% content[:event_timelines].each do |day| %>
+            <section class="generated-template--packet-sheet__subsection">
+              <h3 class="generated-template--packet-sheet__subsection-title"><%= day[:day] %></h3>
+              <div class="generated-template--packet-sheet__body">
+                <% day[:entries].each do |entry| %>
+                  <article>
+                    <p class="generated-template--packet-sheet__text">
+                      <strong><%= entry[:title] %></strong><br>
+                      <%= entry[:venue] %><br>
+                      <% if entry[:sublocation].present? %>
+                        <em><%= entry[:sublocation] %></em><br>
+                      <% end %>
+                      <u><%= entry[:time] %></u>
+                    </p>
+                    <% if entry[:note].present? %>
+                      <p class="generated-template--packet-sheet__text"><em><%= entry[:note] %></em></p>
+                    <% end %>
+                  </article>
+                <% end %>
+              </div>
+            </section>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="generated-template--packet-sheet__section">
+        <h2 class="generated-template--packet-sheet__section-title">Transportation Details</h2>
+        <div class="generated-template--packet-sheet__content">
+          <% content[:transportation_details].each do |day| %>
+            <section class="generated-template--packet-sheet__subsection">
+              <h3 class="generated-template--packet-sheet__subsection-title"><%= day[:day] %></h3>
+              <div class="generated-template--packet-sheet__body">
+                <% day[:paragraphs].each do |paragraph| %>
+                  <p class="generated-template--packet-sheet__text"><%= paragraph %></p>
+                <% end %>
+              </div>
+            </section>
+          <% end %>
+        </div>
+      </section>
+    </div>
+
+    <section class="generated-template--packet-sheet__section">
+      <h2 class="generated-template--packet-sheet__section-title"><%= content[:excursion][:title] %></h2>
+      <div class="generated-template--packet-sheet__grid">
+        <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
+          <div class="generated-template--packet-sheet__grid-cell">
+            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Date</p>
+          </div>
+          <div class="generated-template--packet-sheet__grid-cell">
+            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value"><%= content[:excursion][:date] %></p>
+          </div>
+        </div>
+        <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
+          <div class="generated-template--packet-sheet__grid-cell">
+            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Transportation</p>
+          </div>
+          <div class="generated-template--packet-sheet__grid-cell">
+            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value"><%= content[:excursion][:transportation] %></p>
+          </div>
+        </div>
+        <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
+          <div class="generated-template--packet-sheet__grid-cell">
+            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Details</p>
+          </div>
+          <div class="generated-template--packet-sheet__grid-cell">
+            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail"><%= content[:excursion][:details_text] %></p>
+            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail">
+              <%= link_to content[:excursion][:link_label],
+                          content[:excursion][:link_url],
+                          class: "generated-template--packet-sheet__link" %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="generated-template--packet-sheet__section">
+      <h2 class="generated-template--packet-sheet__section-title">Getting Ready Details &amp; Transportation</h2>
+      <div class="generated-template--packet-sheet__content">
+        <% content[:getting_ready].each do |group| %>
+          <section class="generated-template--packet-sheet__subsection">
+            <h3 class="generated-template--packet-sheet__subsection-title"><%= group[:title] %></h3>
+            <div class="generated-template--packet-sheet__body">
+              <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--muted"><%= group[:location] %></p>
+              <% group[:paragraphs].each do |paragraph| %>
+                <p class="generated-template--packet-sheet__text"><%= paragraph %></p>
+              <% end %>
+            </div>
+          </section>
+        <% end %>
+      </div>
+    </section>
+
+    <div class="generated-template--packet-sheet__two-column">
+      <% content[:wedding_party].each do |side| %>
+        <section class="generated-template--packet-sheet__section">
+          <h2 class="generated-template--packet-sheet__section-title"><%= side[:title] %></h2>
+          <div class="generated-template--packet-sheet__grid">
+            <% side[:members].each do |member| %>
+              <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--roster">
+                <div class="generated-template--packet-sheet__grid-cell">
+                  <p class="generated-template--packet-sheet__text"><strong><%= member[:name] %></strong></p>
+                </div>
+                <div class="generated-template--packet-sheet__grid-cell">
+                  <p class="generated-template--packet-sheet__text"><em><%= member[:role] %></em></p>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </section>
+      <% end %>
+    </div>
+  </div>
+</section>

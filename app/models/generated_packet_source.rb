@@ -53,17 +53,9 @@ class GeneratedPacketSource < ApplicationRecord
     },
     CANONICAL_KEYS[:wedding_party_reference] => {
       label: "Wedding Party Reference",
-      description: "Placeholder for the upcoming wedding party reference packet page.",
-      view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
-      options: lambda { |_event|
-        {
-          "body_markdown" => <<~MARKDOWN.strip
-            ## Wedding Party Reference
-
-            This shared page is ready for future wedding party reference content.
-          MARKDOWN
-        }
-      }
+      description: "Shared wedding party reference sheet for this event.",
+      view_key: DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY,
+      options: ->(_event) { {} }
     }
   }.freeze
 
@@ -121,13 +113,7 @@ class GeneratedPacketSource < ApplicationRecord
       raise ArgumentError, "Unknown canonical key: #{canonical_key}" unless config
 
       event.generated_packet_sources.find_or_initialize_by(canonical_key: canonical_key).tap do |source|
-        next if source.persisted?
-
-        source.source_category = CATEGORIES[:canonical]
-        source.kind = KINDS[:html_view]
-        source.title = config[:label]
-        source.assign_html_view(config[:view_key], options: config[:options].call(event))
-        source.save!
+        sync_canonical_source!(source, canonical_key:, config:, event:)
       end
     end
 
@@ -166,6 +152,17 @@ class GeneratedPacketSource < ApplicationRecord
         "show_vendor" => true,
         "show_team_members" => true
       }
+    end
+
+    private
+
+    def sync_canonical_source!(source, canonical_key:, config:, event:)
+      source.source_category = CATEGORIES[:canonical]
+      source.kind = KINDS[:html_view]
+      source.canonical_key = canonical_key
+      source.title = config[:label] if source.title.blank?
+      source.assign_html_view(config[:view_key], options: config[:options].call(event))
+      source.save! if source.new_record? || source.changed?
     end
   end
 

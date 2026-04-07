@@ -4,6 +4,169 @@ module GeneratedDocumentsHelper
   ].freeze
   MARKDOWN_ALLOWED_ATTRIBUTES = %w[href title rel target].freeze
   MARKDOWN_ALLOWED_PROTOCOLS = %w[http https mailto].freeze
+  WEDDING_PARTY_REFERENCE_CONTENT = {
+    event_timelines: [
+      {
+        day: "Friday, August 29",
+        entries: [
+          {
+            title: "Ceremony Rehearsal",
+            venue: "Le Meridien",
+            sublocation: "Pierce Arrow Board Room",
+            time: "5:30 PM",
+            note: "Please meet at 5:15 PM."
+          },
+          {
+            title: "Rehearsal Dinner",
+            venue: "Provisions",
+            time: "7:00 PM to 10:00 PM"
+          }
+        ]
+      },
+      {
+        day: "Saturday, August 30",
+        entries: [
+          {
+            title: "Welcome Party",
+            venue: "Salt & Olive",
+            time: "6:00 PM to 9:00 PM"
+          }
+        ]
+      },
+      {
+        day: "Sunday, August 31",
+        entries: [
+          {
+            title: "Ceremony",
+            venue: "La Caille",
+            time: "4:30 PM to 5:00 PM"
+          },
+          {
+            title: "Cocktails",
+            venue: "La Caille",
+            time: "5:00 PM to 6:00 PM"
+          },
+          {
+            title: "Dinner & Dancing",
+            venue: "La Caille",
+            time: "6:00 PM to 10:00 PM"
+          },
+          {
+            title: "After Party",
+            venue: "Le Meridien",
+            sublocation: "Van Ryder",
+            time: "10:00 PM to 12:00 AM"
+          }
+        ]
+      },
+      {
+        day: "Monday, September 1",
+        entries: [
+          {
+            title: "Farewell Brunch",
+            venue: "Le Meridien",
+            sublocation: "Second Floor Pre-Function Space",
+            time: "10:00 AM to 1:00 PM"
+          }
+        ]
+      }
+    ],
+    transportation_details: [
+      {
+        day: "Friday, August 29",
+        paragraphs: [
+          "Guests attending the Rehearsal should meet in the Pierce Arrow Board Room at Le Meridien at 5:15 PM. Please arrive dressed for dinner.",
+          "At the conclusion of the Rehearsal, transportation to the Rehearsal Dinner will depart from the hotel entrance at 6:30 PM. Return transportation will be available at the conclusion of the Rehearsal Dinner, around 10:00 PM."
+        ]
+      },
+      {
+        day: "Saturday, August 30",
+        paragraphs: [
+          "Guests attending Oktoberfest at Snowbird should meet at the hotel entrance to depart at 11:30 AM. Return shuttle departure at 2:30 PM.",
+          "Wedding Party & all guests attending the Welcome Party should meet at the hotel entrance to depart at 5:45 PM. Return shuttles available at 8:00 PM and 9:00 PM."
+        ]
+      },
+      {
+        day: "Sunday, August 31",
+        paragraphs: [
+          "Groom's family and attendants depart Le Meridien at 1:10 PM from hotel entrance.",
+          "Bride's attendants meet in the Le Meridien lobby at 1:15 PM for 1:30 PM departure with Hannah and immediate family.",
+          "Wedding guests depart from Le Meridien entrance at 3:30 PM.",
+          "Return shuttles to Le Meridien available at 9:30 PM and 10:30 PM."
+        ]
+      }
+    ],
+    excursion: {
+      title: "Oktoberfest Excursions",
+      date: "Saturday, August 30",
+      transportation: "Guests attending Oktoberfest at Snowbird should meet at the hotel entrance to depart at 11:30 AM. Return shuttle departure at 2:30 PM.",
+      details_text: "For more details, please visit the Oktoberfest link.",
+      link_label: "Oktoberfest",
+      link_url: "https://example.com/oktoberfest"
+    },
+    getting_ready: [
+      {
+        title: "Hannah's Attendants",
+        location: "Pierce Arrow Board Room",
+        paragraphs: [
+          "Please steam your dress in advance and bring it to the Pierce Arrow Board Room. Arrive with clean and moisturized skin and clean, dry hair that has been blow-dried with a paddle brush or round brush the night before.",
+          "Please bring a bag (easily identified with your name) for your extra clothes and belongings. We'll ensure your items are brought to La Caille or returned to your hotel rooms."
+        ]
+      },
+      {
+        title: "Dan's Attendants",
+        location: "Dan's Hotel Suite",
+        paragraphs: [
+          "On the wedding day, Dan & the Groom's Party will be having lunch at Adelaide's, the restaurant on the lobby level of Le Meridien. Please meet at Adelaide's at 11:00 AM.",
+          "Before lunch, please bring your pressed suits, shined shoes, and accessories to Dan's hotel suite. You'll dress there and then gather in the hotel lobby at 1:00 PM.",
+          "Please bring a bag (easily identified with your name) for your extra clothes and belongings. We'll ensure that your items are brought to La Caille or returned to your hotel rooms."
+        ]
+      }
+    ],
+    wedding_party: [
+      {
+        title: "Bride's Side",
+        members: [
+          { name: "Hannah Isakowitz", role: "Bride" },
+          { name: "Missy Isakowitz", role: "Mother of the Bride" },
+          { name: "Mark Isakowitz", role: "Father of the Bride" },
+          { name: "Sharon Newman", role: "Grandmother of the Bride" },
+          { name: "Carly Graham", role: "Matron of Honor and Sister of the Bride" },
+          { name: "Allie Isakowitz", role: "Bridesmaid and Sister-in-Law of the Bride" },
+          { name: "Julia Barone", role: "Bridesmaid" },
+          { name: "Danielle Bruns", role: "Bridesmaid" },
+          { name: "Lindsay Stassinos", role: "Bridesmaid" },
+          { name: "Sarah Iacomelli", role: "Bridesmaid" },
+          { name: "Erin Hess", role: "Bridesmaid" },
+          { name: "Michael Denzel", role: "Bride's Attendant" },
+          { name: "Emmy Graham", role: "Bride's Niece & Flower Kid" },
+          { name: "Ava Graham", role: "Bride's Niece & Flower Kid" },
+          { name: "Luca Isakowitz", role: "Nephew of the Bride & Flower Kid" }
+        ]
+      },
+      {
+        title: "Groom's Side",
+        members: [
+          { name: "Dan Greener", role: "Groom" },
+          { name: "Ruth Greener", role: "Mother of the Groom" },
+          { name: "Jeff Greener", role: "Father of the Groom" },
+          { name: "Marilyn Greener", role: "Grandmother of the Groom" },
+          { name: "Samuel Bonolio", role: "Grandfather of the Groom" },
+          { name: "Andrew Greener", role: "Best Man and Brother of the Groom" },
+          { name: "Michael Greener", role: "Best Man and Brother of the Groom" },
+          { name: "Zach Isakowitz", role: "Groomsman and Brother of the Bride" },
+          { name: "Eric Graham", role: "Groomsman and Brother-in-Law of the Bride" },
+          { name: "Christian Maine De Biran", role: "Groomsman" },
+          { name: "Daniel Marcus", role: "Groomsman" },
+          { name: "Harlan Pittell", role: "Groomsman" },
+          { name: "Dylan Magalit", role: "Groomsman" },
+          { name: "Jon Schneidman", role: "Groomsman" },
+          { name: "Max Levitin", role: "Groomsman" },
+          { name: "Clark Chamerlin", role: "Groomsman" }
+        ]
+      }
+    ]
+  }.freeze
 
   def generated_segment_body_markdown(segment)
     options = if segment.respond_to?(:html_options)
@@ -89,6 +252,10 @@ module GeneratedDocumentsHelper
         contacts: contacts
       }
     end
+  end
+
+  def generated_wedding_party_reference_content
+    WEDDING_PARTY_REFERENCE_CONTENT.deep_dup
   end
 
   private

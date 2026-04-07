@@ -88,6 +88,8 @@ module Documents
           planning_team_payload
         when DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
           event_overview_payload
+        when DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY
+          wedding_party_reference_payload
         when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
           timeline_payload(run_of_show: true)
         when DocumentSegment::TIMELINE_VIEW_KEY
@@ -131,6 +133,7 @@ module Documents
 
       def event_overview_payload
         {
+          template_version: DocumentSegment::EVENT_OVERVIEW_TEMPLATE_VERSION,
           event: {
             name: segment.event.name,
             starts_on: segment.event.starts_on,
@@ -176,6 +179,12 @@ module Documents
               contacts: contacts
             }
           end
+        }
+      end
+
+      def wedding_party_reference_payload
+        {
+          template_version: DocumentSegment::WEDDING_PARTY_REFERENCE_TEMPLATE_VERSION
         }
       end
 

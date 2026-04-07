@@ -8,6 +8,13 @@ class DocumentSegment < ApplicationRecord
   RUN_OF_SHOW_VIEW_KEY = "run_of_show_timeline".freeze
   TEXT_PAGE_VIEW_KEY = "text_page".freeze
   EVENT_OVERVIEW_VIEW_KEY = "event_overview".freeze
+  WEDDING_PARTY_REFERENCE_VIEW_KEY = "wedding_party_reference".freeze
+  SYSTEM_MANAGED_VIEW_KEYS = [
+    EVENT_OVERVIEW_VIEW_KEY,
+    WEDDING_PARTY_REFERENCE_VIEW_KEY
+  ].freeze
+  EVENT_OVERVIEW_TEMPLATE_VERSION = "packet-sheet-v2".freeze
+  WEDDING_PARTY_REFERENCE_TEMPLATE_VERSION = "packet-sheet-v1".freeze
   EVENT_OVERVIEW_DEFAULT_BODY_MARKDOWN = <<~MARKDOWN.freeze
     ### Important Information
 
@@ -168,6 +175,11 @@ class DocumentSegment < ApplicationRecord
       label: "Event Overview",
       template: "generated_documents/sections/event_overview",
       description: "Structured event overview powered by live event and contact data."
+    },
+    WEDDING_PARTY_REFERENCE_VIEW_KEY => {
+      label: "Wedding Party Reference",
+      template: "generated_documents/sections/wedding_party_reference",
+      description: "Structured wedding party reference sheet with packet-ready planning details."
     },
     "planning_team" => {
       label: "Planning Team",
