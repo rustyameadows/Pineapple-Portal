@@ -34,6 +34,7 @@ module Documents
       assert_select "[data-controller='generated-markdown-editor']", count: 1
       assert_select "[data-generated-markdown-editor-target='openButton']", count: 1
       assert_select "dialog.generated-builder__overlay-dialog[data-generated-markdown-editor-target='dialog']", count: 1
+      assert_select "dialog.generated-builder__segment-dialog", count: 1
       assert_select "textarea[name='segment[options][body_markdown]'][data-generated-markdown-editor-target='source']", count: 1
       assert_select "textarea.generated-builder__overlay-textarea[data-generated-markdown-editor-target='overlay'][name]", count: 0
     end
@@ -75,11 +76,38 @@ module Documents
       assert_response :success
       assert_select "[data-controller='generated-markdown-editor']", count: 2
       assert_select "[data-generated-markdown-editor-target='openButton']", count: 2
+      assert_select "button", text: "Settings", count: 5
+      assert_select "button", text: "Duplicate", count: 0
+      assert_select "details", count: 0
+      assert_select "dialog.generated-builder__segment-dialog", count: 5
       assert_select "textarea[name='segment[options][body_markdown]'][data-generated-markdown-editor-target='source']", count: 2
       assert_select "textarea.generated-builder__overlay-textarea[data-generated-markdown-editor-target='overlay'][name]", count: 0
       assert_select ".generated-builder__hint", text: /live event, planner, and vendor data/, minimum: 1
       assert_select ".generated-builder__hint", text: /live planner and vendor data/, minimum: 1
       assert_select ".generated-builder__hint", text: /wedding party reference layout with stubbed content/, minimum: 1
+    end
+
+    test "show prefixes cover and section titles in the packet builder list only" do
+      create_page_placement(
+        view_key: "cover_sheet",
+        title: "Smith Weekend",
+        position: 1,
+        options: {}
+      )
+      create_page_placement(
+        view_key: "section_break",
+        title: "Travel",
+        position: 2,
+        options: {}
+      )
+
+      get event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select ".generated-builder__list-content strong", text: "Cover - Smith Weekend", count: 1
+      assert_select ".generated-builder__list-content strong", text: "Section - Travel", count: 1
+      assert_select "input[name='segment[title]'][value='Smith Weekend']", count: 1
+      assert_select "input[name='segment[title]'][value='Travel']", count: 1
     end
 
     test "index renders packet actions without portal visibility checkbox" do

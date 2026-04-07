@@ -4,6 +4,7 @@ import DecisionModalController from "controllers/decision_modal_controller"
 import QuestionnaireController from "controllers/questionnaire_controller"
 import QuestionAttachmentController from "controllers/question_attachment_controller"
 import GeneratedSegmentsController from "controllers/generated_segments_controller"
+import GeneratedSegmentDialogController from "controllers/generated_segment_dialog_controller"
 import GeneratedMarkdownEditorController from "controllers/generated_markdown_editor_controller"
 import GeneratedPacketUploadController from "controllers/generated_packet_upload_controller"
 import GeneratedPdfFrameController from "controllers/generated_pdf_frame_controller"
@@ -22,6 +23,7 @@ application.register("decision-modal", DecisionModalController)
 application.register("questionnaire", QuestionnaireController)
 application.register("question-attachment", QuestionAttachmentController)
 application.register("generated-segments", GeneratedSegmentsController)
+application.register("generated-segment-dialog", GeneratedSegmentDialogController)
 application.register("generated-markdown-editor", GeneratedMarkdownEditorController)
 application.register("generated-packet-upload", GeneratedPacketUploadController)
 application.register("generated-pdf-frame", GeneratedPdfFrameController)

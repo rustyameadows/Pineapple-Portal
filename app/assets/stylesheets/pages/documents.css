@@ -478,38 +478,27 @@
   background: white;
   padding: 1rem 1.25rem;
   display: grid;
-  gap: 1.5rem;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
   align-items: start;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .generated-builder__list--grid .generated-builder__list-item {
-  grid-template-columns: 1fr;
   padding: 1.1rem 1.2rem;
   gap: 1.1rem;
 }
 
-.generated-builder__list-left {
+.generated-builder__list-top {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.75rem;
   align-content: start;
+  align-items: start;
 }
 
-.generated-builder__list--grid .generated-builder__list-left {
+.generated-builder__list--grid .generated-builder__list-top {
+  grid-template-columns: 1fr;
   gap: 1rem;
-}
-
-.generated-builder__list-right {
-  background: color-mix(in srgb, var(--color-light-cream) 50%, white);
-  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 40%, white);
-  border-radius: var(--radius-lg);
-  padding: 1rem;
-  min-width: 0;
-}
-
-.generated-builder__list--grid .generated-builder__list-right {
-  width: 100%;
 }
 
 .generated-builder__list-main {
@@ -569,14 +558,42 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .generated-builder__list--grid .generated-builder__list-actions {
-  justify-content: flex-start;
+  justify-content: flex-end;
 }
 
 .generated-builder__list-actions form {
   margin: 0;
+}
+
+.generated-builder__segment-dialog {
+  width: min(44rem, calc(100vw - 2rem));
+}
+
+.generated-builder__segment-dialog-panel {
+  width: min(44rem, calc(100vw - 2rem));
+}
+
+.generated-builder__segment-dialog-header {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.generated-builder__segment-dialog-body {
+  align-content: start;
+}
+
+.generated-builder__segment-dialog-form {
+  gap: 0;
+}
+
+.generated-builder__segment-dialog-actions {
+  border-top: 1px solid color-mix(in srgb, var(--color-sea-foam) 30%, white);
+  padding-top: 0.9rem;
 }
 
 .generated-builder__inline-form {
@@ -1377,11 +1394,11 @@
   }
 
   .generated-builder__list-item {
-    grid-template-columns: 1fr;
+    gap: 0.9rem;
   }
 
-  .generated-builder__list-right {
-    order: 2;
+  .generated-builder__list-top {
+    grid-template-columns: 1fr;
   }
 
   .generated-builder__workspace-head {
@@ -1437,9 +1454,17 @@
     max-width: calc(100vw - 1rem);
   }
 
+  .generated-builder__segment-dialog {
+    width: calc(100vw - 1rem);
+  }
+
   .generated-builder__overlay-panel {
     width: calc(100vw - 1rem);
     max-height: calc(100vh - 1rem);
+  }
+
+  .generated-builder__segment-dialog-panel {
+    width: calc(100vw - 1rem);
   }
 
   .generated-builder__overlay-header {
