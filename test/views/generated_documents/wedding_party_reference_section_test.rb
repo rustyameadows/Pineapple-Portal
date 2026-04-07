@@ -26,11 +26,14 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     view.define_singleton_method(:inline_asset_data_uri) { |_path| "data:image/png;base64,stub" }
   end
 
-  test "renders milestone tagged event items grouped by date in the top section" do
+  test "renders milestone tagged event items grouped by date and dynamic getting ready details" do
     milestone_tag = @event.run_of_show_calendar.event_calendar_tags.create!(name: "Milestones", position: 9)
     calendar_items(:decision_flowers).event_calendar_tags << milestone_tag
     calendar_items(:ceremony).event_calendar_tags << milestone_tag
     calendar_items(:afterparty).event_calendar_tags << milestone_tag
+    @event.update!(
+      getting_ready_details: "Please arrive dressed and ready to prep.\n\nBring all accessories in a labeled bag."
+    )
 
     render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
 
@@ -39,8 +42,7 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--wedding-party-reference__events-grid", count: 2
     assert_select ".generated-template--packet-sheet__section-title", text: "Event Timelines"
     assert_select ".generated-template--packet-sheet__section-title", text: "Transportation Details"
-    assert_select ".generated-template--packet-sheet__section-title", text: "Oktoberfest Excursions"
-    assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details & Transportation"
+    assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details"
     assert_select ".generated-template--packet-sheet__section-title", text: "Bride's Side"
     assert_select ".generated-template--packet-sheet__section-title", text: "Groom's Side"
     assert_select ".generated-template--packet-sheet__event-card", minimum: 1
@@ -56,7 +58,9 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_match(/Reviewing proposals/, rendered)
     assert_match(/Exchange vows and rings\./, rendered)
     assert_match(/Guests attending the Rehearsal should meet/, rendered)
-    assert_match(/Guests attending Oktoberfest at Snowbird/, rendered)
+    assert_match(/Please arrive dressed and ready to prep\./, rendered)
+    assert_match(/Bring all accessories in a labeled bag\./, rendered)
+    assert_no_match(/Guests attending Oktoberfest at Snowbird/, rendered)
     assert_match(/Hannah Isakowitz/, rendered)
     assert_match(/Dan Greener/, rendered)
     assert_no_match(/generated-text-columns|:::columns|### Wedding party reference sheet/, rendered)
@@ -84,8 +88,8 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_match(/Transportation details coming soon\./, rendered)
   end
 
-  test "shows an empty state when no milestone items are available" do
-    empty_event = Event.create!(name: "Quiet Event")
+  test "hides getting ready details when blank" do
+    empty_event = Event.create!(name: "Quiet Event", getting_ready_details: nil)
 
     view.assign(event: empty_event, segment: @segment)
     render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
@@ -94,5 +98,10 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__empty", text: /No milestone items are available/
     assert_select ".generated-template--packet-sheet__section-title", text: "Transportation Details"
     assert_select ".generated-template--packet-sheet__empty", text: /Transportation details coming soon\./
+    assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details", count: 0
+    assert_select ".generated-template--packet-sheet__section-title", text: "Oktoberfest Excursions", count: 0
+    assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details & Transportation", count: 0
+    assert_select ".generated-template--packet-sheet__section-title", text: "Bride's Side"
+    assert_select ".generated-template--packet-sheet__section-title", text: "Groom's Side"
   end
 end

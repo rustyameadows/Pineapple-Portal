@@ -14,10 +14,12 @@
     margin: 0;
     color: var(--color-ink);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
     background: var(--section-break-bg);
+    gap: 0.75rem;
   }
 
   .generated-template--section-break__title {
@@ -27,8 +29,24 @@
     margin: 0;
     padding: 0 2.5rem;
   }
+
+  .generated-template--section-break__divider {
+    margin-top: 1rem;
+  }
+
+  .generated-template--section-break__divider img {
+    display: block;
+    width: 11rem;
+    max-width: 60vw;
+    height: auto;
+    margin: 0 auto;
+  }
 </style>
 
 <div class="generated-template generated-template--section-break">
   <h1 class="generated-template--section-break__title"><%= @segment.display_title %></h1>
+  <div class="generated-template--section-break__divider">
+    <% divider_line = inline_asset_data_uri("hero-divider-line.png") %>
+    <img src="<%= divider_line %>" alt="" aria-hidden="true">
+  </div>
 </div>
