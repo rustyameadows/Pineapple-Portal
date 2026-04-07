@@ -49,8 +49,12 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__vendor-name", text: "Sunshine Catering"
     assert_select ".generated-template--event-overview__vendor-name", text: "Bright Lights Production"
     assert_select ".generated-template--event-overview__vendor-contact-name", text: /Maria Cater/
-    assert_select ".generated-template--event-overview__vendor-contact-email", text: /maria@sunshine.test/
+    assert_select ".generated-template--event-overview__vendor-contact-name em", text: "Maria Cater"
+    assert_select ".generated-template--event-overview__vendor-contact-name em", text: "Devon Reed"
     assert_select ".generated-template--event-overview__vendor-contact-phone", text: /555-123-4567/
+    assert_select ".generated-template--event-overview__vendor-contact-email", count: 0
+    assert_select ".generated-template--packet-sheet__text--detail", text: "@sunshinecatering"
+    assert_select ".generated-template--packet-sheet__text--detail", text: "@brightlights"
     assert_operator rendered.index("Timeline"), :<, rendered.index("Planner Contact")
     assert_no_match(/Client Contact|Gluten-free specialist/, rendered)
     assert_no_match(/Custom Heading|generated-text-columns/, rendered)
