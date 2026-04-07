@@ -9,6 +9,17 @@
 <% milestone_items = milestone_data[:groups].flat_map { |group| group[:items] } %>
 <% milestone_timezone = milestone_data[:timezone] %>
 <% vendors = generated_event_overview_vendors(@event) %>
+<% important_information_rows = generated_event_overview_primary_rows(@event) %>
+<% style_rows = generated_event_overview_style_rows(@event) %>
+<% social_media_paragraphs = generated_packet_text_paragraphs(@event.social_media_policy) %>
+<% parking_paragraphs = generated_packet_text_paragraphs(@event.parking_details) %>
+
+<style>
+  .generated-template--event-overview__important-information-groups {
+    display: grid;
+    gap: 10px;
+  }
+</style>
 
 <section class="generated-template generated-template--packet-sheet generated-template--event-overview">
   <%= render "generated_documents/sections/page_header", segment: @segment %>
@@ -16,31 +27,44 @@
   <div class="generated-template--packet-sheet__stack">
     <section class="generated-template--packet-sheet__section">
       <h2 class="generated-template--packet-sheet__section-title">Important Information</h2>
-      <div class="generated-template--packet-sheet__grid">
-        <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
-          <div class="generated-template--packet-sheet__grid-cell">
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Event</p>
+      <div class="generated-template--event-overview__important-information-groups">
+        <section class="generated-template--packet-sheet__subsection">
+          <div class="generated-template--packet-sheet__grid">
+            <% important_information_rows.each do |label, value| %>
+              <% value_class =
+                   case label
+                   when "Date" then "generated-template--event-overview__dates"
+                   when "Location" then "generated-template--event-overview__location"
+                   when "Guest Count" then "generated-template--event-overview__guest-count"
+                   end %>
+              <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
+                <div class="generated-template--packet-sheet__grid-cell">
+                  <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label"><%= label %></p>
+                </div>
+                <div class="generated-template--packet-sheet__grid-cell">
+                  <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value <%= value_class %>"><%= value %></p>
+                </div>
+              </div>
+            <% end %>
           </div>
-          <div class="generated-template--packet-sheet__grid-cell">
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__event-name"><%= @event.name %></p>
-          </div>
-        </div>
-        <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
-          <div class="generated-template--packet-sheet__grid-cell">
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Date</p>
-          </div>
-          <div class="generated-template--packet-sheet__grid-cell">
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__dates"><%= event_date_range %></p>
-          </div>
-        </div>
-        <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
-          <div class="generated-template--packet-sheet__grid-cell">
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Location</p>
-          </div>
-          <div class="generated-template--packet-sheet__grid-cell">
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__location"><%= @event.location.presence || "Location TBD" %></p>
-          </div>
-        </div>
+        </section>
+
+        <% if style_rows.any? %>
+          <section class="generated-template--packet-sheet__subsection">
+            <div class="generated-template--packet-sheet__grid">
+              <% style_rows.each do |label, value| %>
+                <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label"><%= label %></p>
+                  </div>
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value"><%= value %></p>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </section>
+        <% end %>
       </div>
     </section>
 
@@ -153,5 +177,31 @@
         <p class="generated-template--packet-sheet__empty">No vendor contacts are available for this event yet.</p>
       <% end %>
     </section>
+
+    <% if social_media_paragraphs.any? %>
+      <section class="generated-template--packet-sheet__section">
+        <h2 class="generated-template--packet-sheet__section-title">Social Media Policy</h2>
+        <div class="generated-template--packet-sheet__content">
+          <div class="generated-template--packet-sheet__body">
+            <% social_media_paragraphs.each do |paragraph| %>
+              <p class="generated-template--packet-sheet__text generated-template--event-overview__social-media"><%= paragraph %></p>
+            <% end %>
+          </div>
+        </div>
+      </section>
+    <% end %>
+
+    <% if parking_paragraphs.any? %>
+      <section class="generated-template--packet-sheet__section">
+        <h2 class="generated-template--packet-sheet__section-title">PARKING &amp; GETTING THERE</h2>
+        <div class="generated-template--packet-sheet__content">
+          <div class="generated-template--packet-sheet__body">
+            <% parking_paragraphs.each do |paragraph| %>
+              <p class="generated-template--packet-sheet__text generated-template--event-overview__parking"><%= paragraph %></p>
+            <% end %>
+          </div>
+        </div>
+      </section>
+    <% end %>
   </div>
 </section>

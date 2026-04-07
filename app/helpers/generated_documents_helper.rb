@@ -267,6 +267,31 @@ module GeneratedDocumentsHelper
     end
   end
 
+  def generated_event_overview_primary_rows(event)
+    rows = [
+      [ "Date", generated_event_overview_date_range(event) ],
+      [ "Location", event.location.presence || "Location TBD" ]
+    ]
+
+    guest_count = event.guest_count.to_s.strip.presence
+    rows << [ "Guest Count", guest_count ] if guest_count
+    rows
+  end
+
+  def generated_event_overview_style_rows(event)
+    [
+      [ "Attire", event.attire.to_s.strip.presence ],
+      [ "Color Palette", event.color_palette.to_s.strip.presence ],
+      [ "Style", event.style.to_s.strip.presence ]
+    ].select { |_label, value| value.present? }
+  end
+
+  def generated_packet_text_paragraphs(text)
+    text.to_s.split(/\r?\n+/).filter_map do |paragraph|
+      paragraph.to_s.strip.presence
+    end
+  end
+
   def generated_wedding_party_reference_content
     WEDDING_PARTY_REFERENCE_CONTENT.deep_dup
   end

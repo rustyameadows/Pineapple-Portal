@@ -6,12 +6,20 @@ module Documents
       setup do
         @event = events(:one)
         @source = GeneratedPacketSource.ensure_canonical!(@event, GeneratedPacketSource::CANONICAL_KEYS[:event_overview])
+        @wedding_party_source = GeneratedPacketSource.ensure_canonical!(
+          @event,
+          GeneratedPacketSource::CANONICAL_KEYS[:wedding_party_reference]
+        )
       end
 
-      test "event overview hash changes when event fields change" do
+      test "event overview hash changes when exposed event metadata changes" do
         original_hash = SegmentHasher.call(@source)
 
-        @event.update!(location: "Garden Terrace")
+        @event.update!(
+          guest_count: "220",
+          social_media_policy: "Hold social posts until the first planner post.",
+          parking_details: "Use the south lot."
+        )
 
         refute_equal original_hash, SegmentHasher.call(@source)
       end
@@ -65,6 +73,14 @@ module Documents
         )
 
         refute_equal original_hash, SegmentHasher.call(@source)
+      end
+
+      test "wedding party reference hash changes when getting ready details changes" do
+        original_hash = SegmentHasher.call(@wedding_party_source)
+
+        @event.update!(getting_ready_details: "Arrive at 8:00 AM.\n\nHair and makeup begin at 8:30 AM.")
+
+        refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
       end
     end
   end

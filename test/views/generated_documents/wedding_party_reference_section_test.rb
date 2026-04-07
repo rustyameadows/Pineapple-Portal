@@ -22,7 +22,8 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     view.extend DocumentsHelper
     view.extend GeneratedDocumentsHelper
     view.extend CalendarHelper
-    view.assign(event: @event, segment: @segment)
+    view.instance_variable_set(:@event, @event)
+    view.instance_variable_set(:@segment, @segment)
     view.define_singleton_method(:inline_asset_data_uri) { |_path| "data:image/png;base64,stub" }
   end
 
@@ -54,13 +55,12 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_match(/Grand Ballroom/, rendered)
     assert_match(/12:00 PM/, rendered)
     assert_match(/3:00 PM/, rendered)
-    assert_match(/9:00 PM\*/, rendered)
+    assert_match(/9:00 PM.*10:30 PM\*/m, rendered)
     assert_match(/Reviewing proposals/, rendered)
     assert_match(/Exchange vows and rings\./, rendered)
     assert_match(/Guests attending the Rehearsal should meet/, rendered)
     assert_match(/Please arrive dressed and ready to prep\./, rendered)
     assert_match(/Bring all accessories in a labeled bag\./, rendered)
-    assert_no_match(/Guests attending Oktoberfest at Snowbird/, rendered)
     assert_match(/Hannah Isakowitz/, rendered)
     assert_match(/Dan Greener/, rendered)
     assert_no_match(/generated-text-columns|:::columns|### Wedding party reference sheet/, rendered)
@@ -91,7 +91,7 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
   test "hides getting ready details when blank" do
     empty_event = Event.create!(name: "Quiet Event", getting_ready_details: nil)
 
-    view.assign(event: empty_event, segment: @segment)
+    @event = empty_event
     render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
 
     assert_select ".generated-template--packet-sheet__section-title", text: "Event Timelines"

@@ -138,7 +138,13 @@ module Documents
             name: segment.event.name,
             starts_on: segment.event.starts_on,
             ends_on: segment.event.ends_on,
-            location: segment.event.location
+            location: segment.event.location,
+            guest_count: segment.event.guest_count,
+            attire: segment.event.attire,
+            style: segment.event.style,
+            color_palette: segment.event.color_palette,
+            social_media_policy: segment.event.social_media_policy,
+            parking_details: segment.event.parking_details
           },
           planners: segment.event.planner_team_members.includes(:user).ordered_for_display.filter_map do |member|
             user = member.user
@@ -184,7 +190,10 @@ module Documents
 
       def wedding_party_reference_payload
         {
-          template_version: DocumentSegment::WEDDING_PARTY_REFERENCE_TEMPLATE_VERSION
+          template_version: DocumentSegment::WEDDING_PARTY_REFERENCE_TEMPLATE_VERSION,
+          event: {
+            getting_ready_details: segment.event.getting_ready_details
+          }
         }
       end
 

@@ -147,7 +147,7 @@
     display: grid;
     grid-template-columns: 1.05fr 2.1fr 1.15fr;
     align-items: stretch;
-    min-height: 0.22in;
+    min-height: 0.18in;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     break-inside: avoid;
   }
@@ -161,7 +161,10 @@
   }
 
   .generated-template--packet-sheet__grid-cell {
-    padding: 2px 4px;
+    display: grid;
+    align-content: center;
+    gap: 1px;
+    padding: 1px 4px;
     border-right: 1px solid rgba(0, 0, 0, 0.06);
     box-sizing: border-box;
   }

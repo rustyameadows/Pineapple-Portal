@@ -7,6 +7,7 @@
 <% milestone_data = generated_wedding_party_reference_milestones(@event) %>
 <% milestone_groups = milestone_data[:groups] %>
 <% milestone_timezone = milestone_data[:timezone] %>
+<% getting_ready_paragraphs = generated_packet_text_paragraphs(@event.getting_ready_details) %>
 
 <style>
   .generated-template--wedding-party-reference__top-band {
@@ -124,57 +125,18 @@
       <% end %>
     </div>
 
-    <section class="generated-template--packet-sheet__section">
-      <h2 class="generated-template--packet-sheet__section-title"><%= content[:excursion][:title] %></h2>
-      <div class="generated-template--packet-sheet__grid">
-        <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
-          <div class="generated-template--packet-sheet__grid-cell">
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Date</p>
-          </div>
-          <div class="generated-template--packet-sheet__grid-cell">
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value"><%= content[:excursion][:date] %></p>
-          </div>
-        </div>
-        <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
-          <div class="generated-template--packet-sheet__grid-cell">
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Transportation</p>
-          </div>
-          <div class="generated-template--packet-sheet__grid-cell">
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value"><%= content[:excursion][:transportation] %></p>
+    <% if getting_ready_paragraphs.any? %>
+      <section class="generated-template--packet-sheet__section">
+        <h2 class="generated-template--packet-sheet__section-title">Getting Ready Details</h2>
+        <div class="generated-template--packet-sheet__content">
+          <div class="generated-template--packet-sheet__body">
+            <% getting_ready_paragraphs.each do |paragraph| %>
+              <p class="generated-template--packet-sheet__text generated-template--wedding-party-reference__getting-ready"><%= paragraph %></p>
+            <% end %>
           </div>
         </div>
-        <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
-          <div class="generated-template--packet-sheet__grid-cell">
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Details</p>
-          </div>
-          <div class="generated-template--packet-sheet__grid-cell">
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail"><%= content[:excursion][:details_text] %></p>
-            <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail">
-              <%= link_to content[:excursion][:link_label],
-                          content[:excursion][:link_url],
-                          class: "generated-template--packet-sheet__link" %>
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="generated-template--packet-sheet__section">
-      <h2 class="generated-template--packet-sheet__section-title">Getting Ready Details &amp; Transportation</h2>
-      <div class="generated-template--packet-sheet__content">
-        <% content[:getting_ready].each do |group| %>
-          <section class="generated-template--packet-sheet__subsection">
-            <h3 class="generated-template--packet-sheet__subsection-title"><%= group[:title] %></h3>
-            <div class="generated-template--packet-sheet__body">
-              <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--muted"><%= group[:location] %></p>
-              <% group[:paragraphs].each do |paragraph| %>
-                <p class="generated-template--packet-sheet__text"><%= paragraph %></p>
-              <% end %>
-            </div>
-          </section>
-        <% end %>
-      </div>
-    </section>
+      </section>
+    <% end %>
 
     <div class="generated-template--packet-sheet__two-column">
       <% content[:wedding_party].each do |side| %>

@@ -1,6 +1,8 @@
 require "test_helper"
 
 class EventOverviewSectionTest < ActionView::TestCase
+  include GeneratedDocumentsHelper
+
   fixtures :events, :event_calendars, :calendar_items, :event_calendar_tags, :calendar_item_tags, :event_team_members, :event_vendors, :users
 
   setup do
@@ -10,7 +12,8 @@ class EventOverviewSectionTest < ActionView::TestCase
     view.extend DocumentsHelper
     view.extend GeneratedDocumentsHelper
     view.extend CalendarHelper
-    view.assign(event: @event, segment: @segment)
+    view.instance_variable_set(:@event, @event)
+    view.instance_variable_set(:@segment, @segment)
     view.define_singleton_method(:inline_asset_data_uri) { |_path| "data:image/png;base64,stub" }
     view.define_singleton_method(:inline_global_asset_data_uri) { |_asset| "data:image/png;base64,avatar" }
   end
@@ -25,14 +28,21 @@ class EventOverviewSectionTest < ActionView::TestCase
 
     assert_select ".generated-template--event-overview", count: 1
     assert_select ".generated-template--packet-sheet", count: 1
-    assert_select ".generated-template--packet-sheet__grid", minimum: 4
+    assert_select ".generated-template--packet-sheet__grid", minimum: 5
     assert_select ".generated-template--packet-sheet__section-title", text: "Important Information"
     assert_select ".generated-template--packet-sheet__section-title", text: "Timeline"
     assert_select ".generated-template--packet-sheet__section-title", text: "Planner Contact"
     assert_select ".generated-template--packet-sheet__section-title", text: "Vendor Contacts"
-    assert_select ".generated-template--event-overview__event-name", text: @event.name
+    assert_select ".generated-template--event-overview__event-name", count: 0
     assert_select ".generated-template--event-overview__dates", text: "#{@event.starts_on.to_fs(:long)} - #{@event.ends_on.to_fs(:long)}"
     assert_select ".generated-template--event-overview__location", text: @event.location
+    assert_select ".generated-template--event-overview__guest-count", text: @event.guest_count
+    assert_select ".generated-template--packet-sheet__text--label", text: "Attire"
+    assert_select ".generated-template--packet-sheet__text--value", text: @event.attire
+    assert_select ".generated-template--packet-sheet__text--label", text: "Color Palette"
+    assert_select ".generated-template--packet-sheet__text--value", text: @event.color_palette
+    assert_select ".generated-template--packet-sheet__text--label", text: "Style"
+    assert_select ".generated-template--packet-sheet__text--value", text: @event.style
     assert_select ".generated-template--event-overview__timeline-label", text: "Ceremony"
     assert_select ".generated-template--event-overview__timeline-label", text: "Reception"
     assert_select ".generated-template--event-overview__timeline-label", text: "Afterparty"
@@ -50,12 +60,18 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__vendor-name", text: "Bright Lights Production"
     assert_select ".generated-template--event-overview__vendor-contact-name", text: /Maria Cater/
     assert_select ".generated-template--event-overview__vendor-contact-name em", text: "Maria Cater"
-    assert_select ".generated-template--event-overview__vendor-contact-name em", text: "Devon Reed"
+    assert_select ".generated-template--event-overview__vendor-contact-name em", text: "Leo Light"
     assert_select ".generated-template--event-overview__vendor-contact-phone", text: /555-123-4567/
     assert_select ".generated-template--event-overview__vendor-contact-email", count: 0
     assert_select ".generated-template--packet-sheet__text--detail", text: "@sunshinecatering"
     assert_select ".generated-template--packet-sheet__text--detail", text: "@brightlights"
+    assert_select ".generated-template--packet-sheet__section-title", text: "Social Media Policy"
+    assert_select ".generated-template--event-overview__social-media", text: @event.social_media_policy
+    assert_select ".generated-template--packet-sheet__section-title", text: "PARKING & GETTING THERE"
+    assert_select ".generated-template--event-overview__parking", text: @event.parking_details
     assert_operator rendered.index("Timeline"), :<, rendered.index("Planner Contact")
+    assert_operator rendered.index("Vendor Contacts"), :<, rendered.index("Social Media Policy")
+    assert_operator rendered.index("Social Media Policy"), :<, rendered.index("PARKING &amp; GETTING THERE")
     assert_no_match(/Client Contact|Gluten-free specialist/, rendered)
     assert_no_match(/Custom Heading|generated-text-columns/, rendered)
   end
@@ -64,11 +80,13 @@ class EventOverviewSectionTest < ActionView::TestCase
     @segment = build_segment(
       "## Custom Heading\n\nCustom body copy."
     )
-    view.assign(event: @event, segment: @segment)
+    view.instance_variable_set(:@event, @event)
+    view.instance_variable_set(:@segment, @segment)
 
     render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
 
-    assert_select ".generated-template--event-overview__event-name", text: @event.name
+    assert_select ".generated-template--event-overview__event-name", count: 0
+    assert_select ".generated-template--event-overview__guest-count", text: @event.guest_count
     assert_select ".generated-template--event-overview__planner-name", text: "Pineapple Productions"
     assert_select ".generated-template--event-overview__vendor-name", text: "Sunshine Catering"
     assert_no_match(/Custom Heading|Custom body copy|generated-text-columns/, rendered)
@@ -106,7 +124,7 @@ class EventOverviewSectionTest < ActionView::TestCase
   test "shows empty states when planner and vendor data are missing" do
     empty_event = Event.create!(name: "Quiet Event")
 
-    view.assign(event: empty_event, segment: @segment)
+    @event = empty_event
     render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
 
     assert_select ".generated-template--event-overview__dates", text: "Date TBD"
@@ -115,6 +133,33 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__empty", text: /No milestone items are available/
     assert_select ".generated-template--packet-sheet__empty", text: /No lead planner is linked/
     assert_select ".generated-template--packet-sheet__empty", text: /No vendor contacts are available/
+    assert_select ".generated-template--event-overview__guest-count", count: 0
+    assert_select ".generated-template--packet-sheet__text--label", text: "Attire", count: 0
+    assert_select ".generated-template--packet-sheet__section-title", text: "Social Media Policy", count: 0
+    assert_select ".generated-template--packet-sheet__section-title", text: "PARKING & GETTING THERE", count: 0
+  end
+
+  test "hides empty metadata rows and sections while keeping populated rows" do
+    @event.update!(
+      guest_count: nil,
+      attire: nil,
+      color_palette: nil,
+      style: "Minimal Modern",
+      social_media_policy: "",
+      parking_details: nil
+    )
+
+    view.instance_variable_set(:@event, @event)
+    view.instance_variable_set(:@segment, @segment)
+    render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--event-overview__guest-count", count: 0
+    assert_select ".generated-template--packet-sheet__text--label", text: "Attire", count: 0
+    assert_select ".generated-template--packet-sheet__text--label", text: "Color Palette", count: 0
+    assert_select ".generated-template--packet-sheet__text--label", text: "Style", count: 1
+    assert_select ".generated-template--packet-sheet__text--value", text: "Minimal Modern"
+    assert_select ".generated-template--packet-sheet__section-title", text: "Social Media Policy", count: 0
+    assert_select ".generated-template--packet-sheet__section-title", text: "PARKING & GETTING THERE", count: 0
   end
 
   private
