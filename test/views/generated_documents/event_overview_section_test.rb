@@ -40,12 +40,12 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__timeline-time", text: generated_event_overview_timeline_time(calendar_items(:reception), @event.run_of_show_calendar.timezone)
     assert_select ".generated-template--event-overview__timeline-time", text: generated_event_overview_timeline_time(calendar_items(:afterparty), @event.run_of_show_calendar.timezone)
     assert_select ".generated-template--event-overview__timeline-time em", text: "to", count: 3
-    assert_select ".generated-template--event-overview__planner-name", text: "Ada Fixture"
-    assert_select ".generated-template--event-overview__planner-name", text: "Grace Fixture"
-    assert_select ".generated-template--event-overview__planner-title", text: "Lead Planner"
-    assert_select ".generated-template--event-overview__planner-title", text: "Operations Director"
-    assert_select ".generated-template--event-overview__planner-email", text: /ada_fixture@example.com/
-    assert_select ".generated-template--event-overview__planner-phone", text: /555-111-2222/
+    assert_select ".generated-template--event-overview__planner-name", text: "Pineapple Productions"
+    assert_select ".generated-template--event-overview__planner-contact-name em", text: "Ada Fixture"
+    assert_select ".generated-template--event-overview__planner-handle", text: "@pineappleprodc"
+    assert_select ".generated-template--event-overview__planner-title", count: 0
+    assert_select ".generated-template--event-overview__planner-email", count: 0
+    assert_select ".generated-template--event-overview__planner-phone", count: 0
     assert_select ".generated-template--event-overview__vendor-name", text: "Sunshine Catering"
     assert_select ".generated-template--event-overview__vendor-name", text: "Bright Lights Production"
     assert_select ".generated-template--event-overview__vendor-contact-name", text: /Maria Cater/
@@ -69,12 +69,12 @@ class EventOverviewSectionTest < ActionView::TestCase
     render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
 
     assert_select ".generated-template--event-overview__event-name", text: @event.name
-    assert_select ".generated-template--event-overview__planner-name", text: "Ada Fixture"
+    assert_select ".generated-template--event-overview__planner-name", text: "Pineapple Productions"
     assert_select ".generated-template--event-overview__vendor-name", text: "Sunshine Catering"
     assert_no_match(/Custom Heading|Custom body copy|generated-text-columns/, rendered)
   end
 
-  test "omits vendors without contact data" do
+  test "includes vendors without contact data" do
     @event.event_vendors.create!(
       name: "Silent Vendor",
       vendor_type: "Décor",
@@ -83,11 +83,24 @@ class EventOverviewSectionTest < ActionView::TestCase
       position: 9,
       client_visible: false
     )
+    @event.event_vendors.create!(
+      name: "Type Free Vendor",
+      vendor_type: nil,
+      social_handle: "typefree",
+      contacts_jsonb: [
+        { name: "No Type Contact" }
+      ],
+      position: 10,
+      client_visible: false
+    )
 
     view.assign(event: @event, segment: @segment)
     render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
 
-    assert_select ".generated-template--event-overview__vendor-name", text: "Silent Vendor", count: 0
+    assert_select ".generated-template--event-overview__vendor-name", text: "Silent Vendor"
+    assert_select ".generated-template--event-overview__vendor-name", text: "Type Free Vendor"
+    assert_select ".generated-template--event-overview__vendor-contact-name--empty", count: 1
+    assert_no_match(/generated-template--packet-sheet__text--label">Vendor<\/p>/, rendered)
   end
 
   test "shows empty states when planner and vendor data are missing" do
@@ -100,7 +113,7 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__location", text: "Location TBD"
     assert_select ".generated-template--packet-sheet__section-title", text: "Timeline"
     assert_select ".generated-template--packet-sheet__empty", text: /No milestone items are available/
-    assert_select ".generated-template--packet-sheet__empty", text: /No planner contacts are linked/
+    assert_select ".generated-template--packet-sheet__empty", text: /No lead planner is linked/
     assert_select ".generated-template--packet-sheet__empty", text: /No vendor contacts are available/
   end
 

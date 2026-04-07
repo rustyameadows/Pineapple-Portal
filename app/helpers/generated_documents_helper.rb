@@ -258,8 +258,6 @@ module GeneratedDocumentsHelper
         normalized_contact
       end
 
-      next if contacts.empty?
-
       {
         name: generated_event_overview_vendor_name(vendor),
         vendor_type: generated_event_overview_vendor_type(vendor),

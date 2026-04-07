@@ -67,37 +67,28 @@
 
     <section class="generated-template--packet-sheet__section">
       <h2 class="generated-template--packet-sheet__section-title">Planner Contact</h2>
-      <% if planners.any? %>
+      <% lead_planner = planners.find { |planner| planner[:lead] } %>
+      <% if lead_planner %>
         <div class="generated-template--packet-sheet__grid">
-          <% planners.each do |planner| %>
-            <article>
-              <div class="generated-template--packet-sheet__grid-row">
-                <div class="generated-template--packet-sheet__grid-cell">
-                  <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Planning, Design &amp; Coordination</p>
-                </div>
-                <div class="generated-template--packet-sheet__grid-cell">
-                  <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__planner-name"><%= planner[:name] %></p>
-                  <% if planner[:title].present? %>
-                    <p class="generated-template--packet-sheet__text generated-template--event-overview__planner-title"><%= planner[:title] %></p>
-                  <% end %>
-                  <% if planner[:lead] %>
-                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--muted generated-template--event-overview__planner-lead">Lead planner</p>
-                  <% end %>
-                </div>
-                <div class="generated-template--packet-sheet__grid-cell">
-                  <% if planner[:email].present? %>
-                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail generated-template--event-overview__planner-email"><%= planner[:email] %></p>
-                  <% end %>
-                  <% if planner[:phone].present? %>
-                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail generated-template--event-overview__planner-phone"><%= planner[:phone] %></p>
-                  <% end %>
-                </div>
+          <article>
+            <div class="generated-template--packet-sheet__grid-row">
+              <div class="generated-template--packet-sheet__grid-cell">
+                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Planning, Design &amp; Coordination</p>
               </div>
-            </article>
-          <% end %>
+              <div class="generated-template--packet-sheet__grid-cell">
+                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__planner-name">Pineapple Productions</p>
+                <p class="generated-template--packet-sheet__text generated-template--event-overview__planner-contact-name">
+                  <em><%= lead_planner[:name] %></em>
+                </p>
+              </div>
+              <div class="generated-template--packet-sheet__grid-cell">
+                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail generated-template--event-overview__planner-handle">@pineappleprodc</p>
+              </div>
+            </div>
+          </article>
         </div>
       <% else %>
-        <p class="generated-template--packet-sheet__empty">No planner contacts are linked to this event yet.</p>
+        <p class="generated-template--packet-sheet__empty">No lead planner is linked to this event yet.</p>
       <% end %>
     </section>
 
@@ -108,7 +99,7 @@
           <% vendors.each do |vendor| %>
             <% first_contact = vendor[:contacts].first %>
             <% remaining_contacts = vendor[:contacts].drop(1) %>
-            <% label_text = vendor[:vendor_type].presence || "Vendor" %>
+            <% label_text = vendor[:vendor_type].presence %>
 
             <article>
               <div class="generated-template--packet-sheet__grid-row">
@@ -121,6 +112,8 @@
                     <p class="generated-template--packet-sheet__text generated-template--event-overview__vendor-contact-name">
                       <em><%= first_contact[:name].presence || first_contact[:title].presence || "Primary contact" %></em>
                     </p>
+                  <% else %>
+                    <p class="generated-template--packet-sheet__text generated-template--event-overview__vendor-contact-name generated-template--event-overview__vendor-contact-name--empty" aria-hidden="true">&nbsp;</p>
                   <% end %>
                 </div>
                 <div class="generated-template--packet-sheet__grid-cell">
