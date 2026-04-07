@@ -3,7 +3,6 @@
 <% end %>
 <%= render "generated_documents/sections/packet_sheet_styles" %>
 
-<% content = generated_wedding_party_reference_content %>
 <% milestone_data = generated_wedding_party_reference_milestones(@event) %>
 <% milestone_groups = milestone_data[:groups] %>
 <% milestone_timezone = milestone_data[:timezone] %>
@@ -57,6 +56,11 @@
   .generated-template--wedding-party-reference__events-grid > article {
     min-width: 0;
   }
+
+  .generated-template--wedding-party-reference__transportation-stack {
+    display: grid;
+    gap: 6px;
+  }
 </style>
 
 <section class="generated-template generated-template--packet-sheet generated-template--wedding-party-reference">
@@ -74,8 +78,7 @@
       </div>
 
       <% if milestone_groups.any? %>
-        <% milestone_groups.each_with_index do |group, index| %>
-          <% transportation_group = content[:transportation_details][index] %>
+        <% milestone_groups.each do |group| %>
           <div class="generated-template--wedding-party-reference__top-band-row">
             <section class="generated-template--packet-sheet__section">
               <section class="generated-template--packet-sheet__subsection">
@@ -102,12 +105,9 @@
             <section class="generated-template--packet-sheet__section">
               <section class="generated-template--packet-sheet__subsection">
                 <h3 class="generated-template--packet-sheet__subsection-title"><%= group[:date_label] %></h3>
-                <div class="generated-template--packet-sheet__body">
-                  <% Array(transportation_group&.dig(:paragraphs)).each do |paragraph| %>
-                    <p class="generated-template--packet-sheet__text"><%= paragraph %></p>
-                  <% end %>
-                  <% unless transportation_group.present? %>
-                    <p class="generated-template--packet-sheet__text">Transportation details coming soon.</p>
+                <div class="generated-template--packet-sheet__body generated-template--wedding-party-reference__transportation-stack">
+                  <% Array(group[:transportation_notes]).each do |note| %>
+                    <p class="generated-template--packet-sheet__text generated-template--wedding-party-reference__transportation-note"><%= note %></p>
                   <% end %>
                 </div>
               </section>
@@ -120,7 +120,7 @@
             <p class="generated-template--packet-sheet__empty">No milestone items are available for this event yet.</p>
           </section>
           <section class="generated-template--packet-sheet__section">
-            <p class="generated-template--packet-sheet__empty">Transportation details coming soon.</p>
+            <div class="generated-template--packet-sheet__body generated-template--wedding-party-reference__transportation-stack"></div>
           </section>
         </div>
       <% end %>

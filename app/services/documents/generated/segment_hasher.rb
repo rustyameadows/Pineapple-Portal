@@ -207,6 +207,7 @@ module Documents
           event: {
             getting_ready_details: segment.event.getting_ready_details
           },
+          milestone_groups: wedding_party_reference_milestone_groups_payload,
           key_people: segment.event.event_guests.key_people.ordered.map do |guest|
             {
               guest_id: guest.id,
@@ -221,6 +222,52 @@ module Documents
             }
           end
         }
+      end
+
+      def wedding_party_reference_milestone_groups_payload
+        calendar = segment.event.run_of_show_calendar
+        timezone = calendar&.timezone.presence || Time.zone.name
+        return [] unless calendar
+
+        milestone_items = calendar.calendar_items
+                                 .includes(:event_calendar_tags, :relative_anchor)
+                                 .to_a
+                                 .select(&:milestone?)
+                                 .sort_by do |item|
+          start_time = item.effective_starts_at&.in_time_zone(timezone)
+          [start_time&.to_f || Float::INFINITY, item.title.to_s.downcase]
+        end
+
+        milestone_items
+          .group_by do |item|
+            start_time = item.effective_starts_at&.in_time_zone(timezone)
+            start_time ? start_time.strftime("%A, %B %-d") : "Date TBD"
+          end
+          .map do |date_label, items|
+            {
+              date_label: date_label,
+              items: items.map do |item|
+                {
+                  item_id: item.id,
+                  title: item.title,
+                  location_name: item.location_name,
+                  notes: item.notes,
+                  transportation_note: item.transportation_note,
+                  time_caption: item.time_caption,
+                  starts_at: item.starts_at&.utc&.iso8601,
+                  effective_starts_at: item.effective_starts_at&.utc&.iso8601,
+                  effective_ends_at: item.effective_ends_at&.utc&.iso8601,
+                  duration_minutes: item.duration_minutes,
+                  relative_anchor_id: item.relative_anchor_id,
+                  relative_offset_minutes: item.relative_offset_minutes,
+                  relative_before: item.relative_before,
+                  relative_to_anchor_end: item.relative_to_anchor_end,
+                  locked: item.locked,
+                  updated_at: item.updated_at&.utc&.iso8601
+                }
+              end
+            }
+          end
       end
 
       def timeline_payload(run_of_show:)

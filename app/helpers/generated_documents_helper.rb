@@ -301,7 +301,8 @@ module GeneratedDocumentsHelper
                .map do |date_label, items|
       {
         date_label:,
-        items:
+        items:,
+        transportation_notes: items.filter_map { |item| item.transportation_note.to_s.strip.presence }
       }
     end
 

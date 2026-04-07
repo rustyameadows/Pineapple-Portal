@@ -50,6 +50,7 @@ module Events
 
       assert_response :success
       assert_select "form#calendar-item-delete-form-#{item.id}[data-turbo-confirm='Remove this calendar item?']", count: 1
+      assert_select "input[name='calendar_item[transportation_note]']", count: 1
     end
 
     test "update respects anchored return_to" do
@@ -61,6 +62,7 @@ module Events
         return_to:,
         calendar_item: {
           title: "Ceremony Updated",
+          transportation_note: "Guests leave from the front drive at 2:15 PM.",
           starts_at: "2025-10-01T15:00",
           duration_value: 45,
           duration_unit: "minutes"
@@ -69,6 +71,24 @@ module Events
 
       assert_redirected_to return_to
       assert_equal "Ceremony Updated", item.reload.title
+      assert_equal "Guests leave from the front drive at 2:15 PM.", item.reload.transportation_note
+    end
+
+    test "create persists transportation note" do
+      assert_difference("CalendarItem.count", 1) do
+        post event_calendar_items_url(@event), params: {
+          calendar_item: {
+            title: "Guest Shuttle",
+            starts_at: "2025-10-01T13:00",
+            transportation_note: "Board the shuttle at the hotel porte cochere.",
+            duration_value: 30,
+            duration_unit: "minutes"
+          }
+        }
+      end
+
+      assert_redirected_to event_calendar_path(@event)
+      assert_equal "Board the shuttle at the hotel porte cochere.", CalendarItem.order(:id).last.transportation_note
     end
 
     test "destroy removes item and respects safe return path" do

@@ -43,6 +43,9 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--wedding-party-reference__events-grid", count: 2
     assert_select ".generated-template--packet-sheet__section-title", text: "Event Timelines"
     assert_select ".generated-template--packet-sheet__section-title", text: "Transportation Details"
+    assert_select ".generated-template--wedding-party-reference__transportation-stack", count: 2
+    assert_select ".generated-template--wedding-party-reference__transportation-note", text: "Meet in the lobby at 11:30 AM for the florist site visit."
+    assert_select ".generated-template--wedding-party-reference__transportation-note", text: "Guests depart from the hotel entrance at 2:15 PM."
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details"
     assert_select ".generated-template--packet-sheet__section-title", text: "VIP Family"
     assert_select ".generated-template--packet-sheet__section-title", text: "Jordan's Side"
@@ -58,19 +61,19 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_match(/9:00 PM.*10:30 PM\*/m, rendered)
     assert_match(/Reviewing proposals/, rendered)
     assert_match(/Exchange vows and rings\./, rendered)
-    assert_match(/Guests attending the Rehearsal should meet/, rendered)
     assert_match(/Please arrive dressed and ready to prep\./, rendered)
     assert_match(/Bring all accessories in a labeled bag\./, rendered)
     assert_match(/Jordan Rivers/, rendered)
     assert_match(/Maya Chen/, rendered)
     assert_match(/Host/, rendered)
     assert_match(/Sister of the Honoree/, rendered)
+    assert_no_match(/Transportation details coming soon\./, rendered)
     assert_no_match(/Hannah Isakowitz/, rendered)
     assert_no_match(/Dan Greener/, rendered)
     assert_no_match(/generated-text-columns|:::columns|### Wedding party reference sheet/, rendered)
   end
 
-  test "shows placeholder transportation copy when live milestone groups exceed stub day groups" do
+  test "keeps transportation column empty for date groups without transportation notes" do
     milestone_tag = @event.run_of_show_calendar.event_calendar_tags.create!(name: "Milestones", position: 9)
     calendar_items(:decision_flowers).event_calendar_tags << milestone_tag
     calendar_items(:decision_catering).event_calendar_tags << milestone_tag
@@ -88,8 +91,11 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
 
     assert_select ".generated-template--wedding-party-reference__top-band-row", count: 4
+    assert_select ".generated-template--wedding-party-reference__transportation-stack", count: 4
+    assert_select ".generated-template--wedding-party-reference__transportation-note", text: "Meet in the lobby at 11:30 AM for the florist site visit.", count: 1
+    assert_select ".generated-template--wedding-party-reference__transportation-note", text: "Guests depart from the hotel entrance at 2:15 PM.", count: 1
     assert_select ".generated-template--packet-sheet__subsection-title", text: "Sunday, October 5", count: 2
-    assert_match(/Transportation details coming soon\./, rendered)
+    assert_no_match(/Transportation details coming soon\./, rendered)
   end
 
   test "hides getting ready details when blank" do
@@ -101,7 +107,8 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__section-title", text: "Event Timelines"
     assert_select ".generated-template--packet-sheet__empty", text: /No milestone items are available/
     assert_select ".generated-template--packet-sheet__section-title", text: "Transportation Details"
-    assert_select ".generated-template--packet-sheet__empty", text: /Transportation details coming soon\./
+    assert_select ".generated-template--wedding-party-reference__transportation-stack", count: 1
+    assert_select ".generated-template--wedding-party-reference__transportation-note", count: 0
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details", count: 0
     assert_select ".generated-template--packet-sheet__section-title", text: "Oktoberfest Excursions", count: 0
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details & Transportation", count: 0

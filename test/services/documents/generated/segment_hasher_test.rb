@@ -106,6 +106,16 @@ module Documents
 
         refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
       end
+
+      test "wedding party reference hash changes when milestone transportation notes change" do
+        milestone_tag = @event.run_of_show_calendar.event_calendar_tags.create!(name: "Milestones", position: 9)
+        calendar_items(:ceremony).event_calendar_tags << milestone_tag
+        original_hash = SegmentHasher.call(@wedding_party_source)
+
+        calendar_items(:ceremony).update!(transportation_note: "Meet the shuttle at the east entrance.")
+
+        refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
+      end
     end
   end
 end

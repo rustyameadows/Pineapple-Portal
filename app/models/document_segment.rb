@@ -14,7 +14,7 @@ class DocumentSegment < ApplicationRecord
     WEDDING_PARTY_REFERENCE_VIEW_KEY
   ].freeze
   EVENT_OVERVIEW_TEMPLATE_VERSION = "packet-sheet-v4".freeze
-  WEDDING_PARTY_REFERENCE_TEMPLATE_VERSION = "packet-sheet-v3".freeze
+  WEDDING_PARTY_REFERENCE_TEMPLATE_VERSION = "packet-sheet-v4".freeze
   EVENT_OVERVIEW_DEFAULT_BODY_MARKDOWN = <<~MARKDOWN.freeze
     ### Important Information
 
