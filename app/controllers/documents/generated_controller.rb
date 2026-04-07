@@ -11,11 +11,14 @@ module Documents
     def library
       GeneratedPacketSource.ensure_canonical_sources_for_event!(@event)
       @packet_definitions = packet_definitions
+      @group_sources = @event.generated_packet_sources.group_sources.order(:title)
       @canonical_sources = @event.generated_packet_sources.where(source_category: GeneratedPacketSource::CATEGORIES[:canonical]).order(:title)
       @page_sources = @event.generated_packet_sources.where(source_category: GeneratedPacketSource::CATEGORIES[:page]).order(updated_at: :desc, title: :asc)
       @uploaded_pdf_documents = uploaded_pdf_documents
-      @source_usage_labels = source_usage_labels
-      @upload_usage_labels = upload_usage_labels
+      usage_map = usage_map_result
+      @source_usage_labels = usage_map.source_packets
+      @upload_usage_labels = usage_map.upload_packets
+      @group_usage_labels = usage_map.group_packets
     end
 
     def new
@@ -37,6 +40,11 @@ module Documents
     end
 
     def show
+      if @document.group_container?
+        redirect_to edit_event_documents_generated_path(@event, @document.logical_id)
+        return
+      end
+
       load_document_context
       @working_copy = current_working_copy_access
     end
@@ -49,7 +57,9 @@ module Documents
 
     def update
       if @document.update(definition_params)
-        redirect_to event_documents_generated_path(@event, @document.logical_id), notice: "Packet updated."
+        sync_group_sources! if @document.group_container?
+        redirect_to(@document.group_container? ? edit_event_documents_generated_path(@event, @document.logical_id) : event_documents_generated_path(@event, @document.logical_id),
+                    notice: "#{@document.group_container? ? 'Group' : 'Packet'} updated.")
       else
         redirect_to edit_event_documents_generated_path(@event, @document.logical_id), alert: @document.errors.full_messages.to_sentence
       end
@@ -57,17 +67,26 @@ module Documents
 
     def destroy
       title = @document.title
+      packets_to_refresh = @document.group_container? ? packet_consumer_resolver.for_container(@document).to_a : []
 
       Document.transaction do
+        destroy_group_sources! if @document.group_container?
         generated_scope.where(logical_id: @document.logical_id).to_a.each(&:destroy!)
       end
 
-      redirect_to event_documents_generated_index_path(@event), notice: "#{title} deleted."
+      enqueue_working_refresh_for_documents(packets_to_refresh) if packets_to_refresh.any?
+
+      redirect_to(@document.group_container? ? library_event_documents_generated_index_path(@event) : event_documents_generated_index_path(@event), notice: "#{title} deleted.")
     rescue StandardError => e
       redirect_to edit_event_documents_generated_path(@event, @document.logical_id), alert: "Unable to delete packet: #{e.message}"
     end
 
     def working_pdf
+      if @document.group_container?
+        redirect_to edit_event_documents_generated_path(@event, @document.logical_id), alert: "Groups do not have live PDFs."
+        return
+      end
+
       access = current_working_copy_access
 
       if access.empty?
@@ -93,6 +112,11 @@ module Documents
     end
 
     def working_status
+      if @document.group_container?
+        render json: { status: "missing", working_available: false, rendered_at: nil, refresh_error: nil, viewer_token: "missing", viewer_path: nil }
+        return
+      end
+
       access = current_working_copy_access
 
       render json: {
@@ -115,6 +139,11 @@ module Documents
     end
 
     def compile
+      if @document.group_container?
+        redirect_to edit_event_documents_generated_path(@event, @document.logical_id), alert: "Groups do not create snapshots."
+        return
+      end
+
       segments = current_segments
 
       if segments.empty?
@@ -168,7 +197,7 @@ module Documents
     end
 
     def build_manifest_entries
-      grouped = generated_scope.where(is_template: false)
+      grouped = generated_scope.packet_containers.where(is_template: false)
                                 .order(:logical_id, version: :asc)
                                 .group_by(&:logical_id)
 
@@ -192,7 +221,8 @@ module Documents
         is_template: false,
         is_latest: false,
         built_by_user: current_user,
-        packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed]
+        packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed],
+        packet_container_kind: Document::PACKET_CONTAINER_KINDS[:packet]
       }
 
       @event.documents.new(attrs)
@@ -212,7 +242,9 @@ module Documents
     end
 
     def definition_params
-      params.fetch(:document, {}).permit(:title, :client_visible)
+      allowed = [:title]
+      allowed << :client_visible unless @document&.group_container?
+      params.fetch(:document, {}).permit(*allowed)
     end
 
     def load_document_context
@@ -226,15 +258,19 @@ module Documents
       @available_timeline_views = timeline_view_options
       @available_canonical_sources = @event.generated_packet_sources.where(source_category: GeneratedPacketSource::CATEGORIES[:canonical]).order(:title)
       @available_page_sources = @event.generated_packet_sources.where(source_category: GeneratedPacketSource::CATEGORIES[:page]).order(updated_at: :desc, title: :asc)
+      @available_group_sources = @event.generated_packet_sources.group_sources.order(:title)
       @packet_definitions = packet_definitions.reject { |definition| definition.logical_id == @document.logical_id }
-      @source_usage_labels = source_usage_labels
+      usage_map = usage_map_result
+      @source_usage_labels = usage_map.source_packets
+      @upload_usage_labels = usage_map.upload_packets
+      @group_usage_labels = usage_map.group_packets
       @builds = @document.builds.recent_first.to_a
       @active_build = @builds.find { |build| build.pending? || build.running? }
       @segment_warnings = segment_blockers_map(@segments)
     end
 
     def builder_path
-      event_documents_generated_path(@event, @document.logical_id)
+      @document.group_container? ? edit_event_documents_generated_path(@event, @document.logical_id) : event_documents_generated_path(@event, @document.logical_id)
     end
 
     def compile_blockers(segments)
@@ -251,27 +287,49 @@ module Documents
 
     def segment_blockers_map(segments)
       warnings = {}
+      leaf_entries = if @document.packet_source_backed? || @document.packet_placements.exists?
+                       Documents::Generated::ContainerEntries.new(definition_document: @document).call
+                     else
+                       segments
+                     end
 
-      if segments.any?(&:pdf_asset?)
-        pdf_segments = segments.select(&:pdf_asset?)
-        attached_ids = pdf_segments.filter_map(&:pdf_document_id)
-        documents_by_id = @event.documents.where(id: attached_ids).index_by(&:id)
+      pdf_entries = leaf_entries.select { |entry| source_for_warning(entry).pdf_asset? }
+      attached_ids = pdf_entries.filter_map { |entry| source_for_warning(entry).pdf_document_id }
+      documents_by_id = @event.documents.where(id: attached_ids).index_by(&:id)
 
-        pdf_segments.each do |segment|
-          document = documents_by_id[segment.pdf_document_id]
-          if document.nil?
-            warnings[segment.id] = "#{segment.display_title}: attach a PDF before compiling"
-          elsif document.storage_uri.blank?
-            warnings[segment.id] = "#{segment.display_title}: attached PDF is missing a stored file"
-          end
+      pdf_entries.each do |entry|
+        source = source_for_warning(entry)
+        owner = warning_owner_for(entry)
+        document = documents_by_id[source.pdf_document_id]
+
+        if document.nil?
+          warnings[owner.id] = "#{owner.display_title}: attach a PDF before compiling"
+        elsif document.storage_uri.blank?
+          warnings[owner.id] = "#{owner.display_title}: attached PDF is missing a stored file"
         end
       end
 
-      segments.each do |segment|
-        next unless segment.html_view?
+      leaf_entries.each do |entry|
+        source = source_for_warning(entry)
+        owner = warning_owner_for(entry)
 
-        if segment.html_view_config.blank?
-          warnings[segment.id] = "#{segment.display_title}: select a branded section"
+        if source.group?
+          warnings[owner.id] = "#{owner.display_title}: groups cannot contain other groups"
+          next
+        end
+
+        next unless source.html_view?
+
+        if source.html_view_config.blank?
+          warnings[owner.id] = "#{owner.display_title}: select a branded section"
+        end
+      end
+
+      segments.select { |segment| segment.respond_to?(:group?) && segment.group? }.each do |segment|
+        if segment.group_document.nil?
+          warnings[segment.id] = "#{segment.display_title}: select a valid group"
+        elsif segment.group_document.packet_placements.none?
+          warnings[segment.id] = "#{segment.display_title}: add at least one group page"
         end
       end
 
@@ -287,34 +345,6 @@ module Documents
 
     def packet_definitions
       build_manifest_entries.map { |entry| entry[:definition] }
-    end
-
-    def source_usage_labels
-      definitions_by_logical_id = packet_definitions.index_by(&:logical_id)
-      placements = GeneratedPacketPlacement.where(document_logical_id: definitions_by_logical_id.keys)
-
-      placements.group_by(&:generated_packet_source_id).transform_values do |source_placements|
-        source_placements
-          .map { |placement| definitions_by_logical_id[placement.document_logical_id]&.title }
-          .compact
-          .uniq
-      end
-    end
-
-    def upload_usage_labels
-      usage_by_logical_id = Hash.new { |hash, key| hash[key] = [] }
-      definitions_by_logical_id = packet_definitions.index_by(&:logical_id)
-
-      @event.generated_packet_sources.where(source_category: GeneratedPacketSource::CATEGORIES[:upload]).includes(:packet_placements).find_each do |source|
-        source.packet_placements.each do |placement|
-          title = definitions_by_logical_id[placement.document_logical_id]&.title
-          next if title.blank?
-
-          usage_by_logical_id[source.pdf_logical_id] << title
-        end
-      end
-
-      usage_by_logical_id.transform_values(&:uniq)
     end
 
     def uploaded_pdf_documents
@@ -336,6 +366,39 @@ module Documents
       @current_working_copy_access ||= Documents::Generated::WorkingCopyAccess.new(
         definition_document: @document
       ).call
+    end
+
+    def usage_map_result
+      @usage_map_result ||= Documents::Generated::PacketUsageMap.new(event: @event).call
+    end
+
+    def packet_consumer_resolver
+      @packet_consumer_resolver ||= Documents::Generated::PacketConsumerResolver.new(event: @event)
+    end
+
+    def enqueue_working_refresh_for_documents(*documents)
+      Array(documents).flatten.compact.uniq.each do |document|
+        Documents::Generated::WorkingCopyRefresh.enqueue(document)
+      end
+    end
+
+    def source_for_warning(entry)
+      entry.respond_to?(:source) ? entry.source : entry
+    end
+
+    def warning_owner_for(entry)
+      entry.respond_to?(:top_level_placement) && entry.top_level_placement.present? ? entry.top_level_placement : entry
+    end
+
+    def destroy_group_sources!
+      @event.generated_packet_sources.group_sources.where("source_ref ->> 'logical_id' = ?", @document.logical_id).find_each(&:destroy!)
+    end
+
+    def sync_group_sources!
+      @event.generated_packet_sources.group_sources.where("source_ref ->> 'logical_id' = ?", @document.logical_id).find_each do |source|
+        source.assign_group_document(@document)
+        source.save! if source.changed?
+      end
     end
 
     def render_working_placeholder(message)

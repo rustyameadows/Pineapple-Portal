@@ -58,6 +58,8 @@ module Documents
           pdf_document_payload
         when GeneratedPacketSource::KINDS[:html_view]
           html_view_payload
+        when GeneratedPacketSource::KINDS[:group]
+          group_payload
         else
           {}
         end
@@ -99,6 +101,25 @@ module Documents
         else
           {}
         end
+      end
+
+      def group_payload
+        document = segment.group_document
+        return {} unless document
+
+        {
+          logical_id: document.logical_id,
+          title: document.title,
+          updated_at: document.updated_at&.utc&.iso8601,
+          child_placements: document.packet_placements.ordered.map do |placement|
+            {
+              placement_id: placement.id,
+              position: placement.position,
+              source_id: placement.generated_packet_source_id,
+              updated_at: placement.updated_at&.utc&.iso8601
+            }
+          end
+        }
       end
 
       def cover_payload

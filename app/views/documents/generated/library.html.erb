@@ -69,6 +69,63 @@
             </article>
           <% end %>
 
+          <article class="generated-builder__workspace-card" style="margin-bottom: 1.5rem;">
+            <div class="generated-builder__workspace-head">
+              <div>
+                <h2>Groups</h2>
+              </div>
+            </div>
+            <% if @group_sources.any? %>
+              <table class="event-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Used in</th>
+                    <th>Manage</th>
+                    <th>Insert</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @group_sources.each do |source| %>
+                    <% usage = Array(@source_usage_labels[source.id]) %>
+                    <% group_document = source.group_document %>
+                    <tr>
+                      <td><%= source.display_title %></td>
+                      <td><%= usage.any? ? usage.join(", ") : "Not in any packets yet" %></td>
+                      <td>
+                        <% if group_document.present? %>
+                          <%= link_to "Manage",
+                                      edit_event_documents_generated_path(@event, group_document.logical_id),
+                                      class: "button button--tiny button--ghost" %>
+                        <% else %>
+                          <span class="generated-builder__hint">Missing group</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if @packet_definitions.any? %>
+                          <% @packet_definitions.each do |packet| %>
+                            <%= form_with scope: :segment,
+                                          url: event_documents_generated_segments_path(@event, packet.logical_id),
+                                          method: :post,
+                                          local: true,
+                                          style: "display: inline-block; margin: 0 0.35rem 0.35rem 0;" do |form| %>
+                              <%= form.hidden_field :source_id, value: source.id %>
+                              <%= form.submit "Insert into #{packet.title}", class: "button button--tiny button--ghost" %>
+                            <% end %>
+                          <% end %>
+                        <% else %>
+                          <span class="generated-builder__hint">Create a packet first.</span>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% else %>
+              <p class="generated-builder__empty">No shared groups yet.</p>
+            <% end %>
+          </article>
+
           <article class="generated-builder__workspace-card">
             <div class="generated-builder__workspace-head">
               <div>

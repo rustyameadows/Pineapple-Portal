@@ -2,7 +2,17 @@
 <% reorder_url ||= nil %>
 <% csrf_token ||= form_authenticity_token %>
 <% available_timeline_views ||= [] %>
+<% available_group_sources ||= [] %>
 <% return_to ||= nil %>
+<% open_group_source_id ||= local_assigns.fetch(:open_group_source_id, params[:open_group_source_id]) %>
+<% allow_group_actions = local_assigns.fetch(:allow_group_actions, document.packet_container?) %>
+<% container_label = document.group_container? ? "Group" : "Packet" %>
+<% container_item_label = document.group_container? ? "group page" : "packet page" %>
+<% empty_message = if document.group_container?
+                     "No group pages yet. Add a canonical, page, or upload to build this shared group."
+                   else
+                     "No packet pages yet. Add a canonical, page, upload, or group to start the live working PDF."
+                   end %>
 <% segment_display_title = lambda do |segment|
      case segment.html_view_key
      when "cover_sheet"
@@ -26,10 +36,16 @@
      data-generated-segments-view-mode-value="list">
   <div class="generated-builder__sidebar-header">
     <div class="generated-builder__sidebar-header-main">
-      <h2>Packet Pages</h2>
-      <p class="generated-builder__hint">These pages are ordered for the live working PDF. Canonicals and reused pages stay shared across packets.</p>
+      <h2><%= "#{container_label} Pages" %></h2>
+      <p class="generated-builder__hint">
+        <% if document.group_container? %>
+          These pages define the shared group. Any packet using this group will render the current contents in this order.
+        <% else %>
+          These pages are ordered for the live working PDF. Canonicals, reused pages, and groups stay shared across packets.
+        <% end %>
+      </p>
     </div>
-    <div class="generated-builder__view-toggle" role="group" aria-label="Packet page layout view">
+    <div class="generated-builder__view-toggle" role="group" aria-label="<%= "#{container_label} page layout view" %>">
       <button type="button"
               class="generated-builder__view-button generated-builder__view-button--active"
               data-generated-segments-target="viewButton"
@@ -54,8 +70,10 @@
         data-generated-segments-target="list">
       <% segments.each do |segment| %>
         <% shared_packets = Array(source_usage_labels[segment.source.id]) %>
+        <% nested_return_to = generated_builder_return_to(return_to.presence || request.fullpath, open_group_source_id: segment.source.id) if segment.group? %>
         <li class="generated-builder__list-item"
             data-controller="generated-segment-dialog"
+            data-generated-segment-dialog-auto-open-value="<%= segment.group? && open_group_source_id.to_s == segment.source.id.to_s %>"
             data-generated-segments-target="item"
             data-segment-id="<%= segment.id %>"
             draggable="true">
@@ -64,18 +82,22 @@
               <button type="button"
                       class="generated-builder__drag-handle"
                       data-generated-segments-target="handle"
-                      aria-label="Drag to reorder packet page">
+                      aria-label="<%= "Drag to reorder #{container_item_label}" %>">
                 <span aria-hidden="true">⋮⋮</span>
               </button>
               <div class="generated-builder__list-content">
                 <strong><%= segment_display_title.call(segment) %></strong>
                 <div class="generated-builder__list-meta">
                   <span class="generated-builder__status-tag"><%= segment.builder_label %></span>
-                  <%= render "documents/generated/render_status",
-                             segment: segment,
-                             event: event,
-                             document: document,
-                             return_to: return_to %>
+                  <% if segment.group? %>
+                    <span class="generated-builder__status-tag"><%= pluralize(segment.group_child_count, "page") %></span>
+                  <% else %>
+                    <%= render "documents/generated/render_status",
+                               segment: segment,
+                               event: event,
+                               document: document,
+                               return_to: return_to %>
+                  <% end %>
                   <% if shared_packets.size > 1 %>
                     <span class="generated-builder__status-tag generated-builder__status-tag--warning">
                       Shared in <%= shared_packets.size %> packets
@@ -108,7 +130,7 @@
                             event_documents_generated_segment_path(event, document.logical_id, segment, return_to: return_to),
                             method: :delete,
                             class: "button button--tiny button--danger",
-                            data: { confirm: "Remove this page from the packet?" } %>
+                            data: { confirm: "Remove this #{segment.group? ? 'group' : 'page'} from the #{document.group_container? ? 'group' : 'packet'}?" } %>
             </div>
           </div>
 
@@ -117,154 +139,205 @@
                   data-action="cancel->generated-segment-dialog#handleCancel click->generated-segment-dialog#handleBackdropClose">
             <div class="generated-builder__overlay-panel generated-builder__segment-dialog-panel">
               <header class="generated-builder__overlay-header generated-builder__segment-dialog-header">
-                <h3>Segment settings</h3>
+                <h3><%= segment.group? ? "Group settings" : "Segment settings" %></h3>
                 <p class="generated-builder__hint"><%= segment_display_title.call(segment) %></p>
               </header>
-              <%= form_with model: segment,
-                            scope: :segment,
-                            url: event_documents_generated_segment_path(event, document.logical_id, segment, return_to: return_to),
-                            method: :patch,
-                            local: true,
-                            class: "generated-builder__form generated-builder__segment-dialog-form" do |form| %>
-                <div class="generated-builder__overlay-body generated-builder__segment-dialog-body">
-                  <div class="generated-builder__form-row">
-                    <%= form.label :title, "Page title" %>
-                    <%= form.text_field :title, value: segment.display_title %>
+
+              <% if segment.group? %>
+                <%= form_with model: segment,
+                              scope: :segment,
+                              url: event_documents_generated_segment_path(event, document.logical_id, segment, return_to: return_to),
+                              method: :patch,
+                              local: true,
+                              class: "generated-builder__form generated-builder__segment-dialog-form" do |form| %>
+                  <div class="generated-builder__overlay-body generated-builder__segment-dialog-body">
+                    <div class="generated-builder__form-row">
+                      <%= form.label :title, "Group title" %>
+                      <%= form.text_field :title, value: segment.display_title %>
+                    </div>
+                    <p class="generated-builder__hint">Changes to this group update every packet that reuses it.</p>
                   </div>
 
-                  <% if segment.pdf_asset? %>
-                    <div class="generated-builder__form-row">
-                      <%= form.label :pdf_document_id, "Attached PDF" %>
-                      <%= form.select :pdf_document_id,
-                                      options_from_collection_for_select(available_pdf_documents, :id, :title, segment.pdf_document_id),
-                                      include_blank: "Choose a PDF" %>
-                    </div>
-                  <% elsif segment.html_view? %>
-                    <% boolean_cast = ActiveModel::Type::Boolean.new %>
-                    <% if segment.html_view_key == DocumentSegment::TIMELINE_VIEW_KEY %>
-                      <% timeline_options = segment.html_options.stringify_keys %>
-                      <% selected_view = timeline_options["view_ref"].presence || available_timeline_views.dig(0, 1) %>
-                      <%= form.hidden_field :view_key, value: segment.html_view_key %>
-                      <%= form.fields_for :options, timeline_options do |options_fields| %>
-                        <div class="generated-builder__form-row">
-                          <%= options_fields.label :view_ref, "Timeline view" %>
-                          <% if available_timeline_views.any? %>
-                            <%= options_fields.select :view_ref,
-                                                     options_for_select(available_timeline_views, selected_view) %>
-                          <% else %>
-                            <p class="generated-builder__empty">No timeline views available yet.</p>
-                          <% end %>
-                        </div>
+                  <footer class="generated-builder__overlay-actions generated-builder__segment-dialog-actions">
+                    <button type="button"
+                            class="button button--small button--ghost"
+                            data-action="generated-segment-dialog#close">
+                      Cancel
+                    </button>
+                    <%= form.submit "Save group", class: "button button--small" %>
+                  </footer>
+                <% end %>
 
-                        <fieldset class="generated-builder__form-row generated-builder__form-row--checkbox-group">
-                          <legend>Show columns</legend>
-                          <label class="generated-builder__checkbox">
-                            <%= options_fields.check_box :show_location, { checked: boolean_cast.cast(timeline_options.fetch("show_location", true)) }, "1", "0" %>
-                            <span>Location</span>
-                          </label>
-                          <label class="generated-builder__checkbox">
-                            <%= options_fields.check_box :show_vendor, { checked: boolean_cast.cast(timeline_options.fetch("show_vendor", true)) }, "1", "0" %>
-                            <span>Vendor</span>
-                          </label>
-                          <label class="generated-builder__checkbox">
-                            <%= options_fields.check_box :show_team_members, { checked: boolean_cast.cast(timeline_options.fetch("show_team_members", true)) }, "1", "0" %>
-                            <span>Team members</span>
-                          </label>
-                        </fieldset>
-                      <% end %>
-                    <% elsif segment.html_view_key == DocumentSegment::RUN_OF_SHOW_VIEW_KEY %>
-                      <% run_options = segment.html_options.stringify_keys %>
-                      <%= form.hidden_field :view_key, value: segment.html_view_key %>
-                      <%= form.fields_for :options, run_options do |options_fields| %>
-                        <fieldset class="generated-builder__form-row generated-builder__form-row--checkbox-group">
-                          <legend>Show columns</legend>
-                          <label class="generated-builder__checkbox">
-                            <%= options_fields.check_box :show_location, { checked: boolean_cast.cast(run_options.fetch("show_location", true)) }, "1", "0" %>
-                            <span>Location</span>
-                          </label>
-                          <label class="generated-builder__checkbox">
-                            <%= options_fields.check_box :show_vendor, { checked: boolean_cast.cast(run_options.fetch("show_vendor", true)) }, "1", "0" %>
-                            <span>Vendor</span>
-                          </label>
-                          <label class="generated-builder__checkbox">
-                            <%= options_fields.check_box :show_team_members, { checked: boolean_cast.cast(run_options.fetch("show_team_members", true)) }, "1", "0" %>
-                            <span>Team members</span>
-                          </label>
-                        </fieldset>
-                      <% end %>
-                    <% elsif segment.html_view_key == DocumentSegment::TEXT_PAGE_VIEW_KEY %>
-                      <% text_options = segment.html_options.stringify_keys %>
-                      <% body_markdown = generated_segment_body_markdown(segment) %>
-                      <%= form.hidden_field :view_key, value: segment.html_view_key %>
-                      <%= form.fields_for :options, text_options do |options_fields| %>
-                        <div class="generated-builder__markdown-editor" data-controller="generated-markdown-editor">
-                          <div class="generated-builder__form-row">
-                            <%= options_fields.label :body_markdown, "Page content" %>
-                            <%= options_fields.text_area :body_markdown,
-                                                        value: body_markdown,
-                                                        rows: 14,
-                                                        class: "generated-builder__textarea",
-                                                        placeholder: "Write notes, schedules, or instructions with Markdown syntax.",
-                                                        data: {
-                                                          generated_markdown_editor_target: "source",
-                                                          action: "input->generated-markdown-editor#syncFromSource"
-                                                        } %>
-                          </div>
-                          <div class="generated-builder__overlay-trigger-row">
-                            <button type="button"
-                                    class="button button--tiny button--ghost generated-builder__overlay-trigger"
-                                    data-generated-markdown-editor-target="openButton"
-                                    data-action="generated-markdown-editor#open"
-                                    aria-haspopup="dialog"
-                                    hidden>
-                              Open large editor
-                            </button>
-                          </div>
-                          <dialog class="generated-builder__overlay-dialog"
-                                  data-generated-markdown-editor-target="dialog"
-                                  data-action="cancel->generated-markdown-editor#handleCancel click->generated-markdown-editor#handleBackdropClose">
-                            <div class="generated-builder__overlay-panel">
-                              <header class="generated-builder__overlay-header">
-                                <h3>Large text editor</h3>
-                              </header>
-                              <div class="generated-builder__overlay-body">
-                                <textarea class="generated-builder__overlay-textarea"
-                                          aria-label="Large markdown editor"
-                                          data-generated-markdown-editor-target="overlay"
-                                          data-action="input->generated-markdown-editor#syncFromOverlay"><%= body_markdown %></textarea>
-                              </div>
-                              <footer class="generated-builder__overlay-actions">
-                                <button type="button"
-                                        class="button button--small"
-                                        data-action="generated-markdown-editor#close">
-                                  Done
-                                </button>
-                              </footer>
-                            </div>
-                          </dialog>
-                        </div>
-                      <% end %>
-                    <% elsif segment.html_view_key == DocumentSegment::EVENT_OVERVIEW_VIEW_KEY %>
-                      <%= form.hidden_field :view_key, value: segment.html_view_key %>
-                      <p class="generated-builder__hint">This page is powered by live event, planner, and vendor data. Update those records in the app to change the sheet.</p>
-                    <% elsif segment.html_view_key == DocumentSegment::VENDOR_CONTACTS_VIEW_KEY %>
-                      <%= form.hidden_field :view_key, value: segment.html_view_key %>
-                      <p class="generated-builder__hint">This page is powered by live planner and vendor data. Update those records in the app to change the sheet.</p>
-                    <% elsif segment.html_view_key == DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY %>
-                      <%= form.hidden_field :view_key, value: segment.html_view_key %>
-                      <p class="generated-builder__hint">This page uses the packet wedding party reference layout with stubbed content for now. It does not use markdown editing.</p>
-                    <% end %>
+                <div class="generated-builder__overlay-body generated-builder__segment-dialog-body">
+                  <% if segment.group_document.present? %>
+                    <%= render "documents/generated/segment_list",
+                               event: event,
+                               document: segment.group_document,
+                               segments: segment.group_document.packet_placements.includes(:source).ordered.to_a,
+                               available_pdf_documents: available_pdf_documents,
+                               available_page_views: available_page_views,
+                               available_canonical_sources: available_canonical_sources,
+                               available_page_sources: available_page_sources,
+                               available_group_sources: [],
+                               source_usage_labels: source_usage_labels,
+                               available_timeline_views: available_timeline_views,
+                               segment_warnings: {},
+                               reorder_url: reorder_event_documents_generated_segments_path(event, segment.group_document.logical_id),
+                               csrf_token: csrf_token,
+                               return_to: nested_return_to,
+                               allow_group_actions: false,
+                               open_group_source_id: nil %>
+                  <% else %>
+                    <p class="generated-builder__empty">This group reference no longer points to a valid group.</p>
                   <% end %>
                 </div>
+              <% else %>
+                <%= form_with model: segment,
+                              scope: :segment,
+                              url: event_documents_generated_segment_path(event, document.logical_id, segment, return_to: return_to),
+                              method: :patch,
+                              local: true,
+                              class: "generated-builder__form generated-builder__segment-dialog-form" do |form| %>
+                  <div class="generated-builder__overlay-body generated-builder__segment-dialog-body">
+                    <div class="generated-builder__form-row">
+                      <%= form.label :title, "Page title" %>
+                      <%= form.text_field :title, value: segment.display_title %>
+                    </div>
 
-                <footer class="generated-builder__overlay-actions generated-builder__segment-dialog-actions">
-                  <button type="button"
-                          class="button button--small button--ghost"
-                          data-action="generated-segment-dialog#close">
-                    Cancel
-                  </button>
-                  <%= form.submit "Save settings", class: "button button--small" %>
-                </footer>
+                    <% if segment.pdf_asset? %>
+                      <div class="generated-builder__form-row">
+                        <%= form.label :pdf_document_id, "Attached PDF" %>
+                        <%= form.select :pdf_document_id,
+                                        options_from_collection_for_select(available_pdf_documents, :id, :title, segment.pdf_document_id),
+                                        include_blank: "Choose a PDF" %>
+                      </div>
+                    <% elsif segment.html_view? %>
+                      <% boolean_cast = ActiveModel::Type::Boolean.new %>
+                      <% if segment.html_view_key == DocumentSegment::TIMELINE_VIEW_KEY %>
+                        <% timeline_options = segment.html_options.stringify_keys %>
+                        <% selected_view = timeline_options["view_ref"].presence || available_timeline_views.dig(0, 1) %>
+                        <%= form.hidden_field :view_key, value: segment.html_view_key %>
+                        <%= form.fields_for :options, timeline_options do |options_fields| %>
+                          <div class="generated-builder__form-row">
+                            <%= options_fields.label :view_ref, "Timeline view" %>
+                            <% if available_timeline_views.any? %>
+                              <%= options_fields.select :view_ref,
+                                                       options_for_select(available_timeline_views, selected_view) %>
+                            <% else %>
+                              <p class="generated-builder__empty">No timeline views available yet.</p>
+                            <% end %>
+                          </div>
+
+                          <fieldset class="generated-builder__form-row generated-builder__form-row--checkbox-group">
+                            <legend>Show columns</legend>
+                            <label class="generated-builder__checkbox">
+                              <%= options_fields.check_box :show_location, { checked: boolean_cast.cast(timeline_options.fetch("show_location", true)) }, "1", "0" %>
+                              <span>Location</span>
+                            </label>
+                            <label class="generated-builder__checkbox">
+                              <%= options_fields.check_box :show_vendor, { checked: boolean_cast.cast(timeline_options.fetch("show_vendor", true)) }, "1", "0" %>
+                              <span>Vendor</span>
+                            </label>
+                            <label class="generated-builder__checkbox">
+                              <%= options_fields.check_box :show_team_members, { checked: boolean_cast.cast(timeline_options.fetch("show_team_members", true)) }, "1", "0" %>
+                              <span>Team members</span>
+                            </label>
+                          </fieldset>
+                        <% end %>
+                      <% elsif segment.html_view_key == DocumentSegment::RUN_OF_SHOW_VIEW_KEY %>
+                        <% run_options = segment.html_options.stringify_keys %>
+                        <%= form.hidden_field :view_key, value: segment.html_view_key %>
+                        <%= form.fields_for :options, run_options do |options_fields| %>
+                          <fieldset class="generated-builder__form-row generated-builder__form-row--checkbox-group">
+                            <legend>Show columns</legend>
+                            <label class="generated-builder__checkbox">
+                              <%= options_fields.check_box :show_location, { checked: boolean_cast.cast(run_options.fetch("show_location", true)) }, "1", "0" %>
+                              <span>Location</span>
+                            </label>
+                            <label class="generated-builder__checkbox">
+                              <%= options_fields.check_box :show_vendor, { checked: boolean_cast.cast(run_options.fetch("show_vendor", true)) }, "1", "0" %>
+                              <span>Vendor</span>
+                            </label>
+                            <label class="generated-builder__checkbox">
+                              <%= options_fields.check_box :show_team_members, { checked: boolean_cast.cast(run_options.fetch("show_team_members", true)) }, "1", "0" %>
+                              <span>Team members</span>
+                            </label>
+                          </fieldset>
+                        <% end %>
+                      <% elsif segment.html_view_key == DocumentSegment::TEXT_PAGE_VIEW_KEY %>
+                        <% text_options = segment.html_options.stringify_keys %>
+                        <% body_markdown = generated_segment_body_markdown(segment) %>
+                        <%= form.hidden_field :view_key, value: segment.html_view_key %>
+                        <%= form.fields_for :options, text_options do |options_fields| %>
+                          <div class="generated-builder__markdown-editor" data-controller="generated-markdown-editor">
+                            <div class="generated-builder__form-row">
+                              <%= options_fields.label :body_markdown, "Page content" %>
+                              <%= options_fields.text_area :body_markdown,
+                                                          value: body_markdown,
+                                                          rows: 14,
+                                                          class: "generated-builder__textarea",
+                                                          placeholder: "Write notes, schedules, or instructions with Markdown syntax.",
+                                                          data: {
+                                                            generated_markdown_editor_target: "source",
+                                                            action: "input->generated-markdown-editor#syncFromSource"
+                                                          } %>
+                            </div>
+                            <div class="generated-builder__overlay-trigger-row">
+                              <button type="button"
+                                      class="button button--tiny button--ghost generated-builder__overlay-trigger"
+                                      data-generated-markdown-editor-target="openButton"
+                                      data-action="generated-markdown-editor#open"
+                                      aria-haspopup="dialog"
+                                      hidden>
+                                Open large editor
+                              </button>
+                            </div>
+                            <dialog class="generated-builder__overlay-dialog"
+                                    data-generated-markdown-editor-target="dialog"
+                                    data-action="cancel->generated-markdown-editor#handleCancel click->generated-markdown-editor#handleBackdropClose">
+                              <div class="generated-builder__overlay-panel">
+                                <header class="generated-builder__overlay-header">
+                                  <h3>Large text editor</h3>
+                                </header>
+                                <div class="generated-builder__overlay-body">
+                                  <textarea class="generated-builder__overlay-textarea"
+                                            aria-label="Large markdown editor"
+                                            data-generated-markdown-editor-target="overlay"
+                                            data-action="input->generated-markdown-editor#syncFromOverlay"><%= body_markdown %></textarea>
+                                </div>
+                                <footer class="generated-builder__overlay-actions">
+                                  <button type="button"
+                                          class="button button--small"
+                                          data-action="generated-markdown-editor#close">
+                                    Done
+                                  </button>
+                                </footer>
+                              </div>
+                            </dialog>
+                          </div>
+                        <% end %>
+                      <% elsif segment.html_view_key == DocumentSegment::EVENT_OVERVIEW_VIEW_KEY %>
+                        <%= form.hidden_field :view_key, value: segment.html_view_key %>
+                        <p class="generated-builder__hint">This page is powered by live event, planner, and vendor data. Update those records in the app to change the sheet.</p>
+                      <% elsif segment.html_view_key == DocumentSegment::VENDOR_CONTACTS_VIEW_KEY %>
+                        <%= form.hidden_field :view_key, value: segment.html_view_key %>
+                        <p class="generated-builder__hint">This page is powered by live planner and vendor data. Update those records in the app to change the sheet.</p>
+                      <% elsif segment.html_view_key == DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY %>
+                        <%= form.hidden_field :view_key, value: segment.html_view_key %>
+                        <p class="generated-builder__hint">This page uses the packet wedding party reference layout with stubbed content for now. It does not use markdown editing.</p>
+                      <% end %>
+                    <% end %>
+                  </div>
+
+                  <footer class="generated-builder__overlay-actions generated-builder__segment-dialog-actions">
+                    <button type="button"
+                            class="button button--small button--ghost"
+                            data-action="generated-segment-dialog#close">
+                      Cancel
+                    </button>
+                    <%= form.submit "Save settings", class: "button button--small" %>
+                  </footer>
+                <% end %>
               <% end %>
             </div>
           </dialog>
@@ -272,7 +345,7 @@
       <% end %>
     </ul>
   <% else %>
-    <p class="generated-builder__empty">No packet pages yet. Add a canonical, page, or upload to start the live working PDF.</p>
+    <p class="generated-builder__empty"><%= empty_message %></p>
   <% end %>
 
   <div class="generated-builder__new">
@@ -313,6 +386,45 @@
         </div>
       <% end %>
     </div>
+
+    <% if allow_group_actions %>
+      <div class="generated-builder__panel">
+        <h3>Insert Group</h3>
+        <%= form_with scope: :segment,
+                      url: segment_create_path,
+                      method: :post,
+                      local: true,
+                      class: "generated-builder__form" do |form| %>
+          <div class="generated-builder__form-row">
+            <%= form.label :source_id, "Shared group" %>
+            <%= form.select :source_id,
+                            options_from_collection_for_select(available_group_sources, :id, :display_title),
+                            include_blank: "Choose a group" %>
+          </div>
+          <div class="generated-builder__form-actions">
+            <%= form.submit "Insert group", class: "button button--small" %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="generated-builder__panel">
+        <h3>Create Group</h3>
+        <%= form_with scope: :segment,
+                      url: segment_create_path,
+                      method: :post,
+                      local: true,
+                      class: "generated-builder__form" do |form| %>
+          <div class="generated-builder__form-row">
+            <%= form.label :group_title, "Group title" %>
+            <%= form.text_field :group_title, placeholder: "Design & Decor" %>
+          </div>
+          <p class="generated-builder__hint">Creates a shared group with a section-break placeholder, then inserts it into this packet.</p>
+          <div class="generated-builder__form-actions">
+            <%= form.submit "Create and insert group", class: "button button--small" %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
 
     <div class="generated-builder__panel">
       <h3>Create New Page</h3>
@@ -361,7 +473,7 @@
     </div>
 
     <div class="generated-builder__panel">
-      <h3>Upload PDF Into Packet</h3>
+      <h3><%= "Upload PDF Into #{container_label}" %></h3>
       <%= form_with scope: :segment,
                     url: segment_create_path,
                     method: :post,
@@ -383,7 +495,7 @@
           <%= form.label :title, "Page title" %>
           <%= form.text_field :title, placeholder: "Defaults to file name", data: { generated_packet_upload_target: "title" } %>
         </div>
-        <p class="generated-builder__hint" data-generated-packet-upload-target="status">Choose a PDF to upload directly into this packet.</p>
+        <p class="generated-builder__hint" data-generated-packet-upload-target="status"><%= "Choose a PDF to upload directly into this #{document.group_container? ? 'group' : 'packet'}." %></p>
         <%= hidden_field_tag "segment[file_upload][storage_uri]", nil, data: { generated_packet_upload_target: "storageUri" } %>
         <%= hidden_field_tag "segment[file_upload][checksum]", nil, data: { generated_packet_upload_target: "checksum" } %>
         <%= hidden_field_tag "segment[file_upload][size_bytes]", nil, data: { generated_packet_upload_target: "sizeBytes" } %>

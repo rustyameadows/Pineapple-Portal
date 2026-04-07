@@ -9,6 +9,11 @@ class Document < ApplicationRecord
     source_backed: 2
   }.freeze
 
+  PACKET_CONTAINER_KINDS = {
+    packet: "packet",
+    group: "group"
+  }.freeze
+
   WORKING_STATUSES = {
     missing: "missing",
     fresh: "fresh",
@@ -69,9 +74,12 @@ class Document < ApplicationRecord
   validates :source, inclusion: { in: SOURCE_KEYS }
   validates :doc_kind, inclusion: { in: DOC_KINDS.values }
   validates :working_status, inclusion: { in: WORKING_STATUSES.values }
+  validates :packet_container_kind, inclusion: { in: PACKET_CONTAINER_KINDS.values }, if: :generated?
 
   scope :generated, -> { where(doc_kind: DOC_KINDS[:generated]) }
   scope :templates, -> { where(is_template: true) }
+  scope :packet_containers, -> { where(packet_container_kind: PACKET_CONTAINER_KINDS[:packet]) }
+  scope :group_containers, -> { where(packet_container_kind: PACKET_CONTAINER_KINDS[:group]) }
 
   scope :latest, -> { where(is_latest: true) }
   scope :with_stored_file, -> { where.not(storage_uri: nil) }
@@ -98,14 +106,16 @@ class Document < ApplicationRecord
   end
 
   def self.packet_component_logical_ids_for_event(event)
-    generated_logical_ids = event.documents.generated.select(:logical_id)
-    return [] unless generated_logical_ids.exists?
+    packet_definitions = event.documents.generated.packet_containers.where(storage_uri: nil)
+    return [] unless packet_definitions.exists?
 
-    DocumentSegment
-      .where(document_logical_id: generated_logical_ids, kind: DocumentSegment::KINDS[:pdf_asset])
-      .pluck(Arel.sql("source_ref ->> 'logical_id'"))
-      .filter_map { |value| normalize_uuid(value) }
-      .uniq
+    packet_definitions.flat_map do |document|
+      Documents::Generated::ContainerEntries.new(definition_document: document).call.filter_map do |entry|
+        next unless entry.source.pdf_asset?
+
+        normalize_uuid(entry.source.pdf_logical_id)
+      end
+    end.uniq
   end
 
   def source_label
@@ -121,6 +131,12 @@ class Document < ApplicationRecord
   DOC_KINDS.each_key do |key|
     define_method "#{key}?" do
       doc_kind == DOC_KINDS[key]
+    end
+  end
+
+  PACKET_CONTAINER_KINDS.each_key do |key|
+    define_method "#{key}_container?" do
+      packet_container_kind == PACKET_CONTAINER_KINDS[key]
     end
   end
 
@@ -262,6 +278,7 @@ class Document < ApplicationRecord
       self.source ||= "packet"
       self.is_latest = false if definition_placeholder?
       self.packet_schema_version ||= PACKET_SCHEMA_VERSIONS[:legacy]
+      self.packet_container_kind ||= PACKET_CONTAINER_KINDS[:packet]
       self.working_status ||= WORKING_STATUSES[:missing]
     else
       self.source ||= "staff_upload"

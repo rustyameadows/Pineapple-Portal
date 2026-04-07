@@ -43,6 +43,10 @@ module Documents
       def call(enqueue: true)
         definition_document.reload
 
+        if definition_document.group_container?
+          return build_result(empty: definition_document.packet_placements.none?)
+        end
+
         if definition_document.packet_placements.none?
           reset_missing_state!
           return build_result(empty: true)

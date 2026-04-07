@@ -41,4 +41,18 @@ class DocumentTest < ActiveSupport::TestCase
       document.update!(storage_uri: "documents/contract-updated.pdf")
     end
   end
+
+  test "generated documents default to packet container kind" do
+    event = events(:one)
+    document = event.documents.create!(
+      title: "Family Packet",
+      doc_kind: Document::DOC_KINDS[:generated],
+      logical_id: SecureRandom.uuid,
+      version: 1,
+      is_latest: false,
+      source: "packet"
+    )
+
+    assert document.packet_container?
+  end
 end

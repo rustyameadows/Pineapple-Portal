@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_07_190000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_07_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -253,12 +253,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_07_190000) do
     t.datetime "working_refresh_requested_at"
     t.datetime "working_refresh_started_at"
     t.text "working_refresh_error"
+    t.string "packet_container_kind", default: "packet", null: false
     t.index ["build_id"], name: "index_documents_on_build_id"
     t.index ["client_visible"], name: "index_documents_on_client_visible"
     t.index ["doc_kind"], name: "index_documents_on_doc_kind"
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["logical_id", "version"], name: "index_documents_on_logical_id_and_version", unique: true
     t.index ["logical_id"], name: "index_documents_on_logical_id_latest", unique: true, where: "(is_latest = true)"
+    t.index ["packet_container_kind"], name: "index_documents_on_packet_container_kind"
     t.index ["packet_schema_version"], name: "index_documents_on_packet_schema_version"
     t.index ["packets_portal_visible"], name: "index_documents_on_packets_portal_visible"
     t.index ["source"], name: "index_documents_on_source"

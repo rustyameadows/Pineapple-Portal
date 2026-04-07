@@ -9,55 +9,77 @@
         <header class="event-section__header">
           <div>
             <p class="event-section__eyebrow">Generated packets</p>
-            <h1 class="event-section__title">Packet Settings</h1>
-            <p class="event-section__lead">Update packet details and manage packet pages here. The packet view stays focused on preview and snapshots.</p>
+            <h1 class="event-section__title"><%= @document.group_container? ? "Group Settings" : "Packet Settings" %></h1>
+            <p class="event-section__lead">
+              <% if @document.group_container? %>
+                Update the shared group details and manage the pages every consuming packet will render.
+              <% else %>
+                Update packet details and manage packet pages here. The packet view stays focused on preview and snapshots.
+              <% end %>
+            </p>
           </div>
           <div class="event-section__actions">
-            <%= link_to "Back to packet", event_documents_generated_path(@event, @document.logical_id), class: "event-section__cta event-section__cta--secondary" %>
+            <% if @document.packet_container? %>
+              <%= link_to "Back to packet", event_documents_generated_path(@event, @document.logical_id), class: "event-section__cta event-section__cta--secondary" %>
+            <% else %>
+              <%= link_to "Back to library", library_event_documents_generated_index_path(@event), class: "event-section__cta event-section__cta--secondary" %>
+            <% end %>
           </div>
         </header>
 
         <div class="event-section__body generated-doc__settings-layout">
           <div class="generated-doc__create-layout">
             <section class="documents-form__panel">
-              <h2 class="documents-form__heading">Packet details</h2>
-              <p class="generated-doc__help">These settings apply to the packet definition and future snapshots.</p>
+              <h2 class="documents-form__heading"><%= @document.group_container? ? "Group details" : "Packet details" %></h2>
+              <p class="generated-doc__help">
+                <% if @document.group_container? %>
+                  These settings apply to the shared group definition.
+                <% else %>
+                  These settings apply to the packet definition and future snapshots.
+                <% end %>
+              </p>
 
               <%= render "form",
                          form_url: event_documents_generated_path(@event, @document.logical_id),
                          form_method: :patch,
-                         submit_label: "Save packet settings" %>
+                         submit_label: @document.group_container? ? "Save group settings" : "Save packet settings" %>
             </section>
 
             <section class="documents-form__panel">
               <div class="generated-doc__panel-header">
                 <div>
-                  <h2 class="documents-form__heading">Delete packet</h2>
-                  <p class="generated-doc__help">Deleting removes the live packet, its saved snapshots, and all packet-specific placements for this event.</p>
+                  <h2 class="documents-form__heading"><%= @document.group_container? ? "Delete group" : "Delete packet" %></h2>
+                  <p class="generated-doc__help">
+                    <% if @document.group_container? %>
+                      Deleting removes the shared group and its placements from every consuming packet.
+                    <% else %>
+                      Deleting removes the live packet, its saved snapshots, and all packet-specific placements for this event.
+                    <% end %>
+                  </p>
                 </div>
               </div>
 
               <dl class="generated-builder__build-details">
                 <div>
-                  <dt>Packet pages</dt>
+                  <dt><%= @document.group_container? ? "Group pages" : "Packet pages" %></dt>
                   <dd><%= @packet_pages_count %></dd>
                 </div>
                 <div>
-                  <dt>Saved snapshots</dt>
-                  <dd><%= @compiled_versions_count %></dd>
+                  <dt><%= @document.group_container? ? "Using packets" : "Saved snapshots" %></dt>
+                  <dd><%= @document.group_container? ? Array(@group_usage_labels[@document.logical_id]).size : @compiled_versions_count %></dd>
                 </div>
                 <div>
-                  <dt>Latest snapshot</dt>
-                  <dd><%= @latest_version.present? ? @latest_version.updated_at.to_fs(:short) : "None yet" %></dd>
+                  <dt><%= @document.group_container? ? "Latest update" : "Latest snapshot" %></dt>
+                  <dd><%= @document.group_container? ? @document.updated_at.to_fs(:short) : (@latest_version.present? ? @latest_version.updated_at.to_fs(:short) : "None yet") %></dd>
                 </div>
               </dl>
 
               <div class="form-actions">
-                <%= button_to "Delete packet",
+                <%= button_to (@document.group_container? ? "Delete group" : "Delete packet"),
                               event_documents_generated_path(@event, @document.logical_id),
                               method: :delete,
                               class: "button button--danger",
-                              form: { data: { turbo_confirm: "Delete this packet and all saved snapshots?" } } %>
+                              form: { data: { turbo_confirm: @document.group_container? ? "Delete this group and remove it from every packet?" : "Delete this packet and all saved snapshots?" } } %>
               </div>
             </section>
           </div>
@@ -70,12 +92,14 @@
                      available_page_views: @available_page_views,
                      available_canonical_sources: @available_canonical_sources,
                      available_page_sources: @available_page_sources,
+                     available_group_sources: @available_group_sources,
                      source_usage_labels: @source_usage_labels,
                      available_timeline_views: @available_timeline_views,
                      segment_warnings: @segment_warnings,
                      reorder_url: reorder_event_documents_generated_segments_path(@event, @document.logical_id),
                      csrf_token: form_authenticity_token,
-                     return_to: request.fullpath %>
+                     return_to: request.fullpath,
+                     open_group_source_id: params[:open_group_source_id] %>
         </div>
       </section>
     </div>

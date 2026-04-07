@@ -182,7 +182,7 @@ class DocumentsController < ApplicationController
   end
 
   def generated_manifest
-    generated_scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated])
+    generated_scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated], packet_container_kind: Document::PACKET_CONTAINER_KINDS[:packet])
     grouped = generated_scope.order(:logical_id, version: :asc).group_by(&:logical_id)
 
     grouped.filter_map do |logical_id, records|
@@ -199,7 +199,7 @@ class DocumentsController < ApplicationController
   end
 
   def latest_compiled_generated_documents
-    generated_scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated]).where.not(storage_uri: nil)
+    generated_scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated], packet_container_kind: Document::PACKET_CONTAINER_KINDS[:packet]).where.not(storage_uri: nil)
     grouped = generated_scope.order(version: :desc).group_by(&:logical_id)
     grouped.values.map { |versions| versions.max_by(&:version) }
   end

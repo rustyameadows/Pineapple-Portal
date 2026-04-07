@@ -20,6 +20,8 @@ module Documents
       end
 
       def refresh_source(source)
+        return if source.group?
+
         result = SegmentRenderer.new(source).call
 
         if result.error.present?
@@ -53,7 +55,7 @@ module Documents
       end
 
       def packet_definitions(event)
-        event.documents.generated.where(is_template: false, storage_uri: nil)
+        event.documents.generated.packet_containers.where(is_template: false, storage_uri: nil)
       end
     end
   end

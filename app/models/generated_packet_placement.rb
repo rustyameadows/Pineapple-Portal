@@ -11,6 +11,7 @@ class GeneratedPacketPlacement < ApplicationRecord
 
   validates :document_logical_id, :position, presence: true
   validates :position, numericality: { only_integer: true, greater_than: 0 }
+  validate :prevent_nested_groups
 
   before_validation :assign_position, on: :create
 
@@ -37,6 +38,11 @@ class GeneratedPacketPlacement < ApplicationRecord
            :canonical?,
            :page?,
            :upload?,
+           :group?,
+           :group_source?,
+           :group_document,
+           :group_document_logical_id,
+           :group_child_count,
            to: :source
 
   private
@@ -46,5 +52,12 @@ class GeneratedPacketPlacement < ApplicationRecord
 
     last_position = self.class.where(document_logical_id: document_logical_id).maximum(:position)
     self.position = last_position.present? ? last_position + 1 : 1
+  end
+
+  def prevent_nested_groups
+    return unless source&.group?
+    return unless document&.group_container?
+
+    errors.add(:source, "groups cannot contain other groups")
   end
 end

@@ -7,6 +7,7 @@ module Documents
         definition_document = Document.find_by(id: document_id)
         return unless definition_document&.generated?
         return if definition_document.storage_uri.present?
+        return unless definition_document.packet_container?
 
         if definition_document.packet_placements.none?
           definition_document.clear_working_copy!

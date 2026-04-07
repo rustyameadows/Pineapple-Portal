@@ -253,6 +253,72 @@ module Documents
         assert_equal [@document.logical_id], enqueued_logical_ids
       end
 
+      test "creates a shared group and inserts it into the packet" do
+        enqueued_logical_ids = []
+
+        assert_difference("Document.generated.group_containers.count", 1) do
+          assert_difference("GeneratedPacketSource.group_sources.count", 1) do
+            assert_difference("GeneratedPacketPlacement.count", 2) do
+              Documents::Generated::WorkingCopyRefresh.stub :enqueue, ->(document) { enqueued_logical_ids << document.logical_id; true } do
+                post event_documents_generated_segments_url(@event, @document.logical_id), params: {
+                  segment: {
+                    group_title: "Design & Decor"
+                  }
+                }
+              end
+            end
+          end
+        end
+
+        assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+        placement = GeneratedPacketPlacement.order(:id).last
+
+        assert placement.source.group?
+        assert_equal "Design & Decor", placement.source.group_document.title
+        assert_equal [@document.logical_id], enqueued_logical_ids
+      end
+
+      test "updating a group title syncs the shared group document" do
+        group_document = @event.documents.create!(
+          title: "Design & Decor",
+          doc_kind: Document::DOC_KINDS[:generated],
+          logical_id: SecureRandom.uuid,
+          version: 1,
+          is_latest: false,
+          source: "packet",
+          built_by_user: @user,
+          packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed],
+          packet_container_kind: Document::PACKET_CONTAINER_KINDS[:group]
+        )
+        group_document.packet_placements.create!(
+          source: GeneratedPacketSource.build_page_source(
+            event: @event,
+            view_key: "section_break",
+            title: "Design & Decor",
+            options: {}
+          ).tap(&:save!),
+          position: 1
+        )
+        group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
+        group_placement = GeneratedPacketPlacement.create!(
+          document_logical_id: @document.logical_id,
+          source: group_source,
+          position: 2
+        )
+
+        Documents::Generated::WorkingCopyRefresh.stub :enqueue, true do
+          patch event_documents_generated_segment_url(@event, @document.logical_id, group_placement), params: {
+            segment: {
+              title: "Decor Vision"
+            }
+          }
+        end
+
+        assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+        assert_equal "Decor Vision", group_document.reload.title
+        assert_equal "Decor Vision", group_source.reload.display_title
+      end
+
     end
   end
 end

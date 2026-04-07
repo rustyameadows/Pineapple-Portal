@@ -69,7 +69,7 @@ module Documents
 
       def ordered_entries
         if definition_document.packet_source_backed? || definition_document.packet_placements.exists?
-          definition_document.packet_placements.includes(:source).ordered.to_a
+          ContainerEntries.new(definition_document: definition_document).call
         else
           definition_document.segments.ordered.to_a
         end
@@ -182,6 +182,8 @@ module Documents
       end
 
       def entry_key_for(entry)
+        return entry.entry_key if entry.respond_to?(:entry_key)
+
         if entry.respond_to?(:source)
           "placement:#{entry.id}"
         else

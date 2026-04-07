@@ -202,10 +202,25 @@ module Documents
       assert_select "h2", text: "Reusable pages"
       assert_select "h2", text: "Uploaded packet assets"
       assert_select "td", text: "Event Overview", minimum: 1
+      assert_select "td", text: "Photo / Video Timeline", minimum: 1
+      assert_select "td", text: "Hair & Makeup Timeline", minimum: 1
       assert_select "td", text: "Vendor Contacts", minimum: 1
       assert_select "td", text: "Shared Notes", count: 1
       assert_select "td", text: "Ceremony Inserts", count: 1
       assert_select "input[type='submit'][value='Insert into Generated Packet']", minimum: 1
+    end
+
+    test "library renders shared groups with manage links" do
+      group_document = create_group_document(title: "Design & Decor")
+      group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
+      @document.packet_placements.create!(source: group_source, position: 1)
+
+      get library_event_documents_generated_index_url(@event)
+
+      assert_response :success
+      assert_select "h2", text: "Groups"
+      assert_select "td", text: "Design & Decor", minimum: 1
+      assert_select "a", text: "Manage", minimum: 1
     end
 
     test "add default packets uses the builder and redirects with summary" do
@@ -438,12 +453,35 @@ module Documents
       assert_response :success
       assert_select "h1", text: "Packet Settings"
       assert_select "h2", text: "Packet Pages", count: 1
+      assert_select "select[name='segment[source_id]'] option", text: "Photo / Video Timeline", minimum: 1
+      assert_select "select[name='segment[source_id]'] option", text: "Hair & Makeup Timeline", minimum: 1
       assert_select "input[type='submit'][value='Insert canonical']", count: 1
       assert_select "input[type='submit'][value='Reuse page']", count: 1
       assert_select "input[type='submit'][value='Create page']", count: 1
       assert_select "input[type='submit'][value='Attach PDF']", count: 1
       assert_select "input[type='submit'][value='Upload and add PDF']", count: 1
       assert_select "button", text: "Delete packet", count: 1
+    end
+
+    test "edit renders group settings and group pages for a group container" do
+      group_document = create_group_document(title: "Design & Decor")
+
+      get edit_event_documents_generated_url(@event, group_document.logical_id)
+
+      assert_response :success
+      assert_select "h1", text: "Group Settings"
+      assert_select "h2", text: "Group Pages", count: 1
+      assert_select "input[type='submit'][value='Insert group']", count: 0
+      assert_select "input[type='submit'][value='Create and insert group']", count: 0
+      assert_select "button", text: "Delete group", count: 1
+    end
+
+    test "show redirects group containers to edit" do
+      group_document = create_group_document(title: "Design & Decor")
+
+      get event_documents_generated_url(@event, group_document.logical_id)
+
+      assert_redirected_to edit_event_documents_generated_url(@event, group_document.logical_id)
     end
 
     test "destroy removes the generated packet definition" do
@@ -605,6 +643,26 @@ module Documents
         content_type: "application/pdf",
         built_by_user: @user
       )
+    end
+
+    def create_group_document(title:)
+      document = @event.documents.create!(
+        title: title,
+        doc_kind: Document::DOC_KINDS[:generated],
+        logical_id: SecureRandom.uuid,
+        version: 1,
+        is_latest: false,
+        source: "packet",
+        built_by_user: @user,
+        packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed],
+        packet_container_kind: Document::PACKET_CONTAINER_KINDS[:group]
+      )
+
+      document.packet_placements.create!(
+        source: create_page_source(view_key: "section_break", title: title, options: {}),
+        position: 1
+      )
+      document
     end
 
     def placement_manifest_hash(placement, render_hash)

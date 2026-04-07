@@ -95,8 +95,12 @@ module Documents
           case timeline_view_name_for(segment).to_s
           when "Family Timeline"
             GeneratedPacketSource::CANONICAL_KEYS[:family_timeline]
+          when "Photo / Video Timeline"
+            GeneratedPacketSource::CANONICAL_KEYS[:photo_video_timeline]
           when "Production Timeline"
             GeneratedPacketSource::CANONICAL_KEYS[:production_timeline]
+          when "Hair & Makeup Timeline", "Hair and Makeup Timeline"
+            GeneratedPacketSource::CANONICAL_KEYS[:hair_makeup_timeline]
           when "Wedding Party Reference"
             GeneratedPacketSource::CANONICAL_KEYS[:wedding_party_reference]
           end

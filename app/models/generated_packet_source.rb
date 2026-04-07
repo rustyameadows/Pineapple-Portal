@@ -1,10 +1,13 @@
 class GeneratedPacketSource < ApplicationRecord
-  KINDS = DocumentSegment::KINDS
+  KINDS = DocumentSegment::KINDS.merge(
+    group: "group"
+  ).freeze
 
   CATEGORIES = {
     canonical: "canonical",
     page: "page",
-    upload: "upload"
+    upload: "upload",
+    group: "group"
   }.freeze
 
   CANONICAL_KEYS = {
@@ -13,7 +16,9 @@ class GeneratedPacketSource < ApplicationRecord
     vendor_contacts: "vendor_contacts",
     run_of_show: "run_of_show",
     family_timeline: "family_timeline",
+    photo_video_timeline: "photo_video_timeline",
     production_timeline: "production_timeline",
+    hair_makeup_timeline: "hair_makeup_timeline",
     wedding_party_reference: "wedding_party_reference"
   }.freeze
 
@@ -50,12 +55,28 @@ class GeneratedPacketSource < ApplicationRecord
         default_timeline_options.merge("view_ref" => Documents::Generated::DefaultTimelineViews.ensure_view!(event, "Family Timeline").id.to_s)
       }
     },
+    CANONICAL_KEYS[:photo_video_timeline] => {
+      label: "Photo / Video Timeline",
+      description: "Shared photo and video timeline for this event.",
+      view_key: DocumentSegment::TIMELINE_VIEW_KEY,
+      options: lambda { |event|
+        default_timeline_options.merge("view_ref" => Documents::Generated::DefaultTimelineViews.ensure_view!(event, "Photo / Video Timeline").id.to_s)
+      }
+    },
     CANONICAL_KEYS[:production_timeline] => {
       label: "Production Timeline",
       description: "Shared production-focused timeline for this event.",
       view_key: DocumentSegment::TIMELINE_VIEW_KEY,
       options: lambda { |event|
         default_timeline_options.merge("view_ref" => Documents::Generated::DefaultTimelineViews.ensure_view!(event, "Production Timeline").id.to_s)
+      }
+    },
+    CANONICAL_KEYS[:hair_makeup_timeline] => {
+      label: "Hair & Makeup Timeline",
+      description: "Shared hair and makeup timeline for this event.",
+      view_key: DocumentSegment::TIMELINE_VIEW_KEY,
+      options: lambda { |event|
+        default_timeline_options.merge("view_ref" => Documents::Generated::DefaultTimelineViews.ensure_view!(event, "Hair & Makeup Timeline").id.to_s)
       }
     },
     CANONICAL_KEYS[:wedding_party_reference] => {
@@ -72,9 +93,10 @@ class GeneratedPacketSource < ApplicationRecord
            class_name: "GeneratedPacketPlacement",
            dependent: :destroy
 
-  enum :kind, KINDS, validate: true
+  scope :group_sources, -> { where(source_category: CATEGORIES[:group], kind: KINDS[:group]) }
 
   validates :event_id, :kind, :title, :source_ref, :spec, :source_category, presence: true
+  validates :kind, inclusion: { in: KINDS.values }
   validates :canonical_key, uniqueness: { scope: :event_id }, allow_nil: true
   validate :validate_source_ref_payload
 
@@ -102,6 +124,10 @@ class GeneratedPacketSource < ApplicationRecord
 
     def page_view_keys
       [DocumentSegment::TEXT_PAGE_VIEW_KEY, "section_break", "cover_sheet"]
+    end
+
+    def group_view_options
+      []
     end
 
     def canonical_config(key)
@@ -153,6 +179,20 @@ class GeneratedPacketSource < ApplicationRecord
       end
     end
 
+    def find_or_create_group_source!(event, document)
+      source = event.generated_packet_sources.group_sources.find_by("source_ref ->> 'logical_id' = ?", document.logical_id)
+      source ||= event.generated_packet_sources.new(
+        source_category: CATEGORIES[:group],
+        kind: KINDS[:group]
+      )
+
+      source.source_category = CATEGORIES[:group]
+      source.kind = KINDS[:group]
+      source.assign_group_document(document)
+      source.save! if source.new_record? || source.changed?
+      source
+    end
+
     def default_timeline_options
       {
         "show_location" => true,
@@ -185,12 +225,20 @@ class GeneratedPacketSource < ApplicationRecord
     source_category == CATEGORIES[:upload]
   end
 
+  def group_source?
+    source_category == CATEGORIES[:group]
+  end
+
   def html_view?
     kind == KINDS[:html_view]
   end
 
   def pdf_asset?
     kind == KINDS[:pdf_asset]
+  end
+
+  def group?
+    kind == KINDS[:group]
   end
 
   def html_view_key
@@ -226,7 +274,28 @@ class GeneratedPacketSource < ApplicationRecord
     source_ref.is_a?(Hash) ? source_ref["logical_id"] : nil
   end
 
+  def group_document_logical_id
+    return unless group?
+
+    source_ref.is_a?(Hash) ? source_ref["logical_id"] : nil
+  end
+
+  def group_document
+    return unless group_document_logical_id.present?
+
+    event.documents.generated.group_containers.where(logical_id: group_document_logical_id).where(storage_uri: nil).first ||
+      event.documents.generated.group_containers.where(logical_id: group_document_logical_id).order(version: :asc).first
+  end
+
+  def group_child_count
+    return 0 unless group?
+
+    group_document&.packet_placements&.count.to_i
+  end
+
   def display_title
+    return group_document.title if group? && group_document&.title.present?
+
     title.presence || spec.fetch("label", kind.humanize)
   end
 
@@ -234,6 +303,7 @@ class GeneratedPacketSource < ApplicationRecord
     return "Canonical" if canonical?
     return "Page" if page?
     return "Upload" if upload?
+    return "Group" if group?
 
     "Segment"
   end
@@ -277,6 +347,19 @@ class GeneratedPacketSource < ApplicationRecord
     self.title = config[:label] if title.blank?
   end
 
+  def assign_group_document(document)
+    self.source_ref = {
+      "logical_id" => document.logical_id,
+      "title" => document.title
+    }
+    self.spec = {
+      "label" => document.title,
+      "kind" => KINDS[:group],
+      "logical_id" => document.logical_id
+    }
+    self.title = document.title
+  end
+
   private
 
   def validate_source_ref_payload
@@ -292,6 +375,15 @@ class GeneratedPacketSource < ApplicationRecord
       unless self.class.html_view?(view_key)
         errors.add(:source_ref, "must include a valid view key")
       end
+    when KINDS[:group]
+      logical_id = source_ref.is_a?(Hash) ? source_ref["logical_id"] : nil
+      unless logical_id.present?
+        errors.add(:source_ref, "must include a group reference")
+        return
+      end
+
+      document = event&.documents&.generated&.group_containers&.find_by(logical_id: logical_id)
+      errors.add(:source_ref, "must reference a group in this event") unless document
     end
   end
 

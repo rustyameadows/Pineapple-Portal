@@ -11,8 +11,8 @@ module Documents
         placement = placements_scope.new(source: source)
 
         if source.errors.none? && placement.save
-          enqueue_working_refresh_for_documents(@document)
-          redirect_to safe_return_to(fallback: builder_path), notice: "Packet page added."
+          refresh_after_create!(source)
+          redirect_to safe_return_to(fallback: builder_path), notice: "#{source.group? ? 'Group' : 'Page'} added."
         else
           message = source.errors.full_messages + placement.errors.full_messages
           redirect_to safe_return_to(fallback: builder_path), alert: message.uniq.to_sentence
@@ -24,7 +24,7 @@ module Documents
 
         if @placement.source.errors.empty? && @placement.source.save
           enqueue_working_refresh_for_source(@placement.source)
-          redirect_to safe_return_to(fallback: builder_path), notice: "Packet page updated."
+          redirect_to safe_return_to(fallback: builder_path), notice: "#{@placement.source.group? ? 'Group' : 'Page'} updated."
         else
           redirect_to safe_return_to(fallback: builder_path), alert: @placement.source.errors.full_messages.to_sentence
         end
@@ -33,12 +33,12 @@ module Documents
       def destroy
         @placement.destroy
         resequence_placements!
-        if placements_scope.exists?
-          enqueue_working_refresh_for_documents(@document)
-        else
+        if @document.packet_container? && placements_scope.none?
           @document.clear_working_copy!
+        else
+          refresh_after_structure_change!
         end
-        redirect_to safe_return_to(fallback: builder_path), notice: "Packet page removed."
+        redirect_to safe_return_to(fallback: builder_path), notice: "#{@placement.source.group? ? 'Group' : 'Page'} removed."
       end
 
       def duplicate
@@ -50,9 +50,9 @@ module Documents
           placements_scope.create!(source: source, position: new_position)
           resequence_placements!
         end
-        enqueue_working_refresh_for_documents(@document)
+        refresh_after_structure_change!
 
-        redirect_to safe_return_to(fallback: builder_path), notice: "Page duplicated."
+        redirect_to safe_return_to(fallback: builder_path), notice: "#{source.group? ? 'Group' : 'Page'} duplicated."
       end
 
       def reorder
@@ -73,7 +73,7 @@ module Documents
 
           resequence_placements!
         end
-        enqueue_working_refresh_for_documents(@document)
+        refresh_after_structure_change!
 
         head :ok
       end
@@ -81,7 +81,9 @@ module Documents
       def preview
         source = @placement.source
 
-        if source.html_view?
+        if source.group?
+          preview_group(source)
+        elsif source.html_view?
           view_config = source.html_view_config
           if view_config
             @segment = source
@@ -98,6 +100,11 @@ module Documents
 
       def cached_pdf
         source = @placement.source
+
+        if source.group?
+          redirect_to safe_return_to(fallback: builder_path), alert: "Groups do not have cached page renders."
+          return
+        end
 
         unless source.cached?
           redirect_to safe_return_to(fallback: builder_path), alert: "Page has not been rendered yet."
@@ -154,6 +161,9 @@ module Documents
           return GeneratedPacketSource.find_or_create_upload_source!(@event, pdf_document, title: attrs[:title])
         end
 
+        group_source = build_group_source(attrs)
+        return group_source if group_source
+
         build_page_source(attrs)
       end
 
@@ -187,14 +197,38 @@ module Documents
         source
       end
 
-      def assign_source_payload(source, attrs)
-        source.title = attrs[:title] if attrs.key?(:title) && attrs[:title].present?
+      def build_group_source(attrs)
+        group_title = attrs[:group_title].to_s.strip
+        return if group_title.blank?
 
+        if @document.group_container?
+          return @event.generated_packet_sources.new.tap do |source|
+            source.errors.add(:base, "Groups cannot contain other groups.")
+          end
+        end
+
+        result = Documents::Generated::GroupBuilder.new(
+          event: @event,
+          title: group_title,
+          built_by_user: current_user
+        ).call
+        result.source
+      rescue ActiveRecord::RecordInvalid => e
+        invalid = @event.generated_packet_sources.new
+        e.record.errors.full_messages.each { |message| invalid.errors.add(:base, message) }
+        invalid
+      end
+
+      def assign_source_payload(source, attrs)
         case source.kind
         when GeneratedPacketSource::KINDS[:pdf_asset]
+          source.title = attrs[:title] if attrs.key?(:title) && attrs[:title].present?
           assign_pdf_payload(source, attrs)
         when GeneratedPacketSource::KINDS[:html_view]
+          source.title = attrs[:title] if attrs.key?(:title) && attrs[:title].present?
           assign_html_payload(source, attrs)
+        when GeneratedPacketSource::KINDS[:group]
+          assign_group_payload(source, attrs)
         end
       end
 
@@ -220,7 +254,27 @@ module Documents
         source.assign_html_view(view_key, options: options)
       end
 
+      def assign_group_payload(source, attrs)
+        document = source.group_document
+        unless document
+          source.errors.add(:base, "Select a valid group.")
+          return
+        end
+
+        title = attrs[:title].to_s.strip
+        document.title = title if title.present?
+
+        unless document.save
+          document.errors.full_messages.each { |message| source.errors.add(:base, message) }
+          return
+        end
+
+        source.assign_group_document(document)
+      end
+
       def duplicate_source(source)
+        return source if source.group?
+
         @event.generated_packet_sources.create!(
           source_category: source.canonical? ? GeneratedPacketSource::CATEGORIES[:page] : source.source_category,
           kind: source.kind,
@@ -255,6 +309,7 @@ module Documents
       def segment_params
         params.require(:segment).permit(
           :title,
+          :group_title,
           :source_id,
           :pdf_document_id,
           :document_id,
@@ -281,7 +336,7 @@ module Documents
       end
 
       def builder_path
-        event_documents_generated_path(@event, @document.logical_id)
+        @document.group_container? ? edit_event_documents_generated_path(@event, @document.logical_id) : event_documents_generated_path(@event, @document.logical_id)
       end
 
       def storage
@@ -392,9 +447,48 @@ module Documents
       end
 
       def enqueue_working_refresh_for_source(source)
-        document_logical_ids = source.packet_placements.pluck(:document_logical_id)
-        documents = @event.documents.generated.where(logical_id: document_logical_ids, storage_uri: nil)
+        documents = packet_consumer_resolver.for_source(source)
         enqueue_working_refresh_for_documents(documents)
+      end
+
+      def refresh_after_create!(source)
+        if @document.group_container?
+          enqueue_working_refresh_for_container(@document)
+        else
+          enqueue_working_refresh_for_documents(@document)
+        end
+      end
+
+      def refresh_after_structure_change!
+        if @document.group_container?
+          enqueue_working_refresh_for_container(@document)
+        else
+          enqueue_working_refresh_for_documents(@document)
+        end
+      end
+
+      def enqueue_working_refresh_for_container(document)
+        documents = if document.group_container?
+                      packet_consumer_resolver.for_container(document)
+                    else
+                      [document]
+                    end
+        enqueue_working_refresh_for_documents(documents)
+      end
+
+      def packet_consumer_resolver
+        @packet_consumer_resolver ||= Documents::Generated::PacketConsumerResolver.new(event: @event)
+      end
+
+      def preview_group(source)
+        group_document = source.group_document
+        head :not_found and return unless group_document
+
+        bundle = Documents::Generated::PacketBundle.new(definition_document: group_document).call
+        filename = "#{source.display_title.to_s.parameterize.presence || 'group'}.pdf"
+        send_data bundle.pdf_data, filename: filename, type: "application/pdf", disposition: "inline"
+      rescue StandardError
+        head :not_found
       end
     end
   end

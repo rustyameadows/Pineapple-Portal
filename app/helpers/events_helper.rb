@@ -192,7 +192,7 @@ module EventsHelper
   private
 
   def generated_packet_sidebar_entries(event)
-    grouped = event.documents.generated.where(is_template: false)
+    grouped = event.documents.generated.packet_containers.where(is_template: false)
                               .order(:logical_id, version: :asc)
                               .group_by(&:logical_id)
 
