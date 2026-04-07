@@ -1,0 +1,49 @@
+vip_family_primary:
+  event: one
+  kind: key_person
+  first_name: Jordan
+  last_name: Rivers
+  relationship: Host
+  vip: true
+  group_name: VIP Family
+  position: 1
+
+vip_family_secondary:
+  event: one
+  kind: key_person
+  first_name: Maya
+  last_name: Chen
+  relationship: Sister of the Honoree
+  vip: false
+  group_name: VIP Family
+  position: 2
+
+jordan_side_primary:
+  event: one
+  kind: key_person
+  first_name: Elliot
+  last_name: Stone
+  relationship: Best Friend
+  vip: false
+  group_name: Jordan's Side
+  position: 3
+
+jordan_side_secondary:
+  event: one
+  kind: key_person
+  first_name: Priya
+  last_name: Patel
+  relationship: Cousin
+  vip: false
+  group_name: Jordan's Side
+  position: 4
+
+awards_general_guest:
+  event: two
+  kind: guest
+  first_name: Taylor
+  last_name: Brooks
+  relationship: Attendee
+  vip: false
+  group_name: Audience
+  position: 1

@@ -123,49 +123,6 @@ module GeneratedDocumentsHelper
         ]
       }
     ],
-    wedding_party: [
-      {
-        title: "Bride's Side",
-        members: [
-          { name: "Hannah Isakowitz", role: "Bride" },
-          { name: "Missy Isakowitz", role: "Mother of the Bride" },
-          { name: "Mark Isakowitz", role: "Father of the Bride" },
-          { name: "Sharon Newman", role: "Grandmother of the Bride" },
-          { name: "Carly Graham", role: "Matron of Honor and Sister of the Bride" },
-          { name: "Allie Isakowitz", role: "Bridesmaid and Sister-in-Law of the Bride" },
-          { name: "Julia Barone", role: "Bridesmaid" },
-          { name: "Danielle Bruns", role: "Bridesmaid" },
-          { name: "Lindsay Stassinos", role: "Bridesmaid" },
-          { name: "Sarah Iacomelli", role: "Bridesmaid" },
-          { name: "Erin Hess", role: "Bridesmaid" },
-          { name: "Michael Denzel", role: "Bride's Attendant" },
-          { name: "Emmy Graham", role: "Bride's Niece & Flower Kid" },
-          { name: "Ava Graham", role: "Bride's Niece & Flower Kid" },
-          { name: "Luca Isakowitz", role: "Nephew of the Bride & Flower Kid" }
-        ]
-      },
-      {
-        title: "Groom's Side",
-        members: [
-          { name: "Dan Greener", role: "Groom" },
-          { name: "Ruth Greener", role: "Mother of the Groom" },
-          { name: "Jeff Greener", role: "Father of the Groom" },
-          { name: "Marilyn Greener", role: "Grandmother of the Groom" },
-          { name: "Samuel Bonolio", role: "Grandfather of the Groom" },
-          { name: "Andrew Greener", role: "Best Man and Brother of the Groom" },
-          { name: "Michael Greener", role: "Best Man and Brother of the Groom" },
-          { name: "Zach Isakowitz", role: "Groomsman and Brother of the Bride" },
-          { name: "Eric Graham", role: "Groomsman and Brother-in-Law of the Bride" },
-          { name: "Christian Maine De Biran", role: "Groomsman" },
-          { name: "Daniel Marcus", role: "Groomsman" },
-          { name: "Harlan Pittell", role: "Groomsman" },
-          { name: "Dylan Magalit", role: "Groomsman" },
-          { name: "Jon Schneidman", role: "Groomsman" },
-          { name: "Max Levitin", role: "Groomsman" },
-          { name: "Clark Chamerlin", role: "Groomsman" }
-        ]
-      }
-    ]
   }.freeze
 
   def generated_segment_body_markdown(segment)
@@ -286,6 +243,18 @@ module GeneratedDocumentsHelper
     ].select { |_label, value| value.present? }
   end
 
+  def generated_event_overview_vip_rows(event)
+    event.event_guests.key_people.ordered.filter_map do |guest|
+      next unless guest.vip?
+
+      label = guest.relationship.to_s.strip.presence
+      value = guest.full_name.to_s.strip.presence
+      next if label.blank? || value.blank?
+
+      [ label, value ]
+    end
+  end
+
   def generated_packet_text_paragraphs(text)
     text.to_s.split(/\r?\n+/).filter_map do |paragraph|
       paragraph.to_s.strip.presence
@@ -294,6 +263,20 @@ module GeneratedDocumentsHelper
 
   def generated_wedding_party_reference_content
     WEDDING_PARTY_REFERENCE_CONTENT.deep_dup
+  end
+
+  def generated_wedding_party_reference_key_people(event)
+    event.event_guests.key_people.ordered.group_by(&:group_name).map do |group_name, guests|
+      {
+        title: group_name,
+        members: guests.map do |guest|
+          {
+            name: guest.full_name,
+            role: guest.relationship.to_s.strip
+          }
+        end
+      }
+    end
   end
 
   def generated_wedding_party_reference_milestones(event)

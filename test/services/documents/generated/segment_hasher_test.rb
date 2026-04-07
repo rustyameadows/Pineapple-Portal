@@ -32,6 +32,14 @@ module Documents
         refute_equal original_hash, SegmentHasher.call(@source)
       end
 
+      test "event overview hash changes when vip key people change" do
+        original_hash = SegmentHasher.call(@source)
+
+        event_guests(:vip_family_primary).update!(relationship: "Lead Host")
+
+        refute_equal original_hash, SegmentHasher.call(@source)
+      end
+
       test "event overview hash changes when linked global vendor data changes" do
         global_vendor = GlobalVendor.create!(
           name: "Northlight Films",
@@ -79,6 +87,22 @@ module Documents
         original_hash = SegmentHasher.call(@wedding_party_source)
 
         @event.update!(getting_ready_details: "Arrive at 8:00 AM.\n\nHair and makeup begin at 8:30 AM.")
+
+        refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
+      end
+
+      test "wedding party reference hash changes when key people change" do
+        original_hash = SegmentHasher.call(@wedding_party_source)
+
+        event_guests(:vip_family_primary).update!(relationship: "Lead Host")
+
+        refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
+      end
+
+      test "wedding party reference hash changes when key people ordering changes" do
+        original_hash = SegmentHasher.call(@wedding_party_source)
+
+        event_guests(:vip_family_primary).update!(position: 10)
 
         refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
       end

@@ -10,6 +10,7 @@
 <% milestone_timezone = milestone_data[:timezone] %>
 <% vendors = generated_event_overview_vendors(@event) %>
 <% important_information_rows = generated_event_overview_primary_rows(@event) %>
+<% vip_rows = generated_event_overview_vip_rows(@event) %>
 <% style_rows = generated_event_overview_style_rows(@event) %>
 <% social_media_paragraphs = generated_packet_text_paragraphs(@event.social_media_policy) %>
 <% parking_paragraphs = generated_packet_text_paragraphs(@event.parking_details) %>
@@ -48,6 +49,23 @@
             <% end %>
           </div>
         </section>
+
+        <% if vip_rows.any? %>
+          <section class="generated-template--packet-sheet__subsection">
+            <div class="generated-template--packet-sheet__grid">
+              <% vip_rows.each do |label, value| %>
+                <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label"><%= label %></p>
+                  </div>
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value"><%= value %></p>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </section>
+        <% end %>
 
         <% if style_rows.any? %>
           <section class="generated-template--packet-sheet__subsection">

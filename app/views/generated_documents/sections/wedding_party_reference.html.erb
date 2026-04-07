@@ -8,6 +8,7 @@
 <% milestone_groups = milestone_data[:groups] %>
 <% milestone_timezone = milestone_data[:timezone] %>
 <% getting_ready_paragraphs = generated_packet_text_paragraphs(@event.getting_ready_details) %>
+<% wedding_party_groups = generated_wedding_party_reference_key_people(@event) %>
 
 <style>
   .generated-template--wedding-party-reference__top-band {
@@ -138,24 +139,26 @@
       </section>
     <% end %>
 
-    <div class="generated-template--packet-sheet__two-column">
-      <% content[:wedding_party].each do |side| %>
-        <section class="generated-template--packet-sheet__section">
-          <h2 class="generated-template--packet-sheet__section-title"><%= side[:title] %></h2>
-          <div class="generated-template--packet-sheet__grid">
-            <% side[:members].each do |member| %>
-              <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--roster">
-                <div class="generated-template--packet-sheet__grid-cell">
-                  <p class="generated-template--packet-sheet__text"><strong><%= member[:name] %></strong></p>
+    <% if wedding_party_groups.any? %>
+      <div class="generated-template--packet-sheet__two-column">
+        <% wedding_party_groups.each do |side| %>
+          <section class="generated-template--packet-sheet__section">
+            <h2 class="generated-template--packet-sheet__section-title"><%= side[:title] %></h2>
+            <div class="generated-template--packet-sheet__grid">
+              <% side[:members].each do |member| %>
+                <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--roster">
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text"><strong><%= member[:name] %></strong></p>
+                  </div>
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text"><em><%= member[:role] %></em></p>
+                  </div>
                 </div>
-                <div class="generated-template--packet-sheet__grid-cell">
-                  <p class="generated-template--packet-sheet__text"><em><%= member[:role] %></em></p>
-                </div>
-              </div>
-            <% end %>
-          </div>
-        </section>
-      <% end %>
-    </div>
+              <% end %>
+            </div>
+          </section>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 </section>

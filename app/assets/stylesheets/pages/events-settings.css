@@ -944,6 +944,155 @@
   color: var(--color-brown);
 }
 
+.event-key-people {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.event-key-people__groups,
+.event-key-people__rows,
+.event-key-people__form {
+  display: grid;
+  gap: 1rem;
+}
+
+.event-key-people__group-card,
+.event-key-people__create-card {
+  gap: 1.1rem;
+}
+
+.event-key-people__group-header h3,
+.event-key-people__create-card h3 {
+  margin: 0;
+  color: var(--color-dark-brown);
+}
+
+.event-key-people__row {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 70%, white);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.event-key-people__grid {
+  display: grid;
+  gap: 0.9rem 1rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: start;
+}
+
+.event-key-people__field {
+  display: grid;
+  gap: 0.45rem;
+  align-content: start;
+}
+
+.event-key-people__field > label,
+.event-key-people__field-label {
+  margin: 0;
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-brown);
+}
+
+.event-key-people__field input[type="text"] {
+  width: 100%;
+  min-height: 2.9rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 75%, white);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--color-dark-brown);
+  padding: 0.72rem 0.9rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 1px 2px rgba(60, 46, 37, 0.04);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.event-key-people__field select {
+  width: 100%;
+  min-height: 2.9rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 75%, white);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--color-dark-brown);
+  padding: 0.72rem 2.65rem 0.72rem 0.9rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 1px 2px rgba(60, 46, 37, 0.04);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-brown) 50%),
+    linear-gradient(135deg, var(--color-brown) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.15rem) calc(50% - 0.15rem),
+    calc(100% - 0.8rem) calc(50% - 0.15rem);
+  background-size: 0.42rem 0.42rem, 0.42rem 0.42rem;
+  background-repeat: no-repeat;
+}
+
+.event-key-people__field input[type="text"]:focus,
+.event-key-people__field select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-dark-brown) 28%, white);
+  background: var(--color-white);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-sea-foam) 38%, white);
+}
+
+.event-key-people__subfield {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.event-key-people__subfield[hidden] {
+  display: none;
+}
+
+.event-key-people__subfield label {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-brown) 88%, white);
+}
+
+.event-key-people__field--checkbox {
+  align-self: center;
+}
+
+.event-key-people__checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.9rem;
+  padding: 0.72rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 75%, white);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--color-dark-brown);
+}
+
+.event-key-people__checkbox input[type="checkbox"] {
+  margin: 0;
+}
+
+.event-key-people__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
 @media (max-width: 700px) {
   .event-settings__details-grid,
   .event-settings__link-list--planning-grid {
@@ -965,5 +1114,9 @@
 
   .event-settings__upload-button {
     width: 100%;
+  }
+
+  .event-key-people__grid {
+    grid-template-columns: 1fr;
   }
 }

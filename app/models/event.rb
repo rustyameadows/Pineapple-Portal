@@ -8,6 +8,9 @@ class Event < ApplicationRecord
   has_many :event_vendors,
            -> { order(:position, :id) },
            dependent: :destroy
+  has_many :event_guests,
+           -> { order(:position, :id) },
+           dependent: :destroy
   has_many :global_vendors, -> { distinct }, through: :event_vendors
   has_many :event_venues,
            -> { order(:position, :id) },

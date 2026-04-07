@@ -9,6 +9,7 @@ import GeneratedPacketUploadController from "controllers/generated_packet_upload
 import GeneratedPdfFrameController from "controllers/generated_pdf_frame_controller"
 import LocalTimeController from "controllers/local_time_controller"
 import EventSidebarController from "controllers/event_sidebar_controller"
+import EventGroupSelectController from "controllers/event_group_select_controller"
 import CalendarBulkEditController from "controllers/calendar_bulk_edit_controller"
 import CalendarItemImportController from "controllers/calendar_item_import_controller"
 import AnchorScrollController from "controllers/anchor_scroll_controller"
@@ -26,6 +27,7 @@ application.register("generated-packet-upload", GeneratedPacketUploadController)
 application.register("generated-pdf-frame", GeneratedPdfFrameController)
 application.register("local-time", LocalTimeController)
 application.register("event-sidebar", EventSidebarController)
+application.register("event-group-select", EventGroupSelectController)
 application.register("calendar-bulk-edit", CalendarBulkEditController)
 application.register("calendar-item-import", CalendarItemImportController)
 application.register("anchor-scroll", AnchorScrollController)

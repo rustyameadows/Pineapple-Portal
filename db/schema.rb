@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_07_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_07_133000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -316,6 +316,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_07_120000) do
     t.check_constraint "kind::text = ANY (ARRAY['master'::character varying::text, 'derived'::character varying::text])", name: "event_calendars_kind_check"
   end
 
+  create_table "event_guests", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "kind", default: "key_person", null: false
+    t.string "first_name", null: false
+    t.string "last_name", null: false
+    t.string "relationship", null: false
+    t.boolean "vip", default: false, null: false
+    t.string "group_name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id", "kind"], name: "index_event_guests_on_event_id_and_kind"
+    t.index ["event_id", "position"], name: "index_event_guests_on_event_id_and_position"
+    t.index ["event_id"], name: "index_event_guests_on_event_id"
+  end
+
   create_table "event_links", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.string "label", null: false
@@ -603,6 +619,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_07_120000) do
   add_foreign_key "event_calendar_views", "event_calendars", on_delete: :cascade
   add_foreign_key "event_calendars", "calendar_templates", column: "template_source_id", on_delete: :nullify
   add_foreign_key "event_calendars", "events"
+  add_foreign_key "event_guests", "events"
   add_foreign_key "event_links", "events"
   add_foreign_key "event_team_members", "events"
   add_foreign_key "event_team_members", "users"

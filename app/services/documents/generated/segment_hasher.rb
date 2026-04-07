@@ -146,6 +146,19 @@ module Documents
             social_media_policy: segment.event.social_media_policy,
             parking_details: segment.event.parking_details
           },
+          vip_key_people: segment.event.event_guests.key_people.ordered.filter_map do |guest|
+            next unless guest.vip?
+
+            {
+              guest_id: guest.id,
+              first_name: guest.first_name,
+              last_name: guest.last_name,
+              relationship: guest.relationship,
+              group_name: guest.group_name,
+              position: guest.position,
+              updated_at: guest.updated_at&.utc&.iso8601
+            }
+          end,
           planners: segment.event.planner_team_members.includes(:user).ordered_for_display.filter_map do |member|
             user = member.user
             next unless user
@@ -193,7 +206,20 @@ module Documents
           template_version: DocumentSegment::WEDDING_PARTY_REFERENCE_TEMPLATE_VERSION,
           event: {
             getting_ready_details: segment.event.getting_ready_details
-          }
+          },
+          key_people: segment.event.event_guests.key_people.ordered.map do |guest|
+            {
+              guest_id: guest.id,
+              kind: guest.kind,
+              first_name: guest.first_name,
+              last_name: guest.last_name,
+              relationship: guest.relationship,
+              vip: guest.vip,
+              group_name: guest.group_name,
+              position: guest.position,
+              updated_at: guest.updated_at&.utc&.iso8601
+            }
+          end
         }
       end
 

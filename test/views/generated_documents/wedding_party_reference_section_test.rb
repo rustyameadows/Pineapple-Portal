@@ -1,7 +1,7 @@
 require "test_helper"
 
 class WeddingPartyReferenceSectionTest < ActionView::TestCase
-  fixtures :events, :event_calendars, :calendar_items, :event_calendar_tags, :calendar_item_tags
+  fixtures :events, :event_calendars, :calendar_items, :event_calendar_tags, :calendar_item_tags, :event_guests
 
   setup do
     @event = events(:one)
@@ -27,7 +27,7 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     view.define_singleton_method(:inline_asset_data_uri) { |_path| "data:image/png;base64,stub" }
   end
 
-  test "renders milestone tagged event items grouped by date and dynamic getting ready details" do
+  test "renders milestone tagged event items grouped by date, dynamic getting ready details, and key people" do
     milestone_tag = @event.run_of_show_calendar.event_calendar_tags.create!(name: "Milestones", position: 9)
     calendar_items(:decision_flowers).event_calendar_tags << milestone_tag
     calendar_items(:ceremony).event_calendar_tags << milestone_tag
@@ -44,8 +44,8 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__section-title", text: "Event Timelines"
     assert_select ".generated-template--packet-sheet__section-title", text: "Transportation Details"
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details"
-    assert_select ".generated-template--packet-sheet__section-title", text: "Bride's Side"
-    assert_select ".generated-template--packet-sheet__section-title", text: "Groom's Side"
+    assert_select ".generated-template--packet-sheet__section-title", text: "VIP Family"
+    assert_select ".generated-template--packet-sheet__section-title", text: "Jordan's Side"
     assert_select ".generated-template--packet-sheet__event-card", minimum: 1
     assert_select ".generated-template--packet-sheet__subsection-title", text: "Monday, September 15", count: 2
     assert_select ".generated-template--packet-sheet__subsection-title", text: "Wednesday, October 1", count: 2
@@ -61,8 +61,12 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_match(/Guests attending the Rehearsal should meet/, rendered)
     assert_match(/Please arrive dressed and ready to prep\./, rendered)
     assert_match(/Bring all accessories in a labeled bag\./, rendered)
-    assert_match(/Hannah Isakowitz/, rendered)
-    assert_match(/Dan Greener/, rendered)
+    assert_match(/Jordan Rivers/, rendered)
+    assert_match(/Maya Chen/, rendered)
+    assert_match(/Host/, rendered)
+    assert_match(/Sister of the Honoree/, rendered)
+    assert_no_match(/Hannah Isakowitz/, rendered)
+    assert_no_match(/Dan Greener/, rendered)
     assert_no_match(/generated-text-columns|:::columns|### Wedding party reference sheet/, rendered)
   end
 
@@ -101,7 +105,6 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details", count: 0
     assert_select ".generated-template--packet-sheet__section-title", text: "Oktoberfest Excursions", count: 0
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details & Transportation", count: 0
-    assert_select ".generated-template--packet-sheet__section-title", text: "Bride's Side"
-    assert_select ".generated-template--packet-sheet__section-title", text: "Groom's Side"
+    assert_select ".generated-template--packet-sheet__two-column", count: 0
   end
 end

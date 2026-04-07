@@ -119,6 +119,13 @@ post "upload_failures", to: "upload_failures#create"
       end
     end
 
+    resources :event_guests, only: %i[create update destroy], module: :events do
+      member do
+        patch :move_up
+        patch :move_down
+      end
+    end
+
     resources :event_venues, only: %i[create update destroy], module: :events do
       member do
         patch :move_up

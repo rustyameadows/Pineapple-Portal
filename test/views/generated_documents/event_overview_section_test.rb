@@ -3,7 +3,7 @@ require "test_helper"
 class EventOverviewSectionTest < ActionView::TestCase
   include GeneratedDocumentsHelper
 
-  fixtures :events, :event_calendars, :calendar_items, :event_calendar_tags, :calendar_item_tags, :event_team_members, :event_vendors, :users
+  fixtures :events, :event_calendars, :calendar_items, :event_calendar_tags, :calendar_item_tags, :event_team_members, :event_vendors, :event_guests, :users
 
   setup do
     @event = events(:one)
@@ -37,6 +37,10 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__dates", text: "#{@event.starts_on.to_fs(:long)} - #{@event.ends_on.to_fs(:long)}"
     assert_select ".generated-template--event-overview__location", text: @event.location
     assert_select ".generated-template--event-overview__guest-count", text: @event.guest_count
+    assert_select ".generated-template--packet-sheet__text--label", text: "Host"
+    assert_select ".generated-template--packet-sheet__text--value", text: "Jordan Rivers"
+    assert_select ".generated-template--packet-sheet__text--label", text: "Sister of the Honoree", count: 0
+    assert_select ".generated-template--event-overview__important-information-groups .generated-template--packet-sheet__subsection", minimum: 3
     assert_select ".generated-template--packet-sheet__text--label", text: "Attire"
     assert_select ".generated-template--packet-sheet__text--value", text: @event.attire
     assert_select ".generated-template--packet-sheet__text--label", text: "Color Palette"
@@ -87,6 +91,7 @@ class EventOverviewSectionTest < ActionView::TestCase
 
     assert_select ".generated-template--event-overview__event-name", count: 0
     assert_select ".generated-template--event-overview__guest-count", text: @event.guest_count
+    assert_select ".generated-template--packet-sheet__text--value", text: "Jordan Rivers"
     assert_select ".generated-template--event-overview__planner-name", text: "Pineapple Productions"
     assert_select ".generated-template--event-overview__vendor-name", text: "Sunshine Catering"
     assert_no_match(/Custom Heading|Custom body copy|generated-text-columns/, rendered)
@@ -134,6 +139,7 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__empty", text: /No lead planner is linked/
     assert_select ".generated-template--packet-sheet__empty", text: /No vendor contacts are available/
     assert_select ".generated-template--event-overview__guest-count", count: 0
+    assert_select ".generated-template--packet-sheet__text--label", text: "Host", count: 0
     assert_select ".generated-template--packet-sheet__text--label", text: "Attire", count: 0
     assert_select ".generated-template--packet-sheet__section-title", text: "Social Media Policy", count: 0
     assert_select ".generated-template--packet-sheet__section-title", text: "PARKING & GETTING THERE", count: 0
@@ -154,6 +160,8 @@ class EventOverviewSectionTest < ActionView::TestCase
     render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
 
     assert_select ".generated-template--event-overview__guest-count", count: 0
+    assert_select ".generated-template--packet-sheet__text--label", text: "Host", count: 1
+    assert_select ".generated-template--packet-sheet__text--value", text: "Jordan Rivers"
     assert_select ".generated-template--packet-sheet__text--label", text: "Attire", count: 0
     assert_select ".generated-template--packet-sheet__text--label", text: "Color Palette", count: 0
     assert_select ".generated-template--packet-sheet__text--label", text: "Style", count: 1
