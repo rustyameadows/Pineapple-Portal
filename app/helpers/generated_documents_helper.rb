@@ -226,6 +226,21 @@ module GeneratedDocumentsHelper
     end
   end
 
+  def generated_event_overview_timeline(event)
+    generated_wedding_party_reference_milestones(event)
+  end
+
+  def generated_event_overview_timeline_time(item, timezone)
+    start_time = item.effective_starts_at&.in_time_zone(timezone)
+    end_time = item.effective_ends_at&.in_time_zone(timezone)
+    return "Date TBD" unless start_time
+
+    start_label = start_time.strftime("%l:%M %p").strip
+    return start_label unless end_time
+
+    "#{start_label} to #{end_time.strftime("%l:%M %p").strip}"
+  end
+
   def generated_event_overview_vendors(event)
     event.event_vendors.includes(:global_vendor).ordered.filter_map do |vendor|
       contacts = Array(vendor.contacts).filter_map do |contact|

@@ -5,6 +5,9 @@
 
 <% event_date_range = generated_event_overview_date_range(@event) %>
 <% planners = generated_event_overview_planners(@event) %>
+<% milestone_data = generated_event_overview_timeline(@event) %>
+<% milestone_items = milestone_data[:groups].flat_map { |group| group[:items] } %>
+<% milestone_timezone = milestone_data[:timezone] %>
 <% vendors = generated_event_overview_vendors(@event) %>
 
 <section class="generated-template generated-template--packet-sheet generated-template--event-overview">
@@ -39,6 +42,27 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <section class="generated-template--packet-sheet__section generated-template--event-overview__timeline">
+      <h2 class="generated-template--packet-sheet__section-title">Timeline</h2>
+      <% if milestone_items.any? %>
+        <div class="generated-template--packet-sheet__grid">
+          <% milestone_items.each do |item| %>
+            <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column generated-template--event-overview__timeline-row">
+              <div class="generated-template--packet-sheet__grid-cell">
+                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label generated-template--event-overview__timeline-label"><%= item.title %></p>
+              </div>
+              <div class="generated-template--packet-sheet__grid-cell">
+                <% timeline_time = generated_event_overview_timeline_time(item, milestone_timezone) %>
+                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail generated-template--event-overview__timeline-time"><%= timeline_time.sub(" to ", " <em>to</em> ").html_safe %></p>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="generated-template--packet-sheet__empty">No milestone items are available for this event yet.</p>
+      <% end %>
     </section>
 
     <section class="generated-template--packet-sheet__section">
