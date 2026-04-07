@@ -35,15 +35,17 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
 
     assert_select ".generated-template--wedding-party-reference", count: 1
-    assert_select ".generated-template--packet-sheet__two-column", minimum: 2
+    assert_select ".generated-template--wedding-party-reference__top-band-row", count: 2
+    assert_select ".generated-template--wedding-party-reference__events-grid", count: 2
     assert_select ".generated-template--packet-sheet__section-title", text: "Event Timelines"
     assert_select ".generated-template--packet-sheet__section-title", text: "Transportation Details"
     assert_select ".generated-template--packet-sheet__section-title", text: "Oktoberfest Excursions"
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details & Transportation"
     assert_select ".generated-template--packet-sheet__section-title", text: "Bride's Side"
     assert_select ".generated-template--packet-sheet__section-title", text: "Groom's Side"
-    assert_select ".generated-template--packet-sheet__subsection-title", text: "Monday, September 15, 2025"
-    assert_select ".generated-template--packet-sheet__subsection-title", text: "Wednesday, October 1, 2025"
+    assert_select ".generated-template--packet-sheet__event-card", minimum: 1
+    assert_select ".generated-template--packet-sheet__subsection-title", text: "Monday, September 15", count: 2
+    assert_select ".generated-template--packet-sheet__subsection-title", text: "Wednesday, October 1", count: 2
     assert_match(/Select Florist/, rendered)
     assert_match(/Ceremony/, rendered)
     assert_match(/Afterparty/, rendered)
@@ -53,9 +55,33 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_match(/9:00 PM\*/, rendered)
     assert_match(/Reviewing proposals/, rendered)
     assert_match(/Exchange vows and rings\./, rendered)
+    assert_match(/Guests attending the Rehearsal should meet/, rendered)
+    assert_match(/Guests attending Oktoberfest at Snowbird/, rendered)
     assert_match(/Hannah Isakowitz/, rendered)
     assert_match(/Dan Greener/, rendered)
     assert_no_match(/generated-text-columns|:::columns|### Wedding party reference sheet/, rendered)
+  end
+
+  test "shows placeholder transportation copy when live milestone groups exceed stub day groups" do
+    milestone_tag = @event.run_of_show_calendar.event_calendar_tags.create!(name: "Milestones", position: 9)
+    calendar_items(:decision_flowers).event_calendar_tags << milestone_tag
+    calendar_items(:decision_catering).event_calendar_tags << milestone_tag
+    calendar_items(:ceremony).event_calendar_tags << milestone_tag
+
+    extra_item = @event.run_of_show_calendar.calendar_items.create!(
+      title: "Farewell Breakfast",
+      starts_at: "2025-10-05 10:00:00",
+      duration_minutes: 60,
+      locked: false,
+      position: 99
+    )
+    extra_item.event_calendar_tags << milestone_tag
+
+    render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--wedding-party-reference__top-band-row", count: 4
+    assert_select ".generated-template--packet-sheet__subsection-title", text: "Sunday, October 5", count: 2
+    assert_match(/Transportation details coming soon\./, rendered)
   end
 
   test "shows an empty state when no milestone items are available" do
@@ -67,6 +93,6 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__section-title", text: "Event Timelines"
     assert_select ".generated-template--packet-sheet__empty", text: /No milestone items are available/
     assert_select ".generated-template--packet-sheet__section-title", text: "Transportation Details"
-    assert_match(/Guests attending the Rehearsal should meet/, rendered)
+    assert_select ".generated-template--packet-sheet__empty", text: /Transportation details coming soon\./
   end
 end

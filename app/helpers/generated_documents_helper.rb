@@ -275,7 +275,7 @@ module GeneratedDocumentsHelper
     groups = milestone_items
                .group_by do |item|
       start_time = item.effective_starts_at&.in_time_zone(timezone)
-      start_time ? start_time.strftime("%A, %B %-d, %Y") : "Date TBD"
+      start_time ? start_time.strftime("%A, %B %-d") : "Date TBD"
     end
                .map do |date_label, items|
       {

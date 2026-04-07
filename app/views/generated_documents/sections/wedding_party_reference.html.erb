@@ -8,57 +8,120 @@
 <% milestone_groups = milestone_data[:groups] %>
 <% milestone_timezone = milestone_data[:timezone] %>
 
+<style>
+  .generated-template--wedding-party-reference__top-band {
+    display: grid;
+    row-gap: 0;
+  }
+
+  .generated-template--wedding-party-reference__top-band-header,
+  .generated-template--wedding-party-reference__top-band-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 0.12in;
+    align-items: stretch;
+  }
+
+  .generated-template--wedding-party-reference__events-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 0.12in;
+    row-gap: 6px;
+  }
+
+  .generated-template--wedding-party-reference__top-band-row .generated-template--packet-sheet__section {
+    align-self: stretch;
+  }
+
+  .generated-template--wedding-party-reference__top-band-row .generated-template--packet-sheet__subsection {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100%;
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .generated-template--wedding-party-reference__top-band-row .generated-template--packet-sheet__body {
+    align-content: start;
+    padding: 6px 6px 10px;
+    border-bottom: none;
+  }
+
+  .generated-template--wedding-party-reference__top-band-row .generated-template--packet-sheet__empty {
+    height: 100%;
+    padding: 4px 6px;
+  }
+
+  .generated-template--wedding-party-reference__events-grid > article {
+    min-width: 0;
+  }
+</style>
+
 <section class="generated-template generated-template--packet-sheet generated-template--wedding-party-reference">
   <%= render "generated_documents/sections/page_header", segment: @segment %>
 
   <div class="generated-template--packet-sheet__stack">
-    <div class="generated-template--packet-sheet__two-column">
-      <section class="generated-template--packet-sheet__section">
-        <h2 class="generated-template--packet-sheet__section-title">Event Timelines</h2>
-        <% if milestone_groups.any? %>
-          <div class="generated-template--packet-sheet__content">
-            <% milestone_groups.each do |group| %>
+    <div class="generated-template--wedding-party-reference__top-band">
+      <div class="generated-template--wedding-party-reference__top-band-header">
+        <section class="generated-template--packet-sheet__section">
+          <h2 class="generated-template--packet-sheet__section-title">Event Timelines</h2>
+        </section>
+        <section class="generated-template--packet-sheet__section">
+          <h2 class="generated-template--packet-sheet__section-title">Transportation Details</h2>
+        </section>
+      </div>
+
+      <% if milestone_groups.any? %>
+        <% milestone_groups.each_with_index do |group, index| %>
+          <% transportation_group = content[:transportation_details][index] %>
+          <div class="generated-template--wedding-party-reference__top-band-row">
+            <section class="generated-template--packet-sheet__section">
+              <section class="generated-template--packet-sheet__subsection">
+                <h3 class="generated-template--packet-sheet__subsection-title"><%= group[:date_label] %></h3>
+                <div class="generated-template--packet-sheet__body generated-template--wedding-party-reference__events-grid">
+                  <% group[:items].each do |item| %>
+                    <article class="generated-template--packet-sheet__event-card">
+                      <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--event-card">
+                        <strong><%= item.title %></strong><br>
+                        <% if item.location_name.present? %>
+                          <%= item.location_name %><br>
+                        <% end %>
+                        <u><%= calendar_item_time_only_label_with_marker(item, milestone_timezone) %></u>
+                      </p>
+                      <% if item.notes.present? %>
+                        <p class="generated-template--packet-sheet__text"><em><%= item.notes %></em></p>
+                      <% end %>
+                    </article>
+                  <% end %>
+                </div>
+              </section>
+            </section>
+
+            <section class="generated-template--packet-sheet__section">
               <section class="generated-template--packet-sheet__subsection">
                 <h3 class="generated-template--packet-sheet__subsection-title"><%= group[:date_label] %></h3>
                 <div class="generated-template--packet-sheet__body">
-                  <% group[:items].each do |item| %>
-                  <article>
-                    <p class="generated-template--packet-sheet__text">
-                      <strong><%= item.title %></strong><br>
-                      <% if item.location_name.present? %>
-                        <%= item.location_name %><br>
-                      <% end %>
-                      <u><%= calendar_item_time_only_label_with_marker(item, milestone_timezone) %></u>
-                    </p>
-                    <% if item.notes.present? %>
-                      <p class="generated-template--packet-sheet__text"><em><%= item.notes %></em></p>
-                    <% end %>
-                  </article>
-                <% end %>
+                  <% Array(transportation_group&.dig(:paragraphs)).each do |paragraph| %>
+                    <p class="generated-template--packet-sheet__text"><%= paragraph %></p>
+                  <% end %>
+                  <% unless transportation_group.present? %>
+                    <p class="generated-template--packet-sheet__text">Transportation details coming soon.</p>
+                  <% end %>
                 </div>
               </section>
-            <% end %>
-          </div>
-        <% else %>
-          <p class="generated-template--packet-sheet__empty">No milestone items are available for this event yet.</p>
-        <% end %>
-      </section>
-
-      <section class="generated-template--packet-sheet__section">
-        <h2 class="generated-template--packet-sheet__section-title">Transportation Details</h2>
-        <div class="generated-template--packet-sheet__content">
-          <% content[:transportation_details].each do |day| %>
-            <section class="generated-template--packet-sheet__subsection">
-              <h3 class="generated-template--packet-sheet__subsection-title"><%= day[:day] %></h3>
-              <div class="generated-template--packet-sheet__body">
-                <% day[:paragraphs].each do |paragraph| %>
-                  <p class="generated-template--packet-sheet__text"><%= paragraph %></p>
-                <% end %>
-              </div>
             </section>
-          <% end %>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="generated-template--wedding-party-reference__top-band-row">
+          <section class="generated-template--packet-sheet__section">
+            <p class="generated-template--packet-sheet__empty">No milestone items are available for this event yet.</p>
+          </section>
+          <section class="generated-template--packet-sheet__section">
+            <p class="generated-template--packet-sheet__empty">Transportation details coming soon.</p>
+          </section>
         </div>
-      </section>
+      <% end %>
     </div>
 
     <section class="generated-template--packet-sheet__section">
