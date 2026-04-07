@@ -60,6 +60,24 @@
     display: grid;
     gap: 6px;
   }
+
+  .generated-template--wedding-party-reference__wedding-party-content {
+    display: grid;
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .generated-template--wedding-party-reference__wedding-party-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.12in;
+    align-items: start;
+  }
+
+  .generated-template--wedding-party-reference__wedding-party-group {
+    display: grid;
+    align-content: start;
+  }
 </style>
 
 <section class="generated-template generated-template--packet-sheet generated-template--wedding-party-reference">
@@ -135,10 +153,13 @@
     <% end %>
 
     <% if wedding_party_groups.any? %>
-      <div class="generated-template--packet-sheet__two-column">
+      <section class="generated-template--packet-sheet__section">
+        <h2 class="generated-template--packet-sheet__section-title"><%= @event.key_people_label.presence || "Wedding Party" %></h2>
+        <div class="generated-template--wedding-party-reference__wedding-party-content">
+          <div class="generated-template--wedding-party-reference__wedding-party-columns">
         <% wedding_party_groups.each do |side| %>
-          <section class="generated-template--packet-sheet__section">
-            <h2 class="generated-template--packet-sheet__section-title"><%= side[:title] %></h2>
+              <section class="generated-template--wedding-party-reference__wedding-party-group generated-template--packet-sheet__subsection">
+            <h3 class="generated-template--packet-sheet__subsection-title"><%= side[:title] %></h3>
             <div class="generated-template--packet-sheet__grid">
               <% side[:members].each do |member| %>
                 <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--roster">
@@ -153,7 +174,9 @@
             </div>
           </section>
         <% end %>
-      </div>
+          </div>
+        </div>
+      </section>
     <% end %>
   </div>
 </section>

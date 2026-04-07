@@ -88,6 +88,7 @@ class EventsController < ApplicationController
       :attire,
       :style,
       :color_palette,
+      :key_people_label,
       :social_media_policy,
       :parking_details,
       :getting_ready_details

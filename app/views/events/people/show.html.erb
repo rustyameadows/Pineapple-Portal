@@ -25,6 +25,32 @@
         </header>
         <div class="event-section__body">
           <div class="event-key-people">
+            <article class="event-directory-card event-key-people__settings-card">
+              <%= form_with model: @event,
+                            url: event_path(@event),
+                            method: :patch,
+                            local: true,
+                            class: "event-key-people__label-form" do |form| %>
+                <%= hidden_field_tag :return_to, request.fullpath %>
+
+                <div class="event-key-people__label-row">
+                  <div class="event-key-people__label-copy">
+                    <h3>Packet Label</h3>
+                    <p class="event-directory-card__meta">This controls the full-width key people section title on the Wedding Party Reference packet.</p>
+                  </div>
+
+                  <div class="event-key-people__label-field">
+                    <%= form.label :key_people_label, "Key People Label" %>
+                    <%= form.text_field :key_people_label, maxlength: 120, placeholder: "Wedding Party" %>
+                  </div>
+
+                  <div class="event-key-people__label-actions">
+                    <%= form.submit "Save label", class: "button button--small" %>
+                  </div>
+                </div>
+              <% end %>
+            </article>
+
             <article class="event-directory-card event-key-people__create-card">
               <h3>Add key person</h3>
               <p class="event-directory-card__meta">These entries stay event-specific and can use any group or side label you need.</p>

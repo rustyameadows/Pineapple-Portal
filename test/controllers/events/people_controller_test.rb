@@ -12,6 +12,8 @@ module Events
       assert_response :success
       assert_select "h1", text: "People"
       assert_select "h2", text: "Key People"
+      assert_select "input[name='event[key_people_label]'][value='VIPs & Family']", count: 1
+      assert_select ".event-directory-card__meta", text: /full-width key people section title on the Wedding Party Reference packet/
       assert_select "h3", text: "VIP Family"
       assert_select "h3", text: "Jordan's Side"
       assert_select "input[name='event_guest[first_name]'][value='Jordan']", count: 1

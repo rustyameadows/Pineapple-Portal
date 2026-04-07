@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_07_150000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_07_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -419,6 +419,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_07_150000) do
     t.text "social_media_policy"
     t.text "parking_details"
     t.text "getting_ready_details"
+    t.string "key_people_label"
     t.index ["archived_at"], name: "index_events_on_archived_at"
     t.index ["event_photo_document_id"], name: "index_events_on_event_photo_document_id"
     t.index ["name"], name: "index_events_on_name"

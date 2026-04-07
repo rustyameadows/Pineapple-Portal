@@ -243,6 +243,7 @@ module Documents
         {
           template_version: DocumentSegment::WEDDING_PARTY_REFERENCE_TEMPLATE_VERSION,
           event: {
+            key_people_label: segment.event.key_people_label,
             getting_ready_details: segment.event.getting_ready_details
           },
           milestone_groups: wedding_party_reference_milestone_groups_payload,

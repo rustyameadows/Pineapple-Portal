@@ -47,8 +47,14 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--wedding-party-reference__transportation-note", text: "Meet in the lobby at 11:30 AM for the florist site visit."
     assert_select ".generated-template--wedding-party-reference__transportation-note", text: "Guests depart from the hotel entrance at 2:15 PM."
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details"
-    assert_select ".generated-template--packet-sheet__section-title", text: "VIP Family"
-    assert_select ".generated-template--packet-sheet__section-title", text: "Jordan's Side"
+    assert_select ".generated-template--packet-sheet__section-title", text: "VIPs & Family", count: 1
+    assert_select ".generated-template--packet-sheet__section-title", text: "Wedding Party", count: 0
+    assert_select ".generated-template--packet-sheet__section-title", text: "VIP Family", count: 0
+    assert_select ".generated-template--packet-sheet__section-title", text: "Jordan's Side", count: 0
+    assert_select ".generated-template--wedding-party-reference__wedding-party-columns", count: 1
+    assert_select ".generated-template--wedding-party-reference__wedding-party-group", count: 2
+    assert_select ".generated-template--wedding-party-reference__wedding-party-group .generated-template--packet-sheet__subsection-title", text: "VIP Family"
+    assert_select ".generated-template--wedding-party-reference__wedding-party-group .generated-template--packet-sheet__subsection-title", text: "Jordan's Side"
     assert_select ".generated-template--packet-sheet__event-card", minimum: 1
     assert_select ".generated-template--packet-sheet__subsection-title", text: "Monday, September 15", count: 2
     assert_select ".generated-template--packet-sheet__subsection-title", text: "Wednesday, October 1", count: 2
@@ -110,9 +116,18 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--wedding-party-reference__transportation-stack", count: 1
     assert_select ".generated-template--wedding-party-reference__transportation-note", count: 0
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details", count: 0
+    assert_select ".generated-template--packet-sheet__section-title", text: "Wedding Party", count: 0
     assert_select ".generated-template--packet-sheet__section-title", text: "Oktoberfest Excursions", count: 0
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details & Transportation", count: 0
-    assert_select ".generated-template--packet-sheet__two-column", count: 0
+    assert_select ".generated-template--wedding-party-reference__wedding-party-columns", count: 0
+  end
+
+  test "falls back to wedding party label when key people label is blank" do
+    @event.update!(key_people_label: nil)
+
+    render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--packet-sheet__section-title", text: "Wedding Party", count: 1
   end
 
   test "renders rich text in getting ready details" do

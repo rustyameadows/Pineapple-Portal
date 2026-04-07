@@ -156,6 +156,18 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_equal getting_ready_markdown, @event.getting_ready_details
   end
 
+  test "updates key people label from people page" do
+    patch event_url(@event), params: {
+      event: {
+        key_people_label: "Family & VIPs"
+      },
+      return_to: event_people_path(@event)
+    }
+
+    assert_redirected_to event_people_url(@event)
+    assert_equal "Family & VIPs", @event.reload.key_people_label
+  end
+
   test "creates event" do
     assert_difference("Event.count") do
       post events_url, params: { event: { name: "Rehearsal", starts_on: "2025-12-01" } }

@@ -95,6 +95,14 @@ module Documents
         refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
       end
 
+      test "wedding party reference hash changes when key people label changes" do
+        original_hash = SegmentHasher.call(@wedding_party_source)
+
+        @event.update!(key_people_label: "Family & VIPs")
+
+        refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
+      end
+
       test "wedding party reference hash changes when key people change" do
         original_hash = SegmentHasher.call(@wedding_party_source)
 
