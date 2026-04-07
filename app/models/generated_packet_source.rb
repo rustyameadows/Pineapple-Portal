@@ -25,7 +25,7 @@ class GeneratedPacketSource < ApplicationRecord
       options: ->(_event) { {} }
     },
     CANONICAL_KEYS[:planning_team] => {
-      label: "Planning Team",
+      label: "Planning Team Directory",
       description: "Shared planning team page for this event.",
       view_key: "planning_team",
       options: ->(_event) { {} }

@@ -190,7 +190,7 @@ class DocumentSegment < ApplicationRecord
       description: "Structured wedding party reference sheet with packet-ready planning details."
     },
     "planning_team" => {
-      label: "Planning Team",
+      label: "Planning Team Directory",
       template: "generated_documents/sections/planning_team",
       description: "Roster of planners with contact details."
     },
