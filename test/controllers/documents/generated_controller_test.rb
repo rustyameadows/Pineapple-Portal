@@ -20,7 +20,7 @@ module Documents
       )
     end
 
-    test "show renders markdown overlay editor controls for text page packet pages" do
+    test "edit renders markdown overlay editor controls for text page packet pages" do
       create_page_placement(
         view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
         title: "Text Notes",
@@ -28,7 +28,7 @@ module Documents
         options: { "body_markdown" => "## Notes" }
       )
 
-      get event_documents_generated_url(@event, @document.logical_id)
+      get edit_event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
       assert_select "[data-controller='generated-markdown-editor']", count: 1
@@ -39,7 +39,7 @@ module Documents
       assert_select "textarea.generated-builder__overlay-textarea[data-generated-markdown-editor-target='overlay'][name]", count: 0
     end
 
-    test "show renders markdown overlay controls only for text page packet pages" do
+    test "edit renders markdown overlay controls only for text page packet pages" do
       create_page_placement(
         view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
         title: "Text One",
@@ -71,7 +71,7 @@ module Documents
         options: {}
       )
 
-      get event_documents_generated_url(@event, @document.logical_id)
+      get edit_event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
       assert_select "[data-controller='generated-markdown-editor']", count: 2
@@ -87,7 +87,7 @@ module Documents
       assert_select ".generated-builder__hint", text: /wedding party reference layout with stubbed content/, minimum: 1
     end
 
-    test "show prefixes cover and section titles in the packet builder list only" do
+    test "edit prefixes cover and section titles in the packet builder list only" do
       create_page_placement(
         view_key: "cover_sheet",
         title: "Smith Weekend",
@@ -101,13 +101,32 @@ module Documents
         options: {}
       )
 
-      get event_documents_generated_url(@event, @document.logical_id)
+      get edit_event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
       assert_select ".generated-builder__list-content strong", text: "Cover - Smith Weekend", count: 1
       assert_select ".generated-builder__list-content strong", text: "Section - Travel", count: 1
       assert_select "input[name='segment[title]'][value='Smith Weekend']", count: 1
       assert_select "input[name='segment[title]'][value='Travel']", count: 1
+    end
+
+    test "show keeps packet page management off the preview screen" do
+      create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+
+      get event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select "h2", text: "Live Working PDF", count: 1
+      assert_select "h2", text: "Snapshots & downloads", count: 1
+      assert_select "h2", text: "Packet Pages", count: 0
+      assert_select "button", text: "Settings", count: 0
+      assert_select "[data-controller='generated-markdown-editor']", count: 0
+      assert_select "dialog.generated-builder__segment-dialog", count: 0
     end
 
     test "index renders packet actions without portal visibility checkbox" do
@@ -413,12 +432,17 @@ module Documents
       assert_select ".generated-builder__build-meta time[data-controller='local-time'][data-local-time-format-value='short']", minimum: 2
     end
 
-    test "edit renders packet settings and delete controls" do
+    test "edit renders packet settings, delete controls, and packet page management" do
       get edit_event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
       assert_select "h1", text: "Packet Settings"
-      assert_select "form", minimum: 2
+      assert_select "h2", text: "Packet Pages", count: 1
+      assert_select "input[type='submit'][value='Insert canonical']", count: 1
+      assert_select "input[type='submit'][value='Reuse page']", count: 1
+      assert_select "input[type='submit'][value='Create page']", count: 1
+      assert_select "input[type='submit'][value='Attach PDF']", count: 1
+      assert_select "input[type='submit'][value='Upload and add PDF']", count: 1
       assert_select "button", text: "Delete packet", count: 1
     end
 

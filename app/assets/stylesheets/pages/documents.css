@@ -1278,6 +1278,11 @@
   grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
 }
 
+.generated-doc__settings-layout {
+  display: grid;
+  gap: 1.5rem;
+}
+
 .generated-doc__panel-header {
   display: flex;
   justify-content: space-between;

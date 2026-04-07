@@ -42,9 +42,9 @@ module Documents
     end
 
     def edit
-      @packet_pages_count = current_segments.count
-      @compiled_versions_count = generated_scope.where(logical_id: @document.logical_id).where.not(storage_uri: nil).count
-      @latest_version = generated_scope.where(logical_id: @document.logical_id).where.not(storage_uri: nil).order(version: :desc).first
+      load_document_context
+      @packet_pages_count = @segments.count
+      @compiled_versions_count = @compiled_versions.count
     end
 
     def update

@@ -2,6 +2,7 @@
 <% reorder_url ||= nil %>
 <% csrf_token ||= form_authenticity_token %>
 <% available_timeline_views ||= [] %>
+<% return_to ||= nil %>
 <% segment_display_title = lambda do |segment|
      case segment.html_view_key
      when "cover_sheet"
@@ -12,6 +13,11 @@
        segment.display_title
      end
    end %>
+<% segment_create_path = if return_to.present?
+                           event_documents_generated_segments_path(event, document.logical_id, return_to: return_to)
+                         else
+                           event_documents_generated_segments_path(event, document.logical_id)
+                         end %>
 
 <div class="generated-builder__segments"
      data-controller="generated-segments"
@@ -68,7 +74,8 @@
                   <%= render "documents/generated/render_status",
                              segment: segment,
                              event: event,
-                             document: document %>
+                             document: document,
+                             return_to: return_to %>
                   <% if shared_packets.size > 1 %>
                     <span class="generated-builder__status-tag generated-builder__status-tag--warning">
                       Shared in <%= shared_packets.size %> packets
@@ -98,7 +105,7 @@
                 Settings
               </button>
               <%= button_to "Remove",
-                            event_documents_generated_segment_path(event, document.logical_id, segment),
+                            event_documents_generated_segment_path(event, document.logical_id, segment, return_to: return_to),
                             method: :delete,
                             class: "button button--tiny button--danger",
                             data: { confirm: "Remove this page from the packet?" } %>
@@ -115,7 +122,7 @@
               </header>
               <%= form_with model: segment,
                             scope: :segment,
-                            url: event_documents_generated_segment_path(event, document.logical_id, segment),
+                            url: event_documents_generated_segment_path(event, document.logical_id, segment, return_to: return_to),
                             method: :patch,
                             local: true,
                             class: "generated-builder__form generated-builder__segment-dialog-form" do |form| %>
@@ -272,7 +279,7 @@
     <div class="generated-builder__panel">
       <h3>Insert Canonical</h3>
       <%= form_with scope: :segment,
-                    url: event_documents_generated_segments_path(event, document.logical_id),
+                    url: segment_create_path,
                     method: :post,
                     local: true,
                     class: "generated-builder__form" do |form| %>
@@ -291,7 +298,7 @@
     <div class="generated-builder__panel">
       <h3>Reuse Page</h3>
       <%= form_with scope: :segment,
-                    url: event_documents_generated_segments_path(event, document.logical_id),
+                    url: segment_create_path,
                     method: :post,
                     local: true,
                     class: "generated-builder__form" do |form| %>
@@ -310,7 +317,7 @@
     <div class="generated-builder__panel">
       <h3>Create New Page</h3>
       <%= form_with scope: :segment,
-                    url: event_documents_generated_segments_path(event, document.logical_id),
+                    url: segment_create_path,
                     method: :post,
                     local: true,
                     class: "generated-builder__form" do |form| %>
@@ -333,7 +340,7 @@
     <div class="generated-builder__panel">
       <h3>Attach Existing PDF</h3>
       <%= form_with scope: :segment,
-                    url: event_documents_generated_segments_path(event, document.logical_id),
+                    url: segment_create_path,
                     method: :post,
                     local: true,
                     class: "generated-builder__form" do |form| %>
@@ -356,7 +363,7 @@
     <div class="generated-builder__panel">
       <h3>Upload PDF Into Packet</h3>
       <%= form_with scope: :segment,
-                    url: event_documents_generated_segments_path(event, document.logical_id),
+                    url: segment_create_path,
                     method: :post,
                     local: true,
                     class: "generated-builder__form",

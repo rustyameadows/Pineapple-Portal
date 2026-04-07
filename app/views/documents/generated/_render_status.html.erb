@@ -1,3 +1,10 @@
+<% return_to ||= nil %>
+<% status_path = if return_to.present?
+                   cached_pdf_event_documents_generated_segment_path(event, document.logical_id, segment, return_to: return_to)
+                 else
+                   cached_pdf_event_documents_generated_segment_path(event, document.logical_id, segment)
+                 end %>
+
 <% if segment.cached? %>
   <% page_count = segment.cached_page_count.present? ? pluralize(segment.cached_page_count, "page").upcase : nil %>
   <% cached_label = if segment.cached_pdf_generated_at.present?
@@ -20,7 +27,7 @@
      ]) %>
 
   <%= link_to status_content,
-              cached_pdf_event_documents_generated_segment_path(event, document.logical_id, segment),
+              status_path,
               class: "generated-builder__status-tag generated-builder__status-tag--link",
               target: "_blank",
               rel: "noopener" %>

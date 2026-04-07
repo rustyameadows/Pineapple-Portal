@@ -12,10 +12,10 @@ module Documents
 
         if source.errors.none? && placement.save
           enqueue_working_refresh_for_documents(@document)
-          redirect_to builder_path, notice: "Packet page added."
+          redirect_to safe_return_to(fallback: builder_path), notice: "Packet page added."
         else
           message = source.errors.full_messages + placement.errors.full_messages
-          redirect_to builder_path, alert: message.uniq.to_sentence
+          redirect_to safe_return_to(fallback: builder_path), alert: message.uniq.to_sentence
         end
       end
 
@@ -24,9 +24,9 @@ module Documents
 
         if @placement.source.errors.empty? && @placement.source.save
           enqueue_working_refresh_for_source(@placement.source)
-          redirect_to builder_path, notice: "Packet page updated."
+          redirect_to safe_return_to(fallback: builder_path), notice: "Packet page updated."
         else
-          redirect_to builder_path, alert: @placement.source.errors.full_messages.to_sentence
+          redirect_to safe_return_to(fallback: builder_path), alert: @placement.source.errors.full_messages.to_sentence
         end
       end
 
@@ -38,7 +38,7 @@ module Documents
         else
           @document.clear_working_copy!
         end
-        redirect_to builder_path, notice: "Packet page removed."
+        redirect_to safe_return_to(fallback: builder_path), notice: "Packet page removed."
       end
 
       def duplicate
@@ -52,7 +52,7 @@ module Documents
         end
         enqueue_working_refresh_for_documents(@document)
 
-        redirect_to builder_path, notice: "Page duplicated."
+        redirect_to safe_return_to(fallback: builder_path), notice: "Page duplicated."
       end
 
       def reorder
@@ -100,14 +100,14 @@ module Documents
         source = @placement.source
 
         unless source.cached?
-          redirect_to builder_path, alert: "Page has not been rendered yet."
+          redirect_to safe_return_to(fallback: builder_path), alert: "Page has not been rendered yet."
           return
         end
 
         url = storage.presigned_download_url(source.cached_pdf_key)
         redirect_to url, allow_other_host: true
       rescue StandardError => e
-        redirect_to builder_path, alert: "Unable to fetch cached PDF: #{e.message}"
+        redirect_to safe_return_to(fallback: builder_path), alert: "Unable to fetch cached PDF: #{e.message}"
       end
 
       private

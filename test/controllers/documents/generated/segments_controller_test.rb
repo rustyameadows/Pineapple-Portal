@@ -60,6 +60,39 @@ module Documents
         assert_equal [@document.logical_id], enqueued_logical_ids
       end
 
+      test "create redirects back to packet settings when return_to is provided" do
+        return_to = edit_event_documents_generated_path(@event, @document.logical_id)
+
+        Documents::Generated::WorkingCopyRefresh.stub :enqueue, true do
+          post event_documents_generated_segments_url(@event, @document.logical_id), params: {
+            return_to: return_to,
+            segment: {
+              view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+              title: "General Notes",
+              options: {
+                body_markdown: "Line 1"
+              }
+            }
+          }
+        end
+
+        assert_redirected_to return_to
+      end
+
+      test "create failure redirects back to packet settings when return_to is provided" do
+        return_to = edit_event_documents_generated_path(@event, @document.logical_id)
+
+        post event_documents_generated_segments_url(@event, @document.logical_id), params: {
+          return_to: return_to,
+          segment: {
+            view_key: "",
+            title: "Broken Page"
+          }
+        }
+
+        assert_redirected_to return_to
+      end
+
       test "updates text page packet page and drops unknown option keys" do
         enqueued_logical_ids = []
 
@@ -82,6 +115,37 @@ module Documents
         assert_equal "General Notes Updated", @placement.source.title
         assert_equal({ "body_markdown" => "Updated\nnotes" }, @placement.source.html_options)
         assert_equal [@document.logical_id], enqueued_logical_ids
+      end
+
+      test "update redirects back to packet settings when return_to is provided" do
+        return_to = edit_event_documents_generated_path(@event, @document.logical_id)
+
+        Documents::Generated::WorkingCopyRefresh.stub :enqueue, true do
+          patch event_documents_generated_segment_url(@event, @document.logical_id, @placement), params: {
+            return_to: return_to,
+            segment: {
+              title: "General Notes Updated",
+              view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+              options: {
+                body_markdown: "Updated notes"
+              }
+            }
+          }
+        end
+
+        assert_redirected_to return_to
+      end
+
+      test "destroy redirects back to packet settings when return_to is provided" do
+        return_to = edit_event_documents_generated_path(@event, @document.logical_id)
+
+        Documents::Generated::WorkingCopyRefresh.stub :enqueue, true do
+          delete event_documents_generated_segment_url(@event, @document.logical_id, @placement), params: {
+            return_to: return_to
+          }
+        end
+
+        assert_redirected_to return_to
       end
 
       test "updates event overview packet page without persisting markdown options" do
