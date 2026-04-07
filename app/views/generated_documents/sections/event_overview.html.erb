@@ -12,8 +12,6 @@
 <% important_information_rows = generated_event_overview_primary_rows(@event) %>
 <% vip_rows = generated_event_overview_vip_rows(@event) %>
 <% style_rows = generated_event_overview_style_rows(@event) %>
-<% social_media_paragraphs = generated_packet_text_paragraphs(@event.social_media_policy) %>
-<% parking_paragraphs = generated_packet_text_paragraphs(@event.parking_details) %>
 
 <style>
   .generated-template--event-overview__important-information-groups {
@@ -196,28 +194,20 @@
       <% end %>
     </section>
 
-    <% if social_media_paragraphs.any? %>
+    <% if generated_packet_rich_text_present?(@event.social_media_policy) %>
       <section class="generated-template--packet-sheet__section">
         <h2 class="generated-template--packet-sheet__section-title">Social Media Policy</h2>
-        <div class="generated-template--packet-sheet__content">
-          <div class="generated-template--packet-sheet__body">
-            <% social_media_paragraphs.each do |paragraph| %>
-              <p class="generated-template--packet-sheet__text generated-template--event-overview__social-media"><%= paragraph %></p>
-            <% end %>
-          </div>
+        <div class="generated-template--packet-sheet__content generated-template--packet-sheet__rich-text generated-template--event-overview__social-media">
+          <%= render_generated_packet_rich_text(@event.social_media_policy) %>
         </div>
       </section>
     <% end %>
 
-    <% if parking_paragraphs.any? %>
+    <% if generated_packet_rich_text_present?(@event.parking_details) %>
       <section class="generated-template--packet-sheet__section">
         <h2 class="generated-template--packet-sheet__section-title">PARKING &amp; GETTING THERE</h2>
-        <div class="generated-template--packet-sheet__content">
-          <div class="generated-template--packet-sheet__body">
-            <% parking_paragraphs.each do |paragraph| %>
-              <p class="generated-template--packet-sheet__text generated-template--event-overview__parking"><%= paragraph %></p>
-            <% end %>
-          </div>
+        <div class="generated-template--packet-sheet__content generated-template--packet-sheet__rich-text generated-template--event-overview__parking">
+          <%= render_generated_packet_rich_text(@event.parking_details) %>
         </div>
       </section>
     <% end %>

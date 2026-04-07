@@ -99,6 +99,47 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
 
+  .generated-template--packet-sheet__rich-text {
+    display: grid;
+    gap: 0;
+  }
+
+  .generated-template--packet-sheet__rich-text > * {
+    margin: 0;
+  }
+
+  .generated-template.generated-template--packet-sheet .generated-template--packet-sheet__rich-text p,
+  .generated-template.generated-template--packet-sheet .generated-template--packet-sheet__rich-text li {
+    margin: 0;
+    font-size: 12px;
+    line-height: 13.5px;
+    color: #5f4836;
+  }
+
+  .generated-template--packet-sheet__rich-text strong {
+    font-weight: 600;
+  }
+
+  .generated-template--packet-sheet__rich-text em {
+    color: #735d49;
+    font-style: italic;
+  }
+
+  .generated-template--packet-sheet__rich-text a {
+    color: #5a4330;
+    text-decoration: underline;
+    text-underline-offset: 1px;
+  }
+
+  .generated-template.generated-template--packet-sheet .generated-template--packet-sheet__content.generated-template--packet-sheet__rich-text h3.generated-template--packet-sheet__subsection-title {
+    padding-left: calc(0.06in - 1px);
+    padding-right: calc(0.06in - 1px);
+  }
+
+  .generated-template--packet-sheet__content.generated-template--packet-sheet__rich-text > .generated-template--packet-sheet__subsection + .generated-template--packet-sheet__subsection {
+    border-top: none;
+  }
+
   .generated-template.generated-template--packet-sheet p.generated-template--packet-sheet__text {
     margin: 0;
     font-size: 12px;

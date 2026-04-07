@@ -170,6 +170,23 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__section-title", text: "PARKING & GETTING THERE", count: 0
   end
 
+  test "renders rich text in social media and parking sections" do
+    @event.update!(
+      social_media_policy: "### Posting Guidelines\n\n**Please** hold posts until *after* the ceremony.\n\n[Approved channels](https://example.com/social)",
+      parking_details: "### Arrival Notes\n\nValet is available at the west entrance.\n\n[Parking map](https://example.com/parking)"
+    )
+
+    view.instance_variable_set(:@event, @event)
+    render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--event-overview__social-media .generated-template--packet-sheet__subsection-title", text: "Posting Guidelines"
+    assert_select ".generated-template--event-overview__social-media strong", text: "Please"
+    assert_select ".generated-template--event-overview__social-media em", text: "after"
+    assert_select ".generated-template--event-overview__social-media a[href='https://example.com/social'][target='_blank'][rel='noopener noreferrer']", text: "Approved channels"
+    assert_select ".generated-template--event-overview__parking .generated-template--packet-sheet__subsection-title", text: "Arrival Notes"
+    assert_select ".generated-template--event-overview__parking a[href='https://example.com/parking'][target='_blank'][rel='noopener noreferrer']", text: "Parking map"
+  end
+
   private
 
   def build_segment(body_markdown = nil)

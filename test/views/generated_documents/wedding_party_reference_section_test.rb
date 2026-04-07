@@ -114,4 +114,18 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details & Transportation", count: 0
     assert_select ".generated-template--packet-sheet__two-column", count: 0
   end
+
+  test "renders rich text in getting ready details" do
+    @event.update!(
+      getting_ready_details: "### Morning Prep\n\n**Arrive** camera-ready.\n\nBring your *labeled bag*.\n\n[Rooming list](https://example.com/rooms)"
+    )
+
+    view.instance_variable_set(:@event, @event)
+    render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--wedding-party-reference__getting-ready .generated-template--packet-sheet__subsection-title", text: "Morning Prep"
+    assert_select ".generated-template--wedding-party-reference__getting-ready strong", text: "Arrive"
+    assert_select ".generated-template--wedding-party-reference__getting-ready em", text: "labeled bag"
+    assert_select ".generated-template--wedding-party-reference__getting-ready a[href='https://example.com/rooms'][target='_blank'][rel='noopener noreferrer']", text: "Rooming list"
+  end
 end

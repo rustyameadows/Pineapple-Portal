@@ -4,6 +4,9 @@ module GeneratedDocumentsHelper
   ].freeze
   MARKDOWN_ALLOWED_ATTRIBUTES = %w[href title rel target].freeze
   MARKDOWN_ALLOWED_PROTOCOLS = %w[http https mailto].freeze
+  PACKET_RICH_TEXT_ALLOWED_TAGS = %w[
+    p br strong em a h1 h2 h3 h4 h5 h6
+  ].freeze
   WEDDING_PARTY_REFERENCE_CONTENT = {
     event_timelines: [
       {
@@ -255,6 +258,31 @@ module GeneratedDocumentsHelper
     end
   end
 
+  def generated_packet_rich_text_present?(text)
+    text.to_s.strip.present?
+  end
+
+  def render_generated_packet_rich_text(markdown_text)
+    normalized_markdown = markdown_text.to_s.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+    html = Commonmarker.to_html(normalized_markdown)
+    sanitized_html = sanitize(
+      html,
+      tags: PACKET_RICH_TEXT_ALLOWED_TAGS,
+      attributes: MARKDOWN_ALLOWED_ATTRIBUTES
+    ).to_s
+
+    fragment = Nokogiri::HTML::DocumentFragment.parse(sanitized_html)
+    fragment.css("a").each do |link|
+      normalize_generated_link!(link)
+    end
+
+    safe_join(
+      generated_packet_rich_text_sections(fragment).map do |section|
+        generated_packet_rich_text_section_html(section)
+      end
+    )
+  end
+
   def generated_packet_text_paragraphs(text)
     text.to_s.split(/\r?\n+/).filter_map do |paragraph|
       paragraph.to_s.strip.presence
@@ -453,6 +481,47 @@ module GeneratedDocumentsHelper
       tags: MARKDOWN_ALLOWED_TAGS,
       attributes: MARKDOWN_ALLOWED_ATTRIBUTES
     ).to_s
+  end
+
+  def generated_packet_rich_text_sections(fragment)
+    sections = []
+    current_section = { heading_html: nil, body_nodes: [] }
+
+    fragment.children.each do |node|
+      next if node.text? && node.text.strip.blank?
+
+      if packet_heading_node?(node)
+        sections << current_section if current_section[:heading_html].present? || current_section[:body_nodes].any?
+        current_section = {
+          heading_html: node.inner_html.to_s.strip.presence,
+          body_nodes: []
+        }
+      else
+        current_section[:body_nodes] << node.dup
+      end
+    end
+
+    sections << current_section if current_section[:heading_html].present? || current_section[:body_nodes].any?
+    sections
+  end
+
+  def generated_packet_rich_text_section_html(section)
+    body_html = section[:body_nodes].map(&:to_html).join.html_safe
+
+    if section[:heading_html].present?
+      content_tag(:section, class: "generated-template--packet-sheet__subsection") do
+        safe_join([
+          content_tag(:h3, section[:heading_html].html_safe, class: "generated-template--packet-sheet__subsection-title"),
+          content_tag(:div, body_html, class: "generated-template--packet-sheet__body")
+        ])
+      end
+    else
+      content_tag(:div, body_html, class: "generated-template--packet-sheet__body")
+    end
+  end
+
+  def packet_heading_node?(node)
+    node.element? && node.name.match?(/\Ah[1-6]\z/)
   end
 
   def normalize_generated_link!(link)

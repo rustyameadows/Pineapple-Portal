@@ -80,32 +80,29 @@
   </div>
 
   <div class="event-settings__details-notes">
-    <div class="event-settings__field event-settings__field--notes">
-      <%= form.label :social_media_policy, "Social Media Policy" %>
-      <%= form.text_area :social_media_policy,
-                         rows: 4,
-                         class: "event-settings__textarea",
-                         placeholder: "Share any posting guidelines, embargo rules, or vendor tagging expectations." %>
-      <p class="event-settings__hint">Use this for planner-facing posting rules or social sharing guardrails.</p>
-    </div>
+    <%= render "events/settings/markdown_field",
+               form:,
+               field_name: :social_media_policy,
+               label_text: "Social Media Policy",
+               rows: 4,
+               placeholder: "Share any posting guidelines, embargo rules, or vendor tagging expectations.",
+               hint_text: "Use this for planner-facing posting rules or social sharing guardrails." %>
 
-    <div class="event-settings__field event-settings__field--notes">
-      <%= form.label :parking_details, "Parking Details" %>
-      <%= form.text_area :parking_details,
-                         rows: 4,
-                         class: "event-settings__textarea",
-                         placeholder: "Note unloading zones, valet instructions, parking lots, or access notes." %>
-      <p class="event-settings__hint">Include the arrival, unloading, and parking instructions your team needs on hand.</p>
-    </div>
+    <%= render "events/settings/markdown_field",
+               form:,
+               field_name: :parking_details,
+               label_text: "Parking Details",
+               rows: 4,
+               placeholder: "Note unloading zones, valet instructions, parking lots, or access notes.",
+               hint_text: "Include the arrival, unloading, and parking instructions your team needs on hand." %>
 
-    <div class="event-settings__field event-settings__field--notes">
-      <%= form.label :getting_ready_details, "Getting Ready Details" %>
-      <%= form.text_area :getting_ready_details,
-                         rows: 5,
-                         class: "event-settings__textarea",
-                         placeholder: "Capture room assignments, arrival timing, and any prep-specific logistics." %>
-      <p class="event-settings__hint">Use this for room locations, prep timing, and any special getting-ready logistics.</p>
-    </div>
+    <%= render "events/settings/markdown_field",
+               form:,
+               field_name: :getting_ready_details,
+               label_text: "Getting Ready Details",
+               rows: 5,
+               placeholder: "Capture room assignments, arrival timing, and any prep-specific logistics.",
+               hint_text: "Use this for room locations, prep timing, and any special getting-ready logistics." %>
   </div>
 
   <div class="event-settings__form-actions event-settings__form-actions--details">

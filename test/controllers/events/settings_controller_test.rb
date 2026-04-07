@@ -18,9 +18,16 @@ module Events
       assert_select "input[name='event[attire]'][value='Black Tie']", count: 1
       assert_select "input[name='event[style]'][value='Elegant Garden']", count: 1
       assert_select "input[name='event[color_palette]'][value='Ivory, Sage, Gold']", count: 1
-      assert_select "textarea[name='event[social_media_policy]']", text: "Please do not post photos before the planner's announcement."
-      assert_select "textarea[name='event[parking_details]']", text: "Valet parking is available at the east entrance."
-      assert_select "textarea[name='event[getting_ready_details]']", text: "Bridal party should arrive by 8:00 AM and check in at suite 402."
+      assert_select "[data-controller='generated-markdown-editor']", count: 3
+      assert_select "[data-generated-markdown-editor-target='openButton']", count: 3
+      assert_select "button[data-markdown-format='bold']", count: 6
+      assert_select "button[data-markdown-format='italic']", count: 6
+      assert_select "button[data-markdown-format='link']", count: 6
+      assert_select "button[data-markdown-format='headline']", count: 6
+      assert_select "textarea[name='event[social_media_policy]'][data-generated-markdown-editor-target='source']", text: "Please do not post photos before the planner's announcement."
+      assert_select "textarea[name='event[parking_details]'][data-generated-markdown-editor-target='source']", text: "Valet parking is available at the east entrance."
+      assert_select "textarea[name='event[getting_ready_details]'][data-generated-markdown-editor-target='source']", text: "Bridal party should arrive by 8:00 AM and check in at suite 402."
+      assert_select ".event-settings__hint", text: /Supports Markdown for bold, italic, links, and one headline style\./, count: 3
     end
 
     test "renders clients page" do

@@ -93,6 +93,10 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "rerenders general settings when event details update is invalid" do
+    social_markdown = "### Posting Guidelines\n\n**Please** hold posts until *after* the ceremony."
+    parking_markdown = "Guests should use the [north lot](https://example.com/parking)."
+    getting_ready_markdown = "### Morning Prep\n\nHair and makeup begins at 7:30 AM."
+
     patch event_url(@event), params: {
       event: {
         name: "",
@@ -100,9 +104,9 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
         attire: " Formal ",
         style: " Contemporary ",
         color_palette: " White, Green ",
-        social_media_policy: " Please hold posts until after the ceremony. ",
-        parking_details: " Guest parking uses the north lot. ",
-        getting_ready_details: " Hair and makeup begins at 7:30 AM. "
+        social_media_policy: social_markdown,
+        parking_details: parking_markdown,
+        getting_ready_details: getting_ready_markdown
       },
       return_to: event_settings_path(@event)
     }
@@ -115,13 +119,17 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='event[attire]'][value=' Formal ']", count: 1
     assert_select "input[name='event[style]'][value=' Contemporary ']", count: 1
     assert_select "input[name='event[color_palette]'][value=' White, Green ']", count: 1
-    assert_select "textarea[name='event[social_media_policy]']", text: " Please hold posts until after the ceremony. "
-    assert_select "textarea[name='event[parking_details]']", text: " Guest parking uses the north lot. "
-    assert_select "textarea[name='event[getting_ready_details]']", text: " Hair and makeup begins at 7:30 AM. "
+    assert_select "textarea[name='event[social_media_policy]']", text: social_markdown
+    assert_select "textarea[name='event[parking_details]']", text: parking_markdown
+    assert_select "textarea[name='event[getting_ready_details]']", text: getting_ready_markdown
     assert_select "h1", text: "Edit Event", count: 0
   end
 
   test "updates general settings metadata fields" do
+    social_markdown = "### Posting Guidelines\n\n**Please** hold posts until *after* the ceremony."
+    parking_markdown = "Guests should use the [north lot](https://example.com/parking)."
+    getting_ready_markdown = "### Morning Prep\n\nHair and makeup begins at 7:30 AM."
+
     patch event_url(@event), params: {
       event: {
         name: @event.name,
@@ -129,9 +137,9 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
         attire: "Formal",
         style: "Contemporary",
         color_palette: "White, Green",
-        social_media_policy: "Please hold posts until after the ceremony.",
-        parking_details: "Guest parking uses the north lot.",
-        getting_ready_details: "Hair and makeup begins at 7:30 AM."
+        social_media_policy: social_markdown,
+        parking_details: parking_markdown,
+        getting_ready_details: getting_ready_markdown
       },
       return_to: event_settings_path(@event)
     }
@@ -143,9 +151,9 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Formal", @event.attire
     assert_equal "Contemporary", @event.style
     assert_equal "White, Green", @event.color_palette
-    assert_equal "Please hold posts until after the ceremony.", @event.social_media_policy
-    assert_equal "Guest parking uses the north lot.", @event.parking_details
-    assert_equal "Hair and makeup begins at 7:30 AM.", @event.getting_ready_details
+    assert_equal social_markdown, @event.social_media_policy
+    assert_equal parking_markdown, @event.parking_details
+    assert_equal getting_ready_markdown, @event.getting_ready_details
   end
 
   test "creates event" do
