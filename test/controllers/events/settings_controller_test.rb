@@ -14,6 +14,13 @@ module Events
       assert_select "h1", text: @event.name
       assert_select "p", text: "Keep the basics fresh so the client portal stays on message.", count: 0
       assert_select "input[name='event[portal_slug]']", count: 0
+      assert_select "input[name='event[guest_count]'][value='175']", count: 1
+      assert_select "input[name='event[attire]'][value='Black Tie']", count: 1
+      assert_select "input[name='event[style]'][value='Elegant Garden']", count: 1
+      assert_select "input[name='event[color_palette]'][value='Ivory, Sage, Gold']", count: 1
+      assert_select "textarea[name='event[social_media_policy]']", text: "Please do not post photos before the planner's announcement."
+      assert_select "textarea[name='event[parking_details]']", text: "Valet parking is available at the east entrance."
+      assert_select "textarea[name='event[getting_ready_details]']", text: "Bridal party should arrive by 8:00 AM and check in at suite 402."
     end
 
     test "renders clients page" do

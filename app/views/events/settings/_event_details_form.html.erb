@@ -50,12 +50,61 @@
       <%= form.date_field :ends_on %>
     </div>
 
+    <div class="event-settings__field">
+      <%= form.label :guest_count, "Guest Count" %>
+      <%= form.text_field :guest_count, maxlength: 150, placeholder: "150 guests" %>
+    </div>
+
+    <div class="event-settings__field">
+      <%= form.label :attire, "Attire" %>
+      <%= form.text_field :attire, maxlength: 150, placeholder: "Black Tie Optional" %>
+    </div>
+
+    <div class="event-settings__field">
+      <%= form.label :style, "Style" %>
+      <%= form.text_field :style, maxlength: 150, placeholder: "Romantic garden party" %>
+    </div>
+
+    <div class="event-settings__field">
+      <%= form.label :color_palette, "Color Palette" %>
+      <%= form.text_field :color_palette, maxlength: 150, placeholder: "Sage, cream, and soft peach" %>
+    </div>
+
     <div class="event-settings__field event-settings__field--photo-select">
       <%= form.label :event_photo_document_id, "Event Photo" %>
       <%= form.select :event_photo_document_id,
                       options_for_select(image_documents.map { |doc| [doc.title.presence || "Untitled (##{doc.id})", doc.id] }, event.event_photo_document_id),
                       include_blank: "None" %>
       <p class="event-settings__hint">Select an existing image or upload a new one below.</p>
+    </div>
+  </div>
+
+  <div class="event-settings__details-notes">
+    <div class="event-settings__field event-settings__field--notes">
+      <%= form.label :social_media_policy, "Social Media Policy" %>
+      <%= form.text_area :social_media_policy,
+                         rows: 4,
+                         class: "event-settings__textarea",
+                         placeholder: "Share any posting guidelines, embargo rules, or vendor tagging expectations." %>
+      <p class="event-settings__hint">Use this for planner-facing posting rules or social sharing guardrails.</p>
+    </div>
+
+    <div class="event-settings__field event-settings__field--notes">
+      <%= form.label :parking_details, "Parking Details" %>
+      <%= form.text_area :parking_details,
+                         rows: 4,
+                         class: "event-settings__textarea",
+                         placeholder: "Note unloading zones, valet instructions, parking lots, or access notes." %>
+      <p class="event-settings__hint">Include the arrival, unloading, and parking instructions your team needs on hand.</p>
+    </div>
+
+    <div class="event-settings__field event-settings__field--notes">
+      <%= form.label :getting_ready_details, "Getting Ready Details" %>
+      <%= form.text_area :getting_ready_details,
+                         rows: 5,
+                         class: "event-settings__textarea",
+                         placeholder: "Capture room assignments, arrival timing, and any prep-specific logistics." %>
+      <p class="event-settings__hint">Use this for room locations, prep timing, and any special getting-ready logistics.</p>
     </div>
   </div>
 

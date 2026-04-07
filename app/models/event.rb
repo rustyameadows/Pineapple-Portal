@@ -41,6 +41,7 @@ class Event < ApplicationRecord
 
   validate :event_photo_document_must_be_image
   before_validation :sanitize_planning_link_tokens
+  before_save :normalize_metadata_fields
   validate :planning_link_keys_must_be_known
   PlanningLinkEntry = Struct.new(:token, :kind, :record, keyword_init: true)
 
@@ -176,6 +177,20 @@ class Event < ApplicationRecord
     return if portal_slug.present?
 
     self.portal_slug = generate_portal_slug
+  end
+
+  def normalize_metadata_fields
+    %i[
+      guest_count
+      attire
+      style
+      color_palette
+      social_media_policy
+      parking_details
+      getting_ready_details
+    ].each do |attribute_name|
+      self[attribute_name] = self[attribute_name].to_s.strip.presence
+    end
   end
 
   def generate_portal_slug

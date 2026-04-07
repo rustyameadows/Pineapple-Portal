@@ -94,7 +94,16 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
   test "rerenders general settings when event details update is invalid" do
     patch event_url(@event), params: {
-      event: { name: "" },
+      event: {
+        name: "",
+        guest_count: " 180 ",
+        attire: " Formal ",
+        style: " Contemporary ",
+        color_palette: " White, Green ",
+        social_media_policy: " Please hold posts until after the ceremony. ",
+        parking_details: " Guest parking uses the north lot. ",
+        getting_ready_details: " Hair and makeup begins at 7:30 AM. "
+      },
       return_to: event_settings_path(@event)
     }
 
@@ -102,7 +111,41 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form.event-settings__details-form", count: 1
     assert_select "div.event-settings__form-errors li", text: "Name can't be blank"
     assert_select "input[name='event[name]'][value='']", count: 1
+    assert_select "input[name='event[guest_count]'][value=' 180 ']", count: 1
+    assert_select "input[name='event[attire]'][value=' Formal ']", count: 1
+    assert_select "input[name='event[style]'][value=' Contemporary ']", count: 1
+    assert_select "input[name='event[color_palette]'][value=' White, Green ']", count: 1
+    assert_select "textarea[name='event[social_media_policy]']", text: " Please hold posts until after the ceremony. "
+    assert_select "textarea[name='event[parking_details]']", text: " Guest parking uses the north lot. "
+    assert_select "textarea[name='event[getting_ready_details]']", text: " Hair and makeup begins at 7:30 AM. "
     assert_select "h1", text: "Edit Event", count: 0
+  end
+
+  test "updates general settings metadata fields" do
+    patch event_url(@event), params: {
+      event: {
+        name: @event.name,
+        guest_count: "180",
+        attire: "Formal",
+        style: "Contemporary",
+        color_palette: "White, Green",
+        social_media_policy: "Please hold posts until after the ceremony.",
+        parking_details: "Guest parking uses the north lot.",
+        getting_ready_details: "Hair and makeup begins at 7:30 AM."
+      },
+      return_to: event_settings_path(@event)
+    }
+
+    assert_redirected_to event_settings_url(@event)
+
+    @event.reload
+    assert_equal "180", @event.guest_count
+    assert_equal "Formal", @event.attire
+    assert_equal "Contemporary", @event.style
+    assert_equal "White, Green", @event.color_palette
+    assert_equal "Please hold posts until after the ceremony.", @event.social_media_policy
+    assert_equal "Guest parking uses the north lot.", @event.parking_details
+    assert_equal "Hair and makeup begins at 7:30 AM.", @event.getting_ready_details
   end
 
   test "creates event" do

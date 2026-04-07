@@ -42,6 +42,27 @@ class EventTest < ActiveSupport::TestCase
     assert_equal "hello-world", event.portal_slug
   end
 
+  test "normalizes event metadata fields" do
+    event = Event.create!(
+      name: "Metadata Event",
+      guest_count: " 175 ",
+      attire: " Black Tie ",
+      style: " Elegant Garden ",
+      color_palette: " Ivory, Sage, Gold ",
+      social_media_policy: "  Please do not post before the planner's announcement.  ",
+      parking_details: "  ",
+      getting_ready_details: "\nReady room opens at 8:00 AM.\n"
+    )
+
+    assert_equal "175", event.guest_count
+    assert_equal "Black Tie", event.attire
+    assert_equal "Elegant Garden", event.style
+    assert_equal "Ivory, Sage, Gold", event.color_palette
+    assert_equal "Please do not post before the planner's announcement.", event.social_media_policy
+    assert_nil event.parking_details
+    assert_equal "Ready room opens at 8:00 AM.", event.getting_ready_details
+  end
+
   test "rejects unknown planning link keys" do
     event = events(:one)
     event.planning_link_keys = %w[guest_list unknown]

@@ -68,6 +68,7 @@
 
 .event-section--event-settings .event-settings__field input[type="text"],
 .event-section--event-settings .event-settings__field input[type="date"],
+.event-section--event-settings .event-settings__field textarea,
 .event-section--event-settings .event-settings__field select {
   width: 100%;
   min-height: 3rem;
@@ -91,6 +92,7 @@
 
 .event-section--event-settings .event-settings__field input[type="text"]:focus,
 .event-section--event-settings .event-settings__field input[type="date"]:focus,
+.event-section--event-settings .event-settings__field textarea:focus,
 .event-section--event-settings .event-settings__field select:focus {
   outline: none;
   border-color: color-mix(in srgb, var(--color-dark-brown) 28%, white);
@@ -116,9 +118,24 @@
   grid-column: 1 / -1;
 }
 
+.event-settings__details-notes {
+  display: grid;
+  gap: 1rem;
+  padding: 1.35rem 1.6rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-sea-foam) 62%, white);
+}
+
 .event-settings__field--photo-select {
   padding-top: 0.25rem;
   border-top: 1px solid color-mix(in srgb, var(--color-sea-foam) 62%, white);
+}
+
+.event-settings__field--notes textarea {
+  min-height: 8rem;
+  resize: vertical;
+  line-height: 1.55;
+  padding-top: 0.9rem;
+  padding-bottom: 0.9rem;
 }
 
 .event-settings__field--date input[type="date"] {
@@ -620,6 +637,10 @@
   .event-settings__details-grid {
     grid-template-columns: 1fr;
     padding: 1.25rem;
+  }
+
+  .event-settings__details-notes {
+    padding: 1.25rem 1.25rem 0;
   }
 
   .event-settings__field--date input[type="date"] {
