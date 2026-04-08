@@ -30,19 +30,13 @@
                         label: "Last snapshot",
                         value: ->(entry) do
                           latest = entry[:latest]
-                          latest.present? && latest.storage_uri.present? ? latest.updated_at.to_fs(:short) : "No snapshots yet"
+                          latest.present? && latest.storage_uri.present? ? "#{time_ago_in_words(latest.updated_at)} ago" : "No snapshots yet"
                         end,
                         sort_key: "last_compiled",
                         sort_value: ->(entry) do
                           latest = entry[:latest]
                           latest.present? && latest.storage_uri.present? ? latest.updated_at.to_i : nil
                         end
-                      },
-                      {
-                        label: "Saved snapshots",
-                        value: ->(entry) { entry[:versions].count(&:storage_uri) },
-                        sort_key: "compiled_versions",
-                        sort_value: ->(entry) { entry[:versions].count(&:storage_uri) }
                       },
                       {
                         label: "Visibility",
@@ -58,17 +52,25 @@
                         sort_value: ->(entry) { entry[:definition].client_visible? ? 1 : 0 }
                       }
                     ],
+                    table_actions: [
+                      {
+                        label: "Edit packet",
+                        text: "Edit packet",
+                        href: ->(entry) { edit_event_documents_generated_path(@event, entry[:logical_id]) }
+                      },
+                      {
+                        label: "View packet",
+                        text: "View packet",
+                        href: ->(entry) { event_documents_generated_path(@event, entry[:logical_id]) }
+                      }
+                    ],
                     card_fields: [
                       {
                         label: "Last snapshot",
                         value: ->(entry) do
                           latest = entry[:latest]
-                          latest.present? && latest.storage_uri.present? ? latest.updated_at.to_fs(:short) : "No snapshots yet"
+                          latest.present? && latest.storage_uri.present? ? "#{time_ago_in_words(latest.updated_at)} ago" : "No snapshots yet"
                         end
-                      },
-                      {
-                        label: "Saved snapshots",
-                        value: ->(entry) { entry[:versions].count(&:storage_uri) }
                       },
                       {
                         label: "Visibility",

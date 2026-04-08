@@ -1220,6 +1220,20 @@
   color: var(--color-brown);
 }
 
+.documents-browser__cell--action {
+  white-space: nowrap;
+}
+
+.documents-browser__action-link {
+  color: var(--color-dark-brown);
+  text-decoration: none;
+}
+
+.documents-browser__action-link:hover,
+.documents-browser__action-link:focus {
+  text-decoration: underline;
+}
+
 .documents-browser__pill {
   display: inline-flex;
   align-items: center;

@@ -132,7 +132,37 @@ module Documents
     end
 
     test "index renders packet actions without portal visibility checkbox" do
-      get event_documents_generated_index_url(@event)
+      travel_to Time.zone.local(2026, 4, 8, 2, 11, 55) do
+        logical_id = SecureRandom.uuid
+        @event.documents.create!(
+          title: "Family Packet",
+          doc_kind: Document::DOC_KINDS[:generated],
+          logical_id: logical_id,
+          version: 1,
+          is_latest: false,
+          source: "packet",
+          built_by_user: @user,
+          packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed]
+        )
+        @event.documents.create!(
+          title: "Family Packet",
+          doc_kind: Document::DOC_KINDS[:generated],
+          logical_id: logical_id,
+          version: 2,
+          is_latest: true,
+          source: "packet",
+          storage_uri: "documents/family-packet-v2.pdf",
+          checksum: "family-packet-checksum-v2",
+          checksum_sha256: "family-packet-sha256-v2",
+          size_bytes: 2048,
+          content_type: "application/pdf",
+          built_by_user: @user,
+          packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed],
+          updated_at: Time.zone.local(2026, 4, 4, 0, 18)
+        )
+
+        get event_documents_generated_index_url(@event)
+      end
 
       assert_response :success
       assert_select "p.event-section__eyebrow", text: "Generated packets", count: 0
@@ -142,6 +172,10 @@ module Documents
       assert_select "a", text: "Packet library", count: 1
       assert_select "form button", text: "Add default packets", count: 1
       assert_select "[data-controller='document-browser']", count: 1
+      assert_select "th", text: "Saved snapshots", count: 0
+      assert_select "td", text: "4 days ago", minimum: 1
+      assert_select "a.documents-browser__action-link", text: "Edit packet", minimum: 1
+      assert_select "a.documents-browser__action-link", text: "View packet", minimum: 1
     end
 
     test "new renders create form and template list" do
