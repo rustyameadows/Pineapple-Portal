@@ -233,11 +233,15 @@ module Documents
         built_by_user: @user,
         packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed]
       )
-      service = Struct.new(:packets) do
+      result = Struct.new(:packets, :summary_message).new(
+        [created_packet],
+        "Added 4 default groups and 1 default packet."
+      )
+      service = Struct.new(:result) do
         def call
-          packets
+          result
         end
-      end.new([created_packet])
+      end.new(result)
 
       Documents::Generated::DefaultPacketBuilder.stub(:new, ->(**) { service }) do
         post add_default_packets_event_documents_generated_index_url(@event)
@@ -245,7 +249,7 @@ module Documents
 
       assert_redirected_to event_documents_generated_index_url(@event)
       follow_redirect!
-      assert_includes response.body, "Added 1 default packet."
+      assert_includes response.body, "Added 4 default groups and 1 default packet."
     end
 
     test "working pdf renders placeholder when the packet has no pages" do

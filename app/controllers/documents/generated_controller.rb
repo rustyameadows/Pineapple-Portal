@@ -173,15 +173,10 @@ module Documents
     end
 
     def add_default_packets
-      created = Documents::Generated::DefaultPacketBuilder.new(event: @event, built_by_user: current_user).call
-      created.each { |packet| Documents::Generated::WorkingCopyRefresh.enqueue(packet) }
-      message = if created.any?
-                  "Added #{created.size} default packet#{'s' if created.size != 1}."
-                else
-                  "All default packets already exist."
-                end
+      result = Documents::Generated::DefaultPacketBuilder.new(event: @event, built_by_user: current_user).call
+      result.packets.each { |packet| Documents::Generated::WorkingCopyRefresh.enqueue(packet) }
 
-      redirect_to event_documents_generated_index_path(@event), notice: message
+      redirect_to event_documents_generated_index_path(@event), notice: result.summary_message
     rescue StandardError => e
       redirect_to event_documents_generated_index_path(@event), alert: "Unable to add default packets: #{e.message}"
     end
