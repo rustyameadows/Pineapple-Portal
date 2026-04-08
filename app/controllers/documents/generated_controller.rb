@@ -119,6 +119,10 @@ module Documents
 
       access = current_working_copy_access
 
+      response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+      response.headers["Pragma"] = "no-cache"
+      response.headers["Expires"] = "0"
+
       render json: {
         status: access.status,
         working_available: access.working_available,
@@ -128,6 +132,10 @@ module Documents
         viewer_path: (working_pdf_event_documents_generated_path(@event, @document.logical_id, v: access.viewer_token) if access.working_available)
       }
     rescue StandardError => e
+      response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+      response.headers["Pragma"] = "no-cache"
+      response.headers["Expires"] = "0"
+
       render json: {
         status: "failed",
         working_available: @document.working_available?,

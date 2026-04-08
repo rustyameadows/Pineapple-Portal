@@ -121,6 +121,8 @@ module Documents
       get event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
+      assert_select "p.event-section__eyebrow", text: "Generated packet", count: 0
+      assert_select "p.event-section__meta", text: /No saved snapshots yet/, count: 0
       assert_select "h2", text: "Live Working PDF", count: 1
       assert_select "h2", text: "Snapshots & downloads", count: 1
       assert_select "h2", text: "Packet Pages", count: 0
@@ -411,6 +413,8 @@ module Documents
       get event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
+      assert_select ".generated-builder__live-pill", text: /Updated/, count: 1
+      assert_select ".generated-builder__live-pill", text: /Auto-updating/, count: 0
       assert_select "time[data-controller='local-time'][data-local-time-iso-value='#{rendered_at.iso8601}'][datetime='#{rendered_at.iso8601}']", count: 1
     end
 
@@ -449,7 +453,8 @@ module Documents
       get event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
-      assert_select "p.event-section__meta time[data-controller='local-time'][data-local-time-iso-value='#{latest_snapshot.updated_at.iso8601}'][data-local-time-format-value='long']", count: 1
+      assert_select "p.event-section__meta", count: 0
+      assert_select ".generated-builder__hint time[data-controller='local-time'][data-local-time-iso-value='#{latest_snapshot.updated_at.iso8601}'][data-local-time-format-value='long']", count: 1
       assert_select ".generated-builder__build-meta time[data-controller='local-time'][data-local-time-format-value='short']", minimum: 2
     end
 

@@ -8,20 +8,7 @@
       <section class="event-section generated-builder">
         <header class="event-section__header generated-builder__header">
           <div>
-            <p class="event-section__eyebrow">Generated packet</p>
             <h1 class="event-section__title"><%= @document.title %></h1>
-            <% if @latest_version.present? && @latest_version.storage_uri.present? %>
-              <p class="event-section__meta">
-                Latest snapshot
-                <time data-controller="local-time"
-                      data-local-time-iso-value="<%= @latest_version.updated_at.utc.iso8601 %>"
-                      data-local-time-format-value="long"
-                      datetime="<%= @latest_version.updated_at.utc.iso8601 %>"><%= @latest_version.updated_at.to_fs(:long) %></time>
-                · version <%= @latest_version.version %>
-              </p>
-            <% else %>
-              <p class="event-section__meta">No saved snapshots yet. The working PDF below stays live.</p>
-            <% end %>
           </div>
           <div class="generated-builder__actions">
             <%= link_to "Packet settings", edit_event_documents_generated_path(@event, @document.logical_id), class: "button button--ghost" %>
@@ -38,24 +25,57 @@
         </header>
 
         <div class="generated-builder__body generated-builder__single-column">
-          <div class="generated-builder__workspace-card">
-            <div class="generated-builder__workspace-head">
-              <div>
-                <h2>Live Working PDF</h2>
-                <p class="generated-builder__hint">
-                  <% if @working_copy&.rendered_at.present? %>
-                    Last live update
-                    <time data-controller="local-time"
-                          data-local-time-iso-value="<%= @working_copy.rendered_at.utc.iso8601 %>"
-                          data-local-time-format-value="long"
-                          datetime="<%= @working_copy.rendered_at.utc.iso8601 %>"><%= @working_copy.rendered_at.to_fs(:long) %></time>.
-                    We’ll keep this preview current without creating a saved version.
-                  <% else %>
-                    This view reflects the current packet order and shared-source content without creating a saved version.
-                  <% end %>
-                </p>
-              </div>
-              <div class="generated-builder__workspace-actions">
+          <%
+            live_pdf_banner_visible = @working_copy.present? && !@working_copy.empty? && (
+              @working_copy.failed? || @working_copy.refreshing? || !@working_copy.working_available
+            )
+
+            live_pdf_banner_message =
+              if @working_copy&.failed?
+                @working_copy&.working_available ? "Live PDF refresh failed." : "Unable to prepare live PDF."
+              elsif @working_copy&.refreshing? && @working_copy&.working_available
+                "A newer live PDF is being prepared."
+              elsif @working_copy&.rendered_at.present?
+                "Refreshing live PDF..."
+              else
+                "Preparing live PDF..."
+              end
+
+            live_pdf_banner_detail =
+              if @working_copy&.failed?
+                if @working_copy&.working_available
+                  @working_copy.refresh_error.presence || "Showing the last live version while we wait for another refresh."
+                else
+                  @working_copy.refresh_error.presence || "Try again in a moment."
+                end
+              elsif @working_copy&.refreshing? && @working_copy&.working_available
+                "Showing the last live version until the refreshed packet is ready."
+              elsif @working_copy&.rendered_at.present?
+                "We’re rebuilding the working preview with the latest packet content."
+              else
+                "This packet is building its live preview. It will appear here automatically."
+              end
+          %>
+          <div class="generated-builder__workspace-card generated-builder__workspace-card--pdf"
+               data-controller="generated-pdf-frame"
+               data-generated-pdf-frame-status-url-value="<%= working_status_event_documents_generated_path(@event, @document.logical_id) %>"
+               data-generated-pdf-frame-initial-status-value="<%= @working_copy&.status || "missing" %>"
+               data-generated-pdf-frame-initial-working-available-value="<%= @working_copy&.working_available ? "true" : "false" %>"
+               data-generated-pdf-frame-initial-viewer-token-value="<%= @working_copy&.viewer_token %>"
+               data-generated-pdf-frame-initial-refresh-error-value="<%= @working_copy&.refresh_error %>">
+            <div class="generated-builder__workspace-head generated-builder__workspace-head--pdf">
+              <h2>Live Working PDF</h2>
+              <span class="generated-builder__live-pill"
+                    data-generated-pdf-frame-target="pill"
+                    <%= "hidden" unless @working_copy&.rendered_at.present? %>>
+                Updated
+                <time data-controller="local-time"
+                      data-generated-pdf-frame-target="pillTime"
+                      data-local-time-iso-value="<%= @working_copy&.rendered_at&.utc&.iso8601 %>"
+                      data-local-time-format-value="short"
+                      datetime="<%= @working_copy&.rendered_at&.utc&.iso8601 %>"><%= @working_copy&.rendered_at&.to_fs(:short) %></time>
+              </span>
+              <div class="generated-builder__workspace-actions generated-builder__workspace-actions--pdf">
                 <%= link_to "Open live PDF",
                             working_pdf_event_documents_generated_path(@event, @document.logical_id),
                             class: "button button--ghost button--small",
@@ -63,31 +83,23 @@
                             rel: "noopener" %>
               </div>
             </div>
+            <% unless @working_copy&.rendered_at.present? %>
+              <p class="generated-builder__hint" data-generated-pdf-frame-target="hint">
+                This view reflects the current packet order and shared-source content without creating a saved version.
+              </p>
+            <% end %>
             <div class="generated-builder__pdf-status"
                  data-generated-pdf-frame-target="banner"
-                 <%= "hidden" unless @working_copy&.working_available && (@working_copy.refreshing? || @working_copy.failed?) %>>
+                 <%= "hidden" unless live_pdf_banner_visible %>>
               <strong data-generated-pdf-frame-target="bannerMessage">
-                <% if @working_copy&.failed? %>
-                  Live PDF refresh failed.
-                <% else %>
-                  A newer live PDF is being prepared.
-                <% end %>
+                <%= live_pdf_banner_message %>
               </strong>
               <p data-generated-pdf-frame-target="bannerDetail">
-                <% if @working_copy&.failed? %>
-                  <%= @working_copy.refresh_error.presence || "Showing the last live version while we wait for another refresh." %>
-                <% else %>
-                  Showing the last live version until the refreshed packet is ready.
-                <% end %>
+                <%= live_pdf_banner_detail %>
               </p>
             </div>
             <div class="generated-builder__pdf-shell"
-                 data-controller="generated-pdf-frame"
-                 data-generated-pdf-frame-status-url-value="<%= working_status_event_documents_generated_path(@event, @document.logical_id) %>"
-                 data-generated-pdf-frame-initial-status-value="<%= @working_copy&.status || "missing" %>"
-                 data-generated-pdf-frame-initial-working-available-value="<%= @working_copy&.working_available ? "true" : "false" %>"
-                 data-generated-pdf-frame-initial-viewer-token-value="<%= @working_copy&.viewer_token %>"
-                 data-generated-pdf-frame-initial-refresh-error-value="<%= @working_copy&.refresh_error %>">
+                 data-generated-pdf-frame-target="shell">
               <div class="generated-builder__pdf-loading"
                    data-generated-pdf-frame-target="loading"
                    <%= "hidden" if @working_copy&.working_available %>>

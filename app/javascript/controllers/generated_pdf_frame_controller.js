@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["frame", "loading", "message", "detail", "banner", "bannerMessage", "bannerDetail"]
+  static targets = ["shell", "frame", "loading", "message", "detail", "banner", "bannerMessage", "bannerDetail", "pill", "pillTime", "hint"]
   static values = {
     statusUrl: String,
     initialStatus: String,
@@ -16,6 +16,8 @@ export default class extends Controller {
     this.currentViewerToken = this.initialViewerTokenValue || null
     this.workingAvailable = this.initialWorkingAvailableValue
     this.blockingLoad = !this.workingAvailable
+    this.clearBannerOnFrameLoad = false
+    this.pendingReadyViewerToken = null
 
     if (this.hasFrameTarget && this.workingAvailable) this.frameTarget.setAttribute("aria-busy", "true")
     this.applyStatus({
@@ -40,6 +42,10 @@ export default class extends Controller {
       this.hideLoading()
       this.blockingLoad = false
     }
+    if (this.clearBannerOnFrameLoad && this.workingAvailable) {
+      this.hideBanner()
+      this.clearBannerOnFrameLoad = false
+    }
     if (this.hasFrameTarget) this.frameTarget.removeAttribute("aria-busy")
   }
 
@@ -49,7 +55,8 @@ export default class extends Controller {
     try {
       const response = await fetch(this.statusUrlValue, {
         headers: { Accept: "application/json" },
-        credentials: "same-origin"
+        credentials: "same-origin",
+        cache: "no-store"
       })
       if (!response.ok) return
 
@@ -67,21 +74,52 @@ export default class extends Controller {
     const nextViewerToken = data.viewer_token || null
     const nextViewerPath = data.viewer_path || null
     const nextError = data.refresh_error || null
+    const nextRenderedAt = data.rendered_at || null
+    const viewerTokenChanged = !!(nextWorkingAvailable && nextViewerToken && nextViewerToken !== this.currentViewerToken)
 
     this.currentStatus = nextStatus
     this.workingAvailable = nextWorkingAvailable
+    this.updateLivePill(nextRenderedAt)
 
-    if (nextStatus === "refreshing" && nextWorkingAvailable) {
-      this.showBanner(
-        "A newer live PDF is being prepared.",
-        "Showing the last live version until the refreshed packet is ready."
-      )
+    if (viewerTokenChanged) {
+      this.pendingReadyViewerToken = nextViewerToken
+      this.hideBanner()
     } else if (nextStatus === "failed" && nextWorkingAvailable) {
       this.showBanner(
         "Live PDF refresh failed.",
         nextError || "Showing the last live version while we wait for another refresh."
       )
+    } else if (nextStatus === "failed") {
+      this.showBanner(
+        "Unable to prepare live PDF.",
+        nextError || "Try again in a moment."
+      )
+    } else if (nextStatus === "refreshing" && nextWorkingAvailable) {
+      if (this.pendingReadyViewerToken && nextViewerToken === this.pendingReadyViewerToken) {
+        this.hideBanner()
+      } else {
+      this.showBanner(
+        "A newer live PDF is being prepared.",
+        "Showing the last live version until the refreshed packet is ready."
+      )
+      }
+    } else if (nextStatus === "refreshing") {
+      this.showBanner(
+        nextRenderedAt ? "Refreshing live PDF..." : "Preparing live PDF...",
+        nextRenderedAt
+          ? "We’re rebuilding the working preview with the latest packet content."
+          : "This packet is building its live preview. It will appear here automatically."
+      )
+    } else if (!nextWorkingAvailable) {
+      this.pendingReadyViewerToken = null
+      this.showBanner(
+        nextRenderedAt ? "Refreshing live PDF..." : "Preparing live PDF...",
+        nextRenderedAt
+          ? "We’re rebuilding the working preview with the latest packet content."
+          : "This packet is building its live preview. It will appear here automatically."
+      )
     } else {
+      this.pendingReadyViewerToken = null
       this.hideBanner()
     }
 
@@ -91,7 +129,8 @@ export default class extends Controller {
       this.hideLoading()
     }
 
-    if (nextWorkingAvailable && nextViewerPath && nextViewerToken && nextViewerToken !== this.currentViewerToken) {
+    if (viewerTokenChanged && nextViewerPath) {
+      this.hideBanner()
       this.currentViewerToken = nextViewerToken
       this.loadFrame(nextViewerPath, { blocking: !previousWorkingAvailable })
     }
@@ -102,12 +141,14 @@ export default class extends Controller {
 
     this.blockingLoad = blocking
     this.loaded = false
+    this.clearBannerOnFrameLoad = true
+    const shell = this.shellElement()
 
     if (blocking) {
       this.showLoading("missing", null)
     } else {
-      this.element.classList.add("is-loaded")
-      this.element.classList.remove("is-loading")
+      shell.classList.add("is-loaded")
+      shell.classList.remove("is-loading")
     }
 
     this.frameTarget.setAttribute("aria-busy", "true")
@@ -131,8 +172,9 @@ export default class extends Controller {
 
     this.clearTimers()
     this.loadingTarget.hidden = false
-    this.element.classList.add("is-loading")
-    this.element.classList.remove("is-loaded")
+    const shell = this.shellElement()
+    shell.classList.add("is-loading")
+    shell.classList.remove("is-loaded")
 
     if (status !== "failed") {
       this.slowTimer = window.setTimeout(() => this.showSlowState(), 1800)
@@ -145,8 +187,9 @@ export default class extends Controller {
 
     this.clearTimers()
     this.loadingTarget.hidden = true
-    this.element.classList.remove("is-loading")
-    this.element.classList.add("is-loaded")
+    const shell = this.shellElement()
+    shell.classList.remove("is-loading")
+    shell.classList.add("is-loaded")
   }
 
   showBanner(message, detail) {
@@ -159,6 +202,40 @@ export default class extends Controller {
 
   hideBanner() {
     if (this.hasBannerTarget) this.bannerTarget.hidden = true
+  }
+
+  updateLivePill(iso) {
+    if (!this.hasPillTarget || !this.hasPillTimeTarget) return
+
+    if (!iso) {
+      this.pillTarget.hidden = true
+      if (this.hasHintTarget) this.hintTarget.hidden = false
+      return
+    }
+
+    this.pillTarget.hidden = false
+    if (this.hasHintTarget) this.hintTarget.hidden = true
+
+    this.pillTimeTarget.dataset.localTimeIsoValue = iso
+    this.pillTimeTarget.setAttribute("datetime", iso)
+    this.pillTimeTarget.textContent = this.formatTimestamp(iso)
+  }
+
+  shellElement() {
+    return this.hasShellTarget ? this.shellTarget : this.element
+  }
+
+  formatTimestamp(iso) {
+    const date = new Date(iso)
+    if (Number.isNaN(date.getTime())) return ""
+
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "2-digit",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    }).format(date)
   }
 
   showSlowState() {
