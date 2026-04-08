@@ -90,16 +90,31 @@ module Documents
       access = current_working_copy_access
 
       if access.empty?
+        disable_response_cache!
         render_working_placeholder("No packet pages yet. Add a canonical, page, or upload to start the live PDF.")
         return
       end
 
       if access.working_available
-        url = R2::Storage.new.presigned_download_url(key: @document.working_storage_uri)
-        redirect_to pdf_viewer_url(url), allow_other_host: true
+        current_token = access.viewer_token
+        if params[:v].to_s != current_token
+          disable_response_cache!
+          redirect_to canonical_working_pdf_path(current_token)
+          return
+        end
+
+        expires_in 12.hours, public: false
+        last_modified = access.rendered_at || @document.updated_at || Time.current
+        return unless stale?(etag: working_pdf_cache_key(current_token), last_modified: last_modified, public: false)
+
+        pdf_io = R2::Storage.new.download(@document.working_storage_uri)
+        raise "Live PDF is missing from storage." unless pdf_io
+
+        send_data pdf_io.read, type: "application/pdf", disposition: "inline"
         return
       end
 
+      disable_response_cache!
       message = if access.failed?
                   access.refresh_error.presence || "Unable to refresh the live PDF right now."
                 else
@@ -108,6 +123,7 @@ module Documents
 
       render_working_placeholder(message)
     rescue StandardError => e
+      disable_response_cache!
       render_working_placeholder("Unable to render the working PDF: #{e.message}")
     end
 
@@ -119,9 +135,7 @@ module Documents
 
       access = current_working_copy_access
 
-      response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-      response.headers["Pragma"] = "no-cache"
-      response.headers["Expires"] = "0"
+      disable_response_cache!
 
       render json: {
         status: access.status,
@@ -129,12 +143,10 @@ module Documents
         rendered_at: access.rendered_at&.utc&.iso8601,
         refresh_error: access.refresh_error,
         viewer_token: access.viewer_token,
-        viewer_path: (working_pdf_event_documents_generated_path(@event, @document.logical_id, v: access.viewer_token) if access.working_available)
+        viewer_path: (pdf_viewer_url(canonical_working_pdf_path(access.viewer_token)) if access.working_available)
       }
     rescue StandardError => e
-      response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-      response.headers["Pragma"] = "no-cache"
-      response.headers["Expires"] = "0"
+      disable_response_cache!
 
       render json: {
         status: "failed",
@@ -142,7 +154,7 @@ module Documents
         rendered_at: @document.working_rendered_at&.utc&.iso8601,
         refresh_error: e.message,
         viewer_token: @document.working_viewer_token,
-        viewer_path: (working_pdf_event_documents_generated_path(@event, @document.logical_id, v: @document.working_viewer_token) if @document.working_available?)
+        viewer_path: (pdf_viewer_url(canonical_working_pdf_path(@document.working_viewer_token)) if @document.working_available?)
       }
     end
 
@@ -411,6 +423,20 @@ module Documents
           <p><%= ERB::Util.html_escape(@message) %></p>
         </section>
       ERB
+    end
+
+    def canonical_working_pdf_path(viewer_token)
+      working_pdf_event_documents_generated_path(@event, @document.logical_id, v: viewer_token)
+    end
+
+    def disable_response_cache!
+      response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+      response.headers["Pragma"] = "no-cache"
+      response.headers["Expires"] = "0"
+    end
+
+    def working_pdf_cache_key(viewer_token)
+      %(working-pdf/#{@document.logical_id}/#{viewer_token})
     end
 
     def pdf_viewer_url(url)
