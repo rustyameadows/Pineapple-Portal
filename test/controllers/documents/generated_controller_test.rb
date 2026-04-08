@@ -133,6 +133,8 @@ module Documents
       get event_documents_generated_index_url(@event)
 
       assert_response :success
+      assert_select "p.event-section__eyebrow", text: "Generated packets", count: 0
+      assert_select "div.event-section__actions.event-section__actions--row", count: 1
       assert_select "input[type='checkbox'][name='document[packets_portal_visible]']", count: 0
       assert_select "a", text: "New generated packet", count: 1
       assert_select "a", text: "Packet library", count: 1

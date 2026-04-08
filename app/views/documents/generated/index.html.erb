@@ -8,10 +8,9 @@
       <section class="event-section">
         <header class="event-section__header">
           <div>
-            <p class="event-section__eyebrow">Generated packets</p>
             <h1 class="event-section__title">Packets for <%= @event.name %></h1>
           </div>
-          <div class="event-section__actions">
+          <div class="event-section__actions event-section__actions--row">
             <%= button_to "Add default packets",
                           add_default_packets_event_documents_generated_index_path(@event),
                           method: :post,
