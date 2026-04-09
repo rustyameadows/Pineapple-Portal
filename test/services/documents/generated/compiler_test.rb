@@ -3,6 +3,25 @@ require "test_helper"
 module Documents
   module Generated
     class CompilerTest < ActiveSupport::TestCase
+      class PageNumbererStub
+        class << self
+          attr_accessor :calls
+        end
+
+        def initialize(pdf_data:, entries:, overlay_renderer: nil)
+          self.class.calls ||= []
+          self.class.calls << {
+            pdf_data: pdf_data,
+            entries: entries,
+            overlay_renderer: overlay_renderer
+          }
+        end
+
+        def call
+          "PDF_WITH_NUMBERS"
+        end
+      end
+
       class SegmentStorageStub
         def download(_key)
           "segment-pdf"
@@ -26,33 +45,26 @@ module Documents
       end
 
       class FakeCombinePDF
-        class << self
-          attr_accessor :last_number_pages_options
-        end
-
         attr_reader :label, :pages
 
         def initialize(label, pages_count: 1)
           @label = label
           @pages = Array.new(pages_count) { Object.new }
-          @numbered = false
         end
 
         def <<(other)
           @pages.concat(other.pages)
         end
 
-        def number_pages(**options)
-          self.class.last_number_pages_options = options
-          @numbered = true
-        end
-
-        def numbered?
-          @numbered
-        end
-
         def to_pdf
-          label == :apply && numbered? ? "PDF_WITH_NUMBERS" : "PDF_WITHOUT_NUMBERS"
+          case label
+          when :stitch
+            "PDF_WITHOUT_NUMBERS"
+          when :final
+            "PDF_WITH_NUMBERS"
+          else
+            "PDF_WITHOUT_NUMBERS"
+          end
         end
       end
 
@@ -96,7 +108,7 @@ module Documents
 
         @segment_storage = SegmentStorageStub.new
         @document_storage = DocumentStorageStub.new
-        FakeCombinePDF.last_number_pages_options = nil
+        PageNumbererStub.calls = []
       end
 
       test "compiler leaves PDF untouched without page numbers flag" do
@@ -114,16 +126,9 @@ module Documents
         assert_equal "application/pdf", @document_storage.uploaded_content_type
         assert_equal 1, result.page_count
 
-        options = FakeCombinePDF.last_number_pages_options
-        assert_equal :bottom_right, options[:location]
-        assert_equal "pg. %s", options[:number_format]
-        assert_equal 1, options[:start_at]
-        assert_equal 10, options[:font_size]
-        assert_equal 10, options[:margin_from_side]
-        assert_equal 12, options[:y]
-        assert_equal :right, options[:text_align]
-
-        assert_nil options[:font]
+        call = PageNumbererStub.calls.last
+        assert_equal "PDF_WITHOUT_NUMBERS", call[:pdf_data]
+        assert_equal [@segment], call[:entries].map { |entry| entry[:source] }
       end
 
       test "compiler defaults compiled packets visibility to hidden" do
@@ -134,7 +139,26 @@ module Documents
         assert_not result.compiled_document.packets_portal_visible?
       end
 
-      test "compiler promotes the current live working pdf into a snapshot when it is fresh" do
+      test "compiler promotes the current live working pdf into a numbered snapshot when it is fresh" do
+        manifest_hash = segment_manifest_hash(@segment, "segment-hash")
+
+        @definition_document.update!(
+          working_storage_uri: "documents/#{@event.id}/#{@definition_document.logical_id}/working/generated-packet-working.pdf",
+          working_manifest_hash: manifest_hash,
+          working_rendered_at: Time.current,
+          working_status: Document::WORKING_STATUSES[:fresh]
+        )
+        @document_storage.download_data = "WORKING_PDF"
+
+        result = execute_compiler(page_numbers: true)
+
+        assert_equal @definition_document.working_storage_uri, @document_storage.downloaded_key
+        assert_equal "WORKING_PDF", @document_storage.uploaded_data
+        assert_equal manifest_hash, result.manifest_hash
+        assert_equal [], PageNumbererStub.calls
+      end
+
+      test "compiler rebuilds an unnumbered snapshot instead of reusing the numbered working pdf" do
         manifest_hash = segment_manifest_hash(@segment, "segment-hash")
 
         @definition_document.update!(
@@ -147,8 +171,8 @@ module Documents
 
         result = execute_compiler(page_numbers: false)
 
-        assert_equal @definition_document.working_storage_uri, @document_storage.downloaded_key
-        assert_equal "WORKING_PDF", @document_storage.uploaded_data
+        assert_nil @document_storage.downloaded_key
+        assert_equal "PDF_WITHOUT_NUMBERS", @document_storage.uploaded_data
         assert_equal manifest_hash, result.manifest_hash
       end
 
@@ -156,16 +180,18 @@ module Documents
 
       def execute_compiler(page_numbers:)
         SegmentHasher.stub :call, ->(_segment) { "segment-hash" } do
-          stub_combine_pdf do
-            compiler = Compiler.new(
-              definition_document: @definition_document,
-              build: @build,
-              built_by_user: nil,
-              segment_storage: @segment_storage,
-              document_storage: @document_storage,
-              page_numbers: page_numbers
-            )
-            compiler.call
+          PageNumberer.stub :new, ->(**kwargs) { PageNumbererStub.new(**kwargs) } do
+            stub_combine_pdf do
+              compiler = Compiler.new(
+                definition_document: @definition_document,
+                build: @build,
+                built_by_user: nil,
+                segment_storage: @segment_storage,
+                document_storage: @document_storage,
+                page_numbers: page_numbers
+              )
+              compiler.call
+            end
           end
         end
       end

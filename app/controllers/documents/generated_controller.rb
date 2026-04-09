@@ -177,7 +177,11 @@ module Documents
         return
       end
 
-      page_numbers = ActiveModel::Type::Boolean.new.cast(params[:page_numbers])
+      page_numbers = if params.key?(:page_numbers)
+                       ActiveModel::Type::Boolean.new.cast(params[:page_numbers])
+                     else
+                       true
+                     end
 
       build = @document.builds.create!(
         build_id: SecureRandom.uuid,

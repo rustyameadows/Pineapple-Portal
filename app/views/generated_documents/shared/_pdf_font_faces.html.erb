@@ -1,0 +1,20 @@
+<style>
+  @font-face {
+    font-family: "Didot";
+    src: url("<%= pdf_asset_url("Didot.woff2") %>") format("woff2"),
+         url("<%= pdf_asset_url("Didot.woff") %>") format("woff"),
+         url("<%= pdf_asset_url("Didot.ttf") %>") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+  }
+
+  @font-face {
+    font-family: "Didot";
+    src: url("<%= pdf_asset_url("DidotLTStd-Italic.woff") %>") format("woff"),
+         url("<%= pdf_asset_url("DidotLTStd-Italic.ttf") %>") format("truetype");
+    font-weight: 400;
+    font-style: italic;
+    font-display: block;
+  }
+</style>

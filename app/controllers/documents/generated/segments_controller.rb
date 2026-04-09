@@ -484,7 +484,10 @@ module Documents
         group_document = source.group_document
         head :not_found and return unless group_document
 
-        bundle = Documents::Generated::PacketBundle.new(definition_document: group_document).call
+        bundle = Documents::Generated::PacketBundle.new(
+          definition_document: group_document,
+          page_numbers: false
+        ).call
         filename = "#{source.display_title.to_s.parameterize.presence || 'group'}.pdf"
         send_data bundle.pdf_data, filename: filename, type: "application/pdf", disposition: "inline"
       rescue StandardError

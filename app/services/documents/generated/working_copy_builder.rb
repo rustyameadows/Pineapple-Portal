@@ -64,7 +64,7 @@ module Documents
       def build_packet_bundle
         kwargs = {
           definition_document: definition_document,
-          page_numbers: false
+          page_numbers: true
         }
         kwargs[:segment_storage] = @segment_storage if @segment_storage
         PacketBundle.new(**kwargs)

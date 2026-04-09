@@ -74,8 +74,7 @@ module Documents
         live_pdf = current_working_pdf(manifest)
 
         if live_pdf.present?
-          pdf_data = page_numbers ? apply_page_numbers(live_pdf) : live_pdf
-          return { pdf_data: pdf_data, manifest_hash: manifest.manifest_hash }
+          return { pdf_data: live_pdf, manifest_hash: manifest.manifest_hash }
         end
 
         bundle = packet_bundle.call
@@ -139,8 +138,10 @@ module Documents
       end
 
       def current_working_pdf(manifest)
+        return unless page_numbers
         return unless definition_document.working_available?
         return unless definition_document.working_manifest_hash == manifest.manifest_hash
+        return unless manifest.entries.count { |entry| entry.source.cached_page_count.present? } == manifest.entries.count
 
         data = document_storage.download(definition_document.working_storage_uri)
         buffer = data.respond_to?(:read) ? data.read : data
@@ -149,24 +150,6 @@ module Documents
         buffer.presence
       rescue StandardError
         nil
-      end
-
-      def apply_page_numbers(compiled_pdf)
-        pdf = CombinePDF.parse(compiled_pdf)
-        pdf.number_pages(**page_number_options)
-        pdf.to_pdf
-      end
-
-      def page_number_options
-        {
-          start_at: 1,
-          number_format: "pg. %s",
-          location: :bottom_right,
-          font_size: 10,
-          margin_from_side: 10,
-          y: 12,
-          text_align: :right
-        }
       end
 
       class CompileError < StandardError; end

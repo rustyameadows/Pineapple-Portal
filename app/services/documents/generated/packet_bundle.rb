@@ -30,7 +30,7 @@ module Documents
 
       def build_from_prepared(prepared)
         compiled_pdf = stitch_segments(prepared.rendered_entries)
-        compiled_pdf = apply_page_numbers(compiled_pdf) if page_numbers
+        compiled_pdf = apply_page_numbers(compiled_pdf, prepared.rendered_entries) if page_numbers
         totals = derive_totals(compiled_pdf)
 
         Result.new(
@@ -134,28 +134,19 @@ module Documents
           buffer.force_encoding(Encoding::BINARY)
           raise Compiler::CompileError, "Cached PDF empty for #{entry[:source].display_title.inspect}" if buffer.empty?
 
-          combined_pdf << CombinePDF.parse(buffer)
+          parsed_pdf = CombinePDF.parse(buffer)
+          entry[:page_count] = parsed_pdf.pages.count
+          combined_pdf << parsed_pdf
         end
 
         combined_pdf.to_pdf
       end
 
-      def apply_page_numbers(compiled_pdf)
-        pdf = CombinePDF.parse(compiled_pdf)
-        pdf.number_pages(**page_number_options)
-        pdf.to_pdf
-      end
-
-      def page_number_options
-        {
-          start_at: 1,
-          number_format: "pg. %s",
-          location: :bottom_right,
-          font_size: 10,
-          margin_from_side: 10,
-          y: 12,
-          text_align: :right
-        }
+      def apply_page_numbers(compiled_pdf, rendered_entries)
+        PageNumberer.new(
+          pdf_data: compiled_pdf,
+          entries: rendered_entries
+        ).call
       end
 
       def derive_totals(compiled_pdf)

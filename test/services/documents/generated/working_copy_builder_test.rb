@@ -56,8 +56,12 @@ module Documents
         )
 
         bundle_stub = PacketBundleStub.new(manifest_hash: "same-manifest", result: nil)
+        packet_bundle_kwargs = []
 
-        PacketBundle.stub :new, ->(**) { bundle_stub } do
+        PacketBundle.stub :new, ->(**kwargs) {
+          packet_bundle_kwargs << kwargs
+          bundle_stub
+        } do
           result = WorkingCopyBuilder.new(
             definition_document: @document,
             document_storage: @document_storage
@@ -67,6 +71,7 @@ module Documents
           assert_nil @document_storage.uploaded_key
           assert_equal 0, bundle_stub.build_calls
           assert_equal Document::WORKING_STATUSES[:fresh], @document.reload.working_status
+          assert_equal true, packet_bundle_kwargs.last[:page_numbers]
         end
       end
 
@@ -81,8 +86,12 @@ module Documents
           checksum_sha256: "sha256"
         )
         bundle_stub = PacketBundleStub.new(manifest_hash: "new-manifest", result: bundle_result)
+        packet_bundle_kwargs = []
 
-        PacketBundle.stub :new, ->(**) { bundle_stub } do
+        PacketBundle.stub :new, ->(**kwargs) {
+          packet_bundle_kwargs << kwargs
+          bundle_stub
+        } do
           result = WorkingCopyBuilder.new(
             definition_document: @document,
             document_storage: @document_storage
@@ -93,6 +102,7 @@ module Documents
           assert_equal 1, bundle_stub.build_calls
           assert_equal "new-manifest", @document.reload.working_manifest_hash
           assert_equal Document::WORKING_STATUSES[:fresh], @document.working_status
+          assert_equal true, packet_bundle_kwargs.last[:page_numbers]
         end
       end
     end

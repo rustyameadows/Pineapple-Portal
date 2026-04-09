@@ -319,6 +319,61 @@ module Documents
         assert_equal "Decor Vision", group_source.reload.display_title
       end
 
+      test "previewing a group keeps the generated pdf unnumbered" do
+        group_document = create_group_document(title: "Design & Decor")
+        group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
+        group_placement = GeneratedPacketPlacement.create!(
+          document_logical_id: @document.logical_id,
+          source: group_source,
+          position: 2
+        )
+
+        seen_kwargs = nil
+        bundle_result = Struct.new(:pdf_data).new("PDF_BYTES")
+        bundle_double = Struct.new(:result) do
+          def call
+            result
+          end
+        end.new(bundle_result)
+
+        Documents::Generated::PacketBundle.stub :new, ->(**kwargs) {
+          seen_kwargs = kwargs
+          bundle_double
+        } do
+          get preview_event_documents_generated_segment_url(@event, @document.logical_id, group_placement)
+        end
+
+        assert_response :success
+        assert_equal group_document, seen_kwargs[:definition_document]
+        assert_equal false, seen_kwargs[:page_numbers]
+      end
+
+    private
+
+    def create_group_document(title:)
+      document = @event.documents.create!(
+        title: title,
+        doc_kind: Document::DOC_KINDS[:generated],
+        logical_id: SecureRandom.uuid,
+        version: 1,
+        is_latest: false,
+        source: "packet",
+        built_by_user: @user,
+        packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed],
+        packet_container_kind: Document::PACKET_CONTAINER_KINDS[:group]
+      )
+
+      document.packet_placements.create!(
+        source: GeneratedPacketSource.build_page_source(
+          event: @event,
+          view_key: "section_break",
+          title: title,
+          options: {}
+        ).tap(&:save!),
+        position: 1
+      )
+      document
     end
   end
+end
 end

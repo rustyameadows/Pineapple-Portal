@@ -1,4 +1,6 @@
 module DocumentsHelper
+  require "uri"
+
   def document_source_label(document)
     Document.source_label(document.source)
   end
@@ -100,6 +102,17 @@ module DocumentsHelper
     base64 = Base64.strict_encode64(blob)
     content_type = Marcel::MimeType.for(StringIO.new(blob), name: path)
     "data:#{content_type};base64,#{base64}"
+  end
+
+  def pdf_base_url
+    ENV.fetch("PDF_BASE_URL", "http://localhost:3000").sub(%r{/\z}, "")
+  end
+
+  def pdf_asset_url(path)
+    asset_path = ActionController::Base.helpers.asset_path(path)
+    return asset_path if asset_path.start_with?("data:")
+
+    "#{pdf_base_url}#{asset_path.start_with?("/") ? asset_path : "/#{asset_path}"}"
   end
 
   def inline_document_image_data_uri(document)

@@ -126,6 +126,8 @@ module Documents
       assert_select "h2", text: "Live Working PDF", count: 1
       assert_select "h2", text: "Snapshots & downloads", count: 1
       assert_select "h2", text: "Packet Pages", count: 0
+      assert_select "button", text: "Create snapshot", count: 1
+      assert_select "button", text: "Create snapshot without page numbers", count: 1
       assert_select "button", text: "Settings", count: 0
       assert_select "[data-controller='generated-markdown-editor']", count: 0
       assert_select "dialog.generated-builder__segment-dialog", count: 0
@@ -619,6 +621,46 @@ module Documents
 
       assert_redirected_to event_documents_generated_index_url(@event)
       assert_nil Document.where(logical_id: logical_id).first
+    end
+
+    test "snapshot defaults to page numbers when page_numbers is omitted" do
+      create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+
+      enqueued_options = []
+
+      Documents::Generated::CompileDocumentJob.stub :perform_later, ->(_build_id, options = {}) { enqueued_options << options } do
+        assert_difference("DocumentBuild.count", 1) do
+          post snapshot_event_documents_generated_url(@event, @document.logical_id)
+        end
+      end
+
+      assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+      assert_equal [{ page_numbers: true }], enqueued_options
+    end
+
+    test "snapshot can opt out of page numbers" do
+      create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+
+      enqueued_options = []
+
+      Documents::Generated::CompileDocumentJob.stub :perform_later, ->(_build_id, options = {}) { enqueued_options << options } do
+        assert_difference("DocumentBuild.count", 1) do
+          post snapshot_event_documents_generated_url(@event, @document.logical_id), params: { page_numbers: false }
+        end
+      end
+
+      assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+      assert_equal [{ page_numbers: false }], enqueued_options
     end
 
     test "snapshot requires at least one page" do
