@@ -15,15 +15,6 @@
           </div>
           <div class="generated-builder__actions">
             <%= link_to "Packet settings", edit_event_documents_generated_path(@event, @document.logical_id), class: "button button--ghost" %>
-            <%= link_to "Packet library", library_event_documents_generated_index_path(@event), class: "button button--ghost" %>
-            <%= link_to "Back to documents", event_documents_path(@event), class: "button button--ghost" %>
-            <% if @latest_version.present? %>
-              <%= link_to "Download latest",
-                          download_event_document_path(@event, @latest_version),
-                          class: "button button--ghost button--small",
-                          target: "_blank",
-                          rel: "noopener" %>
-            <% end %>
           </div>
         </header>
 

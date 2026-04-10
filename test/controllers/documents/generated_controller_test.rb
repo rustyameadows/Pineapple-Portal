@@ -126,6 +126,9 @@ module Documents
       assert_select "h2", text: "Live Working PDF", count: 1
       assert_select "h2", text: "Snapshots & downloads", count: 1
       assert_select "h2", text: "Packet Pages", count: 0
+      assert_select "a", text: "Packet library", count: 0
+      assert_select "a", text: "Back to documents", count: 0
+      assert_select "header .generated-builder__actions a", text: "Download latest", count: 0
       assert_select "button", text: "Create snapshot", count: 1
       assert_select "button", text: "Create snapshot without page numbers", count: 1
       assert_select "button", text: "Settings", count: 0
