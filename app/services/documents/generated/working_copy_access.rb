@@ -2,6 +2,8 @@ module Documents
   module Generated
     class WorkingCopyAccess
       Result = Struct.new(
+        :build,
+        :build_id,
         :status,
         :empty,
         :working_storage_uri,
@@ -9,6 +11,11 @@ module Documents
         :refresh_error,
         :viewer_token,
         :manifest_hash,
+        :progress_stage,
+        :progress_message,
+        :progress_current,
+        :progress_total,
+        :last_progress_at,
         keyword_init: true
       ) do
         def empty?
@@ -19,20 +26,48 @@ module Documents
           working_storage_uri.present?
         end
 
+        def active?
+          pending? || running?
+        end
+
+        def pending?
+          status == DocumentBuild::STATUSES[:pending]
+        end
+
+        def running?
+          status == DocumentBuild::STATUSES[:running]
+        end
+
+        def succeeded?
+          status == DocumentBuild::STATUSES[:succeeded]
+        end
+
         def refreshing?
-          status == Document::WORKING_STATUSES[:refreshing]
+          active?
         end
 
         def fresh?
-          status == Document::WORKING_STATUSES[:fresh]
+          succeeded?
         end
 
         def failed?
-          status == Document::WORKING_STATUSES[:failed]
+          status == DocumentBuild::STATUSES[:failed]
         end
 
         def missing?
-          status == Document::WORKING_STATUSES[:missing]
+          status == "missing"
+        end
+
+        def status_payload(viewer_path:)
+          BuildStatusPresenter.new(
+            build: build,
+            status: status,
+            working_available: working_available,
+            rendered_at: rendered_at,
+            refresh_error: refresh_error,
+            viewer_token: viewer_token,
+            viewer_path: viewer_path
+          ).as_json
         end
       end
 
@@ -55,11 +90,8 @@ module Documents
         manifest = PacketManifest.new(definition_document: definition_document).call
 
         if refresh_needed?(manifest)
-          WorkingCopyRefresh.enqueue(definition_document) if enqueue
+          WorkingCopyRefresh.enqueue(definition_document, manifest: manifest) if enqueue
           definition_document.reload if enqueue
-        elsif !definition_document.working_fresh? || definition_document.working_refresh_error.present?
-          definition_document.mark_working_fresh!
-          definition_document.reload
         end
 
         build_result(empty: false)
@@ -70,13 +102,17 @@ module Documents
       attr_reader :definition_document
 
       def refresh_needed?(manifest)
+        return false if definition_document.active_working_build.present?
+        latest_build = definition_document.latest_working_build
+        return false if latest_build&.failed? && latest_build.manifest_hash == manifest.manifest_hash
+
         !definition_document.working_available? ||
           manifest.stale_sources.any? ||
           definition_document.working_manifest_hash != manifest.manifest_hash
       end
 
       def reset_missing_state!
-        return if definition_document.working_missing? &&
+        return if definition_document.working_status_key == Document::WORKING_STATUSES[:missing] &&
                   !definition_document.working_available? &&
                   definition_document.working_refresh_error.blank?
 
@@ -85,14 +121,34 @@ module Documents
       end
 
       def build_result(empty:)
+        progress_build = definition_document.current_working_progress_build
+        current_build = progress_build || definition_document.current_working_artifact_build
+        status =
+          if progress_build.present?
+            progress_build.status
+          elsif definition_document.working_available?
+            DocumentBuild::STATUSES[:succeeded]
+          elsif definition_document.working_refresh_error.present?
+            DocumentBuild::STATUSES[:failed]
+          else
+            "missing"
+          end
+
         Result.new(
-          status: definition_document.working_status_key,
+          build: current_build,
+          build_id: current_build&.build_id,
+          status: status,
           empty: empty,
           working_storage_uri: definition_document.working_storage_uri,
           rendered_at: definition_document.working_rendered_at,
           refresh_error: definition_document.working_refresh_error,
           viewer_token: definition_document.working_viewer_token,
-          manifest_hash: definition_document.working_manifest_hash
+          manifest_hash: definition_document.working_manifest_hash,
+          progress_stage: progress_build&.progress_stage,
+          progress_message: progress_build&.display_progress_message,
+          progress_current: progress_build&.progress_current,
+          progress_total: progress_build&.progress_total,
+          last_progress_at: progress_build&.last_progress_at
         )
       end
     end

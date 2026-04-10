@@ -7,7 +7,8 @@ export default class extends Controller {
     initialStatus: String,
     initialWorkingAvailable: Boolean,
     initialViewerToken: String,
-    initialRefreshError: String
+    initialRefreshError: String,
+    initialProgressMessage: String
   }
 
   connect() {
@@ -24,7 +25,8 @@ export default class extends Controller {
       status: this.currentStatus,
       working_available: this.workingAvailable,
       viewer_token: this.currentViewerToken,
-      refresh_error: this.initialRefreshErrorValue
+      refresh_error: this.initialRefreshErrorValue,
+      progress_message: this.initialProgressMessageValue
     })
 
     this.pollTimer = window.setInterval(() => this.pollStatus(), 4000)
@@ -75,11 +77,14 @@ export default class extends Controller {
     const nextViewerPath = data.viewer_path || null
     const nextError = data.refresh_error || null
     const nextRenderedAt = data.rendered_at || null
+    const nextProgressMessage = data.progress_message || null
     const viewerTokenChanged = !!(nextWorkingAvailable && nextViewerToken && nextViewerToken !== this.currentViewerToken)
 
     this.currentStatus = nextStatus
     this.workingAvailable = nextWorkingAvailable
+    this.currentProgressMessage = nextProgressMessage
     this.updateLivePill(nextRenderedAt)
+    const activeBuild = nextStatus === "pending" || nextStatus === "running"
 
     if (viewerTokenChanged) {
       this.pendingReadyViewerToken = nextViewerToken
@@ -94,16 +99,16 @@ export default class extends Controller {
         "Unable to prepare live PDF.",
         nextError || "Try again in a moment."
       )
-    } else if (nextStatus === "refreshing" && nextWorkingAvailable) {
+    } else if (activeBuild && nextWorkingAvailable) {
       if (this.pendingReadyViewerToken && nextViewerToken === this.pendingReadyViewerToken) {
         this.hideBanner()
       } else {
-      this.showBanner(
-        "A newer live PDF is being prepared.",
-        "Showing the last live version until the refreshed packet is ready."
-      )
+        this.showBanner(
+          "A newer live PDF is being prepared.",
+          "Showing the last live version until the refreshed packet is ready."
+        )
       }
-    } else if (nextStatus === "refreshing") {
+    } else if (activeBuild) {
       this.showBanner(
         nextRenderedAt ? "Refreshing live PDF..." : "Preparing live PDF...",
         nextRenderedAt
@@ -124,7 +129,7 @@ export default class extends Controller {
     }
 
     if (!nextWorkingAvailable) {
-      this.showLoading(nextStatus, nextError)
+      this.showLoading(nextStatus, nextError, nextProgressMessage)
     } else if (this.blockingLoad === false) {
       this.hideLoading()
     }
@@ -145,7 +150,7 @@ export default class extends Controller {
     const shell = this.shellElement()
 
     if (blocking) {
-      this.showLoading("missing", null)
+      this.showLoading("missing", null, this.currentProgressMessage)
     } else {
       shell.classList.add("is-loaded")
       shell.classList.remove("is-loading")
@@ -155,11 +160,11 @@ export default class extends Controller {
     this.frameTarget.src = url
   }
 
-  showLoading(status, errorMessage) {
+  showLoading(status, errorMessage, progressMessage = null) {
     if (!this.hasLoadingTarget) return
 
     if (this.hasMessageTarget) {
-      this.messageTarget.textContent = status === "failed" ? "Unable to prepare live PDF." : "Preparing live PDF..."
+      this.messageTarget.textContent = progressMessage || (status === "failed" ? "Unable to prepare live PDF." : "Preparing live PDF...")
     }
 
     if (this.hasDetailTarget) {
@@ -196,7 +201,7 @@ export default class extends Controller {
     if (!this.hasBannerTarget) return
 
     this.bannerTarget.hidden = false
-    if (this.hasBannerMessageTarget) this.bannerMessageTarget.textContent = message
+    if (this.hasBannerMessageTarget) this.bannerMessageTarget.textContent = this.currentProgressMessage || message
     if (this.hasBannerDetailTarget) this.bannerDetailTarget.textContent = detail
   }
 
@@ -240,6 +245,7 @@ export default class extends Controller {
 
   showSlowState() {
     if (this.loaded || !this.hasLoadingTarget || this.loadingTarget.hidden) return
+    if (this.currentProgressMessage) return
     if (this.hasMessageTarget) this.messageTarget.textContent = "Rendering live PDF..."
     if (this.hasDetailTarget) {
       this.detailTarget.textContent = "The first preview, or a freshly updated packet, can take a few seconds to build."
@@ -248,6 +254,7 @@ export default class extends Controller {
 
   showStillRenderingState() {
     if (this.loaded || !this.hasLoadingTarget || this.loadingTarget.hidden) return
+    if (this.currentProgressMessage) return
     if (this.hasMessageTarget) this.messageTarget.textContent = "Still building your live PDF..."
     if (this.hasDetailTarget) {
       this.detailTarget.textContent = "Leave this page open. The preview will appear automatically as soon as the working PDF is ready."

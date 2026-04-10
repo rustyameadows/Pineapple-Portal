@@ -31,6 +31,12 @@ class Document < ApplicationRecord
   has_many :builds,
            class_name: "DocumentBuild",
            dependent: :destroy
+  has_many :snapshot_builds,
+           -> { where(build_kind: DocumentBuild::BUILD_KINDS[:snapshot]) },
+           class_name: "DocumentBuild"
+  has_many :working_builds,
+           -> { where(build_kind: DocumentBuild::BUILD_KINDS[:working]) },
+           class_name: "DocumentBuild"
   has_many :segments,
            -> { order(:position) },
            class_name: "DocumentSegment",
@@ -142,7 +148,7 @@ class Document < ApplicationRecord
 
   WORKING_STATUSES.each_key do |key|
     define_method "working_#{key}?" do
-      working_status == WORKING_STATUSES[key]
+      working_status_key == WORKING_STATUSES[key]
     end
   end
 
@@ -150,7 +156,46 @@ class Document < ApplicationRecord
     working_storage_uri.present?
   end
 
+  def working_storage_uri
+    current_working_artifact_build&.storage_uri.presence || self[:working_storage_uri]
+  end
+
+  def working_manifest_hash
+    current_working_artifact_build&.manifest_hash.presence || self[:working_manifest_hash]
+  end
+
+  def working_checksum_sha256
+    current_working_artifact_build&.checksum_sha256.presence || self[:working_checksum_sha256]
+  end
+
+  def working_page_count
+    current_working_artifact_build&.compiled_page_count.presence || self[:working_page_count]
+  end
+
+  def working_file_size
+    current_working_artifact_build&.file_size.presence || self[:working_file_size]
+  end
+
+  def working_rendered_at
+    current_working_artifact_build&.rendered_at || self[:working_rendered_at]
+  end
+
+  def working_refresh_error
+    progress_build = current_working_progress_build
+    if progress_build&.failed?
+      progress_build.error_message.presence || self[:working_refresh_error]
+    else
+      self[:working_refresh_error]
+    end
+  end
+
   def working_status_key
+    return WORKING_STATUSES[:refreshing] if active_working_build.present?
+
+    latest_build = latest_working_build
+    return WORKING_STATUSES[:failed] if latest_build&.failed?
+    return WORKING_STATUSES[:fresh] if current_working_artifact_build.present?
+
     status = self[:working_status].to_s
     return WORKING_STATUSES[:fresh] if working_available? && status == WORKING_STATUSES[:missing]
     return WORKING_STATUSES[:missing] if status.blank?
@@ -171,10 +216,16 @@ class Document < ApplicationRecord
   end
 
   def working_viewer_token
-    [working_manifest_hash, working_rendered_at&.utc&.to_i].compact.join("-").presence || "missing"
+    current_working_artifact_build&.viewer_token.presence ||
+      [self[:working_manifest_hash], self[:working_rendered_at]&.utc&.to_i].compact.join("-").presence ||
+      "missing"
   end
 
   def working_refresh_locked?
+    active_build = active_working_build
+    return true if active_build.present? && (active_build.started_at || active_build.created_at).present? &&
+                   (active_build.started_at || active_build.created_at) >= WORKING_REFRESH_TIMEOUT.ago
+
     return false unless working_refreshing?
 
     reference_time = working_refresh_started_at || working_refresh_requested_at
@@ -226,6 +277,8 @@ class Document < ApplicationRecord
   end
 
   def clear_working_copy!
+    builds.working_kind.delete_all if persisted?
+
     update_columns(
       working_storage_uri: nil,
       working_manifest_hash: nil,
@@ -238,6 +291,30 @@ class Document < ApplicationRecord
       working_refresh_started_at: nil,
       working_refresh_error: nil
     )
+  end
+
+  def active_working_build
+    working_builds.in_progress.recent_first.first
+  end
+
+  def latest_working_build
+    working_builds.recent_first.first
+  end
+
+  def latest_successful_working_build
+    working_builds.successful.recent_first.first
+  end
+
+  def current_working_artifact_build
+    latest_successful_working_build
+  end
+
+  def current_working_progress_build
+    active_build = active_working_build
+    return active_build if active_build.present?
+
+    latest_build = latest_working_build
+    return latest_build if latest_build&.failed?
   end
 
   def self.next_version_for(logical_id)

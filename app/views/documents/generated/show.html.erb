@@ -3,7 +3,10 @@
     <%= render "events/sidebar_navigation", event: @event %>
 
     <div class="event-layout__main">
-      <%= render "shared/flash" %>
+      <%= render "shared/flash",
+                 snapshot_build: @active_build,
+                 snapshot_status_url: (@active_build.present? ? status_event_documents_generated_build_path(@event, @document.logical_id, @active_build) : nil),
+                 snapshot_message: flash[:snapshot_build_message] %>
 
       <section class="event-section generated-builder">
         <header class="event-section__header generated-builder__header">
@@ -34,13 +37,15 @@
               end
 
             live_pdf_banner_visible = @working_copy.present? && !@working_copy.empty? && (
-              @working_copy.failed? || @working_copy.refreshing? || !@working_copy.working_available
+              @working_copy.failed? || @working_copy.active? || !@working_copy.working_available
             )
 
             live_pdf_banner_message =
-              if @working_copy&.failed?
+              if @working_copy&.progress_message.present?
+                @working_copy.progress_message
+              elsif @working_copy&.failed?
                 @working_copy&.working_available ? "Live PDF refresh failed." : "Unable to prepare live PDF."
-              elsif @working_copy&.refreshing? && @working_copy&.working_available
+              elsif @working_copy&.active? && @working_copy&.working_available
                 "A newer live PDF is being prepared."
               elsif @working_copy&.rendered_at.present?
                 "Refreshing live PDF..."
@@ -55,7 +60,7 @@
                 else
                   @working_copy.refresh_error.presence || "Try again in a moment."
                 end
-              elsif @working_copy&.refreshing? && @working_copy&.working_available
+              elsif @working_copy&.active? && @working_copy&.working_available
                 "Showing the last live version until the refreshed packet is ready."
               elsif @working_copy&.rendered_at.present?
                 "We’re rebuilding the working preview with the latest packet content."
@@ -69,7 +74,8 @@
                data-generated-pdf-frame-initial-status-value="<%= @working_copy&.status || "missing" %>"
                data-generated-pdf-frame-initial-working-available-value="<%= @working_copy&.working_available ? "true" : "false" %>"
                data-generated-pdf-frame-initial-viewer-token-value="<%= @working_copy&.viewer_token %>"
-               data-generated-pdf-frame-initial-refresh-error-value="<%= @working_copy&.refresh_error %>">
+               data-generated-pdf-frame-initial-refresh-error-value="<%= @working_copy&.refresh_error %>"
+               data-generated-pdf-frame-initial-progress-message-value="<%= @working_copy&.progress_message %>">
             <div class="generated-builder__workspace-head generated-builder__workspace-head--pdf">
               <h2>Live Working PDF</h2>
               <span class="generated-builder__live-pill"
@@ -114,13 +120,13 @@
                   <div class="generated-builder__pdf-loading-indicator" aria-hidden="true"></div>
                   <div class="generated-builder__pdf-loading-copy">
                     <% if @working_copy&.failed? && !@working_copy&.working_available %>
-                      <strong data-generated-pdf-frame-target="message">Unable to prepare live PDF.</strong>
+                      <strong data-generated-pdf-frame-target="message"><%= @working_copy.progress_message.presence || "Unable to prepare live PDF." %></strong>
                       <p data-generated-pdf-frame-target="detail"><%= @working_copy.refresh_error.presence || "Try again in a moment." %></p>
                     <% elsif @working_copy&.rendered_at.present? && !@working_copy&.working_available %>
-                      <strong data-generated-pdf-frame-target="message">Refreshing live PDF...</strong>
+                      <strong data-generated-pdf-frame-target="message"><%= @working_copy.progress_message.presence || "Refreshing live PDF..." %></strong>
                       <p data-generated-pdf-frame-target="detail">We’re rebuilding the working preview with the latest packet content.</p>
                     <% else %>
-                      <strong data-generated-pdf-frame-target="message">Preparing live PDF...</strong>
+                      <strong data-generated-pdf-frame-target="message"><%= @working_copy&.progress_message.presence || "Preparing live PDF..." %></strong>
                       <p data-generated-pdf-frame-target="detail">This packet is building its first working preview. It should appear here automatically.</p>
                     <% end %>
                   </div>

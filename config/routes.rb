@@ -185,6 +185,7 @@ post "upload_failures", to: "upload_failures#create"
                   controller: "generated/builds",
                   only: [:destroy] do
           member do
+            get :status
             patch :cancel
           end
         end

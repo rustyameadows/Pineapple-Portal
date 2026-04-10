@@ -5,24 +5,11 @@ module Documents
 
       def perform(build_id, options = {})
         build = DocumentBuild.find(build_id)
-        return if build.destroyed? || build.cancelled? || build.succeeded?
+        build.update!(page_numbers: !!options[:page_numbers]) if options.key?(:page_numbers)
 
-        build.mark_running!
-        page_numbers = !!(options && options[:page_numbers])
-        result = Compiler.new(
-          definition_document: build.document,
-          build: build,
-          built_by_user: build.built_by_user,
-          page_numbers: page_numbers
-        ).call
-        build.mark_succeeded!(result)
+        RunDocumentBuildJob.perform_now(build.id)
       rescue ActiveRecord::RecordNotFound
         # Build was removed before the job ran; nothing to do.
-      rescue Compiler::CancelledError
-        build&.mark_cancelled!
-      rescue StandardError => e
-        build&.mark_failed!(e)
-        raise
       end
     end
   end

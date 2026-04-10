@@ -16,11 +16,12 @@ module Documents
         keyword_init: true
       )
 
-      def initialize(definition_document:, segment_storage: R2Storage.new, page_numbers: false, check_cancelled: nil)
+      def initialize(definition_document:, segment_storage: R2Storage.new, page_numbers: false, check_cancelled: nil, progress_reporter: nil)
         @definition_document = definition_document
         @segment_storage = segment_storage
         @page_numbers = !!page_numbers
         @check_cancelled = check_cancelled || -> {}
+        @progress_reporter = progress_reporter || ->(**) {}
       end
 
       def call
@@ -29,8 +30,12 @@ module Documents
       end
 
       def build_from_prepared(prepared)
+        report_progress(stage: :assembling_pdf)
         compiled_pdf = stitch_segments(prepared.rendered_entries)
-        compiled_pdf = apply_page_numbers(compiled_pdf, prepared.rendered_entries) if page_numbers
+        if page_numbers
+          report_progress(stage: :adding_page_numbers)
+          compiled_pdf = apply_page_numbers(compiled_pdf, prepared.rendered_entries)
+        end
         totals = derive_totals(compiled_pdf)
 
         Result.new(
@@ -49,9 +54,15 @@ module Documents
         entries = ordered_entries
         raise Compiler::CompileError, "No segments configured" if entries.empty?
 
-        rendered_entries = entries.map do |entry|
+        rendered_entries = entries.each_with_index.map do |entry, index|
           check_cancelled!
-          ensure_cached(entry)
+          rendered_entry = ensure_cached(entry)
+          report_progress(
+            stage: :rendering_entries,
+            current: index + 1,
+            total: entries.length
+          )
+          rendered_entry
         end
 
         check_cancelled!
@@ -65,7 +76,7 @@ module Documents
 
       private
 
-      attr_reader :definition_document, :segment_storage, :page_numbers
+      attr_reader :definition_document, :segment_storage, :page_numbers, :progress_reporter
 
       def ordered_entries
         if definition_document.packet_source_backed? || definition_document.packet_placements.exists?
@@ -188,6 +199,10 @@ module Documents
 
       def check_cancelled!
         @check_cancelled.call
+      end
+
+      def report_progress(...)
+        progress_reporter.call(...)
       end
     end
   end

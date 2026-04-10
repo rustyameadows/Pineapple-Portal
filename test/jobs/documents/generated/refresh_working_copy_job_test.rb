@@ -51,95 +51,31 @@ module Documents
         )
       end
 
-      test "rerenders only stale sources and rebuilds the working copy when the manifest changes" do
-        rendered_source_ids = []
+      test "delegates packet refreshes to WorkingCopyBuilder" do
         builder_calls = []
-        renderer_result = SegmentRenderer::Result.new(
-          render_hash: "new-hash",
-          storage_key: "segments/new.pdf",
-          page_count: 2,
-          file_size: 128,
-          generated_at: Time.current,
-          error: nil
-        )
 
-        first_manifest = Struct.new(:stale_sources, :manifest_hash).new([@stale_source], "manifest-before")
-        second_manifest = Struct.new(:stale_sources, :manifest_hash).new([], "manifest-after")
-
-        PacketManifest.stub :new, sequential_manifest_stub(first_manifest, second_manifest) do
-          SegmentRenderer.stub :new, ->(source) {
-            rendered_source_ids << source.id
-            Struct.new(:result) do
-              def call
-                result
-              end
-            end.new(renderer_result)
-          } do
-            WorkingCopyBuilder.stub :new, ->(**) {
-              Struct.new(:calls) do
-                def call
-                  calls << true
-                end
-              end.new(builder_calls)
-            } do
-              RefreshWorkingCopyJob.perform_now(@document.id)
-            end
-          end
-        end
-
-        assert_equal [@stale_source.id], rendered_source_ids
-        assert_equal [true], builder_calls
-        assert_equal "new-hash", @stale_source.reload.render_hash
-        assert_equal "fresh-hash", @fresh_source.reload.render_hash
-        assert_equal Document::WORKING_STATUSES[:fresh], @document.reload.working_status
-      end
-
-      test "skips rebuilding the working copy when the manifest is already current" do
-        rendered_source_ids = []
-        builder_calls = []
-        @document.update!(
-          working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
-          working_manifest_hash: "manifest-current",
-          working_rendered_at: Time.current,
-          working_status: Document::WORKING_STATUSES[:refreshing]
-        )
-
-        manifest = Struct.new(:stale_sources, :manifest_hash).new([], "manifest-current")
-
-        PacketManifest.stub :new, sequential_manifest_stub(manifest, manifest) do
-          SegmentRenderer.stub :new, ->(source) {
-            rendered_source_ids << source.id
-            raise "renderer should not be called"
-          } do
-            WorkingCopyBuilder.stub :new, ->(**) {
-              Struct.new(:calls) do
-                def call
-                  calls << true
-                end
-              end.new(builder_calls)
-            } do
-              RefreshWorkingCopyJob.perform_now(@document.id)
-            end
-          end
-        end
-
-        assert_equal [], rendered_source_ids
-        assert_equal [], builder_calls
-        assert_equal Document::WORKING_STATUSES[:fresh], @document.reload.working_status
-      end
-
-      private
-
-      def sequential_manifest_stub(*results)
-        queue = results.flatten.dup
-
-        lambda do |**|
-          Struct.new(:result) do
+        WorkingCopyBuilder.stub :new, ->(**) {
+          Struct.new(:calls) do
             def call
-              result
+              calls << true
             end
-          end.new(queue.shift)
+          end.new(builder_calls)
+        } do
+          RefreshWorkingCopyJob.perform_now(@document.id)
         end
+
+        assert_equal [true], builder_calls
+      end
+
+      test "clears the working copy when there are no packet pages" do
+        @document.packet_placements.destroy_all
+
+        assert_difference("DocumentBuild.count", 0) do
+          RefreshWorkingCopyJob.perform_now(@document.id)
+        end
+
+        assert_nil @document.reload[:working_storage_uri]
+        assert_equal Document::WORKING_STATUSES[:missing], @document.working_status_key
       end
     end
   end

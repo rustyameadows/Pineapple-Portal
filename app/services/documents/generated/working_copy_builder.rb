@@ -17,58 +17,39 @@ module Documents
       end
 
       def call
-        packet_bundle = build_packet_bundle
-        prepared = packet_bundle.prepare
-
-        if working_copy_current?(prepared.manifest_hash)
-          definition_document.mark_working_fresh!
-          return Result.new(
-            storage_key: definition_document.working_storage_uri,
-            manifest_hash: definition_document.working_manifest_hash,
-            page_count: definition_document.working_page_count,
-            file_size: definition_document.working_file_size,
-            checksum_sha256: definition_document.working_checksum_sha256
-          )
-        end
-
-        storage_key = DocumentStorage.build_working_key(
-          event: definition_document.event,
-          logical_id: definition_document.logical_id,
-          filename: build_filename
+        build = definition_document.builds.create!(
+          status: DocumentBuild::STATUSES[:pending],
+          build_kind: DocumentBuild::BUILD_KINDS[:working],
+          built_by_user: definition_document.built_by_user,
+          page_numbers: true
         )
-        bundle = packet_bundle.build_from_prepared(prepared)
-        document_storage.upload_io(storage_key, bundle.pdf_data, content_type: "application/pdf")
+        build.report_progress!(stage: :queued)
+        definition_document.request_working_refresh!
+        build.mark_running!
 
-        definition_document.mark_working_fresh!(
-          working_storage_uri: storage_key,
-          working_manifest_hash: bundle.manifest_hash,
-          working_checksum_sha256: bundle.checksum_sha256,
-          working_page_count: bundle.page_count,
-          working_file_size: bundle.file_size,
-          working_rendered_at: Time.current
-        )
+        result = BuildRunner.new(
+          build: build,
+          segment_storage: segment_storage,
+          document_storage: document_storage
+        ).call
+        build.mark_succeeded!(result)
 
         Result.new(
-          storage_key: storage_key,
-          manifest_hash: bundle.manifest_hash,
-          page_count: bundle.page_count,
-          file_size: bundle.file_size,
-          checksum_sha256: bundle.checksum_sha256
+          storage_key: result.storage_uri,
+          manifest_hash: result.manifest_hash,
+          page_count: result.page_count,
+          file_size: result.file_size,
+          checksum_sha256: result.checksum_sha256
         )
+      rescue StandardError => e
+        build&.mark_failed!(e)
+        definition_document.mark_working_failed!(e.message)
+        raise
       end
 
       private
 
       attr_reader :definition_document
-
-      def build_packet_bundle
-        kwargs = {
-          definition_document: definition_document,
-          page_numbers: true
-        }
-        kwargs[:segment_storage] = @segment_storage if @segment_storage
-        PacketBundle.new(**kwargs)
-      end
 
       def segment_storage
         @segment_storage ||= R2Storage.new
@@ -78,16 +59,6 @@ module Documents
         @document_storage ||= R2::Storage.new
       end
 
-      def working_copy_current?(manifest_hash)
-        definition_document.working_storage_uri.present? &&
-          definition_document.working_manifest_hash == manifest_hash
-      end
-
-      def build_filename
-        base = definition_document.title.to_s.parameterize
-        base = "generated-packet" if base.blank?
-        "#{base}-working.pdf"
-      end
     end
   end
 end

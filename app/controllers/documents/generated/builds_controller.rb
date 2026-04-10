@@ -5,6 +5,11 @@ module Documents
       before_action :set_document
       before_action :set_build
 
+      def status
+        disable_response_cache!
+        render json: Documents::Generated::BuildStatusPresenter.new(build: @build).as_json
+      end
+
       def cancel
         if @build.cancelable?
           @build.mark_cancelled!
@@ -42,11 +47,17 @@ module Documents
       end
 
       def set_build
-        @build = @document.builds.find(params[:id])
+        @build = @document.snapshot_builds.find(params[:id])
       end
 
       def builder_path
         event_documents_generated_path(@event, @document.logical_id)
+      end
+
+      def disable_response_cache!
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
       end
     end
   end

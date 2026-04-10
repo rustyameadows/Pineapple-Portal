@@ -327,6 +327,17 @@ module Documents
         working_rendered_at: Time.current,
         working_status: Document::WORKING_STATUSES[:fresh]
       )
+      working_build = @document.builds.create!(
+        build_kind: DocumentBuild::BUILD_KINDS[:working],
+        status: DocumentBuild::STATUSES[:succeeded],
+        storage_uri: @document[:working_storage_uri],
+        manifest_hash: manifest_hash,
+        checksum_sha256: "working-sha",
+        compiled_page_count: 1,
+        file_size: 1024,
+        page_numbers: true,
+        finished_at: Time.current
+      )
 
       Documents::Generated::SegmentHasher.stub :call, ->(_source) { render_hash } do
         get working_status_event_documents_generated_url(@event, @document.logical_id)
@@ -334,9 +345,64 @@ module Documents
 
       assert_response :success
       payload = JSON.parse(response.body)
-      assert_equal "fresh", payload["status"]
+      assert_equal DocumentBuild::STATUSES[:succeeded], payload["status"]
       assert_equal true, payload["working_available"]
-      assert_equal "#{working_pdf_event_documents_generated_path(@event, @document.logical_id, v: @document.working_viewer_token)}#view=Fit", payload["viewer_path"]
+      assert_equal "#{working_pdf_event_documents_generated_path(@event, @document.logical_id, v: working_build.viewer_token)}#view=Fit", payload["viewer_path"]
+    end
+
+    test "working status reports build-backed progress while serving the latest successful live pdf" do
+      placement = create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+      render_hash = "fresh-hash"
+      manifest_hash = placement_manifest_hash(placement, render_hash)
+
+      placement.source.update!(
+        render_hash: render_hash,
+        cached_pdf_key: "segments/fresh.pdf",
+        cached_pdf_generated_at: Time.current,
+        cached_page_count: 1,
+        cached_file_size: 128
+      )
+
+      successful_build = @document.builds.create!(
+        build_kind: DocumentBuild::BUILD_KINDS[:working],
+        status: DocumentBuild::STATUSES[:succeeded],
+        storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
+        manifest_hash: manifest_hash,
+        checksum_sha256: "working-sha",
+        compiled_page_count: 1,
+        file_size: 1024,
+        page_numbers: true,
+        finished_at: Time.current
+      )
+
+      @document.builds.create!(
+        build_kind: DocumentBuild::BUILD_KINDS[:working],
+        status: DocumentBuild::STATUSES[:running],
+        manifest_hash: manifest_hash,
+        page_numbers: true,
+        progress_stage: DocumentBuild::PROGRESS_STAGES[:rendering_entries],
+        progress_message: "Rendering pages 1/3",
+        progress_current: 1,
+        progress_total: 3,
+        last_progress_at: Time.current,
+        started_at: Time.current
+      )
+
+      Documents::Generated::SegmentHasher.stub :call, ->(_source) { render_hash } do
+        get working_status_event_documents_generated_url(@event, @document.logical_id)
+      end
+
+      assert_response :success
+      payload = JSON.parse(response.body)
+      assert_equal DocumentBuild::STATUSES[:running], payload["status"]
+      assert_equal "Rendering pages 1/3", payload["progress_message"]
+      assert_equal true, payload["working_available"]
+      assert_equal successful_build.viewer_token, payload["viewer_token"]
     end
 
     test "working pdf redirects to the canonical tokenized path when v is missing" do
@@ -470,7 +536,7 @@ module Documents
       assert_select "[data-generated-pdf-frame-status-url-value]", count: 1
     end
 
-    test "show renders a non blocking refresh banner while a newer live pdf is preparing" do
+    test "show renders build-backed live progress while a newer live pdf is preparing" do
       placement = create_page_placement(
         view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
         title: "Text Notes",
@@ -486,15 +552,29 @@ module Documents
         cached_page_count: 1,
         cached_file_size: 128
       )
-      @document.update!(
-        working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
-        working_manifest_hash: "older-manifest",
-        working_checksum_sha256: "working-sha",
-        working_page_count: 1,
-        working_file_size: 1024,
-        working_rendered_at: Time.current,
-        working_status: Document::WORKING_STATUSES[:refreshing],
-        working_refresh_started_at: Time.current
+
+      successful_build = @document.builds.create!(
+        build_kind: DocumentBuild::BUILD_KINDS[:working],
+        status: DocumentBuild::STATUSES[:succeeded],
+        storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
+        manifest_hash: "older-manifest",
+        checksum_sha256: "working-sha",
+        compiled_page_count: 1,
+        file_size: 1024,
+        page_numbers: true,
+        finished_at: Time.current
+      )
+      @document.builds.create!(
+        build_kind: DocumentBuild::BUILD_KINDS[:working],
+        status: DocumentBuild::STATUSES[:running],
+        manifest_hash: "new-hash",
+        page_numbers: true,
+        progress_stage: DocumentBuild::PROGRESS_STAGES[:rendering_entries],
+        progress_message: "Rendering pages 2/5",
+        progress_current: 2,
+        progress_total: 5,
+        last_progress_at: Time.current,
+        started_at: Time.current
       )
 
       Documents::Generated::SegmentHasher.stub :call, ->(_source) { "new-hash" } do
@@ -502,7 +582,8 @@ module Documents
       end
 
       assert_response :success
-      assert_select ".generated-builder__pdf-status", text: /A newer live PDF is being prepared/
+      assert_equal successful_build.viewer_token, @document.reload.working_viewer_token
+      assert_select ".generated-builder__pdf-status", text: /Rendering pages 2\/5/
       assert_select ".generated-builder__pdf-status", text: /Showing the last live version until the refreshed packet is ready/
     end
 
@@ -523,13 +604,24 @@ module Documents
         working_rendered_at: rendered_at,
         working_status: Document::WORKING_STATUSES[:fresh]
       )
+      working_build = @document.builds.create!(
+        build_kind: DocumentBuild::BUILD_KINDS[:working],
+        status: DocumentBuild::STATUSES[:succeeded],
+        storage_uri: @document[:working_storage_uri],
+        manifest_hash: "live-manifest",
+        checksum_sha256: "working-sha",
+        compiled_page_count: 1,
+        file_size: 1024,
+        page_numbers: true,
+        finished_at: rendered_at
+      )
 
       get event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
       assert_select ".generated-builder__live-pill", text: /Updated/, count: 1
       assert_select ".generated-builder__live-pill", text: /Auto-updating/, count: 0
-      expected_viewer_path = "#{working_pdf_event_documents_generated_path(@event, @document.logical_id, v: @document.working_viewer_token)}#view=Fit"
+      expected_viewer_path = "#{working_pdf_event_documents_generated_path(@event, @document.logical_id, v: working_build.viewer_token)}#view=Fit"
       assert_select "a[href='#{expected_viewer_path}']", text: "Open live PDF", count: 1
       assert_select "iframe.generated-builder__pdf-frame[src='#{expected_viewer_path}']", count: 1
       assert_select "time[data-controller='local-time'][data-local-time-iso-value='#{rendered_at.iso8601}'][datetime='#{rendered_at.iso8601}']", count: 1
@@ -633,14 +725,14 @@ module Documents
 
       enqueued_options = []
 
-      Documents::Generated::CompileDocumentJob.stub :perform_later, ->(_build_id, options = {}) { enqueued_options << options } do
+      Documents::Generated::RunDocumentBuildJob.stub :perform_later, ->(build_id) { enqueued_options << DocumentBuild.find(build_id).page_numbers } do
         assert_difference("DocumentBuild.count", 1) do
           post snapshot_event_documents_generated_url(@event, @document.logical_id)
         end
       end
 
       assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
-      assert_equal [{ page_numbers: true }], enqueued_options
+      assert_equal [true], enqueued_options
     end
 
     test "snapshot can opt out of page numbers" do
@@ -653,14 +745,46 @@ module Documents
 
       enqueued_options = []
 
-      Documents::Generated::CompileDocumentJob.stub :perform_later, ->(_build_id, options = {}) { enqueued_options << options } do
+      Documents::Generated::RunDocumentBuildJob.stub :perform_later, ->(build_id) { enqueued_options << DocumentBuild.find(build_id).page_numbers } do
         assert_difference("DocumentBuild.count", 1) do
           post snapshot_event_documents_generated_url(@event, @document.logical_id), params: { page_numbers: false }
         end
       end
 
       assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
-      assert_equal [{ page_numbers: false }], enqueued_options
+      assert_equal [false], enqueued_options
+    end
+
+    test "snapshot reuses the active build instead of enqueueing a duplicate" do
+      create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+
+      active_build = @document.builds.create!(
+        status: DocumentBuild::STATUSES[:running],
+        build_id: SecureRandom.uuid,
+        progress_stage: DocumentBuild::PROGRESS_STAGES[:rendering_entries],
+        progress_message: "Rendering pages 2/5",
+        progress_current: 2,
+        progress_total: 5,
+        last_progress_at: Time.current
+      )
+
+      enqueued = false
+
+      Documents::Generated::RunDocumentBuildJob.stub :perform_later, ->(*_args) { enqueued = true } do
+        assert_no_difference("DocumentBuild.count") do
+          post snapshot_event_documents_generated_url(@event, @document.logical_id)
+        end
+      end
+
+      assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+      assert_not enqueued
+      assert_equal active_build.id, flash[:snapshot_build_id]
+      assert_equal "Rendering pages 2/5", flash[:snapshot_build_message]
     end
 
     test "snapshot requires at least one page" do
@@ -728,6 +852,25 @@ module Documents
       assert_select "input[type='checkbox'][name='document[packets_portal_visible]']", count: 0
       assert_select "button", text: "Show on portal", count: 1
       assert_select "button", text: "Hide from portal", count: 1
+    end
+
+    test "show renders a live snapshot build toast for an active build" do
+      active_build = @document.builds.create!(
+        status: DocumentBuild::STATUSES[:running],
+        build_id: SecureRandom.uuid,
+        progress_stage: DocumentBuild::PROGRESS_STAGES[:rendering_entries],
+        progress_message: "Rendering pages 2/5",
+        progress_current: 2,
+        progress_total: 5,
+        last_progress_at: Time.current
+      )
+
+      get event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select ".flash-toast--build[data-build-status='running']", count: 1
+      assert_select ".flash-toast--build[data-build-status-url='#{status_event_documents_generated_build_path(@event, @document.logical_id, active_build)}']", count: 1
+      assert_select ".flash-toast--build .flash-toast__text[data-flash-toast-target='buildMessage']", text: "Rendering pages 2/5"
     end
 
     test "show renders uncompiled packet definitions in the sidebar navigation" do

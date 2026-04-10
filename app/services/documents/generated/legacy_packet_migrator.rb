@@ -20,6 +20,8 @@ module Documents
             )
           end
 
+          document.builds.working_kind.delete_all
+
           document.update!(
             packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed],
             working_storage_uri: nil,

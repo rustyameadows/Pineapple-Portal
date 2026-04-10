@@ -107,7 +107,7 @@ module Documents
         last_modified = access.rendered_at || @document.updated_at || Time.current
         return unless stale?(etag: working_pdf_cache_key(current_token), last_modified: last_modified, public: false)
 
-        pdf_io = R2::Storage.new.download(@document.working_storage_uri)
+        pdf_io = R2::Storage.new.download(access.working_storage_uri)
         raise "Live PDF is missing from storage." unless pdf_io
 
         send_data pdf_io.read, type: "application/pdf", disposition: "inline"
@@ -129,7 +129,12 @@ module Documents
 
     def working_status
       if @document.group_container?
-        render json: { status: "missing", working_available: false, rendered_at: nil, refresh_error: nil, viewer_token: "missing", viewer_path: nil }
+        render json: Documents::Generated::BuildStatusPresenter.new(
+          build: nil,
+          status: "missing",
+          working_available: false,
+          viewer_token: "missing"
+        ).as_json
         return
       end
 
@@ -137,25 +142,27 @@ module Documents
 
       disable_response_cache!
 
-      render json: {
+      render json: Documents::Generated::BuildStatusPresenter.new(
+        build: access.build,
         status: access.status,
         working_available: access.working_available,
-        rendered_at: access.rendered_at&.utc&.iso8601,
+        rendered_at: access.rendered_at,
         refresh_error: access.refresh_error,
         viewer_token: access.viewer_token,
         viewer_path: (pdf_viewer_url(canonical_working_pdf_path(access.viewer_token)) if access.working_available)
-      }
+      ).as_json
     rescue StandardError => e
       disable_response_cache!
 
-      render json: {
+      render json: Documents::Generated::BuildStatusPresenter.new(
+        build: @document.current_working_progress_build,
         status: "failed",
         working_available: @document.working_available?,
-        rendered_at: @document.working_rendered_at&.utc&.iso8601,
+        rendered_at: @document.working_rendered_at,
         refresh_error: e.message,
         viewer_token: @document.working_viewer_token,
         viewer_path: (pdf_viewer_url(canonical_working_pdf_path(@document.working_viewer_token)) if @document.working_available?)
-      }
+      ).as_json
     end
 
     def compile
@@ -183,15 +190,25 @@ module Documents
                        true
                      end
 
+      active_build = @document.snapshot_builds.in_progress.recent_first.first
+      if active_build.present?
+        set_snapshot_build_flash(active_build)
+        redirect_to builder_path
+        return
+      end
+
       build = @document.builds.create!(
         build_id: SecureRandom.uuid,
         status: DocumentBuild::STATUSES[:pending],
+        build_kind: DocumentBuild::BUILD_KINDS[:snapshot],
+        page_numbers: page_numbers,
         built_by_user: current_user
       )
+      build.report_progress!(stage: :queued)
 
-      job_options = { page_numbers: page_numbers }
-      Documents::Generated::CompileDocumentJob.perform_later(build.id, job_options)
-      redirect_to builder_path, notice: "Snapshot queued. We’ll keep the builder live while the saved version is generated."
+      Documents::Generated::RunDocumentBuildJob.perform_later(build.id)
+      set_snapshot_build_flash(build, message: "Snapshot queued")
+      redirect_to builder_path
     rescue StandardError => e
       redirect_to builder_path, alert: "Unable to queue snapshot: #{e.message}"
     end
@@ -283,13 +300,18 @@ module Documents
       @source_usage_labels = usage_map.source_packets
       @upload_usage_labels = usage_map.upload_packets
       @group_usage_labels = usage_map.group_packets
-      @builds = @document.builds.recent_first.to_a
+      @builds = @document.snapshot_builds.recent_first.to_a
       @active_build = @builds.find { |build| build.pending? || build.running? }
       @segment_warnings = segment_blockers_map(@segments)
     end
 
     def builder_path
       @document.group_container? ? edit_event_documents_generated_path(@event, @document.logical_id) : event_documents_generated_path(@event, @document.logical_id)
+    end
+
+    def set_snapshot_build_flash(build, message: nil)
+      flash[:snapshot_build_id] = build.id
+      flash[:snapshot_build_message] = message.presence || build.display_progress_message
     end
 
     def compile_blockers(segments)

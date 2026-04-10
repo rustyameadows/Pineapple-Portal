@@ -48,11 +48,22 @@ module Documents
           working_rendered_at: Time.current,
           working_status: Document::WORKING_STATUSES[:fresh]
         )
+        @document.builds.create!(
+          build_kind: DocumentBuild::BUILD_KINDS[:working],
+          status: DocumentBuild::STATUSES[:succeeded],
+          storage_uri: @document[:working_storage_uri],
+          manifest_hash: manifest_hash,
+          checksum_sha256: "working-sha",
+          compiled_page_count: 1,
+          file_size: 64,
+          page_numbers: true,
+          finished_at: Time.current
+        )
 
         refresh_calls = []
 
         SegmentHasher.stub :call, ->(_source) { current_hash } do
-          RefreshWorkingCopyJob.stub :perform_later, ->(document_id) { refresh_calls << document_id } do
+          RunDocumentBuildJob.stub :perform_later, ->(build_id) { refresh_calls << build_id } do
             result = WorkingCopyAccess.new(definition_document: @document).call
 
             assert result.fresh?
@@ -72,13 +83,14 @@ module Documents
         refresh_calls = []
 
         SegmentHasher.stub :call, ->(_source) { "hash-2" } do
-          RefreshWorkingCopyJob.stub :perform_later, ->(document_id) { refresh_calls << document_id } do
+          RunDocumentBuildJob.stub :perform_later, ->(build_id) { refresh_calls << build_id } do
             result = WorkingCopyAccess.new(definition_document: @document).call
 
             assert result.refreshing?
             assert_equal true, result.working_available
-            assert_equal [@document.id], refresh_calls
-      assert_equal Document::WORKING_STATUSES[:refreshing], @document.reload.working_status
+            assert_equal 1, refresh_calls.length
+            assert_equal Document::WORKING_STATUSES[:refreshing], @document.reload.working_status
+            assert_equal DocumentBuild::BUILD_KINDS[:working], @document.working_builds.recent_first.first.build_kind
           end
         end
       end
@@ -87,12 +99,12 @@ module Documents
         refresh_calls = []
 
         SegmentHasher.stub :call, ->(_source) { "hash-3" } do
-          RefreshWorkingCopyJob.stub :perform_later, ->(document_id) { refresh_calls << document_id } do
+          RunDocumentBuildJob.stub :perform_later, ->(build_id) { refresh_calls << build_id } do
             result = WorkingCopyAccess.new(definition_document: @document).call
 
             assert result.refreshing?
             assert_equal false, result.working_available
-            assert_equal [@document.id], refresh_calls
+            assert_equal 1, refresh_calls.length
             assert_equal Document::WORKING_STATUSES[:refreshing], @document.reload.working_status
           end
         end

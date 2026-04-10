@@ -46,9 +46,7 @@ module Documents
         packet_definitions(event).find_each do |packet|
           next if packet.packet_placements.none?
 
-          WorkingCopyBuilder.new(definition_document: packet).call
-        rescue Compiler::CompileError => e
-          Rails.logger.warn("[RefreshEventPacketCachesJob] packet=#{packet.logical_id} compile error: #{e.message}")
+          WorkingCopyRefresh.enqueue(packet)
         rescue StandardError => e
           Rails.logger.error("[RefreshEventPacketCachesJob] packet=#{packet.logical_id} #{e.class}: #{e.message}")
         end

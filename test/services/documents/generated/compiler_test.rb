@@ -44,6 +44,32 @@ module Documents
         end
       end
 
+      class BuildSpy
+        attr_reader :progress_calls
+        attr_accessor :build_id
+
+        def initialize(build_id: SecureRandom.uuid)
+          @build_id = build_id
+          @progress_calls = []
+        end
+
+        def report_progress!(**kwargs)
+          @progress_calls << kwargs
+        end
+
+        def persisted?
+          false
+        end
+
+        def destroyed?
+          false
+        end
+
+        def cancelled?
+          false
+        end
+      end
+
       class FakeCombinePDF
         attr_reader :label, :pages
 
@@ -176,15 +202,52 @@ module Documents
         assert_equal manifest_hash, result.manifest_hash
       end
 
+      test "compiler reports progress stages for a numbered snapshot build" do
+        build = BuildSpy.new
+
+        execute_compiler(page_numbers: true, build: build)
+
+        assert_equal [
+          { stage: :preparing_pdf },
+          { stage: :rendering_entries, current: 1, total: 1 },
+          { stage: :assembling_pdf },
+          { stage: :adding_page_numbers },
+          { stage: :uploading_pdf },
+          { stage: :finalizing_pdf }
+        ], build.progress_calls
+      end
+
+      test "compiler reports live pdf reuse progress when it can promote the working copy" do
+        manifest_hash = segment_manifest_hash(@segment, "segment-hash")
+        build = BuildSpy.new
+
+        @definition_document.update!(
+          working_storage_uri: "documents/#{@event.id}/#{@definition_document.logical_id}/working/generated-packet-working.pdf",
+          working_manifest_hash: manifest_hash,
+          working_rendered_at: Time.current,
+          working_status: Document::WORKING_STATUSES[:fresh]
+        )
+        @document_storage.download_data = "WORKING_PDF"
+
+        execute_compiler(page_numbers: true, build: build)
+
+        assert_equal [
+          { stage: :preparing_pdf },
+          { stage: :preparing_pdf, message: "Using the current live PDF" },
+          { stage: :uploading_pdf },
+          { stage: :finalizing_pdf }
+        ], build.progress_calls
+      end
+
       private
 
-      def execute_compiler(page_numbers:)
+      def execute_compiler(page_numbers:, build: @build)
         SegmentHasher.stub :call, ->(_segment) { "segment-hash" } do
           PageNumberer.stub :new, ->(**kwargs) { PageNumbererStub.new(**kwargs) } do
             stub_combine_pdf do
               compiler = Compiler.new(
                 definition_document: @definition_document,
-                build: @build,
+                build: build,
                 built_by_user: nil,
                 segment_storage: @segment_storage,
                 document_storage: @document_storage,

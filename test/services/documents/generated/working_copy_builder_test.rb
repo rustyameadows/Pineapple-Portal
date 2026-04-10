@@ -3,31 +3,16 @@ require "test_helper"
 module Documents
   module Generated
     class WorkingCopyBuilderTest < ActiveSupport::TestCase
-      class DocumentStorageStub
-        attr_reader :uploaded_key, :uploaded_data, :uploaded_content_type
+      class BuildRunnerStub
+        attr_reader :calls
 
-        def upload_io(key, data, content_type:)
-          @uploaded_key = key
-          @uploaded_data = data
-          @uploaded_content_type = content_type
-        end
-      end
-
-      class PacketBundleStub
-        attr_reader :build_calls
-
-        def initialize(manifest_hash:, result:)
-          @manifest_hash = manifest_hash
+        def initialize(result)
           @result = result
-          @build_calls = 0
+          @calls = []
         end
 
-        def prepare
-          PacketBundle::PreparedEntries.new(entries: [], rendered_entries: [], manifest_hash: @manifest_hash)
-        end
-
-        def build_from_prepared(_prepared)
-          @build_calls += 1
+        def call
+          calls << true
           @result
         end
       end
@@ -44,65 +29,37 @@ module Documents
           source: "packet",
           packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed]
         )
-        @document_storage = DocumentStorageStub.new
       end
 
-      test "reuses the current working copy when the manifest already matches" do
-        @document.update!(
-          working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
-          working_manifest_hash: "same-manifest",
-          working_rendered_at: Time.current,
-          working_status: Document::WORKING_STATUSES[:refreshing]
-        )
-
-        bundle_stub = PacketBundleStub.new(manifest_hash: "same-manifest", result: nil)
-        packet_bundle_kwargs = []
-
-        PacketBundle.stub :new, ->(**kwargs) {
-          packet_bundle_kwargs << kwargs
-          bundle_stub
-        } do
-          result = WorkingCopyBuilder.new(
-            definition_document: @document,
-            document_storage: @document_storage
-          ).call
-
-          assert_equal @document.working_storage_uri, result.storage_key
-          assert_nil @document_storage.uploaded_key
-          assert_equal 0, bundle_stub.build_calls
-          assert_equal Document::WORKING_STATUSES[:fresh], @document.reload.working_status
-          assert_equal true, packet_bundle_kwargs.last[:page_numbers]
-        end
-      end
-
-      test "uploads a new working copy when the manifest changes" do
-        bundle_result = PacketBundle::Result.new(
-          entries: [],
+      test "creates a working build and mirrors the runner result onto the document" do
+        runner_result = Struct.new(
+          :manifest_hash,
+          :page_count,
+          :file_size,
+          :checksum_sha256,
+          :storage_uri,
+          :page_numbers,
+          keyword_init: true
+        ).new(
           manifest_hash: "new-manifest",
-          pdf_data: "PDF_DATA",
           page_count: 2,
           file_size: 64,
-          checksum_md5: "md5",
-          checksum_sha256: "sha256"
+          checksum_sha256: "sha256",
+          storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
+          page_numbers: true
         )
-        bundle_stub = PacketBundleStub.new(manifest_hash: "new-manifest", result: bundle_result)
-        packet_bundle_kwargs = []
+        runner_stub = BuildRunnerStub.new(runner_result)
 
-        PacketBundle.stub :new, ->(**kwargs) {
-          packet_bundle_kwargs << kwargs
-          bundle_stub
-        } do
-          result = WorkingCopyBuilder.new(
-            definition_document: @document,
-            document_storage: @document_storage
-          ).call
+        BuildRunner.stub :new, ->(**_kwargs) { runner_stub } do
+          result = WorkingCopyBuilder.new(definition_document: @document).call
 
-          assert_includes result.storage_key, "/working/"
-          assert_equal "PDF_DATA", @document_storage.uploaded_data
-          assert_equal 1, bundle_stub.build_calls
+          build = @document.working_builds.recent_first.first
+          assert_equal 1, runner_stub.calls.length
+          assert_equal DocumentBuild::STATUSES[:succeeded], build.status
+          assert_equal DocumentBuild::BUILD_KINDS[:working], build.build_kind
+          assert_equal runner_result.storage_uri, result.storage_key
           assert_equal "new-manifest", @document.reload.working_manifest_hash
-          assert_equal Document::WORKING_STATUSES[:fresh], @document.working_status
-          assert_equal true, packet_bundle_kwargs.last[:page_numbers]
+          assert_equal Document::WORKING_STATUSES[:fresh], @document.working_status_key
         end
       end
     end

@@ -42,6 +42,17 @@
 
 .flash-toast__message {
   color: var(--color-dark-brown);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.flash-toast__text {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .flash-toast__close {

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_07_200000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_08_223100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -181,8 +181,19 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_07_200000) do
     t.bigint "built_by_user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "progress_stage"
+    t.string "progress_message"
+    t.integer "progress_current"
+    t.integer "progress_total"
+    t.datetime "last_progress_at"
+    t.string "build_kind", default: "snapshot", null: false
+    t.string "storage_uri"
+    t.string "manifest_hash"
+    t.boolean "page_numbers", default: true, null: false
     t.index ["build_id"], name: "index_document_builds_on_build_id", unique: true
+    t.index ["build_kind"], name: "index_document_builds_on_build_kind"
     t.index ["built_by_user_id"], name: "index_document_builds_on_built_by_user_id"
+    t.index ["document_id", "build_kind", "created_at"], name: "index_document_builds_on_document_id_build_kind_created_at"
     t.index ["document_id"], name: "index_document_builds_on_document_id"
   end
 

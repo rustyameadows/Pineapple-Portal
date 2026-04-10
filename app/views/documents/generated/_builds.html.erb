@@ -9,7 +9,7 @@
     <% file_size = build.file_size %>
 
     <% summary_parts = [] %>
-    <% placeholder_note = nil %>
+    <% progress_note = nil %>
 
     <% stats_parts = [] %>
     <% stats_parts << pluralize(pages, "page") if pages.present? %>
@@ -18,12 +18,14 @@
     <% if build.status == "pending" %>
       <% reference_time = build.created_at || build.updated_at || Time.current %>
       <% summary_parts << "Queued #{time_ago_in_words(reference_time)} ago" %>
-      <% placeholder_note = "Snapshot is being prepared" %>
+      <% progress_note = build.display_progress_message %>
     <% elsif build.status == "running" %>
       <% reference_time = started_at || build.created_at || build.updated_at || Time.current %>
       <% started_phrase = started_at.present? ? "started" : "queued" %>
       <% summary_parts << "Creating snapshot · #{started_phrase} #{time_ago_in_words(reference_time)} ago" %>
-      <% placeholder_note = "Snapshot is being prepared" %>
+      <% progress_note = build.display_progress_message %>
+    <% elsif compiled_version.blank? %>
+      <% progress_note = build.display_progress_message %>
     <% elsif build.status == "succeeded" %>
       <% summary_parts << (finished_at.present? ? "Finished #{time_ago_in_words(finished_at)} ago" : "Finished") %>
       <% summary_parts.concat(stats_parts) if stats_parts.any? %>
@@ -39,7 +41,8 @@
       <% summary_parts.concat(stats_parts) if stats_parts.any? %>
     <% end %>
 
-    <li class="generated-builder__build">
+    <li class="generated-builder__build"
+        <%= %(data-controller="document-build-status" data-document-build-status-status-url-value="#{status_event_documents_generated_build_path(event, document.logical_id, build)}" data-document-build-status-initial-status-value="#{build.status}") if build.active? %>>
       <div class="generated-builder__build-main">
         <div class="generated-builder__build-row">
           <div class="generated-builder__build-copy">
@@ -89,7 +92,8 @@
           </div>
 
           <div class="generated-builder__build-status-wrap">
-            <span class="generated-builder__build-status generated-builder__build-status--<%= build.status %>">
+            <span class="generated-builder__build-status generated-builder__build-status--<%= build.status %>"
+                  data-document-build-status-target="status">
               <%= build.status.humanize %>
             </span>
             <div class="generated-builder__build-status-actions">
@@ -108,8 +112,9 @@
                                 }
                               },
                               class: "button button--tiny button--ghost") %>
-              <% elsif placeholder_note.present? %>
-                <span class="generated-builder__build-progress generated-builder__build-progress--hint"><%= placeholder_note %></span>
+              <% elsif progress_note.present? %>
+                <span class="generated-builder__build-progress generated-builder__build-progress--hint"
+                      data-document-build-status-target="progress"><%= progress_note %></span>
               <% end %>
 
               <% if build.cancelable? %>
