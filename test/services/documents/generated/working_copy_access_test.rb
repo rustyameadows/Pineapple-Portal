@@ -110,6 +110,77 @@ module Documents
         end
       end
 
+      test "keeps a same-manifest failed live build in failed state during the retry cooldown" do
+        current_hash = "hash-4"
+        manifest_hash = placement_manifest_hash(@placement, current_hash)
+
+        @source.update!(
+          render_hash: current_hash,
+          cached_pdf_key: "segments/current.pdf",
+          cached_pdf_generated_at: Time.current,
+          cached_page_count: 1,
+          cached_file_size: 64
+        )
+
+        @document.builds.create!(
+          build_kind: DocumentBuild::BUILD_KINDS[:working],
+          status: DocumentBuild::STATUSES[:failed],
+          manifest_hash: manifest_hash,
+          page_numbers: true,
+          error_message: "storage timeout",
+          finished_at: Time.current
+        )
+
+        refresh_calls = []
+
+        SegmentHasher.stub :call, ->(_source) { current_hash } do
+          RunDocumentBuildJob.stub :perform_later, ->(build_id) { refresh_calls << build_id } do
+            result = WorkingCopyAccess.new(definition_document: @document).call
+
+            assert result.failed?
+            assert_equal false, result.working_available
+            assert_equal [], refresh_calls
+          end
+        end
+      end
+
+      test "re-enqueues a same-manifest failed live build after the retry cooldown" do
+        current_hash = "hash-5"
+        manifest_hash = placement_manifest_hash(@placement, current_hash)
+
+        @source.update!(
+          render_hash: current_hash,
+          cached_pdf_key: "segments/current.pdf",
+          cached_pdf_generated_at: Time.current,
+          cached_page_count: 1,
+          cached_file_size: 64
+        )
+
+        @document.builds.create!(
+          build_kind: DocumentBuild::BUILD_KINDS[:working],
+          status: DocumentBuild::STATUSES[:failed],
+          manifest_hash: manifest_hash,
+          page_numbers: true,
+          error_message: "storage timeout",
+          finished_at: Time.current
+        )
+
+        refresh_calls = []
+
+        travel WorkingCopyAccess::FAILED_BUILD_RETRY_COOLDOWN + 1.second do
+          SegmentHasher.stub :call, ->(_source) { current_hash } do
+            RunDocumentBuildJob.stub :perform_later, ->(build_id) { refresh_calls << build_id } do
+              result = WorkingCopyAccess.new(definition_document: @document).call
+
+              assert result.refreshing?
+              assert_equal false, result.working_available
+              assert_equal 1, refresh_calls.length
+              assert_equal Document::WORKING_STATUSES[:refreshing], @document.reload.working_status
+            end
+          end
+        end
+      end
+
       private
 
       def placement_manifest_hash(placement, render_hash)

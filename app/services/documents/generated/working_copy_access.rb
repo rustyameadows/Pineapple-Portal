@@ -1,6 +1,8 @@
 module Documents
   module Generated
     class WorkingCopyAccess
+      FAILED_BUILD_RETRY_COOLDOWN = 30.seconds
+
       Result = Struct.new(
         :build,
         :build_id,
@@ -103,12 +105,22 @@ module Documents
 
       def refresh_needed?(manifest)
         return false if definition_document.active_working_build.present?
+
         latest_build = definition_document.latest_working_build
-        return false if latest_build&.failed? && latest_build.manifest_hash == manifest.manifest_hash
+        if latest_build&.failed? && latest_build.manifest_hash == manifest.manifest_hash
+          return failed_build_retry_due?(latest_build)
+        end
 
         !definition_document.working_available? ||
           manifest.stale_sources.any? ||
           definition_document.working_manifest_hash != manifest.manifest_hash
+      end
+
+      def failed_build_retry_due?(build)
+        retry_reference_time = build.finished_at || build.updated_at || build.created_at
+        return true if retry_reference_time.blank?
+
+        retry_reference_time <= FAILED_BUILD_RETRY_COOLDOWN.ago
       end
 
       def reset_missing_state!

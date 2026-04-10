@@ -87,6 +87,35 @@ module Documents
         refute_equal original_hash, SegmentHasher.call(@source)
       end
 
+      test "pdf asset hash stays stable when a newer uploaded version appears for the same logical id" do
+        logical_id = SecureRandom.uuid
+        pinned_document = create_uploaded_pdf(version: 1, logical_id: logical_id, title: "Ceremony Inserts")
+        source = GeneratedPacketSource.find_or_create_upload_source!(@event, pinned_document, title: "Ceremony Inserts")
+        original_hash = SegmentHasher.call(source)
+
+        create_uploaded_pdf(version: 2, logical_id: logical_id, title: "Ceremony Inserts")
+
+        assert_equal original_hash, SegmentHasher.call(source)
+      end
+
+      test "event overview hash changes when a no-contact vendor is added or renamed" do
+        original_hash = SegmentHasher.call(@source)
+
+        vendor = @event.event_vendors.create!(
+          name: "No Contact Vendor",
+          contacts_jsonb: [],
+          position: 9,
+          client_visible: false
+        )
+
+        after_create_hash = SegmentHasher.call(@source)
+        refute_equal original_hash, after_create_hash
+
+        vendor.update!(name: "No Contact Vendor Updated")
+
+        refute_equal after_create_hash, SegmentHasher.call(@source)
+      end
+
       test "wedding party reference hash changes when getting ready details changes" do
         original_hash = SegmentHasher.call(@wedding_party_source)
 
@@ -230,6 +259,25 @@ module Documents
         )
 
         refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
+      end
+
+      private
+
+      def create_uploaded_pdf(version:, logical_id:, title:)
+        @event.documents.create!(
+          title: title,
+          doc_kind: Document::DOC_KINDS[:uploaded],
+          logical_id: logical_id,
+          version: version,
+          is_latest: true,
+          source: "staff_upload",
+          storage_uri: "documents/#{logical_id}/#{version}.pdf",
+          checksum: "#{logical_id}-#{version}-checksum",
+          checksum_sha256: SecureRandom.hex(32),
+          size_bytes: 1024,
+          content_type: "application/pdf",
+          built_by_user: users(:one)
+        )
       end
     end
   end

@@ -17,6 +17,8 @@ module Documents
       end
 
       def call
+        definition_document.request_working_refresh!
+
         build = definition_document.builds.create!(
           status: DocumentBuild::STATUSES[:pending],
           build_kind: DocumentBuild::BUILD_KINDS[:working],
@@ -24,7 +26,6 @@ module Documents
           page_numbers: true
         )
         build.report_progress!(stage: :queued)
-        definition_document.request_working_refresh!
         build.mark_running!
 
         result = BuildRunner.new(

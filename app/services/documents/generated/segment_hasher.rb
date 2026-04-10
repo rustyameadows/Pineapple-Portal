@@ -66,9 +66,7 @@ module Documents
       end
 
       def pdf_document_payload
-        logical_id = segment.pdf_logical_id
-        document = segment.event.documents.latest.find_by(logical_id: logical_id) if logical_id.present?
-        document ||= segment.event.documents.find_by(id: segment.pdf_document_id) if segment.pdf_document_id.present?
+        document = UploadedDocumentResolver.new(segment).call
         return {} unless document
 
         {
@@ -208,8 +206,6 @@ module Documents
 
               normalized_contact
             end
-
-            next if contacts.empty?
 
             {
               vendor_id: vendor.id,

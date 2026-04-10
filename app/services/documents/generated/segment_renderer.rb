@@ -120,12 +120,7 @@ module Documents
       end
 
       def find_source_document
-        return unless segment.pdf_document_id
-
-        event.documents.find_by(id: segment.pdf_document_id) ||
-          event.documents.where(logical_id: segment.pdf_logical_id)
-               .order(version: :desc)
-               .first
+        UploadedDocumentResolver.new(segment).call
       end
 
       def download_source_pdf(document)

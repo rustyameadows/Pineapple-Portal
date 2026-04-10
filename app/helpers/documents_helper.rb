@@ -110,7 +110,7 @@ module DocumentsHelper
 
   def pdf_asset_url(path)
     asset_path = ActionController::Base.helpers.asset_path(path)
-    return asset_path if asset_path.start_with?("data:")
+    return asset_path if asset_path.start_with?("data:") || asset_path.match?(%r{\A(?:https?:)?//})
 
     "#{pdf_base_url}#{asset_path.start_with?("/") ? asset_path : "/#{asset_path}"}"
   end

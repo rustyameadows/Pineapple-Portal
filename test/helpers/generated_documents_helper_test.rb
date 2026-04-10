@@ -1,6 +1,7 @@
 require "test_helper"
 
 class GeneratedDocumentsHelperTest < ActionView::TestCase
+  include DocumentsHelper
   include GeneratedDocumentsHelper
 
   test "renders packet rich text with normalized headings and safe links" do
@@ -22,5 +23,25 @@ class GeneratedDocumentsHelperTest < ActionView::TestCase
     assert_equal "noopener noreferrer", safe_link["rel"]
     assert_not_nil unsafe_link
     assert_nil unsafe_link["href"]
+  end
+
+  test "pdf_asset_url prefixes relative paths but preserves absolute and data urls" do
+    helper = ActionController::Base.helpers
+
+    helper.stub :asset_path, ->(path) { path } do
+      assert_equal "http://localhost:3000/assets/fonts/Didot.woff2", pdf_asset_url("assets/fonts/Didot.woff2")
+    end
+
+    helper.stub :asset_path, ->(path) { path } do
+      assert_equal "data:font/woff2;base64,AAAA", pdf_asset_url("data:font/woff2;base64,AAAA")
+    end
+
+    helper.stub :asset_path, ->(path) { path } do
+      assert_equal "https://cdn.example.test/assets/fonts/Didot.woff2", pdf_asset_url("https://cdn.example.test/assets/fonts/Didot.woff2")
+    end
+
+    helper.stub :asset_path, ->(path) { path } do
+      assert_equal "//cdn.example.test/assets/fonts/Didot.woff2", pdf_asset_url("//cdn.example.test/assets/fonts/Didot.woff2")
+    end
   end
 end
