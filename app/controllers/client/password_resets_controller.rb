@@ -1,5 +1,7 @@
 module Client
   class PasswordResetsController < ApplicationController
+    include ClientPortalAuthentication
+
     skip_before_action :require_login
     before_action :load_reset_token
 
@@ -37,8 +39,9 @@ module Client
         @reset_token.redeem!
         session[:client_user_id] = @reset_token.user.id
 
-        if (event = first_client_event(@reset_token.user))
-          redirect_to client_event_path(event.portal_slug.presence || event.id), notice: "Password updated. Welcome back to your portal."
+        if accessible_client_events(@reset_token.user).exists?
+          redirect_to client_login_redirect_path(return_to: params[:return_to]),
+                      notice: "Password updated. Welcome back to your portal."
         else
           redirect_to client_login_path, notice: "Password updated. Sign in once your planner grants portal access."
         end
@@ -62,10 +65,11 @@ module Client
       params.require(:password_reset).permit(:password, :password_confirmation)
     end
 
-    def first_client_event(user)
-      user.events_as_team_member
-          .where(event_team_members: { member_role: EventTeamMember::TEAM_ROLES[:client], client_visible: true })
-          .first
+    def client_login_redirect_path(return_to:)
+      target = safe_local_path(return_to)
+      return client_login_path unless target
+
+      client_login_path(return_to: target)
     end
   end
 end

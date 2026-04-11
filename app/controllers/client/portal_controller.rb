@@ -26,12 +26,11 @@ module Client
       event = current_event
 
       if current_client_user.present? && event
-        membership = event.client_team_members.find_by(user_id: current_client_user.id, client_visible: true)
-        return if membership.present?
+        return if client_can_access_event?(current_client_user, event)
       end
 
-      reset_client_session
-      redirect_to client_login_path, alert: "Access to this event is unavailable."
+      redirect_to client_login_path(return_to: request.get? ? request.fullpath : nil),
+                  alert: "Access to this event is unavailable."
     end
   end
 end

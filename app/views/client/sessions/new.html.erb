@@ -13,6 +13,10 @@
       <% end %>
 
       <%= form_with url: client_login_path, method: :post, class: "auth-form" do |form| %>
+        <% if params[:return_to].present? %>
+          <%= hidden_field_tag :return_to, params[:return_to] %>
+        <% end %>
+
         <div class="auth-form__group">
           <%= form.label :email %>
           <%= form.email_field :email, required: true, autofocus: true, autocomplete: "email" %>

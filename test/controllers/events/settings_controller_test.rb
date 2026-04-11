@@ -34,6 +34,7 @@ module Events
       get clients_event_settings_url(@event)
       assert_response :success
       assert_select "h1", text: "Client Access"
+      assert_select "input[value='#{client_login_url}'][readonly]", count: 1
       assert_select "th", text: "Access"
       assert_select "th", text: "Portal Access", count: 0
       assert_select "th", text: "Financial Access", count: 0

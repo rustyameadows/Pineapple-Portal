@@ -74,5 +74,53 @@ module Client
       assert_response :success
       assert_select "#planning-grid"
     end
+
+    test "portal layout shows a choose another event link for multi-event clients" do
+      delete logout_url
+      client = build_client_user(
+        name: "Multi Event Client",
+        email: "multi-event-layout-client@example.com"
+      )
+      grant_client_access(client, @event)
+      grant_client_access(client, events(:two))
+
+      log_in_client_portal(client)
+
+      get client_event_url(@event.portal_slug)
+
+      assert_response :success
+      assert_select "a[href='#{client_login_path}']", text: /Choose another event/i
+    end
+
+    test "portal layout hides the choose another event link for single-event clients" do
+      delete logout_url
+      log_in_client_portal(users(:client_contact))
+
+      get client_event_url(@event.portal_slug)
+
+      assert_response :success
+      assert_select "a[href='#{client_login_path}']", text: /Choose another event/i, count: 0
+    end
+
+    private
+
+    def build_client_user(name:, email:)
+      User.create!(
+        name: name,
+        email: email,
+        role: :client,
+        password: "password123",
+        password_confirmation: "password123"
+      )
+    end
+
+    def grant_client_access(user, event)
+      event.event_team_members.create!(
+        user: user,
+        member_role: EventTeamMember::TEAM_ROLES[:client],
+        client_visible: true,
+        lead_planner: false
+      )
+    end
   end
 end

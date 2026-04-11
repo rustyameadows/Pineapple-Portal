@@ -25,14 +25,21 @@ class ApplicationController < ActionController::Base
   end
 
   def safe_return_to(fallback: root_path)
-    target = params[:return_to].presence
-    return fallback unless target
+    safe_local_path(params[:return_to], fallback: fallback)
+  end
 
-    uri = URI.parse(target)
-    return target if uri.host.nil? && uri.scheme.nil?
-    return target if uri.host == request.host
+  def safe_local_path(target, fallback: nil)
+    value = target.to_s.strip
+    return fallback if value.blank?
 
-    fallback
+    uri = URI.parse(value)
+    if uri.host.nil? && uri.scheme.nil?
+      value
+    elsif uri.host == request.host
+      [uri.path.presence || "/", uri.query.present? ? "?#{uri.query}" : nil].join
+    else
+      fallback
+    end
   rescue URI::InvalidURIError
     fallback
   end

@@ -493,6 +493,11 @@
   gap: 1.25rem;
 }
 
+.event-settings__team {
+  display: grid;
+  gap: 1rem;
+}
+
 .event-settings__contact-item,
 .event-settings__people-card {
   border: 1px solid var(--color-sea-foam);

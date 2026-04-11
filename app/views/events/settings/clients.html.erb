@@ -16,6 +16,21 @@
 
         <div class="event-section__body">
           <div class="event-settings__team">
+            <% generic_client_login_url = "#{request.base_url}#{client_login_path}" %>
+            <div class="event-settings__reset-card" data-reset-card>
+              <div class="event-settings__reset-header">
+                <label for="client-login-link" class="event-settings__reset-label">Client portal login</label>
+                <button type="button" class="event-settings__reset-copy" data-reset-copy>Copy</button>
+              </div>
+              <input id="client-login-link"
+                     type="text"
+                     class="event-settings__reset-input"
+                     value="<%= generic_client_login_url %>"
+                     readonly
+                     data-reset-input>
+              <p class="event-settings__hint">Share this link when a client already has portal credentials. Use the reset links below when they need to set or change their password.</p>
+            </div>
+
             <% if @client_team_members.any? %>
               <table class="event-table event-table--clients">
                 <thead>

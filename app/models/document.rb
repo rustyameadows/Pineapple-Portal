@@ -116,10 +116,18 @@ class Document < ApplicationRecord
     return [] unless packet_definitions.exists?
 
     packet_definitions.flat_map do |document|
-      Documents::Generated::ContainerEntries.new(definition_document: document).call.filter_map do |entry|
-        next unless entry.source.pdf_asset?
+      if document.packet_source_backed?
+        Documents::Generated::ContainerEntries.new(definition_document: document).call.filter_map do |entry|
+          next unless entry.source.pdf_asset?
 
-        normalize_uuid(entry.source.pdf_logical_id)
+          normalize_uuid(entry.source.pdf_logical_id)
+        end
+      else
+        document.segments.filter_map do |segment|
+          next unless segment.pdf_asset?
+
+          normalize_uuid(segment.pdf_logical_id)
+        end
       end
     end.uniq
   end

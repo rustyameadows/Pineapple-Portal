@@ -15,6 +15,10 @@
   padding: 2.5rem 2.25rem;
 }
 
+.auth-card--wide {
+  width: min(560px, 100%);
+}
+
 .auth-card__header h1 {
   margin: 0 0 0.4rem;
   font-size: 1.75rem;
@@ -85,6 +89,95 @@
 .auth-button:hover,
 .auth-button:focus {
   background: var(--color-accent-strong);
+}
+
+.auth-button--secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.auth-button--secondary:hover,
+.auth-button--secondary:focus {
+  background: color-mix(in srgb, var(--color-accent) 10%, white);
+}
+
+.auth-card__secondary-action {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-neutral-200);
+  display: grid;
+  gap: 0.85rem;
+}
+
+.auth-card__secondary-copy {
+  margin: 0;
+  text-align: center;
+  color: var(--color-neutral-500);
+}
+
+.auth-event-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.auth-event-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  text-decoration: none;
+  color: inherit;
+  background: color-mix(in srgb, var(--color-surface-muted) 40%, white);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.auth-event-card:hover,
+.auth-event-card:focus {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.auth-event-card__content {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.auth-event-card__content h2,
+.auth-event-card__content p {
+  margin: 0;
+}
+
+.auth-event-card__content h2 {
+  font-size: 1.05rem;
+}
+
+.auth-event-card__content p {
+  color: var(--color-neutral-500);
+}
+
+.auth-event-card__action {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.auth-card__inline-link {
+  color: inherit;
 }
 
 .auth-card__footer {

@@ -28,6 +28,11 @@
         </div>
       <% end %>
 
+      <div class="auth-card__secondary-action">
+        <p class="auth-card__secondary-copy">Looking for your event portal?</p>
+        <%= link_to "Go to Client Portal Login", client_login_path, class: "auth-button auth-button--secondary" %>
+      </div>
+
       <% if User.none? %>
         <p class="auth-card__footer">Need an account? <%= link_to "Create the first user", new_user_path %>.</p>
       <% end %>

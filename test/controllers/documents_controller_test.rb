@@ -205,4 +205,14 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal({ key: @document.storage_uri }, captured)
   end
+
+  test "unauthenticated client download redirects to client login with return_to" do
+    delete logout_url
+
+    get download_event_document_url(@event, @document)
+
+    assert_redirected_to client_login_url(return_to: download_event_document_path(@event, @document))
+    assert_nil session[:user_id]
+    assert_nil session[:client_user_id]
+  end
 end
