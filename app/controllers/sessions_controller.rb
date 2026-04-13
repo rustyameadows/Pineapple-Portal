@@ -9,9 +9,11 @@ class SessionsController < ApplicationController
     email = params[:email].to_s.strip.downcase
     user = User.find_by(email: email)
 
-    if user&.authenticate(params[:password])
+    if user&.planner_or_admin? && user.authenticate(params[:password])
       session[:user_id] = user.id
       redirect_to root_path, notice: "Welcome back!"
+    elsif user&.client? && user.authenticate(params[:password])
+      redirect_to client_login_path, alert: "Client portal accounts sign in through the client portal login."
     else
       flash.now[:alert] = "Invalid email or password."
       render :new, status: :unprocessable_content

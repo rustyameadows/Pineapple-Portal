@@ -40,7 +40,6 @@ class User < ApplicationRecord
   validate :avatar_must_be_image
   validate :password_required_for_account
   validate :password_confirmation_matches
-
   scope :planners, -> { where(role: ROLES[:planner]) }
   scope :clients, -> { where(role: ROLES[:client]) }
 
@@ -93,4 +92,5 @@ class User < ApplicationRecord
 
     errors.add(:password_confirmation, "doesn't match Password")
   end
+
 end

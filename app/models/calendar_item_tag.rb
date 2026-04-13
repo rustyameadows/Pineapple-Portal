@@ -6,7 +6,6 @@ class CalendarItemTag < ApplicationRecord
   validate :tag_belongs_to_same_calendar
 
   after_commit :refresh_item_tag_summary, on: %i[create destroy]
-
   private
 
   def tag_belongs_to_same_calendar

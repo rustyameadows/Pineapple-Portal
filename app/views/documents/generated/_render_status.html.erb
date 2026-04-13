@@ -1,19 +1,36 @@
-<% if segment.cached? %>
-  <% cached_time = segment.cached_pdf_generated_at&.in_time_zone(Time.zone)&.strftime("%d %b %H:%M")&.upcase %>
-  <% cached_time ||= "RECENTLY" %>
-  <% page_count = segment.cached_page_count.present? ? pluralize(segment.cached_page_count, "page").upcase : nil %>
-  <% meta = [cached_time] %>
-  <% meta << page_count if page_count.present? %>
+<% return_to ||= nil %>
+<% status_path = if return_to.present?
+                   cached_pdf_event_documents_generated_segment_path(event, document.logical_id, segment, return_to: return_to)
+                 else
+                   cached_pdf_event_documents_generated_segment_path(event, document.logical_id, segment)
+                 end %>
 
-  <%= link_to cached_pdf_event_documents_generated_segment_path(event, document.logical_id, segment),
+<% if segment.cached? %>
+  <% page_count = segment.cached_page_count.present? ? pluralize(segment.cached_page_count, "page").upcase : nil %>
+  <% cached_label = if segment.cached_pdf_generated_at.present?
+                      content_tag(
+                        :time,
+                        segment.cached_pdf_generated_at.in_time_zone(Time.zone).strftime("%d %b %H:%M").upcase,
+                        data: {
+                          controller: "local-time",
+                          local_time_iso_value: segment.cached_pdf_generated_at.utc.iso8601,
+                          local_time_format_value: "compact"
+                        },
+                        datetime: segment.cached_pdf_generated_at.utc.iso8601
+                      )
+                    else
+                      "RECENTLY"
+                    end %>
+  <% status_content = safe_join([
+       content_tag(:span, "CACHED", class: "generated-builder__status-emphasis"),
+       content_tag(:span, safe_join([cached_label, page_count.present? ? " · #{page_count}" : nil].compact), class: "generated-builder__status-copy")
+     ]) %>
+
+  <%= link_to status_content,
+              status_path,
               class: "generated-builder__status-tag generated-builder__status-tag--link",
               target: "_blank",
-              rel: "noopener" do %>
-    <span class="generated-builder__status-emphasis">CACHED</span>
-    <% if meta.any? %>
-      <span class="generated-builder__status-copy"><%= meta.join(" · ") %></span>
-    <% end %>
-  <% end %>
+              rel: "noopener" %>
 <% elsif segment.last_render_error.present? %>
   <span class="generated-builder__status-tag generated-builder__status-tag--error">
     Render failed: <%= segment.last_render_error %>

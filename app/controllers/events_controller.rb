@@ -75,7 +75,24 @@ class EventsController < ApplicationController
   end
 
   def event_params
-    params.require(:event).permit(:name, :starts_on, :ends_on, :location, :location_secondary, :event_photo_document_id, :financial_payments_enabled, :portal_slug)
+    params.require(:event).permit(
+      :name,
+      :starts_on,
+      :ends_on,
+      :location,
+      :location_secondary,
+      :event_photo_document_id,
+      :financial_payments_enabled,
+      :portal_slug,
+      :guest_count,
+      :attire,
+      :style,
+      :color_palette,
+      :key_people_label,
+      :social_media_policy,
+      :parking_details,
+      :getting_ready_details
+    )
   end
 
   def active_events_scope

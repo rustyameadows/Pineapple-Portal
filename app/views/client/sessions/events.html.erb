@@ -1,0 +1,41 @@
+<% provide :page_shell do %>
+  <div class="auth-shell">
+    <section class="auth-card auth-card--wide">
+      <header class="auth-card__header">
+        <h1>Choose Your Event</h1>
+        <p>Select the portal you’d like to open.</p>
+      </header>
+
+      <% if flash[:alert].present? %>
+        <p class="auth-card__flash auth-card__flash--alert"><%= flash[:alert] %></p>
+      <% elsif flash[:notice].present? %>
+        <p class="auth-card__flash auth-card__flash--notice"><%= flash[:notice] %></p>
+      <% end %>
+
+      <div class="auth-event-list">
+        <% @accessible_events.each do |event| %>
+          <% schedule_label = event.starts_on.present? ? event.starts_on.strftime("%B %-d, %Y") : "Date coming soon" %>
+          <%= link_to client_event_path(client_portal_event_key(event)), class: "auth-event-card" do %>
+            <div class="auth-event-card__content">
+              <h2><%= event.name %></h2>
+              <p><%= schedule_label %></p>
+              <% if event.location.present? %>
+                <p><%= event.location %></p>
+              <% end %>
+            </div>
+            <span class="auth-event-card__action">Open Portal</span>
+          <% end %>
+        <% end %>
+      </div>
+
+      <p class="auth-card__footer">
+        Need a different account?
+        <%= link_to "Sign out",
+                    client_logout_path,
+                    method: :delete,
+                    data: { turbo_method: :delete },
+                    class: "auth-card__inline-link" %>.
+      </p>
+    </section>
+  </div>
+<% end %>

@@ -11,6 +11,8 @@ module Documents
         :file_size,
         :checksum_md5,
         :checksum_sha256,
+        :storage_uri,
+        :page_numbers,
         keyword_init: true
       )
 
@@ -25,37 +27,35 @@ module Documents
 
       def call
         check_cancelled!
-        segments = definition_document.segments.ordered.to_a
-        raise CompileError, "No segments configured" if segments.empty?
+        report_progress(stage: :preparing_pdf)
 
-        rendered_segments = segments.map do |segment|
-          check_cancelled!
-          ensure_cached(segment)
+        if working_build?
+          compile_working_build
+        else
+          compile_snapshot_build
         end
+      end
 
-        check_cancelled!
+      private
 
-        manifest = rendered_segments.map do |entry|
-          {
-            segment_id: entry[:segment].id,
-            render_hash: entry[:render_hash],
-            page_count: entry[:page_count],
-            file_size: entry[:file_size]
-          }
-        end
-        manifest_hash = Digest::SHA256.hexdigest(JSON.dump(manifest))
+      attr_reader :definition_document, :build, :built_by_user, :segment_storage, :document_storage, :page_numbers
 
-        compiled_pdf = stitch_segments(rendered_segments)
-        compiled_pdf = apply_page_numbers(compiled_pdf) if page_numbers
+      def compile_snapshot_build
+        manifest = PacketManifest.new(definition_document: definition_document).call
+        persist_requested_manifest!(manifest.manifest_hash)
 
-        totals = derive_totals(compiled_pdf)
-        storage_key = persist_compiled_pdf(compiled_pdf, totals[:version], totals[:filename])
+        compiled = compiled_snapshot_payload(manifest)
+        totals = derive_totals(compiled[:pdf_data], version: Document.next_version_for(definition_document.logical_id))
+        report_progress(stage: :uploading_pdf)
+        storage_key = persist_snapshot_pdf(compiled[:pdf_data], totals[:version], totals[:filename])
+        report_progress(stage: :finalizing_pdf)
 
         compiled_document = definition_document.event.documents.create!(
           logical_id: definition_document.logical_id,
           version: totals[:version],
           title: definition_document.title,
           client_visible: definition_document.client_visible,
+          packet_schema_version: definition_document.packet_schema_version,
           storage_uri: storage_key,
           checksum: totals[:checksum_md5],
           checksum_sha256: totals[:checksum_sha256],
@@ -63,7 +63,7 @@ module Documents
           content_type: "application/pdf",
           source: Document::SOURCE_KEYS.first,
           doc_kind: Document::DOC_KINDS[:generated],
-          manifest_hash: manifest_hash,
+          manifest_hash: compiled[:manifest_hash],
           build_id: build.build_id,
           built_by_user: built_by_user,
           compiled_page_count: totals[:page_count]
@@ -72,112 +72,94 @@ module Documents
         definition_document.update!(
           build_id: build.build_id,
           built_by_user: built_by_user,
-          manifest_hash: manifest_hash,
+          manifest_hash: compiled[:manifest_hash],
           compiled_page_count: totals[:page_count]
         )
 
         Result.new(
           compiled_document: compiled_document,
-          manifest_hash: manifest_hash,
+          manifest_hash: compiled[:manifest_hash],
           page_count: totals[:page_count],
           file_size: totals[:file_size],
           checksum_md5: totals[:checksum_md5],
-          checksum_sha256: totals[:checksum_sha256]
+          checksum_sha256: totals[:checksum_sha256],
+          storage_uri: storage_key,
+          page_numbers: page_numbers
         )
       end
 
-      private
+      def compile_working_build
+        manifest = PacketManifest.new(definition_document: definition_document).call
+        persist_requested_manifest!(manifest.manifest_hash)
 
-      attr_reader :definition_document, :build, :built_by_user, :segment_storage, :document_storage, :page_numbers
+        prepared = packet_bundle.prepare
+        reusable_build = current_working_build(prepared.manifest_hash, allow_legacy: false)
 
-      def ensure_cached(segment)
-        hash = SegmentHasher.call(segment)
+        if reusable_build.present?
+          report_progress(stage: :preparing_pdf, message: "Using the current live PDF")
+          report_progress(stage: :finalizing_pdf)
+          mirror_working_copy!(
+            storage_uri: reusable_build.storage_uri,
+            manifest_hash: reusable_build.manifest_hash,
+            checksum_sha256: reusable_build.checksum_sha256,
+            page_count: reusable_build.compiled_page_count,
+            file_size: reusable_build.file_size,
+            rendered_at: reusable_build.rendered_at || Time.current
+          )
 
-        if segment.cached? && !segment.cache_stale?(hash)
-          return cache_entry(segment)
+          return Result.new(
+            manifest_hash: reusable_build.manifest_hash,
+            page_count: reusable_build.compiled_page_count,
+            file_size: reusable_build.file_size,
+            checksum_sha256: reusable_build.checksum_sha256,
+            storage_uri: reusable_build.storage_uri,
+            page_numbers: true
+          )
         end
 
-        check_cancelled!
-        result = SegmentRenderer.new(segment).call
-        if result.error.present?
-          raise CompileError, "Segment ##{segment.id} failed to render: #{result.error}"
-        end
+        bundle = packet_bundle.build_from_prepared(prepared)
+        report_progress(stage: :uploading_pdf)
+        storage_key = persist_working_pdf(bundle.pdf_data)
+        report_progress(stage: :finalizing_pdf)
 
-        segment.update!(
-          render_hash: result.render_hash,
-          cached_pdf_key: result.storage_key,
-          cached_pdf_generated_at: result.generated_at,
-          cached_page_count: result.page_count,
-          cached_file_size: result.file_size,
-          last_render_error: nil
+        mirror_working_copy!(
+          storage_uri: storage_key,
+          manifest_hash: bundle.manifest_hash,
+          checksum_sha256: bundle.checksum_sha256,
+          page_count: bundle.page_count,
+          file_size: bundle.file_size,
+          rendered_at: Time.current
         )
 
-        cache_entry(segment)
+        Result.new(
+          manifest_hash: bundle.manifest_hash,
+          page_count: bundle.page_count,
+          file_size: bundle.file_size,
+          checksum_md5: bundle.checksum_md5,
+          checksum_sha256: bundle.checksum_sha256,
+          storage_uri: storage_key,
+          page_numbers: true
+        )
       end
 
-      def cache_entry(segment)
-        {
-          segment: segment,
-          render_hash: segment.render_hash,
-          page_count: segment.cached_page_count,
-          file_size: segment.cached_file_size
-        }
-      end
+      def compiled_snapshot_payload(manifest)
+        live_pdf = current_working_pdf(manifest)
 
-      def build_filename
-        base = definition_document.title.to_s.parameterize
-        base = "generated-packet" if base.blank?
-        "#{base}.pdf"
-      end
-
-      def stitch_segments(rendered_segments)
-        combined_pdf = CombinePDF.new
-
-        rendered_segments.each do |entry|
-          check_cancelled!
-          pdf_data = segment_storage.download(entry[:segment].cached_pdf_key)
-          unless pdf_data
-            raise CompileError, "Cached PDF not found for segment ##{entry[:segment].id}"
-          end
-
-          buffer = pdf_data.respond_to?(:read) ? pdf_data.read : pdf_data
-          buffer = buffer.to_s
-          buffer.force_encoding(Encoding::BINARY)
-          if buffer.empty?
-            raise CompileError, "Cached PDF empty for segment ##{entry[:segment].id}"
-          end
-
-          combined_pdf << CombinePDF.parse(buffer)
+        if live_pdf.present?
+          report_progress(stage: :preparing_pdf, message: "Using the current live PDF")
+          return { pdf_data: live_pdf, manifest_hash: manifest.manifest_hash }
         end
 
-        combined_pdf.to_pdf
+        bundle = packet_bundle.call
+        { pdf_data: bundle.pdf_data, manifest_hash: bundle.manifest_hash }
       end
 
-      def apply_page_numbers(compiled_pdf)
-        pdf = CombinePDF.parse(compiled_pdf)
-        pdf.number_pages(**page_number_options)
-        pdf.to_pdf
-      end
-
-      def page_number_options
-        {
-          start_at: 1,
-          number_format: "pg. %s",
-          location: :bottom_right,
-          font_size: 10,
-          margin_from_side: 10,
-          y: 12,
-          text_align: :right
-        }
-      end
-
-      def derive_totals(compiled_pdf)
+      def derive_totals(compiled_pdf, version:)
         pdf = CombinePDF.parse(compiled_pdf)
         page_count = pdf.pages.count
         file_size = compiled_pdf.bytesize
         checksum_md5 = Digest::MD5.hexdigest(compiled_pdf)
         checksum_sha256 = Digest::SHA256.hexdigest(compiled_pdf)
-        version = Document.next_version_for(definition_document.logical_id)
 
         {
           page_count: page_count,
@@ -189,7 +171,7 @@ module Documents
         }
       end
 
-      def persist_compiled_pdf(compiled_pdf, version, filename)
+      def persist_snapshot_pdf(compiled_pdf, version, filename)
         check_cancelled!
         storage_key = DocumentStorage.build_key(
           event: definition_document.event,
@@ -204,12 +186,113 @@ module Documents
         raise CompileError, "Failed to upload compiled PDF: #{e.message}"
       end
 
+      def persist_working_pdf(compiled_pdf)
+        check_cancelled!
+        storage_key = DocumentStorage.build_working_key(
+          event: definition_document.event,
+          logical_id: definition_document.logical_id,
+          filename: build_filename(suffix: "-working")
+        )
+
+        document_storage.upload_io(storage_key, compiled_pdf, content_type: "application/pdf")
+        storage_key
+      rescue StandardError => e
+        raise CompileError, "Failed to upload live PDF: #{e.message}"
+      end
+
       def check_cancelled!
         if build.respond_to?(:reload) && build.persisted?
           build.reload
         end
 
         raise CancelledError, "Compile cancelled" if build.destroyed? || build.cancelled?
+      end
+
+      def packet_bundle
+        @packet_bundle ||= PacketBundle.new(
+          definition_document: definition_document,
+          segment_storage: segment_storage,
+          page_numbers: effective_page_numbers,
+          check_cancelled: method(:check_cancelled!),
+          progress_reporter: method(:report_progress)
+        )
+      end
+
+      def current_working_pdf(manifest)
+        return unless page_numbers
+
+        working_build = current_working_build(manifest.manifest_hash)
+        storage_key = working_build&.storage_uri
+        return unless storage_key.present?
+        return unless manifest.entries.count { |entry| entry.source.cached_page_count.present? } == manifest.entries.count
+
+        data = document_storage.download(storage_key)
+        buffer = data.respond_to?(:read) ? data.read : data
+        buffer = buffer.to_s
+        buffer.force_encoding(Encoding::BINARY)
+        buffer.presence
+      rescue StandardError
+        nil
+      end
+
+      def current_working_build(manifest_hash, allow_legacy: true)
+        build = definition_document.working_builds.successful.recent_first.find do |candidate|
+          candidate.storage_uri.present? &&
+            candidate.page_numbers != false &&
+            candidate.manifest_hash == manifest_hash
+        end
+        return build if build.present?
+        return unless allow_legacy
+        return unless definition_document[:working_storage_uri].present?
+        return unless definition_document[:working_manifest_hash] == manifest_hash
+
+        Struct.new(:storage_uri, :manifest_hash, :checksum_sha256, :compiled_page_count, :file_size, :rendered_at, :page_numbers).new(
+          definition_document[:working_storage_uri],
+          definition_document[:working_manifest_hash],
+          definition_document[:working_checksum_sha256],
+          definition_document[:working_page_count],
+          definition_document[:working_file_size],
+          definition_document[:working_rendered_at],
+          true
+        )
+      end
+
+      def mirror_working_copy!(storage_uri:, manifest_hash:, checksum_sha256:, page_count:, file_size:, rendered_at:)
+        definition_document.mark_working_fresh!(
+          working_storage_uri: storage_uri,
+          working_manifest_hash: manifest_hash,
+          working_checksum_sha256: checksum_sha256,
+          working_page_count: page_count,
+          working_file_size: file_size,
+          working_rendered_at: rendered_at
+        )
+      end
+
+      def working_build?
+        build.respond_to?(:working?) && build.working?
+      end
+
+      def effective_page_numbers
+        working_build? ? true : page_numbers
+      end
+
+      def persist_requested_manifest!(manifest_hash)
+        return if manifest_hash.blank?
+        return unless build.respond_to?(:manifest_hash)
+        return unless build.respond_to?(:update!)
+        return if build.manifest_hash == manifest_hash
+
+        build.update!(manifest_hash: manifest_hash)
+      end
+
+      def build_filename(suffix: nil)
+        base = definition_document.title.to_s.parameterize
+        base = "generated-packet" if base.blank?
+        "#{base}#{suffix}.pdf"
+      end
+
+      def report_progress(...)
+        build.report_progress!(...) if build.respond_to?(:report_progress!)
       end
 
       class CompileError < StandardError; end

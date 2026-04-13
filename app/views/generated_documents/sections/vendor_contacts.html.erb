@@ -1,0 +1,82 @@
+<% if local_assigns.fetch(:render_base_styles, true) %>
+  <%= render "generated_documents/sections/base_styles" %>
+<% end %>
+<%= render "generated_documents/sections/packet_sheet_styles" %>
+
+<% vendor_groups = generated_vendor_contacts_groups(@event) %>
+
+<style>
+  .generated-template--vendor-contacts {
+    gap: 0.08in;
+  }
+
+  .generated-template.generated-template--vendor-contacts .generated-template--vendor-contacts__table {
+    margin-top: 0;
+  }
+
+  .generated-template.generated-template--vendor-contacts .generated-template--vendor-contacts__table th,
+  .generated-template.generated-template--vendor-contacts .generated-template--vendor-contacts__table td {
+    padding: 0.04in 0.06in;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    vertical-align: top;
+    font-size: 12px;
+    line-height: 14px;
+    color: #5f4836;
+  }
+
+  .generated-template.generated-template--vendor-contacts .generated-template--vendor-contacts__table thead th {
+    background: #bea075;
+    color: #5a4330;
+    font-family: var(--font-family-body, "BaskervilleNo2", "Times New Roman", serif);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.25px;
+  }
+
+  .generated-template--vendor-contacts__category {
+    width: 18%;
+  }
+
+  .generated-template--vendor-contacts__vendor {
+    width: 28%;
+    font-weight: 600;
+  }
+
+  .generated-template--vendor-contacts__contact {
+    width: 32%;
+  }
+
+  .generated-template--vendor-contacts__phone {
+    width: 22%;
+    white-space: nowrap;
+  }
+</style>
+
+<section class="generated-template generated-template--packet-sheet generated-template--vendor-contacts">
+  <%= render "generated_documents/sections/page_header", segment: @segment %>
+
+  <table class="generated-template--vendor-contacts__table">
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>Vendor</th>
+        <th>Contact</th>
+        <th>Phone</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% vendor_groups.each do |group| %>
+        <% group[:rows].each_with_index do |row, index| %>
+          <tr>
+            <% if index.zero? %>
+              <td class="generated-template--vendor-contacts__category" rowspan="<%= group[:rows].size %>"><%= group[:category] %></td>
+              <td class="generated-template--vendor-contacts__vendor" rowspan="<%= group[:rows].size %>"><%= group[:vendor_name] %></td>
+            <% end %>
+            <td class="generated-template--vendor-contacts__contact"><%= row[:contact] %></td>
+            <td class="generated-template--vendor-contacts__phone"><%= row[:phone] %></td>
+          </tr>
+        <% end %>
+      <% end %>
+    </tbody>
+  </table>
+</section>

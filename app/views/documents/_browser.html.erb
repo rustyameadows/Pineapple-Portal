@@ -3,6 +3,7 @@
   title_for = local_assigns.fetch(:title_for)
   href_for = local_assigns.fetch(:href_for)
   table_columns = Array.wrap(local_assigns.fetch(:table_columns))
+  table_actions = Array.wrap(local_assigns.fetch(:table_actions, []))
   card_fields = Array.wrap(local_assigns.fetch(:card_fields))
   card_media_url_for = local_assigns[:card_media_url_for]
   empty_message = local_assigns.fetch(:empty_message, "No documents available yet.")
@@ -81,6 +82,9 @@
                   <th scope="col"><%= column[:label] %></th>
                 <% end %>
               <% end %>
+              <% table_actions.each do |action| %>
+                <th scope="col"><%= action[:label] %></th>
+              <% end %>
             </tr>
           </thead>
           <tbody data-document-browser-target="tableBody">
@@ -103,14 +107,23 @@
                   data-url="<%= href %>"
                   data-action="click->document-browser#navigate keydown.enter->document-browser#navigate keydown.space->document-browser#navigate">
                 <th scope="row" class="documents-browser__title-cell">
-                  <%= link_to href, class: "documents-browser__title-link" do %>
-                    <span data-document-browser-target="titleText"><%= title %></span>
-                  <% end %>
+                  <%= link_to content_tag(:span, title, data: { document_browser_target: "titleText" }),
+                              href,
+                              class: "documents-browser__title-link" %>
                 </th>
                 <% table_columns.each do |column| %>
                   <% value = column[:value].respond_to?(:call) ? column[:value].call(item) : column[:value] %>
                   <td class="documents-browser__cell <%= column[:class] %>">
                     <%= value.presence || "—" %>
+                  </td>
+                <% end %>
+                <% table_actions.each do |action| %>
+                  <% label = action[:text].respond_to?(:call) ? action[:text].call(item) : action[:text] %>
+                  <% action_href = action[:href].respond_to?(:call) ? action[:href].call(item) : action[:href] %>
+                  <td class="documents-browser__cell documents-browser__cell--action <%= action[:class] %>">
+                    <%= link_to label,
+                                action_href,
+                                class: ["documents-browser__action-link", action[:link_class]].compact.join(" ") %>
                   </td>
                 <% end %>
               </tr>
@@ -156,9 +169,9 @@
             <% end %>
             <div class="documents-browser__card-body">
               <h3 class="documents-browser__card-title">
-                <%= link_to href, class: "documents-browser__title-link" do %>
-                  <span data-document-browser-target="titleText"><%= title %></span>
-                <% end %>
+                <%= link_to content_tag(:span, title, data: { document_browser_target: "titleText" }),
+                            href,
+                            class: "documents-browser__title-link" %>
               </h3>
 
               <dl class="documents-browser__card-meta">

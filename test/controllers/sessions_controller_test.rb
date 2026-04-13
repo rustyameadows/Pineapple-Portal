@@ -5,6 +5,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     get login_url
     assert_response :success
     assert_select "h1", text: "Log In"
+    assert_select "a[href='#{client_login_path}']"
   end
 
   test "logs in with valid credentials" do
@@ -15,6 +16,16 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_url
     follow_redirect!
     assert_select "div.flash.flash-notice", text: /Welcome back/
+  end
+
+  test "redirects client users to the client login path" do
+    client = users(:client_contact)
+
+    post login_url, params: { email: client.email, password: "password123" }
+
+    assert_redirected_to client_login_url
+    assert_nil session[:user_id]
+    assert_nil session[:client_user_id]
   end
 
   test "renders errors on invalid login" do

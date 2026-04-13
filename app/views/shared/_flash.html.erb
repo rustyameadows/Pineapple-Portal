@@ -1,7 +1,28 @@
+<%
+  snapshot_build = local_assigns[:snapshot_build]
+  snapshot_status_url = local_assigns[:snapshot_status_url]
+  snapshot_message = local_assigns[:snapshot_message].presence || snapshot_build&.display_progress_message
+  hidden_flash_keys = %w[snapshot_build_id snapshot_build_message]
+%>
 <div class="flash-toast-container" data-controller="flash-toast">
+  <% if snapshot_build&.active? && snapshot_status_url.present? %>
+    <div class="flash flash-notice flash-toast flash-toast--build"
+         data-flash-toast-target="buildToast"
+         data-build-status="<%= snapshot_build.status %>"
+         data-build-status-url="<%= snapshot_status_url %>">
+      <span class="flash-toast__message">
+        <span class="flash-toast__text" data-flash-toast-target="buildMessage"><%= snapshot_message %></span>
+      </span>
+      <button type="button" class="flash-toast__close" data-action="flash-toast#dismiss">&times;</button>
+    </div>
+  <% end %>
+
   <% flash.each do |type, message| %>
+    <% next if hidden_flash_keys.include?(type.to_s) || message.blank? %>
     <div class="flash flash-<%= type %> flash-toast" data-flash-toast-target="toast">
-      <span class="flash-toast__message"><%= message %></span>
+      <span class="flash-toast__message">
+        <span class="flash-toast__text"><%= message %></span>
+      </span>
       <button type="button" class="flash-toast__close" data-action="flash-toast#dismiss">&times;</button>
     </div>
   <% end %>

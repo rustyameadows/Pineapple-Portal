@@ -13,7 +13,6 @@ class EventVendor < ApplicationRecord
   before_validation :assign_position, on: :create
   before_validation :apply_contacts_attributes
   before_validation :ensure_contacts_default
-
   validates :name, presence: true, uniqueness: { scope: :event_id, case_sensitive: false }
   validates :position, numericality: { greater_than_or_equal_to: 0, allow_nil: false }
   validates :client_visible, inclusion: { in: [true, false] }
@@ -105,4 +104,5 @@ class EventVendor < ApplicationRecord
 
     errors.add(:contacts_jsonb, "must be an array of contact hashes")
   end
+
 end

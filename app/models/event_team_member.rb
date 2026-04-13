@@ -11,7 +11,6 @@ class EventTeamMember < ApplicationRecord
 
   before_validation :assign_position, on: :create
   before_validation :assign_role_from_user
-
   validates :user_id, uniqueness: { scope: :event_id }
   validates :position, numericality: { greater_than_or_equal_to: 0, allow_nil: false }
   validate :user_matches_member_role
@@ -78,4 +77,5 @@ class EventTeamMember < ApplicationRecord
 
     errors.add(:lead_planner, "is only available for planner team members")
   end
+
 end

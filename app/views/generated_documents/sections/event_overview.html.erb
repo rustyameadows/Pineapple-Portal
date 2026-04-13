@@ -1,259 +1,209 @@
 <% if local_assigns.fetch(:render_base_styles, true) %>
   <%= render "generated_documents/sections/base_styles" %>
 <% end %>
+<%= render "generated_documents/sections/packet_sheet_styles" %>
+
+<% event_date_range = generated_event_overview_date_range(@event) %>
+<% planners = generated_event_overview_planners(@event) %>
+<% milestone_data = generated_event_overview_timeline(@event) %>
+<% milestone_items = milestone_data[:groups].flat_map { |group| group[:items] } %>
+<% milestone_timezone = milestone_data[:timezone] %>
+<% vendors = generated_event_overview_vendors(@event) %>
+<% important_information_rows = generated_event_overview_primary_rows(@event) %>
+<% vip_rows = generated_event_overview_vip_rows(@event) %>
+<% style_rows = generated_event_overview_style_rows(@event) %>
 
 <style>
-  .generated-template--text-page {
-    --generated-document-content-padding-x: 0.26in;
-    --generated-document-content-padding-top: 0.24in;
-    --generated-document-content-padding-bottom: 0.24in;
-    gap: 0.5rem;
-    background: var(--color-white, #ffffff);
-    border: none;
-  }
-
-  .generated-template--text-page .generated-template__page-header {
-    gap: 0.38rem;
-  }
-
-  .generated-template--text-page .generated-template__page-header-logo {
-    display: none;
-  }
-
-  .generated-template--text-page .generated-template__page-header-title {
-    margin-bottom: 0.02rem;
-    font-size: 20px;
-    letter-spacing: 1.25px;
-  }
-
-  .generated-template--text-page__content {
+  .generated-template--event-overview__important-information-groups {
     display: grid;
-    gap: 0.16rem;
-    line-height: 1.18;
-    font-size: 0.86rem;
-    color: var(--color-dark-brown, #3f2211);
-  }
-
-  .generated-template--text-page__content .generated-text-columns {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 0.16in;
-    align-items: start;
-    margin: 0.12rem 0 0.18rem;
-  }
-
-  .generated-template--text-page__content .generated-text-column {
-    min-width: 0;
-    display: grid;
-    align-content: start;
-    gap: 0.06rem;
-  }
-
-  .generated-template--text-page__content .generated-text-columns ul {
-    list-style: none;
-    padding-left: 0;
-  }
-
-  .generated-template--text-page__content .generated-text-columns li {
-    margin: 0.02rem 0;
-  }
-
-  .generated-template--text-page__content .generated-text-column > *:first-child {
-    margin-top: 0;
-  }
-
-  .generated-template--text-page__content .generated-text-column > *:last-child {
-    margin-bottom: 0;
-  }
-
-  .generated-template--text-page__content h2 {
-    margin: 0.02rem 0 0.18rem;
-    font-size: 1.36rem;
-    letter-spacing: 0.01em;
-    text-transform: none;
-    border-bottom: 2px solid color-mix(in srgb, var(--color-gold, #be9c72) 65%, white);
-    padding-bottom: 0.08rem;
-  }
-
-  .generated-template--text-page__content h3 {
-    margin: 0.3rem 0 0.02rem;
-    padding: 0.15rem 0.4rem 0.16rem;
-    width: 100%;
-    box-sizing: border-box;
-    background: var(--color-gold, #be9c72);
-    color: var(--color-dark-brown, #3f2211);
-    border: none;
-    font-size: 0.9rem;
-    letter-spacing: 0.035em;
-    line-height: 1.15;
-    text-transform: uppercase;
-  }
-
-  .generated-template--text-page__content > h3 {
-    text-align: center;
-  }
-
-  .generated-template--text-page__content > h3 {
-    padding: 8px;
-    font-size: 16px;
-    line-height: 16px;
-    letter-spacing: 1.5px;
-  }
-
-  .generated-template--text-page__content p:last-child {
-    margin-bottom: 0;
-  }
-
-  .generated-template--text-page__content h4,
-  .generated-template--text-page__content h5 {
-    margin: 0.14rem 0 0.03rem;
-    font-family: var(--font-family-display, 'Didot', 'Times New Roman', serif);
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    line-height: 1.2;
-    color: var(--color-dark-brown, #3f2211);
-  }
-
-  .generated-template--text-page__content h4 {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 7px 0 6px 6px;
-    background: var(--color-sand, #f3e4d2);
-    border: none;
-    font-size: 12px;
-    line-height: 12px;
-    letter-spacing: 1px;
-  }
-
-  .generated-template--text-page__content .generated-text-columns .generated-text-column > h3 {
-    padding: 5px 0 4px 6px;
-    font-size: 14px;
-    letter-spacing: 1px;
-  }
-
-  .generated-template--text-page__content h5 {
-    font-size: 0.84rem;
-    margin: 0.08rem 0 0;
-    padding: 0.02rem 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 60%, white);
-    line-height: 1.14;
-    letter-spacing: 0.01em;
-  }
-
-  .generated-template--text-page__content ul,
-  .generated-template--text-page__content ol {
-    margin: 0.02rem 0 0.12rem;
-    padding-left: 0.88rem;
-  }
-
-  .generated-template--text-page__content li {
-    margin: 0;
-  }
-
-  .generated-template--text-page__content hr {
-    border: 0;
-    border-top: 1px solid color-mix(in srgb, var(--color-gold, #be9c72) 70%, var(--color-brown, #5b4639));
-    margin: 0.22rem 0 0.18rem;
-  }
-
-  .generated-template--text-page__content blockquote {
-    margin: 0.08rem 0;
-    padding: 0.28rem 0.45rem;
-    border-left: 2px solid var(--color-gold, #be9c72);
-    background: color-mix(in srgb, var(--color-sand, #f3e4d2) 55%, white);
-    color: var(--color-brown, #5b4639);
-  }
-
-  .generated-template--text-page__content p {
-    margin: 0;
-  }
-
-  .generated-template--text-page__content > p {
-    font-size: 14px;
-    line-height: 17px;
-    padding: 6px 4px 8px 4px;
-  }
-
-  .generated-template--text-page__content .generated-text-columns .generated-text-column > p {
-    font-size: 14px;
-    line-height: 17px;
-    padding: 6px 4px 8px 4px;
-  }
-
-  .generated-template--text-page__content p + p {
-    margin-top: 0.05rem;
-  }
-
-  .generated-template--text-page__content p strong:first-child {
-    letter-spacing: 0.01em;
-  }
-
-  .generated-template--text-page__content > p > strong {
-    font-weight: 600;
-  }
-
-  .generated-template--text-page__content .generated-text-columns .generated-text-column > p > strong {
-    font-weight: 600;
-  }
-
-  .generated-template--text-page__content li + li {
-    margin-top: 0.05rem;
-  }
-
-  .generated-template--text-page__content a {
-    color: var(--color-dark-brown, #2f2a26);
-    text-decoration: underline;
-    text-decoration-color: var(--color-gold, #be9c72);
-    text-underline-offset: 2px;
-  }
-
-  .generated-template--text-page__content p,
-  .generated-template--text-page__content li {
-    border-bottom: 1px solid color-mix(in srgb, var(--color-dark-sand, #dccbb3) 34%, white);
-    padding-bottom: 0.035rem;
-  }
-
-  .generated-template--text-page__content p:not(:has(+ p)) {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .generated-template--text-page__content h3 + p,
-  .generated-template--text-page__content h4 + p,
-  .generated-template--text-page__content h5 + p {
-    margin-top: 0;
-  }
-
-  .generated-template--text-page__content > h4 {
-    margin-top: 0.34rem;
-  }
-
-  .generated-template--text-page__content h3 + h4,
-  .generated-template--text-page__content h3 + h5,
-  .generated-template--text-page__content h4 + h3,
-  .generated-template--text-page__content h4 + h4,
-  .generated-template--text-page__content h4 + h5,
-  .generated-template--text-page__content h5 + h3,
-  .generated-template--text-page__content h5 + h4,
-  .generated-template--text-page__content h5 + h5 {
-    margin-top: 0.06rem;
-  }
-
-  .generated-template--text-page__empty {
-    font-style: italic;
+    gap: 10px;
   }
 </style>
 
-<% body_markdown = generated_segment_body_markdown(@segment) %>
-
-<section class="generated-template generated-template--text-page">
+<section class="generated-template generated-template--packet-sheet generated-template--event-overview">
   <%= render "generated_documents/sections/page_header", segment: @segment %>
 
-  <% if body_markdown.present? %>
-    <div class="generated-template--text-page__content">
-      <%= render_generated_markdown(body_markdown) %>
-    </div>
-  <% else %>
-    <p class="generated-template__muted generated-template--text-page__empty">Add text in segment settings to populate this page.</p>
-  <% end %>
+  <div class="generated-template--packet-sheet__stack">
+    <section class="generated-template--packet-sheet__section">
+      <h2 class="generated-template--packet-sheet__section-title">Important Information</h2>
+      <div class="generated-template--event-overview__important-information-groups">
+        <section class="generated-template--packet-sheet__subsection">
+          <div class="generated-template--packet-sheet__grid">
+            <% important_information_rows.each do |label, value| %>
+              <% value_class =
+                   case label
+                   when "Date" then "generated-template--event-overview__dates"
+                   when "Location" then "generated-template--event-overview__location"
+                   when "Guest Count" then "generated-template--event-overview__guest-count"
+                   end %>
+              <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
+                <div class="generated-template--packet-sheet__grid-cell">
+                  <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label"><%= label %></p>
+                </div>
+                <div class="generated-template--packet-sheet__grid-cell">
+                  <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value <%= value_class %>"><%= value %></p>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </section>
+
+        <% if vip_rows.any? %>
+          <section class="generated-template--packet-sheet__subsection">
+            <div class="generated-template--packet-sheet__grid">
+              <% vip_rows.each do |label, value| %>
+                <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label"><%= label %></p>
+                  </div>
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value"><%= value %></p>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </section>
+        <% end %>
+
+        <% if style_rows.any? %>
+          <section class="generated-template--packet-sheet__subsection">
+            <div class="generated-template--packet-sheet__grid">
+              <% style_rows.each do |label, value| %>
+                <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column">
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label"><%= label %></p>
+                  </div>
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value"><%= value %></p>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </section>
+        <% end %>
+      </div>
+    </section>
+
+    <section class="generated-template--packet-sheet__section generated-template--event-overview__timeline">
+      <h2 class="generated-template--packet-sheet__section-title">Timeline</h2>
+      <% if milestone_items.any? %>
+        <div class="generated-template--packet-sheet__grid">
+          <% milestone_items.each do |item| %>
+            <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column generated-template--event-overview__timeline-row">
+              <div class="generated-template--packet-sheet__grid-cell">
+                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label generated-template--event-overview__timeline-label"><%= item.title %></p>
+              </div>
+              <div class="generated-template--packet-sheet__grid-cell">
+                <% timeline_time = generated_event_overview_timeline_time(item, milestone_timezone) %>
+                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail generated-template--event-overview__timeline-time"><%= timeline_time.sub(" to ", " <em>to</em> ").html_safe %></p>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="generated-template--packet-sheet__empty">No milestone items are available for this event yet.</p>
+      <% end %>
+    </section>
+
+    <section class="generated-template--packet-sheet__section">
+      <h2 class="generated-template--packet-sheet__section-title">Planner Contact</h2>
+      <% lead_planner = planners.find { |planner| planner[:lead] } %>
+      <% if lead_planner %>
+        <div class="generated-template--packet-sheet__grid">
+          <article>
+            <div class="generated-template--packet-sheet__grid-row">
+              <div class="generated-template--packet-sheet__grid-cell">
+                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Planning, Design &amp; Coordination</p>
+              </div>
+              <div class="generated-template--packet-sheet__grid-cell">
+                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__planner-name">Pineapple Productions</p>
+                <p class="generated-template--packet-sheet__text generated-template--event-overview__planner-contact-name">
+                  <em><%= lead_planner[:name] %></em>
+                </p>
+              </div>
+              <div class="generated-template--packet-sheet__grid-cell">
+                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail generated-template--event-overview__planner-handle">@pineappleprodc</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      <% else %>
+        <p class="generated-template--packet-sheet__empty">No lead planner is linked to this event yet.</p>
+      <% end %>
+    </section>
+
+    <section class="generated-template--packet-sheet__section">
+      <h2 class="generated-template--packet-sheet__section-title">Vendor Contacts</h2>
+      <% if vendors.any? %>
+        <div class="generated-template--packet-sheet__grid">
+          <% vendors.each do |vendor| %>
+            <% first_contact = vendor[:contacts].first %>
+            <% remaining_contacts = vendor[:contacts].drop(1) %>
+            <% label_text = vendor[:vendor_type].presence %>
+
+            <article>
+              <div class="generated-template--packet-sheet__grid-row">
+                <div class="generated-template--packet-sheet__grid-cell">
+                  <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label"><%= label_text %></p>
+                </div>
+                <div class="generated-template--packet-sheet__grid-cell">
+                  <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__vendor-name"><%= vendor[:name] %></p>
+                  <% if first_contact %>
+                    <p class="generated-template--packet-sheet__text generated-template--event-overview__vendor-contact-name">
+                      <em><%= first_contact[:name].presence || first_contact[:title].presence || "Primary contact" %></em>
+                    </p>
+                  <% else %>
+                    <p class="generated-template--packet-sheet__text generated-template--event-overview__vendor-contact-name generated-template--event-overview__vendor-contact-name--empty" aria-hidden="true">&nbsp;</p>
+                  <% end %>
+                </div>
+                <div class="generated-template--packet-sheet__grid-cell">
+                  <% if vendor[:social_handle].present? %>
+                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail"><%= vendor[:social_handle] %></p>
+                  <% end %>
+                </div>
+              </div>
+
+              <% remaining_contacts.each do |contact| %>
+                <div class="generated-template--packet-sheet__grid-row">
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label"></p>
+                  </div>
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text generated-template--event-overview__vendor-contact-name">
+                      <em><%= contact[:name].presence || contact[:title].presence || "Additional contact" %></em>
+                    </p>
+                  </div>
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <% if vendor[:social_handle].present? %>
+                      <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail"><%= vendor[:social_handle] %></p>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </article>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="generated-template--packet-sheet__empty">No vendor contacts are available for this event yet.</p>
+      <% end %>
+    </section>
+
+    <% if generated_packet_rich_text_present?(@event.social_media_policy) %>
+      <section class="generated-template--packet-sheet__section">
+        <h2 class="generated-template--packet-sheet__section-title">Social Media Policy</h2>
+        <div class="generated-template--packet-sheet__content generated-template--packet-sheet__rich-text generated-template--event-overview__social-media">
+          <%= render_generated_packet_rich_text(@event.social_media_policy) %>
+        </div>
+      </section>
+    <% end %>
+
+    <% if generated_packet_rich_text_present?(@event.parking_details) %>
+      <section class="generated-template--packet-sheet__section">
+        <h2 class="generated-template--packet-sheet__section-title">PARKING &amp; GETTING THERE</h2>
+        <div class="generated-template--packet-sheet__content generated-template--packet-sheet__rich-text generated-template--event-overview__parking">
+          <%= render_generated_packet_rich_text(@event.parking_details) %>
+        </div>
+      </section>
+    <% end %>
+  </div>
 </section>

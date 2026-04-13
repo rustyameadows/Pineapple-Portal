@@ -24,7 +24,6 @@ class EventCalendar < ApplicationRecord
 
   before_validation :set_default_timezone
   before_validation :generate_slug, if: -> { slug.blank? && name.present? }
-
   scope :master, -> { where(kind: KINDS[:master]) }
   scope :derived, -> { where(kind: KINDS[:derived]) }
 
@@ -68,4 +67,5 @@ class EventCalendar < ApplicationRecord
 
     errors.add(:template_source_id, "must reference an existing calendar template")
   end
+
 end

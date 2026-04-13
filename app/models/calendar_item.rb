@@ -24,7 +24,6 @@ class CalendarItem < ApplicationRecord
 
   before_validation :default_relative_offset
   before_save :sync_tag_summary
-
   STATUSES = {
     planned: "planned",
     to_be_confirmed: "to_be_confirmed",
@@ -148,4 +147,5 @@ class CalendarItem < ApplicationRecord
   rescue ArgumentError
     value
   end
+
 end

@@ -113,8 +113,6 @@
 
 .event-section {
   background: var(--color-white);
-  border: 1px solid var(--color-sea-foam);
-  border-radius: var(--radius-lg);
   padding: 2.5rem;
   display: grid;
   gap: 2rem;
@@ -157,6 +155,16 @@
   border-radius: var(--radius-pill);
   background: var(--color-dark-brown);
   color: var(--color-light-cream);
+  cursor: pointer;
+}
+
+button.event-section__cta,
+input.event-section__cta {
+  border: none;
+  font-family: inherit;
+  line-height: inherit;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .event-section__cta:hover,

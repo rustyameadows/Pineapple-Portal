@@ -119,6 +119,13 @@ post "upload_failures", to: "upload_failures#create"
       end
     end
 
+    resources :event_guests, only: %i[create update destroy], module: :events do
+      member do
+        patch :move_up
+        patch :move_down
+      end
+    end
+
     resources :event_venues, only: %i[create update destroy], module: :events do
       member do
         patch :move_up
@@ -161,11 +168,16 @@ post "upload_failures", to: "upload_failures#create"
       resources :generated, param: :logical_id, controller: :generated do
         member do
           post :compile
+          post :snapshot, action: :compile
+          get :working_pdf
+          get :working_status
           post :duplicate
           post :mark_template
           delete :unmark_template
         end
         collection do
+          get :library
+          post :add_default_packets
           post :create_from_template
         end
 
@@ -173,6 +185,7 @@ post "upload_failures", to: "upload_failures#create"
                   controller: "generated/builds",
                   only: [:destroy] do
           member do
+            get :status
             patch :cancel
           end
         end
@@ -185,7 +198,7 @@ post "upload_failures", to: "upload_failures#create"
           end
 
           member do
-            post :render_pdf
+            post :duplicate
             get :preview
             get :cached_pdf
           end

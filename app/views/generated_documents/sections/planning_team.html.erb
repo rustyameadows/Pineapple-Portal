@@ -1,26 +1,22 @@
 <% if local_assigns.fetch(:render_base_styles, true) %>
   <%= render "generated_documents/sections/base_styles" %>
 <% end %>
+<%= render "generated_documents/sections/packet_sheet_styles" %>
 
 <style>
-  .generated-template--planning-team {
-    gap: 1.6rem;
-    --generated-document-content-padding-x: 0.15in;
-    --generated-document-content-padding-top: 0.5in;
-    --generated-document-content-padding-bottom: 1in;
+  .generated-template--planning-team.generated-template--packet-sheet {
+    gap: 0.16in;
+    --generated-document-content-padding-top: 0.28in;
+    --generated-document-content-padding-bottom: 0.55in;
   }
 
   .generated-template--planning-team__grid {
     display: grid;
-    gap: 0.9rem;
+    gap: 0.12in;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 
   .generated-template--planning-team__card {
-    border: 1px solid rgba(45, 28, 18, 0.12);
-    border-radius: 0.55rem;
-    background: rgba(255, 255, 255, 0.9);
-    overflow: hidden;
     display: flex;
     flex-direction: column;
     text-align: center;
@@ -47,22 +43,24 @@
   }
 
   .generated-template--planning-team__details {
-    padding: 1rem 1.1rem 1.3rem;
+    padding: 0.12in 0.05in 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.08in;
   }
 
   .generated-template--planning-team__name {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
+    line-height: 1.1;
     letter-spacing: 0.05em;
   }
 
   .generated-template--planning-team__title {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.92rem;
+    line-height: 1.1;
     color: rgba(45, 28, 18, 0.75);
   }
 
@@ -72,7 +70,7 @@
   }
 </style>
 
-<div class="generated-template generated-template--planning-team">
+<div class="generated-template generated-template--packet-sheet generated-template--planning-team">
   <%= render "generated_documents/sections/page_header", segment: @segment %>
   <% planners = @event.planner_team_members.includes(:user) %>
   <% if planners.any? %>

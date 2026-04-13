@@ -1,10 +1,18 @@
+<% form_url = local_assigns.fetch(:form_url) do
+     @document.persisted? ? event_documents_generated_path(@event, @document.logical_id) : event_documents_generated_index_path(@event)
+   end %>
+<% form_method = local_assigns.fetch(:form_method, @document.persisted? ? :patch : :post) %>
+<% container_noun = @document.group_container? ? "group" : "packet" %>
+<% submit_label = local_assigns.fetch(:submit_label, @document.persisted? ? "Save #{container_noun}" : "Create #{container_noun}") %>
+
 <%= form_with model: @document,
-              url: event_documents_generated_index_path(@event),
+              url: form_url,
+              method: form_method,
               local: true,
               class: "generated-doc__form" do |form| %>
   <% if form.object.errors.any? %>
     <div class="form-errors">
-      <p><strong><%= pluralize(form.object.errors.count, "error") %></strong> prevented the document from being saved:</p>
+      <p><strong><%= pluralize(form.object.errors.count, "error") %></strong> prevented the packet from being saved:</p>
       <ul>
         <% form.object.errors.full_messages.each do |message| %>
           <li><%= message %></li>
@@ -14,16 +22,18 @@
   <% end %>
 
   <div class="form-field">
-    <%= form.label :title, "Document title" %>
-    <%= form.text_field :title, required: true, autofocus: true %>
+    <%= form.label :title, "#{container_noun.capitalize} title" %>
+    <%= form.text_field :title, required: true, autofocus: !@document.persisted? %>
   </div>
 
-  <div class="form-field form-field--inline">
-    <%= form.check_box :client_visible %>
-    <%= form.label :client_visible, "Share latest version with clients" %>
-  </div>
+  <% unless @document.group_container? %>
+    <div class="form-field form-field--inline">
+      <%= form.check_box :client_visible %>
+      <%= form.label :client_visible, "Share latest version with clients" %>
+    </div>
+  <% end %>
 
   <div class="form-actions">
-    <%= form.submit "Create generated document", class: "button button--primary" %>
+    <%= form.submit submit_label, class: "button button--primary" %>
   </div>
 <% end %>

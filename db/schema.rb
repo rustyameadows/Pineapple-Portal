@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_08_223100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -45,7 +45,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
     t.index ["document_logical_id"], name: "index_attachments_on_document_logical_id"
     t.index ["entity_type", "entity_id", "context", "position"], name: "index_attachments_on_entity_scope", unique: true
     t.index ["entity_type", "entity_id"], name: "index_attachments_on_entity"
-    t.check_constraint "context::text = ANY (ARRAY['prompt'::character varying, 'help_text'::character varying, 'answer'::character varying, 'other'::character varying]::text[])", name: "attachments_context_valid"
+    t.check_constraint "context::text = ANY (ARRAY['prompt'::character varying::text, 'help_text'::character varying::text, 'answer'::character varying::text, 'other'::character varying::text])", name: "attachments_context_valid"
     t.check_constraint "document_id IS NOT NULL AND document_logical_id IS NULL OR document_id IS NULL AND document_logical_id IS NOT NULL", name: "attachments_exactly_one_document_reference"
   end
 
@@ -89,6 +89,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
     t.string "status", default: "planned", null: false
     t.string "additional_team_members"
     t.string "time_caption"
+    t.string "transportation_note"
     t.index ["event_calendar_id", "position"], name: "index_calendar_items_on_calendar_and_position"
     t.index ["event_calendar_id"], name: "index_calendar_items_on_event_calendar_id"
     t.index ["relative_anchor_id"], name: "index_calendar_items_on_relative_anchor_id"
@@ -180,8 +181,19 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
     t.bigint "built_by_user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "progress_stage"
+    t.string "progress_message"
+    t.integer "progress_current"
+    t.integer "progress_total"
+    t.datetime "last_progress_at"
+    t.string "build_kind", default: "snapshot", null: false
+    t.string "storage_uri"
+    t.string "manifest_hash"
+    t.boolean "page_numbers", default: true, null: false
     t.index ["build_id"], name: "index_document_builds_on_build_id", unique: true
+    t.index ["build_kind"], name: "index_document_builds_on_build_kind"
     t.index ["built_by_user_id"], name: "index_document_builds_on_built_by_user_id"
+    t.index ["document_id", "build_kind", "created_at"], name: "index_document_builds_on_document_id_build_kind_created_at"
     t.index ["document_id"], name: "index_document_builds_on_document_id"
   end
 
@@ -241,15 +253,31 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
     t.integer "compiled_page_count"
     t.boolean "financial_portal_visible", default: false, null: false
     t.boolean "packets_portal_visible", default: false, null: false
+    t.integer "packet_schema_version", default: 1, null: false
+    t.string "working_storage_uri"
+    t.string "working_manifest_hash"
+    t.string "working_checksum_sha256"
+    t.integer "working_page_count"
+    t.integer "working_file_size"
+    t.datetime "working_rendered_at"
+    t.string "working_status", default: "missing", null: false
+    t.datetime "working_refresh_requested_at"
+    t.datetime "working_refresh_started_at"
+    t.text "working_refresh_error"
+    t.string "packet_container_kind", default: "packet", null: false
     t.index ["build_id"], name: "index_documents_on_build_id"
     t.index ["client_visible"], name: "index_documents_on_client_visible"
     t.index ["doc_kind"], name: "index_documents_on_doc_kind"
     t.index ["event_id"], name: "index_documents_on_event_id"
     t.index ["logical_id", "version"], name: "index_documents_on_logical_id_and_version", unique: true
     t.index ["logical_id"], name: "index_documents_on_logical_id_latest", unique: true, where: "(is_latest = true)"
+    t.index ["packet_container_kind"], name: "index_documents_on_packet_container_kind"
+    t.index ["packet_schema_version"], name: "index_documents_on_packet_schema_version"
     t.index ["packets_portal_visible"], name: "index_documents_on_packets_portal_visible"
     t.index ["source"], name: "index_documents_on_source"
     t.index ["template_source_logical_id"], name: "index_documents_on_template_source_logical_id"
+    t.index ["working_manifest_hash"], name: "index_documents_on_working_manifest_hash"
+    t.index ["working_status"], name: "index_documents_on_working_status"
     t.check_constraint "size_bytes > 0", name: "documents_size_positive"
     t.check_constraint "version > 0", name: "documents_version_positive"
   end
@@ -299,7 +327,23 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
     t.index ["event_id"], name: "index_event_calendars_on_event_id_and_master", unique: true, where: "((kind)::text = 'master'::text)"
     t.index ["kind"], name: "index_event_calendars_on_kind"
     t.index ["template_source_id"], name: "index_event_calendars_on_template_source_id"
-    t.check_constraint "kind::text = ANY (ARRAY['master'::character varying, 'derived'::character varying]::text[])", name: "event_calendars_kind_check"
+    t.check_constraint "kind::text = ANY (ARRAY['master'::character varying::text, 'derived'::character varying::text])", name: "event_calendars_kind_check"
+  end
+
+  create_table "event_guests", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "kind", default: "key_person", null: false
+    t.string "first_name", null: false
+    t.string "last_name", null: false
+    t.string "relationship", null: false
+    t.boolean "vip", default: false, null: false
+    t.string "group_name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id", "kind"], name: "index_event_guests_on_event_id_and_kind"
+    t.index ["event_id", "position"], name: "index_event_guests_on_event_id_and_position"
+    t.index ["event_id"], name: "index_event_guests_on_event_id"
   end
 
   create_table "event_links", force: :cascade do |t|
@@ -381,11 +425,52 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
     t.string "location_secondary"
     t.boolean "financial_payments_enabled", default: false, null: false
     t.string "portal_slug"
+    t.string "guest_count"
+    t.string "attire"
+    t.string "style"
+    t.string "color_palette"
+    t.text "social_media_policy"
+    t.text "parking_details"
+    t.text "getting_ready_details"
+    t.string "key_people_label"
     t.index ["archived_at"], name: "index_events_on_archived_at"
     t.index ["event_photo_document_id"], name: "index_events_on_event_photo_document_id"
     t.index ["name"], name: "index_events_on_name"
     t.index ["portal_slug"], name: "index_events_on_portal_slug", unique: true
     t.check_constraint "jsonb_typeof(planning_link_keys) = 'array'::text", name: "events_planning_link_keys_array"
+  end
+
+  create_table "generated_packet_placements", force: :cascade do |t|
+    t.uuid "document_logical_id", null: false
+    t.bigint "generated_packet_source_id", null: false
+    t.integer "position", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_logical_id", "position"], name: "index_generated_packet_placements_on_document_and_position", unique: true
+    t.index ["document_logical_id"], name: "index_generated_packet_placements_on_document_logical_id"
+    t.index ["generated_packet_source_id"], name: "idx_on_generated_packet_source_id_886ca84844"
+    t.check_constraint "\"position\" > 0", name: "generated_packet_placements_position_positive"
+  end
+
+  create_table "generated_packet_sources", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.string "kind", null: false
+    t.string "source_category", null: false
+    t.string "canonical_key"
+    t.string "title", default: "", null: false
+    t.jsonb "source_ref", default: {}, null: false
+    t.jsonb "spec", default: {}, null: false
+    t.string "render_hash"
+    t.string "cached_pdf_key"
+    t.datetime "cached_pdf_generated_at"
+    t.integer "cached_page_count"
+    t.integer "cached_file_size"
+    t.string "last_render_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id", "canonical_key"], name: "index_generated_packet_sources_on_event_and_canonical", unique: true, where: "(canonical_key IS NOT NULL)"
+    t.index ["event_id"], name: "index_generated_packet_sources_on_event_id"
+    t.index ["render_hash"], name: "index_generated_packet_sources_on_render_hash"
   end
 
   create_table "global_assets", force: :cascade do |t|
@@ -549,6 +634,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
   add_foreign_key "event_calendar_views", "event_calendars", on_delete: :cascade
   add_foreign_key "event_calendars", "calendar_templates", column: "template_source_id", on_delete: :nullify
   add_foreign_key "event_calendars", "events"
+  add_foreign_key "event_guests", "events"
   add_foreign_key "event_links", "events"
   add_foreign_key "event_team_members", "events"
   add_foreign_key "event_team_members", "users"
@@ -557,6 +643,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_21_120000) do
   add_foreign_key "event_venues", "events"
   add_foreign_key "event_venues", "global_venues"
   add_foreign_key "events", "documents", column: "event_photo_document_id"
+  add_foreign_key "generated_packet_placements", "generated_packet_sources"
   add_foreign_key "global_assets", "users", column: "uploaded_by_id"
   add_foreign_key "password_reset_tokens", "users"
   add_foreign_key "password_reset_tokens", "users", column: "issued_by_id"

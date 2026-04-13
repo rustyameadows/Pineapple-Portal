@@ -8,7 +8,6 @@ class EventCalendarView < ApplicationRecord
 
   before_validation :generate_slug, if: -> { slug.blank? && name.present? }
   before_validation :normalize_tag_filter
-
   scope :client_visible, -> { where(client_visible: true) }
 
   private
@@ -50,4 +49,5 @@ class EventCalendarView < ApplicationRecord
     invalid_ids = tag_filter - valid_ids
     errors.add(:tag_filter, "contains unknown tags") if invalid_ids.any?
   end
+
 end

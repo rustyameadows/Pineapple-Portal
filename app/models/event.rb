@@ -2,9 +2,13 @@ class Event < ApplicationRecord
   has_many :questionnaires, dependent: :destroy
   has_many :questions, through: :questionnaires
   has_many :documents, dependent: :destroy
+  has_many :generated_packet_sources, dependent: :destroy
   has_many :attachments, as: :entity, dependent: :destroy
   has_many :event_links, -> { order(:position, :id) }, dependent: :destroy
   has_many :event_vendors,
+           -> { order(:position, :id) },
+           dependent: :destroy
+  has_many :event_guests,
            -> { order(:position, :id) },
            dependent: :destroy
   has_many :global_vendors, -> { distinct }, through: :event_vendors
@@ -40,8 +44,8 @@ class Event < ApplicationRecord
 
   validate :event_photo_document_must_be_image
   before_validation :sanitize_planning_link_tokens
+  before_save :normalize_metadata_fields
   validate :planning_link_keys_must_be_known
-
   PlanningLinkEntry = Struct.new(:token, :kind, :record, keyword_init: true)
 
   scope :active, -> { where(archived_at: nil) }
@@ -178,6 +182,21 @@ class Event < ApplicationRecord
     self.portal_slug = generate_portal_slug
   end
 
+  def normalize_metadata_fields
+    %i[
+      guest_count
+      attire
+      style
+      color_palette
+      key_people_label
+      social_media_policy
+      parking_details
+      getting_ready_details
+    ].each do |attribute_name|
+      self[attribute_name] = self[attribute_name].to_s.strip.presence
+    end
+  end
+
   def generate_portal_slug
     loop do
       candidate = SecureRandom.hex(6)
@@ -257,4 +276,5 @@ class Event < ApplicationRecord
 
     PlanningLinkToken.built_in(token)
   end
+
 end

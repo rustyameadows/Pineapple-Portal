@@ -8,7 +8,6 @@ class GlobalVendor < ApplicationRecord
   before_validation :normalize_name_fields
   before_validation :apply_contacts_attributes
   before_validation :ensure_contacts_default
-
   validates :name, presence: true
   validates :normalized_name, presence: true, uniqueness: { case_sensitive: true }
   validate :contacts_jsonb_must_be_array_of_hashes
@@ -74,4 +73,5 @@ class GlobalVendor < ApplicationRecord
 
     errors.add(:contacts_jsonb, "must be an array of contact hashes")
   end
+
 end

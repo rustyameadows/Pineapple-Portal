@@ -1,0 +1,174 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Generated packets</p>
+            <h1 class="event-section__title">Packet Library</h1>
+            <p class="event-section__lead">Browse shared canonicals, reusable packet pages, and uploaded packet assets for this event.</p>
+          </div>
+          <div class="event-section__actions">
+            <%= link_to "Back to packets", event_documents_generated_index_path(@event), class: "event-section__cta event-section__cta--secondary" %>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <% [
+               ["Canonical segments", @canonical_sources, :source],
+               ["Reusable pages", @page_sources, :source]
+             ].each do |label, sources, kind| %>
+            <article class="generated-builder__workspace-card" style="margin-bottom: 1.5rem;">
+              <div class="generated-builder__workspace-head">
+                <div>
+                  <h2><%= label %></h2>
+                </div>
+              </div>
+              <% if sources.any? %>
+                <table class="event-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Used in</th>
+                      <th>Insert</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% sources.each do |source| %>
+                      <% usage = Array(@source_usage_labels[source.id]) %>
+                      <tr>
+                        <td><%= source.display_title %></td>
+                        <td><%= usage.any? ? usage.join(", ") : "Not in any packets yet" %></td>
+                        <td>
+                          <% if @packet_definitions.any? %>
+                            <% @packet_definitions.each do |packet| %>
+                              <%= form_with scope: :segment,
+                                            url: event_documents_generated_segments_path(@event, packet.logical_id),
+                                            method: :post,
+                                            local: true,
+                                            style: "display: inline-block; margin: 0 0.35rem 0.35rem 0;" do |form| %>
+                                <%= form.hidden_field :source_id, value: source.id %>
+                                <%= form.submit "Insert into #{packet.title}", class: "button button--tiny button--ghost" %>
+                              <% end %>
+                            <% end %>
+                          <% else %>
+                            <span class="generated-builder__hint">Create a packet first.</span>
+                          <% end %>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              <% else %>
+                <p class="generated-builder__empty">Nothing here yet.</p>
+              <% end %>
+            </article>
+          <% end %>
+
+          <article class="generated-builder__workspace-card" style="margin-bottom: 1.5rem;">
+            <div class="generated-builder__workspace-head">
+              <div>
+                <h2>Groups</h2>
+              </div>
+            </div>
+            <% if @group_sources.any? %>
+              <table class="event-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Used in</th>
+                    <th>Manage</th>
+                    <th>Insert</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @group_sources.each do |source| %>
+                    <% usage = Array(@source_usage_labels[source.id]) %>
+                    <% group_document = source.group_document %>
+                    <tr>
+                      <td><%= source.display_title %></td>
+                      <td><%= usage.any? ? usage.join(", ") : "Not in any packets yet" %></td>
+                      <td>
+                        <% if group_document.present? %>
+                          <%= link_to "Manage",
+                                      edit_event_documents_generated_path(@event, group_document.logical_id),
+                                      class: "button button--tiny button--ghost" %>
+                        <% else %>
+                          <span class="generated-builder__hint">Missing group</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if @packet_definitions.any? %>
+                          <% @packet_definitions.each do |packet| %>
+                            <%= form_with scope: :segment,
+                                          url: event_documents_generated_segments_path(@event, packet.logical_id),
+                                          method: :post,
+                                          local: true,
+                                          style: "display: inline-block; margin: 0 0.35rem 0.35rem 0;" do |form| %>
+                              <%= form.hidden_field :source_id, value: source.id %>
+                              <%= form.submit "Insert into #{packet.title}", class: "button button--tiny button--ghost" %>
+                            <% end %>
+                          <% end %>
+                        <% else %>
+                          <span class="generated-builder__hint">Create a packet first.</span>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% else %>
+              <p class="generated-builder__empty">No shared groups yet.</p>
+            <% end %>
+          </article>
+
+          <article class="generated-builder__workspace-card">
+            <div class="generated-builder__workspace-head">
+              <div>
+                <h2>Uploaded packet assets</h2>
+              </div>
+            </div>
+            <% if @uploaded_pdf_documents.any? %>
+              <table class="event-table">
+                <thead>
+                  <tr>
+                    <th>PDF</th>
+                    <th>Used in</th>
+                    <th>Insert</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @uploaded_pdf_documents.each do |document| %>
+                    <% usage = Array(@upload_usage_labels[document.logical_id]) %>
+                    <tr>
+                      <td><%= document.title %></td>
+                      <td><%= usage.any? ? usage.join(", ") : "Not in any packets yet" %></td>
+                      <td>
+                        <% @packet_definitions.each do |packet| %>
+                          <%= form_with scope: :segment,
+                                        url: event_documents_generated_segments_path(@event, packet.logical_id),
+                                        method: :post,
+                                        local: true,
+                                        style: "display: inline-block; margin: 0 0.35rem 0.35rem 0;" do |form| %>
+                            <%= form.hidden_field :pdf_document_id, value: document.id %>
+                            <%= form.submit "Insert into #{packet.title}", class: "button button--tiny button--ghost" %>
+                          <% end %>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            <% else %>
+              <p class="generated-builder__empty">No uploaded PDFs yet.</p>
+            <% end %>
+          </article>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

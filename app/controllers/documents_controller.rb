@@ -1,4 +1,6 @@
 class DocumentsController < ApplicationController
+  include ClientPortalAuthentication
+
   before_action :set_event
   before_action :set_document, only: %i[show edit update destroy download]
   before_action :load_versions, only: %i[show edit update]
@@ -87,13 +89,12 @@ class DocumentsController < ApplicationController
   def authorize_download
     return if current_user&.planner_or_admin?
 
-    client_user = client_portal_user
-    if client_user && client_has_event_access?(client_user)
+    if current_client_user && client_can_access_event?(current_client_user, @event)
       return
     end
 
-    session.delete(:client_user_id) if session[:client_user_id].present? && client_user.nil?
-    redirect_to client_login_path, alert: "Please sign in to view this file."
+    reset_client_session if session[:client_user_id].present? && current_client_user.nil?
+    redirect_to client_login_path(return_to: request.fullpath), alert: "Please sign in to view this file."
   end
 
   def set_event
@@ -161,28 +162,8 @@ class DocumentsController < ApplicationController
     @event.documents.where(logical_id: logical_id, doc_kind: Document::DOC_KINDS[:uploaded]).order(version: :desc)
   end
 
-  def client_portal_user
-    return @client_portal_user if defined?(@client_portal_user)
-
-    @client_portal_user = if session[:client_user_id].present?
-                             User.clients.find_by(id: session[:client_user_id])
-                           else
-                             nil
-                           end
-  end
-
-  def client_has_event_access?(user)
-    user.events_as_team_member
-        .where(event_team_members: {
-          event_id: @event.id,
-          member_role: EventTeamMember::TEAM_ROLES[:client],
-          client_visible: true
-        })
-        .exists?
-  end
-
   def generated_manifest
-    generated_scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated])
+    generated_scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated], packet_container_kind: Document::PACKET_CONTAINER_KINDS[:packet])
     grouped = generated_scope.order(:logical_id, version: :asc).group_by(&:logical_id)
 
     grouped.filter_map do |logical_id, records|
@@ -199,7 +180,7 @@ class DocumentsController < ApplicationController
   end
 
   def latest_compiled_generated_documents
-    generated_scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated]).where.not(storage_uri: nil)
+    generated_scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated], packet_container_kind: Document::PACKET_CONTAINER_KINDS[:packet]).where.not(storage_uri: nil)
     grouped = generated_scope.order(version: :desc).group_by(&:logical_id)
     grouped.values.map { |versions| versions.max_by(&:version) }
   end

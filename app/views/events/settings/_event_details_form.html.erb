@@ -50,6 +50,26 @@
       <%= form.date_field :ends_on %>
     </div>
 
+    <div class="event-settings__field">
+      <%= form.label :guest_count, "Guest Count" %>
+      <%= form.text_field :guest_count, maxlength: 150, placeholder: "150 guests" %>
+    </div>
+
+    <div class="event-settings__field">
+      <%= form.label :attire, "Attire" %>
+      <%= form.text_field :attire, maxlength: 150, placeholder: "Black Tie Optional" %>
+    </div>
+
+    <div class="event-settings__field">
+      <%= form.label :style, "Style" %>
+      <%= form.text_field :style, maxlength: 150, placeholder: "Romantic garden party" %>
+    </div>
+
+    <div class="event-settings__field">
+      <%= form.label :color_palette, "Color Palette" %>
+      <%= form.text_field :color_palette, maxlength: 150, placeholder: "Sage, cream, and soft peach" %>
+    </div>
+
     <div class="event-settings__field event-settings__field--photo-select">
       <%= form.label :event_photo_document_id, "Event Photo" %>
       <%= form.select :event_photo_document_id,
@@ -57,6 +77,32 @@
                       include_blank: "None" %>
       <p class="event-settings__hint">Select an existing image or upload a new one below.</p>
     </div>
+  </div>
+
+  <div class="event-settings__details-notes">
+    <%= render "events/settings/markdown_field",
+               form:,
+               field_name: :social_media_policy,
+               label_text: "Social Media Policy",
+               rows: 4,
+               placeholder: "Share any posting guidelines, embargo rules, or vendor tagging expectations.",
+               hint_text: "Use this for planner-facing posting rules or social sharing guardrails." %>
+
+    <%= render "events/settings/markdown_field",
+               form:,
+               field_name: :parking_details,
+               label_text: "Parking Details",
+               rows: 4,
+               placeholder: "Note unloading zones, valet instructions, parking lots, or access notes.",
+               hint_text: "Include the arrival, unloading, and parking instructions your team needs on hand." %>
+
+    <%= render "events/settings/markdown_field",
+               form:,
+               field_name: :getting_ready_details,
+               label_text: "Getting Ready Details",
+               rows: 5,
+               placeholder: "Capture room assignments, arrival timing, and any prep-specific logistics.",
+               hint_text: "Use this for room locations, prep timing, and any special getting-ready logistics." %>
   </div>
 
   <div class="event-settings__form-actions event-settings__form-actions--details">

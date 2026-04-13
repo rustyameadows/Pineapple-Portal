@@ -163,6 +163,7 @@ module Events
         :status,
         :additional_team_members,
         :time_caption,
+        :transportation_note,
         team_member_ids: []
       )
     end

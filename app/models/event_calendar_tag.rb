@@ -9,7 +9,7 @@ class EventCalendarTag < ApplicationRecord
 
   before_validation :normalize_name
   before_validation :default_position, on: :create
-
+  after_commit :refresh_calendar_item_tag_summaries, on: :update, if: :saved_change_to_name?
   private
 
   def normalize_name
@@ -21,4 +21,9 @@ class EventCalendarTag < ApplicationRecord
 
     self.position = (event_calendar&.event_calendar_tags&.maximum(:position) || -1) + 1
   end
+
+  def refresh_calendar_item_tag_summaries
+    calendar_items.find_each(&:refresh_tag_summary!)
+  end
+
 end

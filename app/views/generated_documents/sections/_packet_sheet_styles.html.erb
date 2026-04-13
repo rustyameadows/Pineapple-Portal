@@ -1,0 +1,233 @@
+<style>
+  .generated-template--packet-sheet {
+    gap: 0.14in;
+    font-size: 12px;
+    line-height: 14.4px;
+    background: var(--color-white, #ffffff);
+    color: #5b4639;
+    --generated-document-content-padding-x: 0.24in;
+    --generated-document-content-padding-top: 0.28in;
+    --generated-document-content-padding-bottom: 0.32in;
+  }
+
+  .generated-template--packet-sheet .generated-template__page-header {
+    justify-items: start;
+    text-align: left;
+    gap: 0.04in;
+    padding-bottom: 0.06in;
+    border-bottom: 1px solid rgba(91, 70, 57, 0.55);
+  }
+
+  .generated-template--packet-sheet .generated-template__page-header-logo {
+    display: none;
+  }
+
+  .generated-template--packet-sheet .generated-template__page-header-title {
+    font-family: var(--font-family-body, "BaskervilleNo2", "Times New Roman", serif);
+    font-size: 0.24in;
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    color: #6a533f;
+  }
+
+  .generated-template--packet-sheet__stack,
+  .generated-template--packet-sheet__one-column {
+    display: grid;
+    gap: 0.12in;
+  }
+
+  .generated-template--packet-sheet__two-column {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.12in;
+    align-items: start;
+  }
+
+  .generated-template--packet-sheet__section {
+    display: grid;
+    gap: 0;
+    break-inside: avoid;
+  }
+
+  .generated-template.generated-template--packet-sheet h2.generated-template--packet-sheet__section-title {
+    margin: 0;
+    padding: 0.03in 0.06in;
+    background: #bea075;
+    color: #5a4330;
+    font-family: var(--font-family-body, "BaskervilleNo2", "Times New Roman", serif);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.25px;
+    line-height: 15px;
+    text-transform: uppercase;
+  }
+
+  .generated-template--packet-sheet__content,
+  .generated-template--packet-sheet__grid {
+    display: grid;
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .generated-template--packet-sheet__subsection + .generated-template--packet-sheet__subsection {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .generated-template--packet-sheet__subsection {
+    display: grid;
+    break-inside: avoid;
+  }
+
+  .generated-template.generated-template--packet-sheet h3.generated-template--packet-sheet__subsection-title {
+    margin: 0;
+    padding: 5px 6px;
+    background: #f4f1ed;
+    color: #5b4639;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    line-height: 15px;
+    text-transform: uppercase;
+  }
+
+  .generated-template--packet-sheet__body {
+    display: grid;
+    gap: 8px;
+    padding: 0.04in 0.055in 0.05in;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .generated-template--packet-sheet__rich-text {
+    display: grid;
+    gap: 0;
+  }
+
+  .generated-template--packet-sheet__rich-text > * {
+    margin: 0;
+  }
+
+  .generated-template.generated-template--packet-sheet .generated-template--packet-sheet__rich-text p,
+  .generated-template.generated-template--packet-sheet .generated-template--packet-sheet__rich-text li {
+    margin: 0;
+    font-size: 12px;
+    line-height: 13.5px;
+    color: #5f4836;
+  }
+
+  .generated-template--packet-sheet__rich-text strong {
+    font-weight: 600;
+  }
+
+  .generated-template--packet-sheet__rich-text em {
+    color: #735d49;
+    font-style: italic;
+  }
+
+  .generated-template--packet-sheet__rich-text a {
+    color: #5a4330;
+    text-decoration: underline;
+    text-underline-offset: 1px;
+  }
+
+  .generated-template.generated-template--packet-sheet .generated-template--packet-sheet__content.generated-template--packet-sheet__rich-text h3.generated-template--packet-sheet__subsection-title {
+    padding-left: calc(0.06in - 1px);
+    padding-right: calc(0.06in - 1px);
+  }
+
+  .generated-template--packet-sheet__content.generated-template--packet-sheet__rich-text > .generated-template--packet-sheet__subsection + .generated-template--packet-sheet__subsection {
+    border-top: none;
+  }
+
+  .generated-template.generated-template--packet-sheet p.generated-template--packet-sheet__text {
+    margin: 0;
+    font-size: 12px;
+    line-height: 13.5px;
+    color: #5f4836;
+  }
+
+  .generated-template.generated-template--packet-sheet p.generated-template--packet-sheet__text.generated-template--packet-sheet__text--event-card {
+    line-height: 16px;
+  }
+
+  .generated-template--packet-sheet__text strong {
+    font-weight: 600;
+  }
+
+  .generated-template--packet-sheet__text em {
+    color: #735d49;
+    font-style: italic;
+  }
+
+  .generated-template--packet-sheet__text u {
+    text-underline-offset: 1px;
+  }
+
+  .generated-template--packet-sheet__text--label {
+    text-align: right;
+    color: #7a6551;
+    white-space: pre-line;
+  }
+
+  .generated-template--packet-sheet__text--value {
+    font-weight: 600;
+    white-space: pre-line;
+  }
+
+  .generated-template--packet-sheet__text--detail {
+    white-space: pre-line;
+  }
+
+  .generated-template--packet-sheet__text--muted {
+    color: #735d49;
+    font-style: italic;
+  }
+
+  .generated-template--packet-sheet__grid-row {
+    display: grid;
+    grid-template-columns: 1.05fr 2.1fr 1.15fr;
+    align-items: stretch;
+    min-height: 0.18in;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    break-inside: avoid;
+  }
+
+  .generated-template--packet-sheet__grid-row--two-column {
+    grid-template-columns: 1.05fr 3.25fr;
+  }
+
+  .generated-template--packet-sheet__grid-row--roster {
+    grid-template-columns: 1.7fr 2fr;
+  }
+
+  .generated-template--packet-sheet__grid-cell {
+    display: grid;
+    align-content: center;
+    gap: 1px;
+    padding: 1px 4px;
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    box-sizing: border-box;
+  }
+
+  .generated-template--packet-sheet__grid-row .generated-template--packet-sheet__grid-cell:last-child {
+    border-right: none;
+  }
+
+  .generated-template.generated-template--packet-sheet p.generated-template--packet-sheet__empty {
+    margin: 0;
+    padding: 0.06in;
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    font-size: 12px;
+    line-height: 14.4px;
+    color: #7a6551;
+    font-style: italic;
+  }
+
+  .generated-template--packet-sheet__link {
+    color: #6b523d;
+    text-decoration: underline;
+  }
+</style>

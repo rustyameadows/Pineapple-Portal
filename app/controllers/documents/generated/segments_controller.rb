@@ -3,78 +3,95 @@ module Documents
     class SegmentsController < ApplicationController
       before_action :set_event
       before_action :set_document
-      before_action :set_segment, only: %i[render_pdf update destroy preview cached_pdf]
+      before_action :ensure_source_backed_document!
+      before_action :set_placement, only: %i[update destroy preview cached_pdf duplicate]
 
       def create
-        @segment = segments_scope.new
-        assign_segment_payload(@segment, segment_params)
+        source = build_source_from_params(segment_params)
+        placement = placements_scope.new(source: source)
 
-        if @segment.errors.empty? && @segment.save
-          DocumentSegment.resequence!(@document.logical_id)
-          redirect_to builder_path, notice: "Segment added."
+        if source.errors.none? && placement.save
+          refresh_after_create!(source)
+          redirect_to safe_return_to(fallback: builder_path), notice: "#{source.group? ? 'Group' : 'Page'} added."
         else
-          redirect_to builder_path, alert: @segment.errors.full_messages.to_sentence
+          message = source.errors.full_messages + placement.errors.full_messages
+          redirect_to safe_return_to(fallback: builder_path), alert: message.uniq.to_sentence
         end
       end
 
       def update
-        assign_segment_payload(@segment, segment_params)
+        assign_source_payload(@placement.source, segment_params)
 
-        if @segment.errors.empty? && @segment.save
-          redirect_to builder_path, notice: "Segment updated."
+        if @placement.source.errors.empty? && @placement.source.save
+          enqueue_working_refresh_for_source(@placement.source)
+          redirect_to safe_return_to(fallback: builder_path), notice: "#{@placement.source.group? ? 'Group' : 'Page'} updated."
         else
-          redirect_to builder_path, alert: @segment.errors.full_messages.to_sentence
+          redirect_to safe_return_to(fallback: builder_path), alert: @placement.source.errors.full_messages.to_sentence
         end
       end
 
       def destroy
-        @segment.destroy
-        DocumentSegment.resequence!(@document.logical_id)
-        redirect_to builder_path, notice: "Segment removed."
+        @placement.destroy
+        resequence_placements!
+        if @document.packet_container? && placements_scope.none?
+          @document.clear_working_copy!
+        else
+          refresh_after_structure_change!
+        end
+        redirect_to safe_return_to(fallback: builder_path), notice: "#{@placement.source.group? ? 'Group' : 'Page'} removed."
       end
 
-      def render_pdf
-        RenderSegmentJob.perform_later(@segment.id)
-        redirect_to builder_path, notice: "Segment render queued."
-      rescue StandardError => e
-        redirect_to builder_path, alert: "Unable to render segment: #{e.message}"
+      def duplicate
+        source = duplicate_source(@placement.source)
+        new_position = @placement.position + 1
+
+        GeneratedPacketPlacement.transaction do
+          placements_scope.where("position >= ?", new_position).update_all("position = position + 1")
+          placements_scope.create!(source: source, position: new_position)
+          resequence_placements!
+        end
+        refresh_after_structure_change!
+
+        redirect_to safe_return_to(fallback: builder_path), notice: "#{source.group? ? 'Group' : 'Page'} duplicated."
       end
 
       def reorder
         ordered_ids = extract_order_ids
+        return head :unprocessable_entity if ordered_ids.empty?
 
-        if ordered_ids.empty?
-          head :unprocessable_entity
-          return
-        end
+        GeneratedPacketPlacement.transaction do
+          temp_position = placements_scope.maximum(:position).to_i + ordered_ids.length + 5
 
-        DocumentSegment.transaction do
-          temp_position = segments_scope.maximum(:position).to_i + ordered_ids.length + 5
-
-          ordered_ids.each do |segment_id|
-            segments_scope.where(id: segment_id).update_all(position: temp_position)
+          ordered_ids.each do |placement_id|
+            placements_scope.where(id: placement_id).update_all(position: temp_position)
             temp_position += 1
           end
 
-          ordered_ids.each_with_index do |segment_id, index|
-            segments_scope.where(id: segment_id).update_all(position: index + 1)
+          ordered_ids.each_with_index do |placement_id, index|
+            placements_scope.where(id: placement_id).update_all(position: index + 1)
           end
 
-          DocumentSegment.resequence!(@document.logical_id)
+          resequence_placements!
         end
+        refresh_after_structure_change!
 
         head :ok
       end
 
       def preview
-        if @segment.html_view?
-          view_config = @segment.html_view_config
+        source = @placement.source
+
+        if source.group?
+          preview_group(source)
+        elsif source.html_view?
+          view_config = source.html_view_config
           if view_config
+            @segment = source
             render template: view_config[:template], layout: "generated_preview"
           else
             head :not_found
           end
-        elsif @segment.pdf_asset? && (document = find_pdf_document(@segment.pdf_document_id))
+        elsif source.pdf_asset? && (document = find_pdf_document(source.pdf_document_id || source.pdf_logical_id))
           redirect_to download_event_document_path(@event, document)
         else
           head :not_found
@@ -82,15 +99,22 @@ module Documents
       end
 
       def cached_pdf
-        unless @segment.cached?
-          redirect_to builder_path, alert: "Segment has not been rendered yet."
+        source = @placement.source
+
+        if source.group?
+          redirect_to safe_return_to(fallback: builder_path), alert: "Groups do not have cached page renders."
           return
         end
 
-        url = storage.presigned_download_url(@segment.cached_pdf_key)
+        unless source.cached?
+          redirect_to safe_return_to(fallback: builder_path), alert: "Page has not been rendered yet."
+          return
+        end
+
+        url = storage.presigned_download_url(source.cached_pdf_key)
         redirect_to url, allow_other_host: true
       rescue StandardError => e
-        redirect_to builder_path, alert: "Unable to fetch cached PDF: #{e.message}"
+        redirect_to safe_return_to(fallback: builder_path), alert: "Unable to fetch cached PDF: #{e.message}"
       end
 
       private
@@ -102,65 +126,174 @@ module Documents
       def set_document
         logical_id = params[:logical_id] || params[:generated_id] || params[:generated_logical_id]
         scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated])
-        @document = scope.find_by(logical_id: logical_id)
+        @document = scope.find_by(logical_id: logical_id, storage_uri: nil)
+        @document ||= scope.where(logical_id: logical_id).order(version: :asc).first
         raise ActiveRecord::RecordNotFound unless @document
       end
 
-      def set_segment
-        @segment = segments_scope.find(params[:id])
+      def ensure_source_backed_document!
+        return if @document.packet_source_backed?
+
+        Documents::Generated::LegacyPacketMigrator.new(document: @document).call
+        @document.reload
       end
 
-      def segments_scope
-        DocumentSegment.where(document_logical_id: @document.logical_id)
+      def set_placement
+        @placement = placements_scope.find(params[:id])
       end
 
-      def assign_segment_payload(segment, attrs)
-        segment.title = attrs[:title] if attrs.key?(:title)
+      def placements_scope
+        GeneratedPacketPlacement.where(document_logical_id: @document.logical_id)
+      end
 
-        if segment.new_record?
-          segment.kind = attrs[:kind]
-          segment.position = segments_scope.maximum(:position).to_i + 1
+      def build_source_from_params(attrs)
+        existing_source = find_existing_source(attrs[:source_id])
+        return existing_source if existing_source
+
+        uploaded_document = build_uploaded_document(attrs)
+        if uploaded_document == :invalid_upload
+          return invalid_source_with_errors
+        elsif uploaded_document.present?
+          return GeneratedPacketSource.find_or_create_upload_source!(@event, uploaded_document, title: attrs[:title])
         end
 
-        unless DocumentSegment::KINDS.value?(segment.kind)
-          segment.errors.add(:base, "Choose a segment type.")
-          return
+        if (pdf_document = find_pdf_document(attrs[:pdf_document_id] || attrs[:document_id]))
+          return GeneratedPacketSource.find_or_create_upload_source!(@event, pdf_document, title: attrs[:title])
         end
 
-        case segment.kind
-        when DocumentSegment::KINDS[:pdf_asset]
-          assign_pdf_payload(segment, attrs)
-        when DocumentSegment::KINDS[:html_view]
-          assign_html_payload(segment, attrs)
+        group_source = build_group_source(attrs)
+        return group_source if group_source
+
+        build_page_source(attrs)
+      end
+
+      def build_uploaded_document(attrs)
+        upload_attrs = file_upload_params(attrs)
+        return if upload_attrs.blank?
+
+        document = @event.documents.new(upload_attrs.merge(source: "staff_upload", doc_kind: Document::DOC_KINDS[:uploaded]))
+        return document if document.save
+
+        @invalid_source = @event.generated_packet_sources.new
+        document.errors.full_messages.each { |message| @invalid_source.errors.add(:base, message) }
+        :invalid_upload
+      end
+
+      def build_page_source(attrs)
+        unless GeneratedPacketSource.page_view_keys.include?(attrs[:view_key].to_s)
+          return @event.generated_packet_sources.new.tap do |source|
+            source.errors.add(:base, "Choose a page type.")
+          end
+        end
+
+        source = GeneratedPacketSource.build_page_source(
+          event: @event,
+          view_key: attrs[:view_key],
+          title: attrs[:title],
+          options: sanitize_html_view_options(attrs[:view_key], normalize_options(attrs[:options]))
+        )
+
+        source.save
+        source
+      end
+
+      def build_group_source(attrs)
+        group_title = attrs[:group_title].to_s.strip
+        return if group_title.blank?
+
+        if @document.group_container?
+          return @event.generated_packet_sources.new.tap do |source|
+            source.errors.add(:base, "Groups cannot contain other groups.")
+          end
+        end
+
+        result = Documents::Generated::GroupBuilder.new(
+          event: @event,
+          title: group_title,
+          built_by_user: current_user
+        ).call
+        result.source
+      rescue ActiveRecord::RecordInvalid => e
+        invalid = @event.generated_packet_sources.new
+        e.record.errors.full_messages.each { |message| invalid.errors.add(:base, message) }
+        invalid
+      end
+
+      def assign_source_payload(source, attrs)
+        case source.kind
+        when GeneratedPacketSource::KINDS[:pdf_asset]
+          source.title = attrs[:title] if attrs.key?(:title) && attrs[:title].present?
+          assign_pdf_payload(source, attrs)
+        when GeneratedPacketSource::KINDS[:html_view]
+          source.title = attrs[:title] if attrs.key?(:title) && attrs[:title].present?
+          assign_html_payload(source, attrs)
+        when GeneratedPacketSource::KINDS[:group]
+          assign_group_payload(source, attrs)
         end
       end
 
-      def assign_pdf_payload(segment, attrs)
-        pdf_id = attrs[:pdf_document_id].presence || attrs[:document_id]
-        document = find_pdf_document(pdf_id)
-
-        if document
-          segment.assign_pdf_document(document)
+      def assign_pdf_payload(source, attrs)
+        pdf_document = find_pdf_document(attrs[:pdf_document_id] || attrs[:document_id])
+        if pdf_document
+          source.assign_pdf_document(pdf_document)
         else
-          segment.errors.add(:base, "Select a document to attach.")
+          source.errors.add(:base, "Select a PDF to attach.")
         end
       end
 
-      def assign_html_payload(segment, attrs)
-        view_key = attrs[:view_key].presence || attrs[:html_view_key]
-
-        unless DocumentSegment.html_view?(view_key)
-          segment.errors.add(:base, "Choose a branded section.")
+      def assign_html_payload(source, attrs)
+        view_key = attrs[:view_key].presence || source.html_view_key
+        unless GeneratedPacketSource.html_view?(view_key)
+          source.errors.add(:base, "Choose a page type.")
           return
         end
 
-        options = attrs[:options]
-        options = options.to_unsafe_h if options.respond_to?(:to_unsafe_h)
-        options = options.to_h if options.respond_to?(:to_h) && !options.is_a?(Hash)
-        options = options.presence || {}
-        options = sanitize_html_view_options(view_key, options)
-        options = apply_default_html_view_options(view_key, options) if segment.new_record?
-        segment.assign_html_view(view_key, options: options)
+        raw_options = attrs.key?(:options) ? normalize_options(attrs[:options]) : source.html_options
+        options = sanitize_html_view_options(view_key, raw_options)
+        options = apply_default_html_view_options(view_key, options)
+        source.assign_html_view(view_key, options: options)
+      end
+
+      def assign_group_payload(source, attrs)
+        document = source.group_document
+        unless document
+          source.errors.add(:base, "Select a valid group.")
+          return
+        end
+
+        title = attrs[:title].to_s.strip
+        document.title = title if title.present?
+
+        unless document.save
+          document.errors.full_messages.each { |message| source.errors.add(:base, message) }
+          return
+        end
+
+        source.assign_group_document(document)
+      end
+
+      def duplicate_source(source)
+        return source if source.group?
+
+        @event.generated_packet_sources.create!(
+          source_category: source.canonical? ? GeneratedPacketSource::CATEGORIES[:page] : source.source_category,
+          kind: source.kind,
+          title: source.title,
+          source_ref: source.source_ref.deep_dup,
+          spec: source.spec.deep_dup
+        )
+      end
+
+      def find_existing_source(value)
+        return if value.blank?
+
+        @event.generated_packet_sources.find_by(id: value)
+      end
+
+      def invalid_source_with_errors
+        @invalid_source || @event.generated_packet_sources.new.tap do |source|
+          source.errors.add(:base, "Unable to create packet page.")
+        end
       end
 
       def find_pdf_document(value)
@@ -169,16 +302,41 @@ module Documents
         if value.to_s =~ /\A\d+\z/
           @event.documents.where(doc_kind: Document::DOC_KINDS[:uploaded]).find_by(id: value)
         else
-          @event.documents.where(doc_kind: Document::DOC_KINDS[:uploaded]).find_by(logical_id: value)
+          @event.documents.where(doc_kind: Document::DOC_KINDS[:uploaded]).latest.find_by(logical_id: value)
         end
       end
 
       def segment_params
-        params.require(:segment).permit(:title, :kind, :pdf_document_id, :document_id, :view_key, :html_view_key, options: {})
+        params.require(:segment).permit(
+          :title,
+          :group_title,
+          :source_id,
+          :pdf_document_id,
+          :document_id,
+          :view_key,
+          options: {},
+          file_upload: %i[title storage_uri checksum size_bytes content_type logical_id]
+        )
+      end
+
+      def file_upload_params(attrs)
+        upload = attrs[:file_upload]
+        upload = upload.to_h if upload.respond_to?(:to_h)
+        upload = upload&.stringify_keys
+        return if upload.blank? || upload["storage_uri"].blank?
+
+        {
+          title: upload["title"].presence || File.basename(upload["storage_uri"].to_s),
+          storage_uri: upload["storage_uri"],
+          checksum: upload["checksum"],
+          size_bytes: upload["size_bytes"].to_i,
+          content_type: upload["content_type"].presence || "application/pdf",
+          logical_id: upload["logical_id"].presence || SecureRandom.uuid
+        }
       end
 
       def builder_path
-        event_documents_generated_path(@event, @document.logical_id)
+        @document.group_container? ? edit_event_documents_generated_path(@event, @document.logical_id) : event_documents_generated_path(@event, @document.logical_id)
       end
 
       def storage
@@ -191,29 +349,39 @@ module Documents
         Array(raw_ids).map(&:to_i).reject(&:zero?)
       end
 
+      def resequence_placements!
+        placements_scope.ordered.each_with_index do |placement, index|
+          next if placement.position == index + 1
+
+          placement.update_column(:position, index + 1)
+        end
+      end
+
+      def normalize_options(options)
+        options = options.to_unsafe_h if options.respond_to?(:to_unsafe_h)
+        options = options.to_h if options.respond_to?(:to_h) && !options.is_a?(Hash)
+        options.presence || {}
+      end
+
       def sanitize_html_view_options(view_key, options)
         case view_key.to_s
         when DocumentSegment::TIMELINE_VIEW_KEY
           sanitize_timeline_options(options)
         when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
           sanitize_run_of_show_options(options)
-        when DocumentSegment::TEXT_PAGE_VIEW_KEY, DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
+        when DocumentSegment::TEXT_PAGE_VIEW_KEY
           sanitize_markdown_body_options(options)
+        when DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
+             DocumentSegment::VENDOR_CONTACTS_VIEW_KEY,
+             DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY
+          {}
         else
           options
         end
       end
 
       def apply_default_html_view_options(view_key, options)
-        return options unless view_key.to_s == DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
-
-        source = options.to_h.stringify_keys
-        body_markdown = source["body_markdown"].to_s
-        return source if body_markdown.present?
-
-        source.merge(
-          "body_markdown" => DocumentSegment.default_body_markdown_for(view_key)
-        )
+        options
       end
 
       def sanitize_timeline_options(options)
@@ -241,7 +409,6 @@ module Documents
         source = options.to_h.stringify_keys
         body = source["body_markdown"].to_s
         normalized_body = body.gsub(/\r\n?/, "\n").delete("\u0000")
-
         { "body_markdown" => normalized_body.first(20_000) }
       end
 
@@ -251,7 +418,6 @@ module Documents
 
         candidate = value.to_s
         candidate = fallback if candidate.blank?
-
         return candidate if candidate.present? && allowed_refs.include?(candidate)
 
         fallback
@@ -272,6 +438,60 @@ module Documents
                               else
                                 []
                               end
+      end
+
+      def enqueue_working_refresh_for_documents(*documents)
+        Array(documents).flatten.compact.uniq.each do |document|
+          Documents::Generated::WorkingCopyRefresh.enqueue(document)
+        end
+      end
+
+      def enqueue_working_refresh_for_source(source)
+        documents = packet_consumer_resolver.for_source(source)
+        enqueue_working_refresh_for_documents(documents)
+      end
+
+      def refresh_after_create!(source)
+        if @document.group_container?
+          enqueue_working_refresh_for_container(@document)
+        else
+          enqueue_working_refresh_for_documents(@document)
+        end
+      end
+
+      def refresh_after_structure_change!
+        if @document.group_container?
+          enqueue_working_refresh_for_container(@document)
+        else
+          enqueue_working_refresh_for_documents(@document)
+        end
+      end
+
+      def enqueue_working_refresh_for_container(document)
+        documents = if document.group_container?
+                      packet_consumer_resolver.for_container(document)
+                    else
+                      [document]
+                    end
+        enqueue_working_refresh_for_documents(documents)
+      end
+
+      def packet_consumer_resolver
+        @packet_consumer_resolver ||= Documents::Generated::PacketConsumerResolver.new(event: @event)
+      end
+
+      def preview_group(source)
+        group_document = source.group_document
+        head :not_found and return unless group_document
+
+        bundle = Documents::Generated::PacketBundle.new(
+          definition_document: group_document,
+          page_numbers: false
+        ).call
+        filename = "#{source.display_title.to_s.parameterize.presence || 'group'}.pdf"
+        send_data bundle.pdf_data, filename: filename, type: "application/pdf", disposition: "inline"
+      rescue StandardError
+        head :not_found
       end
     end
   end

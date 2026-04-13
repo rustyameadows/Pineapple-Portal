@@ -1,0 +1,182 @@
+<% if local_assigns.fetch(:render_base_styles, true) %>
+  <%= render "generated_documents/sections/base_styles" %>
+<% end %>
+<%= render "generated_documents/sections/packet_sheet_styles" %>
+
+<% milestone_data = generated_wedding_party_reference_milestones(@event) %>
+<% milestone_groups = milestone_data[:groups] %>
+<% milestone_timezone = milestone_data[:timezone] %>
+<% wedding_party_groups = generated_wedding_party_reference_key_people(@event) %>
+
+<style>
+  .generated-template--wedding-party-reference__top-band {
+    display: grid;
+    row-gap: 0;
+  }
+
+  .generated-template--wedding-party-reference__top-band-header,
+  .generated-template--wedding-party-reference__top-band-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 0.12in;
+    align-items: stretch;
+  }
+
+  .generated-template--wedding-party-reference__events-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 0.12in;
+    row-gap: 6px;
+  }
+
+  .generated-template--wedding-party-reference__top-band-row .generated-template--packet-sheet__section {
+    align-self: stretch;
+  }
+
+  .generated-template--wedding-party-reference__top-band-row .generated-template--packet-sheet__subsection {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100%;
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .generated-template--wedding-party-reference__top-band-row .generated-template--packet-sheet__body {
+    align-content: start;
+    padding: 6px 6px 10px;
+    border-bottom: none;
+  }
+
+  .generated-template--wedding-party-reference__top-band-row .generated-template--packet-sheet__empty {
+    height: 100%;
+    padding: 4px 6px;
+  }
+
+  .generated-template--wedding-party-reference__events-grid > article {
+    min-width: 0;
+  }
+
+  .generated-template--wedding-party-reference__transportation-stack {
+    display: grid;
+    gap: 6px;
+  }
+
+  .generated-template--wedding-party-reference__wedding-party-content {
+    display: grid;
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .generated-template--wedding-party-reference__wedding-party-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.12in;
+    align-items: start;
+  }
+
+  .generated-template--wedding-party-reference__wedding-party-group {
+    display: grid;
+    align-content: start;
+  }
+</style>
+
+<section class="generated-template generated-template--packet-sheet generated-template--wedding-party-reference">
+  <%= render "generated_documents/sections/page_header", segment: @segment %>
+
+  <div class="generated-template--packet-sheet__stack">
+    <div class="generated-template--wedding-party-reference__top-band">
+      <div class="generated-template--wedding-party-reference__top-band-header">
+        <section class="generated-template--packet-sheet__section">
+          <h2 class="generated-template--packet-sheet__section-title">Event Timelines</h2>
+        </section>
+        <section class="generated-template--packet-sheet__section">
+          <h2 class="generated-template--packet-sheet__section-title">Transportation Details</h2>
+        </section>
+      </div>
+
+      <% if milestone_groups.any? %>
+        <% milestone_groups.each do |group| %>
+          <div class="generated-template--wedding-party-reference__top-band-row">
+            <section class="generated-template--packet-sheet__section">
+              <section class="generated-template--packet-sheet__subsection">
+                <h3 class="generated-template--packet-sheet__subsection-title"><%= group[:date_label] %></h3>
+                <div class="generated-template--packet-sheet__body generated-template--wedding-party-reference__events-grid">
+                  <% group[:items].each do |item| %>
+                    <article class="generated-template--packet-sheet__event-card">
+                      <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--event-card">
+                        <strong><%= item.title %></strong><br>
+                        <% if item.location_name.present? %>
+                          <%= item.location_name %><br>
+                        <% end %>
+                        <u><%= calendar_item_time_only_label_with_marker(item, milestone_timezone) %></u>
+                      </p>
+                      <% if item.notes.present? %>
+                        <p class="generated-template--packet-sheet__text"><em><%= item.notes %></em></p>
+                      <% end %>
+                    </article>
+                  <% end %>
+                </div>
+              </section>
+            </section>
+
+            <section class="generated-template--packet-sheet__section">
+              <section class="generated-template--packet-sheet__subsection">
+                <h3 class="generated-template--packet-sheet__subsection-title"><%= group[:date_label] %></h3>
+                <div class="generated-template--packet-sheet__body generated-template--wedding-party-reference__transportation-stack">
+                  <% Array(group[:transportation_notes]).each do |note| %>
+                    <p class="generated-template--packet-sheet__text generated-template--wedding-party-reference__transportation-note"><%= note %></p>
+                  <% end %>
+                </div>
+              </section>
+            </section>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="generated-template--wedding-party-reference__top-band-row">
+          <section class="generated-template--packet-sheet__section">
+            <p class="generated-template--packet-sheet__empty">No milestone items are available for this event yet.</p>
+          </section>
+          <section class="generated-template--packet-sheet__section">
+            <div class="generated-template--packet-sheet__body generated-template--wedding-party-reference__transportation-stack"></div>
+          </section>
+        </div>
+      <% end %>
+    </div>
+
+    <% if generated_packet_rich_text_present?(@event.getting_ready_details) %>
+      <section class="generated-template--packet-sheet__section">
+        <h2 class="generated-template--packet-sheet__section-title">Getting Ready Details</h2>
+        <div class="generated-template--packet-sheet__content generated-template--packet-sheet__rich-text generated-template--wedding-party-reference__getting-ready">
+          <%= render_generated_packet_rich_text(@event.getting_ready_details) %>
+        </div>
+      </section>
+    <% end %>
+
+    <% if wedding_party_groups.any? %>
+      <section class="generated-template--packet-sheet__section">
+        <h2 class="generated-template--packet-sheet__section-title"><%= @event.key_people_label.presence || "Wedding Party" %></h2>
+        <div class="generated-template--wedding-party-reference__wedding-party-content">
+          <div class="generated-template--wedding-party-reference__wedding-party-columns">
+        <% wedding_party_groups.each do |side| %>
+              <section class="generated-template--wedding-party-reference__wedding-party-group generated-template--packet-sheet__subsection">
+            <h3 class="generated-template--packet-sheet__subsection-title"><%= side[:title] %></h3>
+            <div class="generated-template--packet-sheet__grid">
+              <% side[:members].each do |member| %>
+                <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--roster">
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text"><strong><%= member[:name] %></strong></p>
+                  </div>
+                  <div class="generated-template--packet-sheet__grid-cell">
+                    <p class="generated-template--packet-sheet__text"><em><%= member[:role] %></em></p>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </section>
+        <% end %>
+          </div>
+        </div>
+      </section>
+    <% end %>
+  </div>
+</section>

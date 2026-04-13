@@ -68,12 +68,21 @@
   margin-left: auto;
 }
 
+.client-nav__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .client-nav__event {
   font-size: var(--font-size-200);
   color: rgba(250, 249, 245, 0.75);
   text-align: right;
 }
 
+.client-nav__switch,
 .client-nav__logout {
   display: inline-flex;
   align-items: center;
@@ -87,6 +96,8 @@
   text-decoration: none;
 }
 
+.client-nav__switch:hover,
+.client-nav__switch:focus,
 .client-nav__logout:hover,
 .client-nav__logout:focus {
   border-color: rgba(250, 249, 245, 0.7);

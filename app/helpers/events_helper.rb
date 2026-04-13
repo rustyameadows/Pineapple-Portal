@@ -2,7 +2,7 @@ module EventsHelper
   def event_sidebar_sections(event)
     run_of_show = event.run_of_show_calendar
     derived_views = Array(run_of_show&.event_calendar_views&.order(:position, :name))
-    generated_documents = event.documents.generated.latest.order(:title)
+    generated_documents = generated_packet_sidebar_entries(event)
     questionnaires = event.questionnaires.order(:title)
     payments = event.payments.ordered
     approvals = event.approvals.ordered
@@ -190,6 +190,19 @@ module EventsHelper
   end
 
   private
+
+  def generated_packet_sidebar_entries(event)
+    grouped = event.documents.generated.packet_containers.where(is_template: false)
+                              .order(:logical_id, version: :asc)
+                              .group_by(&:logical_id)
+
+    grouped.filter_map do |_logical_id, records|
+      definition = records.find(&:definition_placeholder?) || records.first
+      next unless definition
+
+      definition
+    end.sort_by { |document| document.title.to_s.downcase }
+  end
 
   def sidebar_path_match?(current_path, target_path)
     return false if target_path.blank?

@@ -1,0 +1,51 @@
+<div class="event-settings__field event-settings__field--notes">
+  <%= form.label field_name, label_text %>
+  <div class="event-settings__markdown-editor" data-controller="generated-markdown-editor">
+    <%= render "events/settings/markdown_toolbar", toolbar_label: "#{label_text} formatting" %>
+
+    <%= form.text_area field_name,
+                       rows: rows,
+                       class: "event-settings__textarea event-settings__markdown-source",
+                       placeholder: placeholder,
+                       data: {
+                         generated_markdown_editor_target: "source",
+                         action: "focus->generated-markdown-editor#rememberSelection click->generated-markdown-editor#rememberSelection keyup->generated-markdown-editor#rememberSelection select->generated-markdown-editor#rememberSelection input->generated-markdown-editor#syncFromSource input->generated-markdown-editor#rememberSelection"
+                       } %>
+
+    <div class="event-settings__markdown-footer">
+      <p class="event-settings__hint"><%= hint_text %> Supports Markdown for bold, italic, links, and one headline style.</p>
+      <button type="button"
+              class="button button--tiny button--ghost event-settings__markdown-open"
+              data-generated-markdown-editor-target="openButton"
+              data-action="generated-markdown-editor#open"
+              aria-haspopup="dialog"
+              hidden>
+        Open large editor
+      </button>
+    </div>
+
+    <dialog class="event-settings__markdown-dialog"
+            data-generated-markdown-editor-target="dialog"
+            data-action="cancel->generated-markdown-editor#handleCancel click->generated-markdown-editor#handleBackdropClose">
+      <div class="event-settings__markdown-panel">
+        <header class="event-settings__markdown-panel-header">
+          <h3><%= label_text %></h3>
+        </header>
+        <div class="event-settings__markdown-panel-body">
+          <%= render "events/settings/markdown_toolbar", toolbar_label: "#{label_text} formatting" %>
+          <textarea class="event-settings__markdown-overlay"
+                    aria-label="<%= "#{label_text} markdown editor" %>"
+                    data-generated-markdown-editor-target="overlay"
+                    data-action="focus->generated-markdown-editor#rememberSelection click->generated-markdown-editor#rememberSelection keyup->generated-markdown-editor#rememberSelection select->generated-markdown-editor#rememberSelection input->generated-markdown-editor#syncFromOverlay input->generated-markdown-editor#rememberSelection"></textarea>
+        </div>
+        <footer class="event-settings__markdown-panel-actions">
+          <button type="button"
+                  class="button button--small"
+                  data-action="generated-markdown-editor#close">
+            Done
+          </button>
+        </footer>
+      </div>
+    </dialog>
+  </div>
+</div>

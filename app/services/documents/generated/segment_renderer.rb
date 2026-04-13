@@ -93,7 +93,7 @@ module Documents
           template: template,
           layout: false,
           assigns: {
-            event: segment.document.event,
+            event: event,
             segment: segment
           }
         )
@@ -120,12 +120,7 @@ module Documents
       end
 
       def find_source_document
-        return unless segment.pdf_document_id
-
-        segment.document.event.documents.find_by(id: segment.pdf_document_id) ||
-          segment.document.event.documents.where(logical_id: segment.pdf_logical_id)
-                                .order(version: :desc)
-                                .first
+        UploadedDocumentResolver.new(segment).call
       end
 
       def download_source_pdf(document)
@@ -147,6 +142,10 @@ module Documents
 
       def default_storage
         R2Storage.new
+      end
+
+      def event
+        segment.respond_to?(:event) ? segment.event : segment.document.event
       end
     end
   end

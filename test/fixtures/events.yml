@@ -3,6 +3,14 @@ one:
   starts_on: 2025-10-01
   ends_on: 2025-10-02
   location: Main Hall
+  guest_count: "175"
+  attire: Black Tie
+  style: Elegant Garden
+  color_palette: Ivory, Sage, Gold
+  key_people_label: VIPs & Family
+  social_media_policy: Please do not post photos before the planner's announcement.
+  parking_details: Valet parking is available at the east entrance.
+  getting_ready_details: Bridal party should arrive by 8:00 AM and check in at suite 402.
   financial_payments_enabled: true
   portal_slug: launch-event
 
@@ -11,5 +19,13 @@ two:
   starts_on: 2025-11-15
   ends_on: 2025-11-15
   location: Ballroom
+  guest_count: "250"
+  attire: Cocktail
+  style: Modern Luxe
+  color_palette: Navy, Silver
+  key_people_label: Speakers & VIPs
+  social_media_policy: Share freely after the red carpet.
+  parking_details: Self parking is available in the west lot.
+  getting_ready_details: Speakers should arrive at 3:30 PM for sound check.
   financial_payments_enabled: false
   portal_slug: awards-night
