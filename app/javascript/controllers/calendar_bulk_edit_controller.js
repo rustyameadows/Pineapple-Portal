@@ -114,6 +114,16 @@ export default class extends Controller {
     this.updateSelectionState()
   }
 
+  selectGroup(event) {
+    event.preventDefault()
+    this.setGroupSelection(event.currentTarget.dataset.groupKey, true)
+  }
+
+  deselectGroup(event) {
+    event.preventDefault()
+    this.setGroupSelection(event.currentTarget.dataset.groupKey, false)
+  }
+
   clearSelection() {
     this.checkboxTargets.forEach((checkbox) => {
       checkbox.checked = false
@@ -222,6 +232,7 @@ export default class extends Controller {
     })
 
     if (!this.hasSelection) this.closeDialog()
+    this.updateGroupSelectionButtons()
     this.updateVisibleSelectionButtons()
     this.updateApplyState()
   }
@@ -303,6 +314,8 @@ export default class extends Controller {
       groupRow.hidden = !isVisible
       groupRow.classList.toggle("event-calendars__date-row--hidden", !isVisible)
     })
+
+    this.updateGroupSelectionButtons()
   }
 
   updateFacetSummaries() {
@@ -583,9 +596,45 @@ export default class extends Controller {
       .filter((checkbox) => checkbox)
   }
 
+  setGroupSelection(groupKey, checked) {
+    if (!groupKey) return
+
+    this.checkboxesForGroup(groupKey).forEach((checkbox) => {
+      checkbox.checked = checked
+    })
+
+    this.updateSelectionState()
+  }
+
+  checkboxesForGroup(groupKey) {
+    return this.visibleRowStates
+      .filter((rowState) => rowState.groupKey === groupKey)
+      .map((rowState) => rowState.checkbox)
+      .filter((checkbox) => checkbox)
+  }
+
   get allVisibleRowsSelected() {
     const visibleCheckboxes = this.visibleCheckboxes
     return visibleCheckboxes.length > 0 && visibleCheckboxes.every((checkbox) => checkbox.checked)
+  }
+
+  updateGroupSelectionButtons() {
+    if (!this.hasGroupRowTarget) return
+
+    this.groupRowTargets.forEach((groupRow) => {
+      const groupKey = groupRow.dataset.calendarGroupKey || ""
+      const groupCheckboxes = this.checkboxesForGroup(groupKey)
+      const allSelected = groupCheckboxes.length > 0 && groupCheckboxes.every((checkbox) => checkbox.checked)
+      const anySelected = groupCheckboxes.some((checkbox) => checkbox.checked)
+
+      groupRow.querySelectorAll("[data-group-selection-action='select']").forEach((button) => {
+        button.disabled = groupCheckboxes.length === 0 || allSelected
+      })
+
+      groupRow.querySelectorAll("[data-group-selection-action='deselect']").forEach((button) => {
+        button.disabled = groupCheckboxes.length === 0 || !anySelected
+      })
+    })
   }
 
   updateVisibleSelectionButtons() {

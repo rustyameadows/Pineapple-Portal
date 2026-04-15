@@ -153,6 +153,31 @@ class CalendarBulkEditTest < ApplicationSystemTestCase
     assert_no_selector ".event-calendars__bulk-toolbar", visible: true
   end
 
+  test "run of show group headers can select and deselect all visible rows in the group" do
+    login_as_planner
+    visit event_calendar_path(@event)
+
+    within find("tr.event-calendars__date-row", text: /Wednesday, October 1/i) do
+      click_button "Select"
+    end
+
+    assert_selector ".event-calendars__bulk-toolbar", visible: true
+    assert_selector ".event-calendars__bulk-count", text: /3\s+selected/
+    assert_selector "input.event-calendars__bulk-checkbox[value='#{@ceremony.id}']:checked", visible: :all
+    assert_selector "input.event-calendars__bulk-checkbox[value='#{@reception.id}']:checked", visible: :all
+    assert_selector "input.event-calendars__bulk-checkbox[value='#{calendar_items(:afterparty).id}']:checked", visible: :all
+    assert_no_selector "input.event-calendars__bulk-checkbox[value='#{calendar_items(:decision_flowers).id}']:checked", visible: :all
+
+    within find("tr.event-calendars__date-row", text: /Wednesday, October 1/i) do
+      click_button "Deselect"
+    end
+
+    assert_no_selector ".event-calendars__bulk-toolbar", visible: true
+    assert_no_selector "input.event-calendars__bulk-checkbox[value='#{@ceremony.id}']:checked", visible: :all
+    assert_no_selector "input.event-calendars__bulk-checkbox[value='#{@reception.id}']:checked", visible: :all
+    assert_no_selector "input.event-calendars__bulk-checkbox[value='#{calendar_items(:afterparty).id}']:checked", visible: :all
+  end
+
   test "run of show tag facet filters tagged and untagged rows" do
     login_as_planner
     visit event_calendar_path(@event)

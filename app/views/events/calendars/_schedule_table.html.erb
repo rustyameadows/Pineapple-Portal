@@ -338,7 +338,31 @@
           <tr class="event-calendars__date-row"
               data-calendar-bulk-edit-target="groupRow"
               data-calendar-group-key="<%= bucket_key %>">
-            <td colspan="<%= base_column_count + (show_tags ? 1 : 0) + (show_edit_button ? 1 : 0) + (render_actions ? 1 : 0) + (bulk_edit ? 1 : 0) %>"><span class="event-calendars__date-label"><%= bucket_label %></span></td>
+            <td colspan="<%= base_column_count + (show_tags ? 1 : 0) + (show_edit_button ? 1 : 0) + (render_actions ? 1 : 0) + (bulk_edit ? 1 : 0) %>">
+              <div class="event-calendars__date-row-content">
+                <span class="event-calendars__date-label"><%= bucket_label %></span>
+                <% if bulk_edit %>
+                  <div class="event-calendars__date-actions" aria-label="<%= "#{bucket_label} selection controls" %>">
+                    <button type="button"
+                            class="event-calendars__group-selection-button"
+                            data-action="calendar-bulk-edit#selectGroup"
+                            data-group-key="<%= bucket_key %>"
+                            data-group-selection-action="select"
+                            aria-label="Select all visible items in <%= bucket_label %>">
+                      Select
+                    </button>
+                    <button type="button"
+                            class="event-calendars__group-selection-button"
+                            data-action="calendar-bulk-edit#deselectGroup"
+                            data-group-key="<%= bucket_key %>"
+                            data-group-selection-action="deselect"
+                            aria-label="Deselect all visible items in <%= bucket_label %>">
+                      Deselect
+                    </button>
+                  </div>
+                <% end %>
+              </div>
+            </td>
           </tr>
         <% end %>
 
