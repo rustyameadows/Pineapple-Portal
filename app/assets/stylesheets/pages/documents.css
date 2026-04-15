@@ -681,6 +681,15 @@
   white-space: nowrap;
 }
 
+button.generated-builder__live-pill {
+  -webkit-appearance: none;
+  appearance: none;
+  font-family: inherit;
+  margin: 0;
+  text-align: inherit;
+  cursor: pointer;
+}
+
 .generated-builder__workspace-actions {
   display: flex;
   gap: 0.5rem;
@@ -888,6 +897,48 @@
   color: var(--color-brown);
   font-size: 0.88rem;
   line-height: 1.45;
+}
+
+.generated-builder__live-rebuild-dialog {
+  width: min(34rem, calc(100vw - 2rem));
+}
+
+.generated-builder__live-rebuild-dialog .generated-builder__overlay-panel {
+  width: min(34rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+}
+
+.generated-builder__live-rebuild-dialog .generated-builder__overlay-actions {
+  flex-wrap: wrap;
+}
+
+.generated-builder__live-rebuild-dialog .button {
+  opacity: 1;
+}
+
+.generated-builder__live-rebuild-dialog .button--ghost {
+  background: white;
+  border-color: color-mix(in srgb, var(--color-dark-brown) 18%, white);
+  color: var(--color-dark-brown);
+}
+
+.generated-builder__live-rebuild-dialog .button--ghost:hover,
+.generated-builder__live-rebuild-dialog .button--ghost:focus {
+  background: color-mix(in srgb, var(--color-sea-foam) 10%, white);
+  border-color: color-mix(in srgb, var(--color-dark-brown) 28%, white);
+  color: var(--color-dark-brown);
+}
+
+.generated-builder__live-rebuild-dialog .button--primary,
+.generated-builder__live-rebuild-dialog .button--primary:hover,
+.generated-builder__live-rebuild-dialog .button--primary:focus {
+  color: var(--color-white);
+}
+
+.generated-builder__live-rebuild-copy {
+  margin: 0;
+  color: var(--color-dark-brown);
+  line-height: 1.5;
 }
 
 .generated-builder__pdf-frame {

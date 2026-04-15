@@ -12,6 +12,9 @@
 
   .generated-template.generated-template--vendor-contacts .generated-template--vendor-contacts__table {
     margin-top: 0;
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
   }
 
   .generated-template.generated-template--vendor-contacts .generated-template--vendor-contacts__table th,
@@ -50,6 +53,15 @@
     width: 22%;
     white-space: nowrap;
   }
+
+  .generated-template--vendor-contacts__category--continued,
+  .generated-template--vendor-contacts__vendor--continued {
+    border-top-color: transparent;
+  }
+
+  .generated-template--vendor-contacts__continued-value {
+    visibility: hidden;
+  }
 </style>
 
 <section class="generated-template generated-template--packet-sheet generated-template--vendor-contacts">
@@ -64,19 +76,30 @@
         <th>Phone</th>
       </tr>
     </thead>
-    <tbody>
       <% vendor_groups.each do |group| %>
-        <% group[:rows].each_with_index do |row, index| %>
-          <tr>
-            <% if index.zero? %>
-              <td class="generated-template--vendor-contacts__category" rowspan="<%= group[:rows].size %>"><%= group[:category] %></td>
-              <td class="generated-template--vendor-contacts__vendor" rowspan="<%= group[:rows].size %>"><%= group[:vendor_name] %></td>
-            <% end %>
-            <td class="generated-template--vendor-contacts__contact"><%= row[:contact] %></td>
-            <td class="generated-template--vendor-contacts__phone"><%= row[:phone] %></td>
-          </tr>
-        <% end %>
+        <tbody class="generated-template--vendor-contacts__group">
+          <% group[:rows].each_with_index do |row, index| %>
+            <% continued = index.positive? %>
+            <tr>
+              <td class="generated-template--vendor-contacts__category <%= "generated-template--vendor-contacts__category--continued" if continued %>">
+                <% if continued %>
+                  <span class="generated-template--vendor-contacts__continued-value" aria-hidden="true">&nbsp;</span>
+                <% else %>
+                  <%= group[:category] %>
+                <% end %>
+              </td>
+              <td class="generated-template--vendor-contacts__vendor <%= "generated-template--vendor-contacts__vendor--continued" if continued %>">
+                <% if continued %>
+                  <span class="generated-template--vendor-contacts__continued-value" aria-hidden="true">&nbsp;</span>
+                <% else %>
+                  <%= group[:vendor_name] %>
+                <% end %>
+              </td>
+              <td class="generated-template--vendor-contacts__contact"><%= row[:contact] %></td>
+              <td class="generated-template--vendor-contacts__phone"><%= row[:phone] %></td>
+            </tr>
+          <% end %>
+        </tbody>
       <% end %>
-    </tbody>
   </table>
 </section>

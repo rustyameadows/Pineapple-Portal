@@ -133,7 +133,7 @@ module Documents
       assert_select "button", text: "Create snapshot without page numbers", count: 1
       assert_select "button", text: "Settings", count: 0
       assert_select "[data-controller='generated-markdown-editor']", count: 0
-      assert_select "dialog.generated-builder__segment-dialog", count: 0
+      assert_select "dialog.generated-builder__live-rebuild-dialog", count: 1
     end
 
     test "index renders packet actions without portal visibility checkbox" do
@@ -532,11 +532,28 @@ module Documents
       get event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
-      assert_select "[data-controller='generated-pdf-frame']", count: 1
+      assert_select "[data-controller~='generated-pdf-frame']", count: 1
       assert_select ".generated-builder__pdf-loading", count: 1
       assert_select "[data-generated-pdf-frame-target='message']", text: /Preparing live PDF|Refreshing live PDF/
       assert_select "iframe.generated-builder__pdf-frame[data-action='load->generated-pdf-frame#frameLoaded']", count: 1
       assert_select "[data-generated-pdf-frame-status-url-value]", count: 1
+    end
+
+    test "show keeps the first-build status area free of extra rebuild buttons" do
+      create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+
+      get event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select ".generated-builder__pdf-status-actions", count: 0
+      assert_select ".generated-builder__live-pill[hidden]", count: 1
+      assert_select "dialog.generated-builder__live-rebuild-dialog", count: 1
+      assert_select "form.generated-builder__inline-form[action='#{rebuild_live_event_documents_generated_path(@event, @document.logical_id)}']", count: 1
     end
 
     test "show renders build-backed live progress while a newer live pdf is preparing" do
@@ -623,11 +640,42 @@ module Documents
 
       assert_response :success
       assert_select ".generated-builder__live-pill", text: /Updated/, count: 1
+      assert_select "button.generated-builder__live-pill[data-action='generated-segment-dialog#open']", text: /Updated/, count: 1
       assert_select ".generated-builder__live-pill", text: /Auto-updating/, count: 0
       expected_viewer_path = "#{working_pdf_event_documents_generated_path(@event, @document.logical_id, v: working_build.viewer_token)}#view=Fit"
       assert_select "a[href='#{expected_viewer_path}']", text: "Open live PDF", count: 1
       assert_select "iframe.generated-builder__pdf-frame[src='#{expected_viewer_path}']", count: 1
       assert_select "time[data-controller='local-time'][data-local-time-iso-value='#{rendered_at.iso8601}'][datetime='#{rendered_at.iso8601}']", count: 1
+      assert_select "dialog.generated-builder__live-rebuild-dialog", count: 1
+      assert_select "form.generated-builder__inline-form[action='#{rebuild_live_event_documents_generated_path(@event, @document.logical_id)}']", count: 1
+    end
+
+    test "rebuild live delegates to the force rebuild service" do
+      create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+
+      force_rebuild_calls = []
+      service = Struct.new(:calls) do
+        def call
+          calls << true
+        end
+      end.new([])
+
+      Documents::Generated::ForceLiveRebuild.stub :new, ->(**kwargs) { force_rebuild_calls << kwargs; service } do
+        post rebuild_live_event_documents_generated_url(@event, @document.logical_id), params: {
+          return_to: event_documents_generated_path(@event, @document.logical_id)
+        }
+      end
+
+      assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+      assert_equal [{ definition_document: @document }], force_rebuild_calls
+      assert_equal [true], service.calls
+      follow_redirect!
+      assert_includes response.body, "Live PDF rebuild queued."
     end
 
     test "show renders browser local time hooks for latest snapshot and build history timestamps" do

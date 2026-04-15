@@ -316,6 +316,17 @@ class GeneratedPacketSource < ApplicationRecord
     render_hash != current_hash
   end
 
+  def clear_cached_render!
+    update_columns( # rubocop:disable Rails/SkipsModelValidations
+      render_hash: nil,
+      cached_pdf_key: nil,
+      cached_pdf_generated_at: nil,
+      cached_page_count: nil,
+      cached_file_size: nil,
+      last_render_error: nil
+    )
+  end
+
   def assign_pdf_document(document)
     self.source_ref = {
       "document_id" => document.id,
