@@ -222,7 +222,7 @@ module Calendars
         title: source_item.title,
         notes: source_item.notes,
         duration_minutes: source_item.duration_minutes,
-        time_caption: source_item.time_caption,
+        time_caption: nil,
         status: CalendarItem::STATUSES[:planned],
         locked: false,
         vendor_name: nil,

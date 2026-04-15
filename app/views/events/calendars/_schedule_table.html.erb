@@ -14,6 +14,7 @@
 <% bulk_form_url = local_assigns[:bulk_form_url] || bulk_update_event_calendar_items_path(calendar.event) %>
 <% bulk_return_to = local_assigns[:bulk_return_to] || request.fullpath %>
 <% filter_source_items = Array(local_assigns[:filter_source_items] || items) %>
+<% bulk_team_members = calendar.event.team_members.where.not(role: User::ROLES[:client]).order(:name) %>
 <% base_column_count = show_relative ? 3 : 5 %>
 <% base_column_count += 1 if show_status_first %>
 <% initial_select_all_label = "Select all #{items.count} item#{'s' unless items.count == 1}" %>
@@ -25,6 +26,12 @@
      ["Clear vendor", "clear_vendor"],
      ["Set location", "set_location"],
      ["Clear location", "clear_location"],
+     ["Set time label", "set_time_label"],
+     ["Clear time label", "clear_time_label"],
+     ["Add PP members", "add_team_members"],
+     ["Remove PP members", "remove_team_members"],
+     ["Set other people", "set_additional_team_members"],
+     ["Clear other people", "clear_additional_team_members"],
      ["Delete items", "delete_items"]
    ] %>
 <% filter_definitions = {
@@ -211,6 +218,45 @@
                                 action: "input->custom-select#search focus->custom-select#search keydown->custom-select#handleInputKeydown"
                               } %>
           <div class="calendar-item-form__autocomplete-menu" data-custom-select-target="menu" role="listbox" hidden></div>
+        </div>
+
+        <div class="event-calendars__bulk-field event-calendars__bulk-field--input"
+             data-calendar-bulk-edit-target="timeLabelRow"
+             hidden>
+          <%= form.text_field :time_caption,
+                              placeholder: "Time label",
+                              autocomplete: "off",
+                              aria: { label: "Time label" },
+                              class: "event-calendars__bulk-input" %>
+        </div>
+
+        <div class="event-calendars__bulk-field event-calendars__bulk-field--tags"
+             data-calendar-bulk-edit-target="teamMembersRow"
+             hidden>
+          <%= hidden_field_tag "bulk[team_member_ids][]", "", id: nil %>
+          <% if bulk_team_members.any? %>
+            <div class="calendar-item-form__pill-list calendar-item-form__pill-list--stack" role="group" aria-label="PP members">
+              <% bulk_team_members.each do |member| %>
+                <% field_id = "bulk_team_member_#{member.id}" %>
+                <label class="calendar-item-form__pill" for="<%= field_id %>">
+                  <%= check_box_tag "bulk[team_member_ids][]", member.id, false, id: field_id %>
+                  <span><%= member.name %></span>
+                </label>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="calendar-item-form__help-text">Assign planners from the event team to bulk edit PP members.</p>
+          <% end %>
+        </div>
+
+        <div class="event-calendars__bulk-field event-calendars__bulk-field--input"
+             data-calendar-bulk-edit-target="additionalTeamMembersRow"
+             hidden>
+          <%= form.text_field :additional_team_members,
+                              placeholder: "Other people",
+                              autocomplete: "off",
+                              aria: { label: "Other people" },
+                              class: "event-calendars__bulk-input" %>
         </div>
 
         <div class="event-calendars__bulk-actions">

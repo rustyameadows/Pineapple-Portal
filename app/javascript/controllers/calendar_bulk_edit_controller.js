@@ -13,6 +13,7 @@ export default class extends Controller {
   static targets = [
     "actionLabel",
     "actionSelect",
+    "additionalTeamMembersRow",
     "applyButton",
     "checkbox",
     "clearFiltersButton",
@@ -33,6 +34,8 @@ export default class extends Controller {
     "selectionCount",
     "tableShell",
     "tagsRow",
+    "teamMembersRow",
+    "timeLabelRow",
     "vendorRow",
     "visibleSelectionButton"
   ]
@@ -228,10 +231,16 @@ export default class extends Controller {
     const showTags = action === "add_tags" || action === "remove_tags"
     const showVendor = action === "set_vendor"
     const showLocation = action === "set_location"
+    const showTimeLabel = action === "set_time_label"
+    const showTeamMembers = action === "add_team_members" || action === "remove_team_members"
+    const showAdditionalTeamMembers = action === "set_additional_team_members"
 
     if (this.hasTagsRowTarget) this.tagsRowTarget.hidden = !showTags
     if (this.hasVendorRowTarget) this.vendorRowTarget.hidden = !showVendor
     if (this.hasLocationRowTarget) this.locationRowTarget.hidden = !showLocation
+    if (this.hasTimeLabelRowTarget) this.timeLabelRowTarget.hidden = !showTimeLabel
+    if (this.hasTeamMembersRowTarget) this.teamMembersRowTarget.hidden = !showTeamMembers
+    if (this.hasAdditionalTeamMembersRowTarget) this.additionalTeamMembersRowTarget.hidden = !showAdditionalTeamMembers
 
     this.updateApplyState()
   }

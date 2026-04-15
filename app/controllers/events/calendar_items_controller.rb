@@ -169,7 +169,15 @@ module Events
     end
 
     def bulk_params
-      params.fetch(:bulk, {}).permit(:bulk_action, :vendor_name, :location_name, tag_ids: [])
+      params.fetch(:bulk, {}).permit(
+        :bulk_action,
+        :vendor_name,
+        :location_name,
+        :time_caption,
+        :additional_team_members,
+        tag_ids: [],
+        team_member_ids: []
+      )
     end
 
     def assign_tags(item)

@@ -191,6 +191,25 @@ class CalendarItemImportsTest < ApplicationSystemTestCase
     end
   end
 
+  test "planner preview does not carry source time labels into imported projection" do
+    labeled_item = event_calendars(:run_of_show).calendar_items.create!(
+      title: "Labeled import item",
+      starts_at: Time.utc(2025, 10, 1, 10, 0, 0),
+      duration_minutes: 30,
+      time_caption: "Contracts Month",
+      position: 12
+    )
+
+    login_as_planner
+    visit event_calendar_item_import_path(@destination_event, source_event_id: @source_event.id, source_timeline_ref: "run_of_show")
+
+    find("input##{ActionView::RecordIdentifier.dom_id(labeled_item, :import_selection)}", visible: :all).set(true)
+
+    within ".event-calendars__import-preview-table-shell" do
+      assert_selector ".event-calendars__import-cell-meta", text: "Contracts Month", count: 1
+    end
+  end
+
   test "planner can confirm an import without batch tagging" do
     login_as_planner
     visit event_calendar_item_import_path(@destination_event, source_event_id: @source_event.id, source_timeline_ref: "run_of_show")
@@ -233,13 +252,4 @@ class CalendarItemImportsTest < ApplicationSystemTestCase
     assert_includes @destination_event.run_of_show_calendar.calendar_items.find_by!(title: "Ceremony").event_calendar_tags.pluck(:name), "imported"
   end
 
-  private
-
-  def login_as_planner
-    visit login_path
-    fill_in "Email", with: users(:one).email
-    fill_in "Password", with: "password123"
-    click_button "Log In"
-    assert_text "Your Active Events"
-  end
 end
