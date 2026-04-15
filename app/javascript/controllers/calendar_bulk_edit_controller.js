@@ -13,6 +13,7 @@ export default class extends Controller {
   static targets = [
     "actionLabel",
     "actionSelect",
+    "additionalTeamMembersRow",
     "applyButton",
     "checkbox",
     "clearFiltersButton",
@@ -33,6 +34,8 @@ export default class extends Controller {
     "selectionCount",
     "tableShell",
     "tagsRow",
+    "teamMembersRow",
+    "timeLabelRow",
     "vendorRow",
     "visibleSelectionButton"
   ]
@@ -109,6 +112,16 @@ export default class extends Controller {
 
     if (!shouldSelect && this.selectedCount === 0) this.closeDialog()
     this.updateSelectionState()
+  }
+
+  selectGroup(event) {
+    event.preventDefault()
+    this.setGroupSelection(event.currentTarget.dataset.groupKey, true)
+  }
+
+  deselectGroup(event) {
+    event.preventDefault()
+    this.setGroupSelection(event.currentTarget.dataset.groupKey, false)
   }
 
   clearSelection() {
@@ -219,6 +232,7 @@ export default class extends Controller {
     })
 
     if (!this.hasSelection) this.closeDialog()
+    this.updateGroupSelectionButtons()
     this.updateVisibleSelectionButtons()
     this.updateApplyState()
   }
@@ -228,10 +242,16 @@ export default class extends Controller {
     const showTags = action === "add_tags" || action === "remove_tags"
     const showVendor = action === "set_vendor"
     const showLocation = action === "set_location"
+    const showTimeLabel = action === "set_time_label"
+    const showTeamMembers = action === "add_team_members" || action === "remove_team_members"
+    const showAdditionalTeamMembers = action === "set_additional_team_members"
 
     if (this.hasTagsRowTarget) this.tagsRowTarget.hidden = !showTags
     if (this.hasVendorRowTarget) this.vendorRowTarget.hidden = !showVendor
     if (this.hasLocationRowTarget) this.locationRowTarget.hidden = !showLocation
+    if (this.hasTimeLabelRowTarget) this.timeLabelRowTarget.hidden = !showTimeLabel
+    if (this.hasTeamMembersRowTarget) this.teamMembersRowTarget.hidden = !showTeamMembers
+    if (this.hasAdditionalTeamMembersRowTarget) this.additionalTeamMembersRowTarget.hidden = !showAdditionalTeamMembers
 
     this.updateApplyState()
   }
@@ -294,6 +314,8 @@ export default class extends Controller {
       groupRow.hidden = !isVisible
       groupRow.classList.toggle("event-calendars__date-row--hidden", !isVisible)
     })
+
+    this.updateGroupSelectionButtons()
   }
 
   updateFacetSummaries() {
@@ -574,9 +596,45 @@ export default class extends Controller {
       .filter((checkbox) => checkbox)
   }
 
+  setGroupSelection(groupKey, checked) {
+    if (!groupKey) return
+
+    this.checkboxesForGroup(groupKey).forEach((checkbox) => {
+      checkbox.checked = checked
+    })
+
+    this.updateSelectionState()
+  }
+
+  checkboxesForGroup(groupKey) {
+    return this.visibleRowStates
+      .filter((rowState) => rowState.groupKey === groupKey)
+      .map((rowState) => rowState.checkbox)
+      .filter((checkbox) => checkbox)
+  }
+
   get allVisibleRowsSelected() {
     const visibleCheckboxes = this.visibleCheckboxes
     return visibleCheckboxes.length > 0 && visibleCheckboxes.every((checkbox) => checkbox.checked)
+  }
+
+  updateGroupSelectionButtons() {
+    if (!this.hasGroupRowTarget) return
+
+    this.groupRowTargets.forEach((groupRow) => {
+      const groupKey = groupRow.dataset.calendarGroupKey || ""
+      const groupCheckboxes = this.checkboxesForGroup(groupKey)
+      const allSelected = groupCheckboxes.length > 0 && groupCheckboxes.every((checkbox) => checkbox.checked)
+      const anySelected = groupCheckboxes.some((checkbox) => checkbox.checked)
+
+      groupRow.querySelectorAll("[data-group-selection-action='select']").forEach((button) => {
+        button.disabled = groupCheckboxes.length === 0 || allSelected
+      })
+
+      groupRow.querySelectorAll("[data-group-selection-action='deselect']").forEach((button) => {
+        button.disabled = groupCheckboxes.length === 0 || !anySelected
+      })
+    })
   }
 
   updateVisibleSelectionButtons() {

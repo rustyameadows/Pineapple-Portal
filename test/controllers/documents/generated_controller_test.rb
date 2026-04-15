@@ -136,6 +136,20 @@ module Documents
       assert_select "dialog.generated-builder__live-rebuild-dialog", count: 1
     end
 
+    test "show renders successfully with a planning team page source" do
+      create_page_placement(
+        view_key: "planning_team",
+        title: "Planning Team",
+        position: 1,
+        options: {}
+      )
+
+      get event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select "h2", text: "Live Working PDF", count: 1
+    end
+
     test "index renders packet actions without portal visibility checkbox" do
       travel_to Time.zone.local(2026, 4, 8, 2, 11, 55) do
         logical_id = SecureRandom.uuid
@@ -676,6 +690,81 @@ module Documents
       assert_equal [true], service.calls
       follow_redirect!
       assert_includes response.body, "Live PDF rebuild queued."
+    end
+
+    test "rebuild live rejects packets with empty group placements before clearing the working copy" do
+      group_document = @event.documents.create!(
+        title: "Empty Group",
+        doc_kind: Document::DOC_KINDS[:generated],
+        logical_id: SecureRandom.uuid,
+        version: 1,
+        is_latest: false,
+        source: "packet",
+        built_by_user: @user,
+        packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed],
+        packet_container_kind: Document::PACKET_CONTAINER_KINDS[:group]
+      )
+      group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
+      @document.packet_placements.create!(source: group_source, position: 1)
+      @document.update!(
+        working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/live.pdf",
+        working_manifest_hash: "live-manifest",
+        working_checksum_sha256: "live-sha",
+        working_page_count: 2,
+        working_file_size: 1024,
+        working_rendered_at: Time.current,
+        working_status: Document::WORKING_STATUSES[:fresh]
+      )
+
+      force_rebuild_called = false
+
+      Documents::Generated::ForceLiveRebuild.stub :new, ->(**_kwargs) {
+        force_rebuild_called = true
+        raise "should not rebuild"
+      } do
+        post rebuild_live_event_documents_generated_url(@event, @document.logical_id), params: {
+          return_to: event_documents_generated_path(@event, @document.logical_id)
+        }
+      end
+
+      assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+      assert_not force_rebuild_called
+      assert_equal "documents/#{@event.id}/#{@document.logical_id}/working/live.pdf", @document.reload.working_storage_uri
+      follow_redirect!
+      assert_includes response.body, "Empty Group: add at least one group page"
+    end
+
+    test "rebuild live rejects packets with missing stored pdf attachments before clearing the working copy" do
+      uploaded_document = create_uploaded_pdf(title: "Missing Attachment")
+      uploaded_document.update_columns(storage_uri: nil) # rubocop:disable Rails/SkipsModelValidations
+      upload_source = GeneratedPacketSource.find_or_create_upload_source!(@event, uploaded_document)
+      @document.packet_placements.create!(source: upload_source, position: 1)
+      @document.update!(
+        working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/live.pdf",
+        working_manifest_hash: "live-manifest",
+        working_checksum_sha256: "live-sha",
+        working_page_count: 2,
+        working_file_size: 1024,
+        working_rendered_at: Time.current,
+        working_status: Document::WORKING_STATUSES[:fresh]
+      )
+
+      force_rebuild_called = false
+
+      Documents::Generated::ForceLiveRebuild.stub :new, ->(**_kwargs) {
+        force_rebuild_called = true
+        raise "should not rebuild"
+      } do
+        post rebuild_live_event_documents_generated_url(@event, @document.logical_id), params: {
+          return_to: event_documents_generated_path(@event, @document.logical_id)
+        }
+      end
+
+      assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+      assert_not force_rebuild_called
+      assert_equal "documents/#{@event.id}/#{@document.logical_id}/working/live.pdf", @document.reload.working_storage_uri
+      follow_redirect!
+      assert_includes response.body, "Missing Attachment: attached PDF is missing a stored file"
     end
 
     test "show renders browser local time hooks for latest snapshot and build history timestamps" do

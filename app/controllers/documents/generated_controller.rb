@@ -171,8 +171,16 @@ module Documents
         return
       end
 
-      if current_segments.empty?
+      segments = current_segments
+
+      if segments.empty?
         redirect_to safe_return_to(fallback: builder_path), alert: "Add at least one page before rebuilding the live PDF."
+        return
+      end
+
+      blockers = compile_blockers(segments)
+      if blockers.any?
+        redirect_to safe_return_to(fallback: builder_path), alert: blockers.join("; ")
         return
       end
 

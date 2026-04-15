@@ -38,7 +38,7 @@ module Calendars
         assert_equal 1, result.imported_count
         assert_equal source_item.notes, imported.notes
         assert_equal source_item.duration_minutes, imported.duration_minutes
-        assert_equal source_item.time_caption, imported.time_caption
+        assert_nil imported.time_caption
         assert_equal CalendarItem::STATUSES[:planned], imported.status
         assert_equal false, imported.locked?
         assert_nil imported.vendor_name

@@ -9,7 +9,7 @@ class PageNumberOverlayTest < ActionView::TestCase
       page_height_points: 792,
       page_text_color: "#ffffff"
     )
-    view.define_singleton_method(:pdf_asset_url) { |path| "https://assets.example.test/#{path}" }
+    view.define_singleton_method(:inline_font_asset_data_uri) { |_path| "data:font/woff2;base64,stub" }
   end
 
   test "renders the styled page number overlay with the display font" do
@@ -21,6 +21,6 @@ class PageNumberOverlayTest < ActionView::TestCase
     assert_match(/font-style:\s*italic/m, rendered)
     assert_match(/color:\s*#ffffff/m, rendered)
     assert_match(/@font-face/m, rendered)
-    assert_match(/DidotLTStd-Italic\.woff/m, rendered)
+    assert_match(/data:font\/woff2;base64,stub/m, rendered)
   end
 end

@@ -32,6 +32,18 @@ module Calendars
                     apply_location_update
                   when "clear_location"
                     apply_location_clear
+                  when "set_time_label"
+                    apply_time_label_update
+                  when "clear_time_label"
+                    apply_time_label_clear
+                  when "add_team_members"
+                    apply_team_member_additions
+                  when "remove_team_members"
+                    apply_team_member_removals
+                  when "set_additional_team_members"
+                    apply_additional_team_members_update
+                  when "clear_additional_team_members"
+                    apply_additional_team_members_clear
                   when "delete_items"
                     apply_deletions
                   else
@@ -129,6 +141,58 @@ module Calendars
       true
     end
 
+    def apply_time_label_update
+      time_caption = params[:time_caption].to_s.strip
+      return "Enter a time label." if time_caption.blank?
+
+      items.find_each { |item| item.update!(time_caption:) }
+      @success_message = "Time label updated for #{items.count} item#{'s' if items.count != 1}."
+      true
+    end
+
+    def apply_time_label_clear
+      items.find_each { |item| item.update!(time_caption: nil) }
+      @success_message = "Time label cleared for #{items.count} item#{'s' if items.count != 1}."
+      true
+    end
+
+    def apply_team_member_additions
+      team_member_ids = permitted_team_member_ids
+      return "Select at least one PP member." if team_member_ids.empty?
+
+      items.find_each do |item|
+        item.update!(team_member_ids: (item.team_member_ids + team_member_ids).uniq)
+      end
+      @success_message = "PP members added to #{items.count} item#{'s' if items.count != 1}."
+      true
+    end
+
+    def apply_team_member_removals
+      team_member_ids = permitted_team_member_ids
+      return "Select at least one PP member." if team_member_ids.empty?
+
+      items.find_each do |item|
+        item.update!(team_member_ids: item.team_member_ids - team_member_ids)
+      end
+      @success_message = "PP members removed from #{items.count} item#{'s' if items.count != 1}."
+      true
+    end
+
+    def apply_additional_team_members_update
+      additional_team_members = params[:additional_team_members].to_s.strip
+      return "Enter other people." if additional_team_members.blank?
+
+      items.find_each { |item| item.update!(additional_team_members:) }
+      @success_message = "Other people updated for #{items.count} item#{'s' if items.count != 1}."
+      true
+    end
+
+    def apply_additional_team_members_clear
+      items.find_each { |item| item.update!(additional_team_members: nil) }
+      @success_message = "Other people cleared for #{items.count} item#{'s' if items.count != 1}."
+      true
+    end
+
     def apply_deletions
       count = items.count
       items.destroy_all
@@ -140,6 +204,11 @@ module Calendars
     def permitted_tag_ids
       available = calendar.event_calendar_tags.pluck(:id)
       Array(params[:tag_ids]).map(&:to_i).select { |id| available.include?(id) }
+    end
+
+    def permitted_team_member_ids
+      available = calendar.event.team_members.where.not(role: User::ROLES[:client]).pluck(:id)
+      Array(params[:team_member_ids]).map(&:to_i).select { |id| available.include?(id) }
     end
 
     def success_message

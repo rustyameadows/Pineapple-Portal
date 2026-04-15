@@ -81,24 +81,26 @@ module Documents
       end
 
       def html_view_payload
-        case segment.html_view_key
-        when "cover_sheet"
-          cover_payload
-        when "planning_team"
-          planning_team_payload
-        when DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
-          event_overview_payload
-        when DocumentSegment::VENDOR_CONTACTS_VIEW_KEY
-          vendor_contacts_payload
-        when DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY
-          wedding_party_reference_payload
-        when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
-          timeline_payload(run_of_show: true)
-        when DocumentSegment::TIMELINE_VIEW_KEY
-          timeline_payload(run_of_show: false)
-        else
-          {}
-        end
+        payload = case segment.html_view_key
+                  when "cover_sheet"
+                    cover_payload
+                  when "planning_team"
+                    planning_team_payload
+                  when DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
+                    event_overview_payload
+                  when DocumentSegment::VENDOR_CONTACTS_VIEW_KEY
+                    vendor_contacts_payload
+                  when DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY
+                    wedding_party_reference_payload
+                  when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
+                    timeline_payload(run_of_show: true)
+                  when DocumentSegment::TIMELINE_VIEW_KEY
+                    timeline_payload(run_of_show: false)
+                  else
+                    {}
+                  end
+
+        with_shared_template_version(payload)
       end
 
       def group_payload
@@ -363,6 +365,17 @@ module Documents
             }
           end
         }
+      end
+
+      def with_shared_template_version(payload)
+        if payload.is_a?(Hash)
+          payload.merge(shared_template_version: DocumentSegment.shared_pdf_template_version)
+        else
+          {
+            shared_template_version: DocumentSegment.shared_pdf_template_version,
+            payload: payload
+          }
+        end
       end
 
       def deep_sort(value)

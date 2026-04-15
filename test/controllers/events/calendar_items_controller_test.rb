@@ -133,6 +133,51 @@ module Events
       assert_nil item.reload.vendor_name
     end
 
+    test "bulk update sets time label for selected items" do
+      item = calendar_items(:ceremony)
+
+      patch bulk_update_event_calendar_items_url(@event), params: {
+        item_ids: [item.id],
+        bulk: {
+          bulk_action: "set_time_label",
+          time_caption: "Morning"
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      assert_equal "Morning", item.reload.time_caption
+    end
+
+    test "bulk update adds pp members for selected items" do
+      item = calendar_items(:ceremony)
+
+      patch bulk_update_event_calendar_items_url(@event), params: {
+        item_ids: [item.id],
+        bulk: {
+          bulk_action: "add_team_members",
+          team_member_ids: [users(:two).id]
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      assert_equal [users(:one).id, users(:two).id].sort, item.reload.team_member_ids.sort
+    end
+
+    test "bulk update sets other people for selected items" do
+      item = calendar_items(:ceremony)
+
+      patch bulk_update_event_calendar_items_url(@event), params: {
+        item_ids: [item.id],
+        bulk: {
+          bulk_action: "set_additional_team_members",
+          additional_team_members: "DJ; Florist"
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      assert_equal "DJ; Florist", item.reload.additional_team_members
+    end
+
     test "bulk update deletes selected items and respects safe return path" do
       item = calendar_items(:reception)
       return_to = event_calendar_view_path(

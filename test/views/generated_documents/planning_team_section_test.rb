@@ -23,6 +23,7 @@ class PlanningTeamSectionTest < ActionView::TestCase
     view.instance_variable_set(:@event, @event)
     view.instance_variable_set(:@segment, @segment)
     view.define_singleton_method(:inline_asset_data_uri) { |_path| "data:image/png;base64,stub" }
+    view.define_singleton_method(:inline_font_asset_data_uri) { |_path| "data:font/woff2;base64,stub" }
     view.define_singleton_method(:inline_global_asset_data_uri) { |_asset| "data:image/png;base64,avatar" }
   end
 
@@ -36,6 +37,9 @@ class PlanningTeamSectionTest < ActionView::TestCase
     assert_select ".generated-template--planning-team__card", minimum: 1
     assert_select ".generated-template--planning-team__name", text: "Ada Fixture"
     assert_select ".generated-template--planning-team__title", text: "Lead Planner"
+    assert_match(/aspect-ratio:\s*1 \/ 1/m, rendered)
+    assert_match(/object-position:\s*center center/m, rendered)
+    assert_match(/justify-content:\s*center/m, rendered)
     assert_no_match(/border-radius:/, rendered)
   end
 

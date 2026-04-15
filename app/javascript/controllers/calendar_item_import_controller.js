@@ -318,7 +318,7 @@ export default class extends Controller {
       id: Number(item.id),
       itemTitle: item.title,
       missingTime,
-      projectedCaption: item.time_caption || "",
+      projectedCaption: "",
       projectedEnd,
       projectedLabel: this.formatRange(projectedStart, projectedEnd),
       projectedStart,

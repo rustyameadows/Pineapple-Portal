@@ -153,6 +153,31 @@ class CalendarBulkEditTest < ApplicationSystemTestCase
     assert_no_selector ".event-calendars__bulk-toolbar", visible: true
   end
 
+  test "run of show group headers can select and deselect all visible rows in the group" do
+    login_as_planner
+    visit event_calendar_path(@event)
+
+    within find("tr.event-calendars__date-row", text: /Wednesday, October 1/i) do
+      click_button "Select"
+    end
+
+    assert_selector ".event-calendars__bulk-toolbar", visible: true
+    assert_selector ".event-calendars__bulk-count", text: /3\s+selected/
+    assert_selector "input.event-calendars__bulk-checkbox[value='#{@ceremony.id}']:checked", visible: :all
+    assert_selector "input.event-calendars__bulk-checkbox[value='#{@reception.id}']:checked", visible: :all
+    assert_selector "input.event-calendars__bulk-checkbox[value='#{calendar_items(:afterparty).id}']:checked", visible: :all
+    assert_no_selector "input.event-calendars__bulk-checkbox[value='#{calendar_items(:decision_flowers).id}']:checked", visible: :all
+
+    within find("tr.event-calendars__date-row", text: /Wednesday, October 1/i) do
+      click_button "Deselect"
+    end
+
+    assert_no_selector ".event-calendars__bulk-toolbar", visible: true
+    assert_no_selector "input.event-calendars__bulk-checkbox[value='#{@ceremony.id}']:checked", visible: :all
+    assert_no_selector "input.event-calendars__bulk-checkbox[value='#{@reception.id}']:checked", visible: :all
+    assert_no_selector "input.event-calendars__bulk-checkbox[value='#{calendar_items(:afterparty).id}']:checked", visible: :all
+  end
+
   test "run of show tag facet filters tagged and untagged rows" do
     login_as_planner
     visit event_calendar_path(@event)
@@ -286,15 +311,114 @@ class CalendarBulkEditTest < ApplicationSystemTestCase
     assert_not_includes @reception.reload.event_calendar_tag_ids, event_calendar_tags(:vendor).id
   end
 
-  private
+  test "run of show bulk edit can set and clear time labels" do
+    login_as_planner
+    visit event_calendar_path(@event)
 
-  def login_as_planner
-    visit login_path
-    fill_in "Email", with: users(:one).email
-    fill_in "Password", with: "password123"
-    click_button "Log In"
-    assert_text "Your Active Events"
+    check_bulk_item(@ceremony)
+    find("select[name='bulk[bulk_action]']").select("Set time label")
+    fill_in "Time label", with: "Morning"
+
+    click_button "Apply"
+    within "dialog[open]" do
+      click_button "Confirm changes"
+    end
+
+    assert_current_path event_calendar_path(@event)
+    assert_text "Time label updated for 1 item."
+    within "tr##{ActionView::RecordIdentifier.dom_id(@ceremony, :timeline_row)}" do
+      assert_text "Morning"
+      assert_no_text "3:00 PM – 3:45 PM"
+    end
+
+    check_bulk_item(@ceremony)
+    find("select[name='bulk[bulk_action]']").select("Clear time label")
+
+    click_button "Apply"
+    within "dialog[open]" do
+      click_button "Confirm changes"
+    end
+
+    assert_current_path event_calendar_path(@event)
+    assert_text "Time label cleared for 1 item."
+    within "tr##{ActionView::RecordIdentifier.dom_id(@ceremony, :timeline_row)}" do
+      assert_text "3:00 PM – 3:45 PM"
+      assert_no_text "Morning"
+    end
   end
+
+  test "planner timeline bulk edit can add and remove pp members" do
+    login_as_planner
+    visit event_calendar_view_path(@event, @view)
+
+    check_bulk_item(@reception)
+    find("select[name='bulk[bulk_action]']").select("Add PP members")
+    find("input#bulk_team_member_#{users(:one).id}", visible: :all).set(true)
+
+    click_button "Apply"
+    within "dialog[open]" do
+      click_button "Confirm changes"
+    end
+
+    assert_current_path event_calendar_view_path(@event, @view)
+    assert_text "PP members added to 1 item."
+    within "tr##{ActionView::RecordIdentifier.dom_id(@reception, :timeline_row)}" do
+      assert_text "Ada Fixture, Grace Fixture"
+    end
+
+    check_bulk_item(@reception)
+    find("select[name='bulk[bulk_action]']").select("Remove PP members")
+    find("input#bulk_team_member_#{users(:two).id}", visible: :all).set(true)
+
+    click_button "Apply"
+    within "dialog[open]" do
+      click_button "Confirm changes"
+    end
+
+    assert_current_path event_calendar_view_path(@event, @view)
+    assert_text "PP members removed from 1 item."
+    within "tr##{ActionView::RecordIdentifier.dom_id(@reception, :timeline_row)}" do
+      assert_text "Ada Fixture"
+      assert_no_text "Grace Fixture"
+    end
+  end
+
+  test "planner timeline bulk edit can set and clear other people" do
+    login_as_planner
+    visit event_calendar_view_path(@event, @view)
+
+    check_bulk_item(@reception)
+    find("select[name='bulk[bulk_action]']").select("Set other people")
+    fill_in "Other people", with: "DJ; Florist"
+
+    click_button "Apply"
+    within "dialog[open]" do
+      click_button "Confirm changes"
+    end
+
+    assert_current_path event_calendar_view_path(@event, @view)
+    assert_text "Other people updated for 1 item."
+    within "tr##{ActionView::RecordIdentifier.dom_id(@reception, :timeline_row)}" do
+      assert_text "Grace Fixture; DJ; Florist"
+    end
+
+    check_bulk_item(@reception)
+    find("select[name='bulk[bulk_action]']").select("Clear other people")
+
+    click_button "Apply"
+    within "dialog[open]" do
+      click_button "Confirm changes"
+    end
+
+    assert_current_path event_calendar_view_path(@event, @view)
+    assert_text "Other people cleared for 1 item."
+    within "tr##{ActionView::RecordIdentifier.dom_id(@reception, :timeline_row)}" do
+      assert_text "Grace Fixture"
+      assert_no_text "DJ; Florist"
+    end
+  end
+
+  private
 
   def open_filter(label)
     find("summary.event-calendars__filter-summary", text: /#{Regexp.escape(label)}/i).click

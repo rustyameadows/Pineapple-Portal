@@ -72,29 +72,7 @@ module DocumentsHelper
     asset_path = ActionController::Base.helpers.asset_path(path)
     return asset_path if asset_path.start_with?("data:")
 
-    manifest = Rails.application.assets_manifest if Rails.application.respond_to?(:assets_manifest)
-    source = manifest&.find_sources(path)&.first
-    if source.nil?
-      env = Rails.application.try(:assets)
-      if env.respond_to?(:find_asset)
-        asset = env.find_asset(path)
-        source = asset&.source
-      end
-    end
-
-    if source.nil?
-      clean_asset_path = asset_path.sub(%r{^/}, "")
-      candidate_paths = [
-        Rails.root.join("app/assets/images", path),
-        Rails.root.join("app/assets", path),
-        Rails.root.join("public", clean_asset_path),
-        Rails.root.join("public/assets", clean_asset_path),
-        Rails.root.join("public/assets", File.basename(clean_asset_path))
-      ]
-
-      candidate = candidate_paths.find { |p| p.exist? }
-      source = candidate&.binread if candidate
-    end
+    source = asset_source_bytes(path, asset_path: asset_path)
 
     return unless source
 
@@ -102,6 +80,10 @@ module DocumentsHelper
     base64 = Base64.strict_encode64(blob)
     content_type = Marcel::MimeType.for(StringIO.new(blob), name: path)
     "data:#{content_type};base64,#{base64}"
+  end
+
+  def inline_font_asset_data_uri(path)
+    inline_asset_data_uri(path)
   end
 
   def pdf_base_url
@@ -151,5 +133,39 @@ module DocumentsHelper
   rescue StandardError => e
     Rails.logger.warn("[inline_global_asset_data_uri] #{e.class}: #{e.message}")
     nil
+  end
+
+  private
+
+  def asset_source_bytes(path, asset_path:)
+    manifest = Rails.application.assets_manifest if Rails.application.respond_to?(:assets_manifest)
+    source = manifest&.find_sources(path)&.first
+    return source if source.present?
+
+    env = Rails.application.try(:assets)
+    if env.respond_to?(:resolver) && env.resolver.respond_to?(:read)
+      source = env.resolver.read(path, encoding: "ASCII-8BIT")
+      return source if source.present?
+    end
+
+    if env.respond_to?(:find_asset)
+      asset = env.find_asset(path)
+      source = asset&.source
+      return source if source.present?
+    end
+
+    clean_asset_path = asset_path.sub(%r{^/}, "")
+    candidate_paths = [
+      Rails.root.join("app/assets/fonts", path),
+      Rails.root.join("app/assets/images", path),
+      Rails.root.join("app/assets/stylesheets", path),
+      Rails.root.join("app/assets", path),
+      Rails.root.join("public", clean_asset_path),
+      Rails.root.join("public/assets", clean_asset_path),
+      Rails.root.join("public/assets", File.basename(clean_asset_path))
+    ]
+
+    candidate = candidate_paths.find(&:exist?)
+    candidate&.binread
   end
 end
