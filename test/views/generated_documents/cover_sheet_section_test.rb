@@ -11,6 +11,7 @@ class CoverSheetSectionTest < ActionView::TestCase
     view.extend GeneratedDocumentsHelper
     view.assign(event: @event, segment: @segment)
     view.define_singleton_method(:inline_asset_data_uri) { |_path| "data:image/png;base64,stub" }
+    view.define_singleton_method(:inline_font_asset_data_uri) { |_path| "data:font/woff2;base64,stub" }
     view.define_singleton_method(:inline_document_image_data_uri) { |_document| "data:image/png;base64,photo" }
   end
 

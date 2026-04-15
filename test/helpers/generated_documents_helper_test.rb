@@ -44,4 +44,11 @@ class GeneratedDocumentsHelperTest < ActionView::TestCase
       assert_equal "//cdn.example.test/assets/fonts/Didot.woff2", pdf_asset_url("//cdn.example.test/assets/fonts/Didot.woff2")
     end
   end
+
+  test "inline_asset_data_uri resolves font assets through propshaft" do
+    data_uri = inline_asset_data_uri("Didot.woff2")
+
+    assert data_uri.present?
+    assert_match(/\Adata:font\/woff2;base64,/, data_uri)
+  end
 end

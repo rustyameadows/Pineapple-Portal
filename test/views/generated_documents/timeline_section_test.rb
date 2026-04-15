@@ -25,14 +25,17 @@ class TimelineSectionTest < ActionView::TestCase
     view.instance_variable_set(:@event, @event)
     view.instance_variable_set(:@segment, @segment)
     view.define_singleton_method(:inline_asset_data_uri) { |_path| "data:image/png;base64,stub" }
+    view.define_singleton_method(:inline_font_asset_data_uri) { |_path| "data:font/woff2;base64,stub" }
   end
 
   test "renders the timeline with the shared packet sheet header style" do
-    render template: "generated_documents/sections/timeline", locals: { render_base_styles: false }
+    render template: "generated_documents/sections/timeline"
 
     assert_select ".generated-template--packet-sheet.generated-template--timeline", count: 1
     assert_select ".generated-template__page-header-title", text: "Photo / Video Timeline", count: 1
     assert_select "table.generated-template--timeline__table", count: 1
     assert_select "table.generated-template--timeline__table thead th", text: "Team", count: 1
+    assert_match(/font-family:\s*"Didot"/m, rendered)
+    assert_match(/font-family:\s*"BaskervilleNo2"/m, rendered)
   end
 end

@@ -15,6 +15,7 @@ class DocumentSegment < ApplicationRecord
     VENDOR_CONTACTS_VIEW_KEY,
     WEDDING_PARTY_REFERENCE_VIEW_KEY
   ].freeze
+  SHARED_PDF_TEMPLATE_VERSION = "packet-base-v1".freeze
   EVENT_OVERVIEW_TEMPLATE_VERSION = "packet-sheet-v5".freeze
   VENDOR_CONTACTS_TEMPLATE_VERSION = "packet-sheet-v1".freeze
   WEDDING_PARTY_REFERENCE_TEMPLATE_VERSION = "packet-sheet-v6".freeze
@@ -255,6 +256,10 @@ class DocumentSegment < ApplicationRecord
 
     def html_view_options
       HTML_VIEWS.map { |key, config| [config[:label], key] }
+    end
+
+    def shared_pdf_template_version
+      SHARED_PDF_TEMPLATE_VERSION
     end
 
     def resequence!(document_logical_id)

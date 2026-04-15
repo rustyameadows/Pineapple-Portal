@@ -136,6 +136,20 @@ module Documents
       assert_select "dialog.generated-builder__live-rebuild-dialog", count: 1
     end
 
+    test "show renders successfully with a planning team page source" do
+      create_page_placement(
+        view_key: "planning_team",
+        title: "Planning Team",
+        position: 1,
+        options: {}
+      )
+
+      get event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select "h2", text: "Live Working PDF", count: 1
+    end
+
     test "index renders packet actions without portal visibility checkbox" do
       travel_to Time.zone.local(2026, 4, 8, 2, 11, 55) do
         logical_id = SecureRandom.uuid

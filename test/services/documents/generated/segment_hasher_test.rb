@@ -6,6 +6,10 @@ module Documents
       setup do
         @event = events(:one)
         @source = GeneratedPacketSource.ensure_canonical!(@event, GeneratedPacketSource::CANONICAL_KEYS[:event_overview])
+        @planning_team_source = GeneratedPacketSource.ensure_canonical!(
+          @event,
+          GeneratedPacketSource::CANONICAL_KEYS[:planning_team]
+        )
         @wedding_party_source = GeneratedPacketSource.ensure_canonical!(
           @event,
           GeneratedPacketSource::CANONICAL_KEYS[:wedding_party_reference]
@@ -156,6 +160,26 @@ module Documents
         calendar_items(:ceremony).update!(transportation_note: "Meet the shuttle at the east entrance.")
 
         refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
+      end
+
+      test "timeline hash changes when the shared packet template version changes" do
+        timeline_source = GeneratedPacketSource.ensure_canonical!(
+          @event,
+          GeneratedPacketSource::CANONICAL_KEYS[:photo_video_timeline]
+        )
+        original_hash = SegmentHasher.call(timeline_source)
+
+        DocumentSegment.stub :shared_pdf_template_version, "packet-base-v999" do
+          refute_equal original_hash, SegmentHasher.call(timeline_source)
+        end
+      end
+
+      test "planning team hash changes when the shared packet template version changes" do
+        original_hash = SegmentHasher.call(@planning_team_source)
+
+        DocumentSegment.stub :shared_pdf_template_version, "packet-base-v999" do
+          refute_equal original_hash, SegmentHasher.call(@planning_team_source)
+        end
       end
 
       test "vendor contacts hash changes when planner contact fields change" do
