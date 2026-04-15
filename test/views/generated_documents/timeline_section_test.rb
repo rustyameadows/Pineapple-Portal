@@ -33,5 +33,6 @@ class TimelineSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet.generated-template--timeline", count: 1
     assert_select ".generated-template__page-header-title", text: "Photo / Video Timeline", count: 1
     assert_select "table.generated-template--timeline__table", count: 1
+    assert_select "table.generated-template--timeline__table thead th", text: "Team", count: 1
   end
 end
