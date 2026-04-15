@@ -48,7 +48,7 @@ module Documents
       )
     end
 
-    test "working pdf, working status, snapshot, and build status routes resolve to the generated packet builder" do
+    test "working pdf, working status, rebuild, snapshot, and build status routes resolve to the generated packet builder" do
       assert_routing(
         { method: "get", path: working_pdf_event_documents_generated_path(@event, @logical_id) },
         controller: "documents/generated",
@@ -68,6 +68,16 @@ module Documents
       assert_recognizes(
         {
           controller: "documents/generated",
+          action: "rebuild_live",
+          event_id: @event.id.to_s,
+          logical_id: @logical_id
+        },
+        { method: "post", path: rebuild_live_event_documents_generated_path(@event, @logical_id) }
+      )
+
+      assert_recognizes(
+        {
+          controller: "documents/generated",
           action: "compile",
           event_id: @event.id.to_s,
           logical_id: @logical_id
@@ -80,7 +90,7 @@ module Documents
         controller: "documents/generated/builds",
         action: "status",
         event_id: @event.id.to_s,
-        logical_id: @logical_id,
+        generated_logical_id: @logical_id,
         id: "12"
       )
     end

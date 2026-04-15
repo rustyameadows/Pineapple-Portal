@@ -169,6 +169,7 @@ post "upload_failures", to: "upload_failures#create"
         member do
           post :compile
           post :snapshot, action: :compile
+          post :rebuild_live
           get :working_pdf
           get :working_status
           post :duplicate

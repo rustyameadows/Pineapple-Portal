@@ -1,8 +1,8 @@
 module Documents
   class GeneratedController < ApplicationController
     before_action :set_event
-    before_action :set_generated_document, only: %i[show edit update destroy compile working_pdf working_status]
-    before_action :ensure_source_backed_document!, only: %i[show edit update compile working_pdf working_status]
+    before_action :set_generated_document, only: %i[show edit update destroy compile rebuild_live working_pdf working_status]
+    before_action :ensure_source_backed_document!, only: %i[show edit update compile rebuild_live working_pdf working_status]
 
     def index
       @manifest_entries = build_manifest_entries
@@ -163,6 +163,23 @@ module Documents
         viewer_token: @document.working_viewer_token,
         viewer_path: (pdf_viewer_url(canonical_working_pdf_path(@document.working_viewer_token)) if @document.working_available?)
       ).as_json
+    end
+
+    def rebuild_live
+      if @document.group_container?
+        redirect_to edit_event_documents_generated_path(@event, @document.logical_id), alert: "Groups do not have live PDFs."
+        return
+      end
+
+      if current_segments.empty?
+        redirect_to safe_return_to(fallback: builder_path), alert: "Add at least one page before rebuilding the live PDF."
+        return
+      end
+
+      Documents::Generated::ForceLiveRebuild.new(definition_document: @document).call
+      redirect_to safe_return_to(fallback: builder_path), notice: "Live PDF rebuild queued."
+    rescue StandardError => e
+      redirect_to safe_return_to(fallback: builder_path), alert: "Unable to rebuild live PDF: #{e.message}"
     end
 
     def compile
