@@ -23,6 +23,9 @@ module Client
 
       assert_response :success
       assert_select "h1", text: "Client Portal Login"
+      assert_select "p.auth-card__footer", text: "If you’ve forgotten your credentials, please email us for a password reset link."
+      assert_select "header.auth-card__header p", count: 0
+      assert_no_match "Enter the credentials provided by your planner to access your event.", response.body
     end
 
     test "guest portal requests redirect to client login with a return_to" do

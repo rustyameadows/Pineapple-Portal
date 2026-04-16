@@ -31,6 +31,40 @@ class DocumentUploadsControllerTest < ActionDispatch::IntegrationTest
     assert storage.args[:key].present?
   end
 
+  test "returns presigned data for a client portal user with access to the event" do
+    delete logout_url
+    log_in_client_portal(users(:client_contact))
+
+    storage = StubStorage.new
+    R2::Storage.stub :new, storage do
+      post presign_event_documents_url(@event), params: {
+        filename: "mood-board.png",
+        content_type: "image/png"
+      }, as: :json
+    end
+
+    assert_response :success
+    body = JSON.parse(response.body)
+
+    assert_equal "https://example.com/upload", body["upload_url"]
+    assert body["storage_uri"].include?(@event.id.to_s)
+    assert_equal "image/png", body["content_type"]
+  end
+
+  test "returns json when a signed-out request tries to presign" do
+    delete logout_url
+
+    post presign_event_documents_url(@event), params: {
+      filename: "mood-board.png",
+      content_type: "image/png"
+    }, as: :json
+
+    assert_response :unauthorized
+    body = JSON.parse(response.body)
+
+    assert_equal "Please sign in to upload files.", body["error"]
+  end
+
   test "returns next version when logical id provided" do
     existing = documents(:contract_v1)
     storage = StubStorage.new

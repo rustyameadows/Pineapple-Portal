@@ -1,5 +1,9 @@
 class DocumentUploadsController < ApplicationController
+  include ClientPortalAuthentication
+
+  skip_before_action :require_login
   before_action :set_event
+  before_action :authorize_presign!
 
   def create
     filename = params.require(:filename)
@@ -27,6 +31,17 @@ class DocumentUploadsController < ApplicationController
   end
 
   private
+
+  def authorize_presign!
+    return if current_user.present?
+    return if current_client_user.present? && client_can_access_event?(current_client_user, @event)
+
+    reset_client_session if session[:client_user_id].present? && current_client_user.nil?
+
+    render json: {
+      error: current_client_user.present? ? "Access to this event is unavailable." : "Please sign in to upload files."
+    }, status: current_client_user.present? ? :forbidden : :unauthorized
+  end
 
   def set_event
     @event = Event.find(params[:event_id])

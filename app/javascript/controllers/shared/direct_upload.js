@@ -44,6 +44,7 @@ const requestPresign = async ({ presignUrl, filename, contentType, logicalId, cs
     response = await fetch(presignUrl, {
       method: "POST",
       headers: {
+        "Accept": "application/json",
         "Content-Type": "application/json",
         "X-CSRF-Token": csrfToken || ""
       },
@@ -66,7 +67,18 @@ const requestPresign = async ({ presignUrl, filename, contentType, logicalId, cs
     })
   }
 
-  return response.json()
+  const responseText = await response.text()
+
+  try {
+    return JSON.parse(responseText)
+  } catch (_error) {
+    throw buildUploadError({
+      stage: "presign",
+      status: response.status,
+      responseText,
+      message: "Could not prepare the upload because Pineapple returned an unexpected response."
+    })
+  }
 }
 
 const uploadToStorage = ({ uploadUrl, file, contentType, onProgress }) => {
