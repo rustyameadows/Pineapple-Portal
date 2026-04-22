@@ -56,6 +56,16 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--wedding-party-reference__wedding-party-group", count: 2
     assert_select ".generated-template--wedding-party-reference__wedding-party-group .generated-template--packet-sheet__subsection-title", text: "VIP Family"
     assert_select ".generated-template--wedding-party-reference__wedding-party-group .generated-template--packet-sheet__subsection-title", text: "Jordan's Side"
+    assert_match(/generated-template--wedding-party-reference__wedding-party-content\s*\{[^}]*border:\s*1px solid rgba\(0,\s*0,\s*0,\s*0\.06\);/m, rendered)
+    assert_match(/generated-template--wedding-party-reference__wedding-party-content\s*\{[^}]*border-top:\s*none;/m, rendered)
+    assert_match(/generated-template--wedding-party-reference__wedding-party-columns\s*\{[^}]*align-items:\s*start;/m, rendered)
+    assert_match(/generated-template--wedding-party-reference__wedding-party-columns\s*\{[^}]*gap:\s*0\.12in;/m, rendered)
+    assert_match(/generated-template--wedding-party-reference__wedding-party-group\s*\{[^}]*align-content:\s*start;/m, rendered)
+    assert_no_match(/generated-template--wedding-party-reference__wedding-party-group::after/, rendered)
+    assert_match(/generated-template--wedding-party-reference__wedding-party-group \.generated-template--packet-sheet__grid\s*\{[^}]*border-bottom:\s*none;/m, rendered)
+    assert_no_match(/generated-template--wedding-party-reference__wedding-party-group \.generated-template--packet-sheet__grid\s*\{[^}]*border-left:\s*none;/m, rendered)
+    assert_no_match(/generated-template--wedding-party-reference__wedding-party-group \.generated-template--packet-sheet__grid\s*\{[^}]*border-right:\s*none;/m, rendered)
+    assert_match(/generated-template--wedding-party-reference__wedding-party-group \.generated-template--packet-sheet__grid-row:last-child\s*\{[^}]*border-bottom:\s*none;/m, rendered)
     assert_select ".generated-template--packet-sheet__event-card", minimum: 1
     assert_select ".generated-template--packet-sheet__subsection-title", text: "Monday, September 15", count: 2
     assert_select ".generated-template--packet-sheet__subsection-title", text: "Wednesday, October 1", count: 2

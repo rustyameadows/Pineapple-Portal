@@ -1,0 +1,5 @@
+[    2306ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3100/login:0
+[  324064ms] [ERROR] Failed to load resource: the server responded with a status of 422 (Unprocessable Content) @ http://localhost:3100/login:0
+[  324168ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3100/login:0
+[  409245ms] [ERROR] Failed to load resource: the server responded with a status of 422 (Unprocessable Content) @ http://localhost:3100/login:0
+[  409353ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3100/login:0

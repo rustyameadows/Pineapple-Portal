@@ -24,7 +24,7 @@
   }
 
   .generated-template--cover {
-    --cover-bg: #e9ede8;
+    --cover-bg: var(--color-white, #ffffff);
     --cover-accent: var(--color-dark-brown, #3f2211);
     --page-bg: var(--cover-bg);
     --page-padding-vertical: clamp(4vh, 8vh, 3.5rem);
@@ -91,6 +91,7 @@
     display: block;
     max-width: 70%;
     max-height: 60vh;
+    border: 4px solid var(--cover-accent);
     object-fit: contain;
   }
 
