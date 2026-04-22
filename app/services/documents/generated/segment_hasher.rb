@@ -169,6 +169,7 @@ module Documents
             social_media_policy: segment.event.social_media_policy,
             parking_details: segment.event.parking_details
           },
+          milestone_items: event_overview_milestone_items_payload,
           vip_key_people: segment.event.event_guests.key_people.ordered.filter_map do |guest|
             next unless guest.vip?
 
@@ -198,25 +199,25 @@ module Documents
               user_updated_at: user.updated_at&.utc&.iso8601
             }
           end,
+          venue_addresses: segment.event.event_venues.ordered.filter_map do |venue|
+            address = venue.address.to_s.strip.presence
+            next unless address
+
+            {
+              venue_id: venue.id,
+              position: venue.position,
+              name: venue.name.to_s.strip,
+              address: address
+            }
+          end,
           vendors: segment.event.event_vendors.includes(:global_vendor).ordered.filter_map do |vendor|
-            contacts = Array(vendor.contacts).filter_map do |contact|
-              normalized_contact = contact.to_h.stringify_keys.slice("name", "title", "email", "phone").transform_values do |value|
-                value.to_s.strip.presence
-              end
-
-              next if normalized_contact.values.all?(&:blank?)
-
-              normalized_contact
-            end
-
             {
               vendor_id: vendor.id,
               position: vendor.position,
               global_vendor_id: vendor.global_vendor_id,
               name: resolved_vendor_name(vendor),
               vendor_type: resolved_vendor_type(vendor),
-              social_handle: normalized_social_handle(resolved_vendor_social_handle(vendor)),
-              contacts: contacts
+              social_handle: normalized_social_handle(resolved_vendor_social_handle(vendor))
             }
           end
         }
@@ -225,6 +226,7 @@ module Documents
       def vendor_contacts_payload
         {
           template_version: DocumentSegment::VENDOR_CONTACTS_TEMPLATE_VERSION,
+          pineapple_team_meals: segment.event.pineapple_team_meals.to_s.strip.presence,
           planners: segment.event.planner_team_members.includes(:user).ordered_for_display.filter_map do |member|
             user = member.user
             next unless user
@@ -248,6 +250,7 @@ module Documents
               global_vendor_id: vendor.global_vendor_id,
               vendor_type: resolved_vendor_type(vendor),
               name: resolved_vendor_name(vendor),
+              team_meals: vendor.team_meals.to_s.strip.presence,
               contacts: Array(vendor.contacts).map do |contact|
                 contact.to_h.stringify_keys.slice("name", "title", "email", "phone", "notes").transform_values do |value|
                   value.to_s.strip.presence
@@ -326,6 +329,45 @@ module Documents
               end
             }
           end
+      end
+
+      def event_overview_milestone_items_payload
+        calendar = segment.event.run_of_show_calendar
+        timezone = calendar&.timezone.presence || Time.zone.name
+        return { timezone: timezone, items: [] } unless calendar
+
+        items = calendar.calendar_items
+                        .includes(:event_calendar_tags, :relative_anchor)
+                        .to_a
+                        .select(&:milestone?)
+                        .sort_by do |item|
+          start_time = item.effective_starts_at&.in_time_zone(timezone)
+          [start_time&.to_f || Float::INFINITY, item.title.to_s.downcase]
+        end
+
+        {
+          timezone: timezone,
+          items: items.map do |item|
+            {
+              item_id: item.id,
+              position: item.position,
+              title: item.title,
+              location_name: item.location_name,
+              guest_count: item.guest_count,
+              time_caption: item.time_caption,
+              starts_at: item.starts_at&.utc&.iso8601,
+              effective_starts_at: item.effective_starts_at&.utc&.iso8601,
+              effective_ends_at: item.effective_ends_at&.utc&.iso8601,
+              duration_minutes: item.duration_minutes,
+              relative_anchor_id: item.relative_anchor_id,
+              relative_offset_minutes: item.relative_offset_minutes,
+              relative_before: item.relative_before,
+              relative_to_anchor_end: item.relative_to_anchor_end,
+              locked: item.locked,
+              updated_at: item.updated_at&.utc&.iso8601
+            }
+          end
+        }
       end
 
       def timeline_payload(run_of_show:)

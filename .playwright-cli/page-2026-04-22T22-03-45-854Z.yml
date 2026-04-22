@@ -1,0 +1,19 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - heading "Log In" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Enter your credentials to access the portal.
+    - paragraph [ref=e7]: Please log in to continue.
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e10]: Email
+        - textbox "Email" [active] [ref=e11]
+      - generic [ref=e12]:
+        - generic [ref=e13]: Password
+        - textbox "Password" [ref=e14]
+      - button "Log In" [ref=e16] [cursor=pointer]
+    - generic [ref=e17]:
+      - paragraph [ref=e18]: Looking for your event portal?
+      - link "Go to Client Portal Login" [ref=e19] [cursor=pointer]:
+        - /url: /client/login
+  - button "Agent Annotation" [ref=e20] [cursor=pointer]

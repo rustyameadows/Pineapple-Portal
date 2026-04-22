@@ -6,8 +6,10 @@
 <% event_date_range = generated_event_overview_date_range(@event) %>
 <% planners = generated_event_overview_planners(@event) %>
 <% milestone_data = generated_event_overview_timeline(@event) %>
-<% milestone_items = milestone_data[:groups].flat_map { |group| group[:items] } %>
+<% milestone_groups = milestone_data[:groups] %>
 <% milestone_timezone = milestone_data[:timezone] %>
+<% venue_addresses = generated_event_overview_venue_addresses(@event) %>
+<% venue_address_title = venue_addresses.one? ? "Venue Address" : "Venue Addresses" %>
 <% vendors = generated_event_overview_vendors(@event) %>
 <% important_information_rows = generated_event_overview_primary_rows(@event) %>
 <% vip_rows = generated_event_overview_vip_rows(@event) %>
@@ -17,6 +19,77 @@
   .generated-template--event-overview__important-information-groups {
     display: grid;
     gap: 10px;
+  }
+
+  .generated-template--event-overview__timeline-groups {
+    display: grid;
+    gap: 0.06in;
+  }
+
+  .generated-template--event-overview__timeline-group {
+    display: grid;
+    break-inside: avoid;
+  }
+
+  .generated-template--event-overview__timeline-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .generated-template--event-overview__timeline-card {
+    display: grid;
+    align-content: start;
+    min-height: 0.46in;
+    padding: 0.04in 0.055in 0.05in;
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    break-inside: avoid;
+    box-sizing: border-box;
+  }
+
+  .generated-template--event-overview__timeline-card:nth-child(4n) {
+    border-right: none;
+  }
+
+  .generated-template--event-overview__timeline-card:nth-child(n+5) {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .generated-template--event-overview__venue-address-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .generated-template--event-overview__venue-address-card {
+    display: grid;
+    gap: 2px;
+    align-content: start;
+    min-height: 0.42in;
+    padding: 0.04in 0.055in 0.05in;
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    break-inside: avoid;
+    box-sizing: border-box;
+  }
+
+  .generated-template--event-overview__venue-address-card:nth-child(4n) {
+    border-right: none;
+  }
+
+  .generated-template--event-overview__venue-address-card:nth-child(n+5) {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .generated-template--event-overview__venue-address-grid--single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .generated-template--event-overview__venue-address-grid--single .generated-template--event-overview__venue-address-card {
+    border-right: none;
   }
 </style>
 
@@ -86,22 +159,48 @@
 
     <section class="generated-template--packet-sheet__section generated-template--event-overview__timeline">
       <h2 class="generated-template--packet-sheet__section-title">Timeline</h2>
-      <% if milestone_items.any? %>
-        <div class="generated-template--packet-sheet__grid">
-          <% milestone_items.each do |item| %>
-            <div class="generated-template--packet-sheet__grid-row generated-template--packet-sheet__grid-row--two-column generated-template--event-overview__timeline-row">
-              <div class="generated-template--packet-sheet__grid-cell">
-                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label generated-template--event-overview__timeline-label"><%= item.title %></p>
+      <% if milestone_groups.any? %>
+        <div class="generated-template--event-overview__timeline-groups">
+          <% milestone_groups.each do |group| %>
+            <section class="generated-template--packet-sheet__subsection generated-template--event-overview__timeline-group">
+              <h3 class="generated-template--packet-sheet__subsection-title generated-template--event-overview__timeline-date"><%= group[:date_label] %></h3>
+              <div class="generated-template--event-overview__timeline-grid">
+                <% group[:items].each do |item| %>
+                  <article class="generated-template--packet-sheet__event-card generated-template--event-overview__timeline-card">
+                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--event-card">
+                      <strong class="generated-template--event-overview__timeline-title"><%= item.title %></strong><br>
+                      <% if item.location_name.present? %>
+                        <span class="generated-template--event-overview__timeline-location"><%= item.location_name %></span><br>
+                      <% end %>
+                      <u class="generated-template--event-overview__timeline-time"><%= calendar_item_time_only_label_with_marker(item, milestone_timezone) %></u>
+                      <% if item.guest_count.present? %>
+                        <br><em class="generated-template--event-overview__timeline-guest-count"><%= item.guest_count %></em>
+                      <% end %>
+                    </p>
+                  </article>
+                <% end %>
               </div>
-              <div class="generated-template--packet-sheet__grid-cell">
-                <% timeline_time = generated_event_overview_timeline_time(item, milestone_timezone) %>
-                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail generated-template--event-overview__timeline-time"><%= timeline_time.sub(" to ", " <em>to</em> ").html_safe %></p>
-              </div>
-            </div>
+            </section>
           <% end %>
         </div>
       <% else %>
         <p class="generated-template--packet-sheet__empty">No milestone items are available for this event yet.</p>
+      <% end %>
+    </section>
+
+    <section class="generated-template--packet-sheet__section generated-template--event-overview__venue-addresses">
+      <h2 class="generated-template--packet-sheet__section-title"><%= venue_address_title %></h2>
+      <% if venue_addresses.any? %>
+        <div class="generated-template--event-overview__venue-address-grid <%= "generated-template--event-overview__venue-address-grid--single" if venue_addresses.one? %>">
+          <% venue_addresses.each do |venue| %>
+            <article class="generated-template--event-overview__venue-address-card">
+              <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__venue-address-name"><strong><%= venue[:name] %></strong></p>
+              <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail generated-template--event-overview__venue-address"><%= venue[:address] %></p>
+            </article>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="generated-template--packet-sheet__empty">No venue addresses are available for this event yet.</p>
       <% end %>
     </section>
 
@@ -137,8 +236,6 @@
       <% if vendors.any? %>
         <div class="generated-template--packet-sheet__grid">
           <% vendors.each do |vendor| %>
-            <% first_contact = vendor[:contacts].first %>
-            <% remaining_contacts = vendor[:contacts].drop(1) %>
             <% label_text = vendor[:vendor_type].presence %>
 
             <article>
@@ -148,13 +245,6 @@
                 </div>
                 <div class="generated-template--packet-sheet__grid-cell">
                   <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__vendor-name"><%= vendor[:name] %></p>
-                  <% if first_contact %>
-                    <p class="generated-template--packet-sheet__text generated-template--event-overview__vendor-contact-name">
-                      <em><%= first_contact[:name].presence || first_contact[:title].presence || "Primary contact" %></em>
-                    </p>
-                  <% else %>
-                    <p class="generated-template--packet-sheet__text generated-template--event-overview__vendor-contact-name generated-template--event-overview__vendor-contact-name--empty" aria-hidden="true">&nbsp;</p>
-                  <% end %>
                 </div>
                 <div class="generated-template--packet-sheet__grid-cell">
                   <% if vendor[:social_handle].present? %>
@@ -162,24 +252,6 @@
                   <% end %>
                 </div>
               </div>
-
-              <% remaining_contacts.each do |contact| %>
-                <div class="generated-template--packet-sheet__grid-row">
-                  <div class="generated-template--packet-sheet__grid-cell">
-                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label"></p>
-                  </div>
-                  <div class="generated-template--packet-sheet__grid-cell">
-                    <p class="generated-template--packet-sheet__text generated-template--event-overview__vendor-contact-name">
-                      <em><%= contact[:name].presence || contact[:title].presence || "Additional contact" %></em>
-                    </p>
-                  </div>
-                  <div class="generated-template--packet-sheet__grid-cell">
-                    <% if vendor[:social_handle].present? %>
-                      <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail"><%= vendor[:social_handle] %></p>
-                    <% end %>
-                  </div>
-                </div>
-              <% end %>
             </article>
           <% end %>
         </div>

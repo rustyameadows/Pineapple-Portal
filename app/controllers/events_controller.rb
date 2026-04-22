@@ -91,7 +91,8 @@ class EventsController < ApplicationController
       :key_people_label,
       :social_media_policy,
       :parking_details,
-      :getting_ready_details
+      :getting_ready_details,
+      :pineapple_team_meals
     )
   end
 

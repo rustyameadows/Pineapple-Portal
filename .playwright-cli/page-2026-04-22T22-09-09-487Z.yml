@@ -1,0 +1,17 @@
+- generic [ref=e23]:
+  - generic [ref=e24]:
+    - heading "Log In" [level=1] [ref=e25]
+    - paragraph [ref=e26]: Enter your credentials to access the portal.
+  - paragraph [ref=e27]: Invalid email or password.
+  - generic [ref=e28]:
+    - generic [ref=e29]:
+      - generic [ref=e30]: Email
+      - textbox "Email" [active] [ref=e31]
+    - generic [ref=e32]:
+      - generic [ref=e33]: Password
+      - textbox "Password" [ref=e34]
+    - button "Log In" [ref=e36] [cursor=pointer]
+  - generic [ref=e37]:
+    - paragraph [ref=e38]: Looking for your event portal?
+    - link "Go to Client Portal Login" [ref=e39] [cursor=pointer]:
+      - /url: /client/login

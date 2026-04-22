@@ -7,6 +7,7 @@ class EventVenue < ApplicationRecord
   attr_writer :contacts_attributes
 
   before_validation :strip_name
+  before_validation :normalize_address
   before_validation :sync_name_from_global_venue
   before_validation :assign_position, on: :create
   before_validation :apply_contacts_attributes
@@ -40,6 +41,10 @@ class EventVenue < ApplicationRecord
 
   def strip_name
     self.name = name.to_s.strip
+  end
+
+  def normalize_address
+    self.address = address.to_s.strip.presence
   end
 
   def assign_position

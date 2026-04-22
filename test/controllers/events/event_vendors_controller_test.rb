@@ -16,6 +16,7 @@ module Events
             vendor_type: " Floral ",
             client_visible: "0",
             social_handle: " @floristcollective ",
+            team_meals: "  **Two vendor meals**\n\n[Menu](https://example.com/menu)  ",
             contacts_attributes: {
               "0" => {
                 name: "Fiona Florist",
@@ -33,6 +34,7 @@ module Events
       refute vendor.client_visible?
       assert_equal "Floral", vendor.vendor_type
       assert_equal "@floristcollective", vendor.social_handle
+      assert_equal "**Two vendor meals**\n\n[Menu](https://example.com/menu)", vendor.team_meals
       assert_equal [{
         "name" => "Fiona Florist",
         "title" => nil,
@@ -51,6 +53,7 @@ module Events
           vendor_type: " Lighting & Production ",
           client_visible: "1",
           social_handle: "@bright.co",
+          team_meals: "Board the **shuttle** after vendor dinner.",
           contacts_attributes: {
             "0" => { name: "Leo Light", phone: "999-000-0000" }
           }
@@ -63,6 +66,7 @@ module Events
       assert vendor.client_visible?
       assert_equal "Lighting & Production", vendor.vendor_type
       assert_equal "@bright.co", vendor.social_handle
+      assert_equal "Board the **shuttle** after vendor dinner.", vendor.team_meals
       assert_equal "999-000-0000", vendor.contacts.first["phone"]
     end
 

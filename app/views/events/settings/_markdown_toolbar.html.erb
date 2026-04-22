@@ -1,34 +1,44 @@
+<% tools = Array(local_assigns.fetch(:tools, %i[bold italic link headline])).map(&:to_sym) %>
+
 <div class="event-settings__markdown-toolbar" role="toolbar" aria-label="<%= toolbar_label %>">
-  <button type="button"
-          class="event-settings__markdown-button"
-          title="Bold"
-          aria-label="Bold"
-          data-markdown-format="bold"
-          data-action="mousedown->generated-markdown-editor#preserveSelection click->generated-markdown-editor#format">
-    <strong>B</strong>
-  </button>
-  <button type="button"
-          class="event-settings__markdown-button"
-          title="Italic"
-          aria-label="Italic"
-          data-markdown-format="italic"
-          data-action="mousedown->generated-markdown-editor#preserveSelection click->generated-markdown-editor#format">
-    <em>I</em>
-  </button>
-  <button type="button"
-          class="event-settings__markdown-button"
-          title="Link"
-          aria-label="Link"
-          data-markdown-format="link"
-          data-action="mousedown->generated-markdown-editor#preserveSelection click->generated-markdown-editor#format">
-    Link
-  </button>
-  <button type="button"
-          class="event-settings__markdown-button"
-          title="Headline"
-          aria-label="Headline"
-          data-markdown-format="headline"
-          data-action="mousedown->generated-markdown-editor#preserveSelection click->generated-markdown-editor#format">
-    H
-  </button>
+  <% if tools.include?(:bold) %>
+    <button type="button"
+            class="event-settings__markdown-button"
+            title="Bold"
+            aria-label="Bold"
+            data-markdown-format="bold"
+            data-action="mousedown->generated-markdown-editor#preserveSelection click->generated-markdown-editor#format">
+      <strong>B</strong>
+    </button>
+  <% end %>
+  <% if tools.include?(:italic) %>
+    <button type="button"
+            class="event-settings__markdown-button"
+            title="Italic"
+            aria-label="Italic"
+            data-markdown-format="italic"
+            data-action="mousedown->generated-markdown-editor#preserveSelection click->generated-markdown-editor#format">
+      <em>I</em>
+    </button>
+  <% end %>
+  <% if tools.include?(:link) %>
+    <button type="button"
+            class="event-settings__markdown-button"
+            title="Link"
+            aria-label="Link"
+            data-markdown-format="link"
+            data-action="mousedown->generated-markdown-editor#preserveSelection click->generated-markdown-editor#format">
+      Link
+    </button>
+  <% end %>
+  <% if tools.include?(:headline) %>
+    <button type="button"
+            class="event-settings__markdown-button"
+            title="Headline"
+            aria-label="Headline"
+            data-markdown-format="headline"
+            data-action="mousedown->generated-markdown-editor#preserveSelection click->generated-markdown-editor#format">
+      H
+    </button>
+  <% end %>
 </div>

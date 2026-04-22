@@ -8,16 +8,24 @@
     gap: 0.16in;
     --generated-document-content-padding-top: 0.28in;
     --generated-document-content-padding-bottom: 0.55in;
+    --planning-team-card-width: 1.9in;
+    --planning-team-grid-column-gap: 0.16in;
+    --planning-team-grid-row-gap: 0.22in;
+    --planning-team-details-min-height: 0.48in;
   }
 
   .generated-template--planning-team__grid {
-    display: grid;
-    gap: 20px 12px;
-    grid-template-columns: repeat(auto-fit, minmax(2.18in, 2.18in));
+    display: flex;
+    flex-wrap: wrap;
     justify-content: center;
+    align-items: flex-start;
+    column-gap: var(--planning-team-grid-column-gap);
+    row-gap: var(--planning-team-grid-row-gap);
   }
 
   .generated-template--planning-team__card {
+    width: var(--planning-team-card-width);
+    flex: 0 0 var(--planning-team-card-width);
     display: grid;
     justify-items: center;
     align-content: start;
@@ -28,7 +36,7 @@
 
   .generated-template--planning-team__photo {
     position: relative;
-    width: min(100%, 2.18in);
+    width: 100%;
     aspect-ratio: 1 / 1;
     overflow: hidden;
     background: rgba(45, 28, 18, 0.08);
@@ -51,20 +59,22 @@
   }
 
   .generated-template--planning-team__details {
-    width: min(100%, 2.28in);
+    width: 100%;
+    min-height: var(--planning-team-details-min-height);
     padding: 0;
     display: grid;
     justify-items: center;
-    gap: 0;
+    align-content: center;
+    gap: 0.03in;
   }
 
   .generated-template p.generated-template--planning-team__name {
     margin: 0;
     color: #6a533f;
     font-family: var(--font-family-display, "Didot", "Times New Roman", serif);
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 400;
-    line-height: 18px;
+    line-height: 19px;
     letter-spacing: 0.025em;
     text-transform: none;
   }
@@ -72,8 +82,8 @@
   .generated-template p.generated-template--planning-team__title {
     margin: 0;
     color: rgba(45, 28, 18, 0.78);
-    font-size: 11px;
-    line-height: 13px;
+    font-size: 10px;
+    line-height: 12px;
     letter-spacing: 0.015em;
   }
 
@@ -86,7 +96,7 @@
   }
 
   .generated-template p.generated-template--planning-team__name {
-    margin-bottom: 6px;
+    margin-bottom: 0;
   }
 
   .generated-template--planning-team__empty {

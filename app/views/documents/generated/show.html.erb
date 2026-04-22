@@ -20,12 +20,13 @@
 
         <div class="generated-builder__body generated-builder__single-column">
           <%
-            live_pdf_viewer_path =
+            live_pdf_frame_path =
               if @working_copy&.working_available
                 "#{working_pdf_event_documents_generated_path(@event, @document.logical_id, v: @working_copy.viewer_token)}#view=Fit"
               else
                 working_pdf_event_documents_generated_path(@event, @document.logical_id)
               end
+            live_pdf_open_path = "#{working_pdf_event_documents_generated_path(@event, @document.logical_id)}#view=Fit"
 
             live_pdf_banner_visible = @working_copy.present? && !@working_copy.empty? && (
               @working_copy.failed? || @working_copy.active? || !@working_copy.working_available
@@ -87,7 +88,7 @@
               </button>
               <div class="generated-builder__workspace-actions generated-builder__workspace-actions--pdf">
                 <%= link_to "Open live PDF",
-                            live_pdf_viewer_path,
+                            live_pdf_open_path,
                             class: "button button--ghost button--small",
                             target: "_blank",
                             rel: "noopener" %>
@@ -125,7 +126,7 @@
                 </div>
               </div>
 
-              <iframe src="<%= @working_copy&.working_available ? live_pdf_viewer_path : "about:blank" %>"
+              <iframe src="<%= @working_copy&.working_available ? live_pdf_frame_path : "about:blank" %>"
                       title="Live working packet PDF"
                       class="generated-builder__pdf-frame"
                       data-generated-pdf-frame-target="frame"

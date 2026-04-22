@@ -25,13 +25,25 @@ class CoverSheetSectionTest < ActionView::TestCase
     assert_select ".generated-template--cover__meta", text: /#{Regexp.escape(@event.location)}/
     assert_match(/\.generated-template--cover\s*\{[^}]*min-height:\s*100vh/m, rendered)
     assert_match(/\.generated-template--cover\s*\{[^}]*height:\s*11in/m, rendered)
+    assert_match(/--page-padding-horizontal:\s*1in/m, rendered)
+    assert_match(/--cover-bg:\s*var\(--color-white,\s*#ffffff\)/m, rendered)
     assert_match(/--cover-accent:\s*var\(--color-dark-brown,\s*#3f2211\)/m, rendered)
+    assert_no_match(/\.generated-template--cover\s*\{[^}]*border:\s*4px solid var\(--cover-accent\)/m, rendered)
   end
 
   test "renders the optional event photo when one is attached" do
     render template: "generated_documents/sections/cover_sheet", locals: { render_base_styles: false }
 
     assert_select ".generated-template--cover__photo img[alt='Launch Event photo']", count: 1
+    assert_match(/\.generated-template--cover__photo img\s*\{[^}]*border:\s*4px solid var\(--cover-accent\)/m, rendered)
+  end
+
+  test "omits the event photo container when no photo is attached" do
+    view.define_singleton_method(:inline_document_image_data_uri) { |_document| nil }
+
+    render template: "generated_documents/sections/cover_sheet", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--cover__photo", count: 0
   end
 
   private

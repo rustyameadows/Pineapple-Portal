@@ -241,8 +241,62 @@
           <%= form.text_field :additional_team_members, placeholder: "Add external collaborators" %>
         </div>
         <div class="event-form__group">
-          <%= form.label :transportation_note, "Transportation note (optional)" %>
-          <%= form.text_field :transportation_note, placeholder: "Add a short transportation note for packet use" %>
+          <%= form.label :guest_count, "Guest count" %>
+          <%= form.text_field :guest_count, placeholder: "e.g., 150 guests, TBD" %>
+        </div>
+        <div class="event-form__group">
+          <%= form.label :transportation_note, "Transportation details (optional)" %>
+          <div class="calendar-item-form__markdown-editor" data-controller="generated-markdown-editor">
+            <%= render "events/settings/markdown_toolbar",
+                       toolbar_label: "Transportation details formatting",
+                       tools: %i[bold italic link] %>
+
+            <%= form.text_area :transportation_note,
+                               rows: 4,
+                               placeholder: "Add transportation details for packet use",
+                               class: "calendar-item-form__markdown-source",
+                               data: {
+                                 generated_markdown_editor_target: "source",
+                                 action: "focus->generated-markdown-editor#rememberSelection click->generated-markdown-editor#rememberSelection keyup->generated-markdown-editor#rememberSelection select->generated-markdown-editor#rememberSelection input->generated-markdown-editor#syncFromSource input->generated-markdown-editor#rememberSelection"
+                               } %>
+            <div class="calendar-item-form__markdown-footer">
+              <p class="calendar-item-form__help-text">Supports Markdown for bold, italic, and links.</p>
+              <button type="button"
+                      class="button button--tiny button--ghost event-settings__markdown-open"
+                      data-generated-markdown-editor-target="openButton"
+                      data-action="generated-markdown-editor#open"
+                      aria-haspopup="dialog"
+                      hidden>
+                Open large editor
+              </button>
+            </div>
+
+            <dialog class="event-settings__markdown-dialog"
+                    data-generated-markdown-editor-target="dialog"
+                    data-action="cancel->generated-markdown-editor#handleCancel click->generated-markdown-editor#handleBackdropClose">
+              <div class="event-settings__markdown-panel">
+                <header class="event-settings__markdown-panel-header">
+                  <h3>Transportation details</h3>
+                </header>
+                <div class="event-settings__markdown-panel-body">
+                  <%= render "events/settings/markdown_toolbar",
+                             toolbar_label: "Transportation details formatting",
+                             tools: %i[bold italic link] %>
+                  <textarea class="event-settings__markdown-overlay"
+                            aria-label="Transportation details markdown editor"
+                            data-generated-markdown-editor-target="overlay"
+                            data-action="focus->generated-markdown-editor#rememberSelection click->generated-markdown-editor#rememberSelection keyup->generated-markdown-editor#rememberSelection select->generated-markdown-editor#rememberSelection input->generated-markdown-editor#syncFromOverlay input->generated-markdown-editor#rememberSelection"></textarea>
+                </div>
+                <footer class="event-settings__markdown-panel-actions">
+                  <button type="button"
+                          class="button button--small"
+                          data-action="generated-markdown-editor#close">
+                    Done
+                  </button>
+                </footer>
+              </div>
+            </dialog>
+          </div>
         </div>
       </div>
     </div>

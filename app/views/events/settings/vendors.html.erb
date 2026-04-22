@@ -16,6 +16,45 @@
 
         <div class="event-section__body">
           <div class="event-settings__contacts-section">
+            <div class="event-settings__contact-item">
+              <%= form_with model: @event, local: true, html: { class: "event-settings__form" } do |form| %>
+                <%= hidden_field_tag :return_to, request.fullpath %>
+                <% if @event.errors.any? %>
+                  <div class="event-settings__form-errors">
+                    <h3><%= pluralize(@event.errors.count, "error") %> prevented saving:</h3>
+                    <ul>
+                      <% @event.errors.full_messages.each do |message| %>
+                        <li><%= message %></li>
+                      <% end %>
+                    </ul>
+                  </div>
+                <% end %>
+
+                <div class="event-settings__vendor-top-row">
+                  <div>
+                    <p class="event-section__eyebrow">Planning</p>
+                    <h3 class="event-settings__subheading">Pineapple Productions</h3>
+                  </div>
+
+                  <div class="event-settings__vendor-actions">
+                    <div class="event-settings__controls event-settings__controls--vendor-top">
+                      <%= button_tag "Save Pineapple meals", type: "submit", class: "event-settings__control" %>
+                    </div>
+                  </div>
+                </div>
+
+                <%= render "events/settings/markdown_field",
+                           form:,
+                           field_name: :pineapple_team_meals,
+                           label_text: "Pineapple Team Meals",
+                           rows: 3,
+                           placeholder: "Note Pineapple meal counts, timing, pickup details, or links.",
+                           hint_text: "Use this for Pineapple Productions meal notes on this event.",
+                           tools: %i[bold italic link],
+                           support_text: "Supports Markdown for bold, italic, and links." %>
+              <% end %>
+            </div>
+
             <% if @event_vendors.any? %>
               <ul class="event-settings__contact-list">
                 <% @event_vendors.each_with_index do |vendor, index| %>
@@ -61,6 +100,16 @@
                         </div>
                       </div>
 
+                      <%= render "events/settings/markdown_field",
+                                 form:,
+                                 field_name: :team_meals,
+                                 label_text: "Team Meals",
+                                 rows: 3,
+                                 placeholder: "Note vendor-provided meals, counts, timing, pickup details, or links.",
+                                 hint_text: "Use this for event-specific team meal notes.",
+                                 tools: %i[bold italic link],
+                                 support_text: "Supports Markdown for bold, italic, and links." %>
+
                       <div class="event-settings__vendor-contacts">
                         <%= render "events/settings/contact_fields", form:, entity: vendor %>
                       </div>
@@ -101,6 +150,16 @@
                 </div>
 
                 <%= render "events/settings/contact_fields", form:, entity: @event_vendor %>
+
+                <%= render "events/settings/markdown_field",
+                           form:,
+                           field_name: :team_meals,
+                           label_text: "Team Meals",
+                           rows: 3,
+                           placeholder: "Note vendor-provided meals, counts, timing, pickup details, or links.",
+                           hint_text: "Use this for event-specific team meal notes.",
+                           tools: %i[bold italic link],
+                           support_text: "Supports Markdown for bold, italic, and links." %>
 
                 <div class="event-settings__form-actions">
                   <%= form.submit "Add vendor" %>

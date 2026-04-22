@@ -1,6 +1,7 @@
 require "test_helper"
 
 class EventOverviewSectionTest < ActionView::TestCase
+  include CalendarHelper
   include GeneratedDocumentsHelper
 
   fixtures :events, :event_calendars, :calendar_items, :event_calendar_tags, :calendar_item_tags, :event_team_members, :event_vendors, :event_guests, :users
@@ -21,9 +22,14 @@ class EventOverviewSectionTest < ActionView::TestCase
 
   test "renders live event, planner, timeline, and vendor data without markdown content" do
     milestone_tag = @event.run_of_show_calendar.event_calendar_tags.create!(name: "Milestones", position: 9)
+    calendar_items(:decision_flowers).event_calendar_tags << milestone_tag
     calendar_items(:ceremony).event_calendar_tags << milestone_tag
     calendar_items(:reception).event_calendar_tags << milestone_tag
     calendar_items(:afterparty).event_calendar_tags << milestone_tag
+    calendar_items(:ceremony).update!(guest_count: "150 guests")
+    calendar_items(:reception).update!(location_name: "Terrace Garden", guest_count: "175 guests")
+    event_venues(:main_hall).update!(address: "123 Pineapple Ave\nSuite 100")
+    event_venues(:backup_space).update!(address: "456 Terrace Road\nGarden Level")
 
     render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
 
@@ -32,8 +38,10 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__grid", minimum: 5
     assert_select ".generated-template--packet-sheet__section-title", text: "Important Information"
     assert_select ".generated-template--packet-sheet__section-title", text: "Timeline"
+    assert_select ".generated-template--packet-sheet__section-title", text: "Venue Addresses"
     assert_select ".generated-template--packet-sheet__section-title", text: "Planner Contact"
     assert_select ".generated-template--packet-sheet__section-title", text: "Vendor Contacts"
+    assert_includes rendered, "grid-template-columns: repeat(4, minmax(0, 1fr));"
     assert_select ".generated-template--event-overview__event-name", count: 0
     assert_select ".generated-template--event-overview__dates", text: "#{@event.starts_on.to_fs(:long)} - #{@event.ends_on.to_fs(:long)}"
     assert_select ".generated-template--event-overview__location", text: @event.location
@@ -48,13 +56,30 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__text--value", text: @event.color_palette
     assert_select ".generated-template--packet-sheet__text--label", text: "Style"
     assert_select ".generated-template--packet-sheet__text--value", text: @event.style
-    assert_select ".generated-template--event-overview__timeline-label", text: "Ceremony"
-    assert_select ".generated-template--event-overview__timeline-label", text: "Reception"
-    assert_select ".generated-template--event-overview__timeline-label", text: "Afterparty"
-    assert_select ".generated-template--event-overview__timeline-time", text: generated_event_overview_timeline_time(calendar_items(:ceremony), @event.run_of_show_calendar.timezone)
-    assert_select ".generated-template--event-overview__timeline-time", text: generated_event_overview_timeline_time(calendar_items(:reception), @event.run_of_show_calendar.timezone)
-    assert_select ".generated-template--event-overview__timeline-time", text: generated_event_overview_timeline_time(calendar_items(:afterparty), @event.run_of_show_calendar.timezone)
-    assert_select ".generated-template--event-overview__timeline-time em", text: "to", count: 3
+    assert_select ".generated-template--event-overview__timeline-groups", count: 1
+    assert_select ".generated-template--event-overview__timeline-group", count: 2
+    assert_select ".generated-template--event-overview__timeline-date", text: "Monday, September 15"
+    assert_select ".generated-template--event-overview__timeline-date", text: "Wednesday, October 1"
+    assert_select ".generated-template--event-overview__timeline-grid", count: 2
+    assert_select ".generated-template--event-overview__timeline-card", count: 4
+    assert_select ".generated-template--event-overview__timeline-title", text: "Select Florist"
+    assert_select ".generated-template--event-overview__timeline-title", text: "Ceremony"
+    assert_select ".generated-template--event-overview__timeline-title", text: "Reception"
+    assert_select ".generated-template--event-overview__timeline-title", text: "Afterparty"
+    assert_select ".generated-template--event-overview__timeline-location", text: "Grand Ballroom"
+    assert_select ".generated-template--event-overview__timeline-location", text: "Terrace Garden"
+    assert_select "u.generated-template--event-overview__timeline-time", text: calendar_item_time_only_label_with_marker(calendar_items(:ceremony), @event.run_of_show_calendar.timezone)
+    assert_select "u.generated-template--event-overview__timeline-time", text: calendar_item_time_only_label_with_marker(calendar_items(:reception), @event.run_of_show_calendar.timezone)
+    assert_select "u.generated-template--event-overview__timeline-time", text: calendar_item_time_only_label_with_marker(calendar_items(:afterparty), @event.run_of_show_calendar.timezone)
+    assert_select "em.generated-template--event-overview__timeline-guest-count", text: "150 guests"
+    assert_select "em.generated-template--event-overview__timeline-guest-count", text: "175 guests"
+    assert_select "em.generated-template--event-overview__timeline-guest-count", count: 2
+    assert_select ".generated-template--event-overview__venue-address-grid", count: 1
+    assert_select ".generated-template--event-overview__venue-address-card", count: 2
+    assert_select ".generated-template--event-overview__venue-address-name strong", text: "Grand Ballroom"
+    assert_select ".generated-template--event-overview__venue-address-name strong", text: "Terrace Garden"
+    assert_select ".generated-template--event-overview__venue-address", text: /123 Pineapple Ave\s+Suite 100/
+    assert_select ".generated-template--event-overview__venue-address", text: /456 Terrace Road\s+Garden Level/
     assert_select ".generated-template--event-overview__planner-name", text: "Pineapple Productions"
     assert_select ".generated-template--event-overview__planner-contact-name em", text: "Ada Fixture"
     assert_select ".generated-template--event-overview__planner-handle", text: "@pineappleprodc"
@@ -63,9 +88,9 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__planner-phone", count: 0
     assert_select ".generated-template--event-overview__vendor-name", text: "Sunshine Catering"
     assert_select ".generated-template--event-overview__vendor-name", text: "Bright Lights Production"
-    assert_select ".generated-template--event-overview__vendor-contact-name", text: /Maria Cater/
-    assert_select ".generated-template--event-overview__vendor-contact-name em", text: "Maria Cater"
-    assert_select ".generated-template--event-overview__vendor-contact-name em", text: "Leo Light"
+    assert_select ".generated-template--event-overview__vendor-contact-name", count: 0
+    assert_select ".generated-template--event-overview__vendor-contact-name--empty", count: 0
+    assert_no_match(/Maria Cater|Leo Light/, rendered)
     assert_select ".generated-template--event-overview__vendor-contact-phone", count: 0
     assert_select ".generated-template--event-overview__vendor-contact-email", count: 0
     assert_select ".generated-template--packet-sheet__text--detail", text: "@sunshinecatering"
@@ -74,7 +99,8 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__social-media", text: @event.social_media_policy
     assert_select ".generated-template--packet-sheet__section-title", text: "PARKING & GETTING THERE"
     assert_select ".generated-template--event-overview__parking", text: @event.parking_details
-    assert_operator rendered.index("Timeline"), :<, rendered.index("Planner Contact")
+    assert_operator rendered.index("Timeline"), :<, rendered.index("Venue Addresses")
+    assert_operator rendered.index("Venue Addresses"), :<, rendered.index("Planner Contact")
     assert_operator rendered.index("Vendor Contacts"), :<, rendered.index("Social Media Policy")
     assert_operator rendered.index("Social Media Policy"), :<, rendered.index("PARKING &amp; GETTING THERE")
     assert_no_match(/555-123-4567|555-987-6543/, rendered)
@@ -124,7 +150,8 @@ class EventOverviewSectionTest < ActionView::TestCase
 
     assert_select ".generated-template--event-overview__vendor-name", text: "Silent Vendor"
     assert_select ".generated-template--event-overview__vendor-name", text: "Type Free Vendor"
-    assert_select ".generated-template--event-overview__vendor-contact-name--empty", count: 1
+    assert_select ".generated-template--event-overview__vendor-contact-name", count: 0
+    assert_no_match(/No Type Contact/, rendered)
     assert_no_match(/generated-template--packet-sheet__text--label">Vendor<\/p>/, rendered)
   end
 
@@ -137,7 +164,9 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__dates", text: "Date TBD"
     assert_select ".generated-template--event-overview__location", text: "Location TBD"
     assert_select ".generated-template--packet-sheet__section-title", text: "Timeline"
+    assert_select ".generated-template--packet-sheet__section-title", text: "Venue Addresses"
     assert_select ".generated-template--packet-sheet__empty", text: /No milestone items are available/
+    assert_select ".generated-template--packet-sheet__empty", text: /No venue addresses are available/
     assert_select ".generated-template--packet-sheet__empty", text: /No lead planner is linked/
     assert_select ".generated-template--packet-sheet__empty", text: /No vendor contacts are available/
     assert_select ".generated-template--event-overview__guest-count", count: 0
@@ -145,6 +174,19 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__text--label", text: "Attire", count: 0
     assert_select ".generated-template--packet-sheet__section-title", text: "Social Media Policy", count: 0
     assert_select ".generated-template--packet-sheet__section-title", text: "PARKING & GETTING THERE", count: 0
+  end
+
+  test "renders a single venue address with singular heading and full width grid" do
+    event_venues(:main_hall).update!(address: "123 Pineapple Ave\nSuite 100")
+
+    render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--packet-sheet__section-title", text: "Venue Address", count: 1
+    assert_select ".generated-template--packet-sheet__section-title", text: "Venue Addresses", count: 0
+    assert_select ".generated-template--event-overview__venue-address-grid--single", count: 1
+    assert_select ".generated-template--event-overview__venue-address-card", count: 1
+    assert_select ".generated-template--event-overview__venue-address-name strong", text: "Grand Ballroom"
+    assert_select ".generated-template--event-overview__venue-address", text: /123 Pineapple Ave\s+Suite 100/
   end
 
   test "hides empty metadata rows and sections while keeping populated rows" do

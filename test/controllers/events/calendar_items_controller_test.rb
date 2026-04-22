@@ -50,7 +50,13 @@ module Events
 
       assert_response :success
       assert_select "form#calendar-item-delete-form-#{item.id}[data-turbo-confirm='Remove this calendar item?']", count: 1
-      assert_select "input[name='calendar_item[transportation_note]']", count: 1
+      assert_select "input[name='calendar_item[guest_count]']", count: 1
+      assert_select "[data-controller='generated-markdown-editor']", count: 1
+      assert_select "textarea[name='calendar_item[transportation_note]'][data-generated-markdown-editor-target='source']", count: 1
+      assert_select ".calendar-item-form__markdown-editor button[data-markdown-format='bold']", count: 2
+      assert_select ".calendar-item-form__markdown-editor button[data-markdown-format='italic']", count: 2
+      assert_select ".calendar-item-form__markdown-editor button[data-markdown-format='link']", count: 2
+      assert_select ".calendar-item-form__markdown-editor button[data-markdown-format='headline']", count: 0
     end
 
     test "update respects anchored return_to" do
@@ -62,7 +68,8 @@ module Events
         return_to:,
         calendar_item: {
           title: "Ceremony Updated",
-          transportation_note: "Guests leave from the front drive at 2:15 PM.",
+          guest_count: "Approx. 175",
+          transportation_note: "**Guests** leave from the [front drive](https://example.com/map) at 2:15 PM.",
           starts_at: "2025-10-01T15:00",
           duration_value: 45,
           duration_unit: "minutes"
@@ -71,16 +78,18 @@ module Events
 
       assert_redirected_to return_to
       assert_equal "Ceremony Updated", item.reload.title
-      assert_equal "Guests leave from the front drive at 2:15 PM.", item.reload.transportation_note
+      assert_equal "Approx. 175", item.reload.guest_count
+      assert_equal "**Guests** leave from the [front drive](https://example.com/map) at 2:15 PM.", item.reload.transportation_note
     end
 
-    test "create persists transportation note" do
+    test "create persists item guest count and transportation note" do
       assert_difference("CalendarItem.count", 1) do
         post event_calendar_items_url(@event), params: {
           calendar_item: {
             title: "Guest Shuttle",
             starts_at: "2025-10-01T13:00",
-            transportation_note: "Board the shuttle at the hotel porte cochere.",
+            guest_count: "120 guests",
+            transportation_note: "Board the **shuttle** at the hotel porte cochere.",
             duration_value: 30,
             duration_unit: "minutes"
           }
@@ -88,7 +97,9 @@ module Events
       end
 
       assert_redirected_to event_calendar_path(@event)
-      assert_equal "Board the shuttle at the hotel porte cochere.", CalendarItem.order(:id).last.transportation_note
+      created_item = CalendarItem.order(:id).last
+      assert_equal "120 guests", created_item.guest_count
+      assert_equal "Board the **shuttle** at the hotel porte cochere.", created_item.transportation_note
     end
 
     test "destroy removes item and respects safe return path" do

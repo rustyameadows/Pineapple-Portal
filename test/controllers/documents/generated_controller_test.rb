@@ -422,7 +422,7 @@ module Documents
       assert_equal successful_build.viewer_token, payload["viewer_token"]
     end
 
-    test "working pdf redirects to the canonical tokenized path when v is missing" do
+    test "working pdf returns the current live pdf bytes with no-store headers when v is missing" do
       placement = create_page_placement(
         view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
         title: "Text Notes",
@@ -430,41 +430,7 @@ module Documents
         options: { "body_markdown" => "## Notes" }
       )
       source = placement.source
-
-      source.update!(
-        render_hash: "stale-hash",
-        cached_pdf_key: "segments/stale.pdf",
-        cached_pdf_generated_at: Time.current,
-        cached_page_count: 1,
-        cached_file_size: 128
-      )
-      @document.update!(
-        working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
-        working_manifest_hash: "older-manifest",
-        working_checksum_sha256: "working-sha",
-        working_page_count: 1,
-        working_file_size: 1024,
-        working_rendered_at: Time.current,
-        working_status: Document::WORKING_STATUSES[:refreshing]
-      )
-
-      Documents::Generated::WorkingCopyRefresh.stub :enqueue, true do
-        Documents::Generated::SegmentHasher.stub :call, ->(_source) { "new-hash" } do
-          get working_pdf_event_documents_generated_url(@event, @document.logical_id)
-        end
-      end
-
-      assert_redirected_to working_pdf_event_documents_generated_url(@event, @document.logical_id, v: @document.working_viewer_token)
-    end
-
-    test "working pdf redirects to the canonical tokenized path when v is stale" do
-      placement = create_page_placement(
-        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
-        title: "Text Notes",
-        position: 1,
-        options: { "body_markdown" => "## Notes" }
-      )
-      source = placement.source
+      pdf_bytes = "%PDF-1.4\nlatest live pdf\n"
 
       source.update!(
         render_hash: "fresh-hash",
@@ -483,14 +449,72 @@ module Documents
         working_status: Document::WORKING_STATUSES[:fresh]
       )
 
+      storage_class = Struct.new(:payload) do
+        def download(key)
+          StringIO.new(payload)
+        end
+      end
+      storage = storage_class.new(pdf_bytes)
+
       Documents::Generated::SegmentHasher.stub :call, ->(_source) { "fresh-hash" } do
-        get working_pdf_event_documents_generated_url(@event, @document.logical_id, v: "stale-token")
+        R2::Storage.stub :new, storage do
+          get working_pdf_event_documents_generated_url(@event, @document.logical_id)
+        end
       end
 
-      assert_redirected_to working_pdf_event_documents_generated_url(@event, @document.logical_id, v: @document.working_viewer_token)
+      assert_response :success
+      assert_equal "application/pdf", response.media_type
+      assert_includes response.headers["Cache-Control"], "no-store"
+      assert_equal pdf_bytes, response.body
     end
 
-    test "working pdf returns inline bytes with cache headers for the current token" do
+    test "working pdf returns the current live pdf bytes with no-store headers when v is stale" do
+      placement = create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Text Notes",
+        position: 1,
+        options: { "body_markdown" => "## Notes" }
+      )
+      source = placement.source
+      pdf_bytes = "%PDF-1.4\ncurrent live pdf\n"
+
+      source.update!(
+        render_hash: "fresh-hash",
+        cached_pdf_key: "segments/fresh.pdf",
+        cached_pdf_generated_at: Time.current,
+        cached_page_count: 1,
+        cached_file_size: 128
+      )
+      @document.update!(
+        working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/generated-packet-working.pdf",
+        working_manifest_hash: placement_manifest_hash(placement, "fresh-hash"),
+        working_checksum_sha256: "working-sha",
+        working_page_count: 1,
+        working_file_size: 1024,
+        working_rendered_at: Time.current,
+        working_status: Document::WORKING_STATUSES[:fresh]
+      )
+
+      storage_class = Struct.new(:payload) do
+        def download(key)
+          StringIO.new(payload)
+        end
+      end
+      storage = storage_class.new(pdf_bytes)
+
+      Documents::Generated::SegmentHasher.stub :call, ->(_source) { "fresh-hash" } do
+        R2::Storage.stub :new, storage do
+          get working_pdf_event_documents_generated_url(@event, @document.logical_id, v: "stale-token")
+        end
+      end
+
+      assert_response :success
+      assert_equal "application/pdf", response.media_type
+      assert_includes response.headers["Cache-Control"], "no-store"
+      assert_equal pdf_bytes, response.body
+    end
+
+    test "working pdf returns inline bytes with no-store cache headers for the current token" do
       placement = create_page_placement(
         view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
         title: "Text Notes",
@@ -535,10 +559,7 @@ module Documents
       assert_response :success
       assert_equal "application/pdf", response.media_type
       assert_includes response.headers["Content-Disposition"], "inline"
-      assert_includes response.headers["Cache-Control"], "private"
-      assert_match(/max-age=\d+/, response.headers["Cache-Control"])
-      assert response.headers["ETag"].present?
-      assert response.headers["Last-Modified"].present?
+      assert_includes response.headers["Cache-Control"], "no-store"
       assert_equal pdf_bytes, response.body
     end
 
@@ -656,9 +677,10 @@ module Documents
       assert_select ".generated-builder__live-pill", text: /Updated/, count: 1
       assert_select "button.generated-builder__live-pill[data-action='generated-segment-dialog#open']", text: /Updated/, count: 1
       assert_select ".generated-builder__live-pill", text: /Auto-updating/, count: 0
-      expected_viewer_path = "#{working_pdf_event_documents_generated_path(@event, @document.logical_id, v: working_build.viewer_token)}#view=Fit"
-      assert_select "a[href='#{expected_viewer_path}']", text: "Open live PDF", count: 1
-      assert_select "iframe.generated-builder__pdf-frame[src='#{expected_viewer_path}']", count: 1
+      expected_frame_path = "#{working_pdf_event_documents_generated_path(@event, @document.logical_id, v: working_build.viewer_token)}#view=Fit"
+      expected_open_path = "#{working_pdf_event_documents_generated_path(@event, @document.logical_id)}#view=Fit"
+      assert_select "a[href='#{expected_open_path}']", text: "Open live PDF", count: 1
+      assert_select "iframe.generated-builder__pdf-frame[src='#{expected_frame_path}']", count: 1
       assert_select "time[data-controller='local-time'][data-local-time-iso-value='#{rendered_at.iso8601}'][datetime='#{rendered_at.iso8601}']", count: 1
       assert_select "dialog.generated-builder__live-rebuild-dialog", count: 1
       assert_select "form.generated-builder__inline-form[action='#{rebuild_live_event_documents_generated_path(@event, @document.logical_id)}']", count: 1

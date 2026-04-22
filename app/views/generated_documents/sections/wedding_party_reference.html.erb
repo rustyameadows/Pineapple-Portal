@@ -61,10 +61,15 @@
     gap: 6px;
   }
 
+  .generated-template--wedding-party-reference__transportation-note {
+    gap: 8px;
+    align-content: start;
+  }
+
   .generated-template--wedding-party-reference__wedding-party-content {
     display: grid;
-    border-left: 1px solid rgba(0, 0, 0, 0.06);
-    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-top: none;
   }
 
   .generated-template--wedding-party-reference__wedding-party-columns {
@@ -77,6 +82,14 @@
   .generated-template--wedding-party-reference__wedding-party-group {
     display: grid;
     align-content: start;
+  }
+
+  .generated-template--wedding-party-reference__wedding-party-group .generated-template--packet-sheet__grid {
+    border-bottom: none;
+  }
+
+  .generated-template--wedding-party-reference__wedding-party-group .generated-template--packet-sheet__grid-row:last-child {
+    border-bottom: none;
   }
 </style>
 
@@ -121,7 +134,9 @@
                 <h3 class="generated-template--packet-sheet__subsection-title"><%= group[:date_label] %></h3>
                 <div class="generated-template--packet-sheet__body generated-template--wedding-party-reference__transportation-stack">
                   <% Array(group[:transportation_notes]).each do |note| %>
-                    <p class="generated-template--packet-sheet__text generated-template--wedding-party-reference__transportation-note"><%= note %></p>
+                    <div class="generated-template--packet-sheet__rich-text generated-template--wedding-party-reference__transportation-note">
+                      <%= render_generated_packet_rich_text_content(note) %>
+                    </div>
                   <% end %>
                 </div>
               </section>

@@ -13,6 +13,10 @@ module EventsSettingsPageSupport
       prepare_client_portal_settings
       render "events/settings/client_portal", status: :unprocessable_content
       true
+    when vendors_event_settings_path(@event)
+      prepare_vendors
+      render "events/settings/vendors", status: :unprocessable_content
+      true
     else
       false
     end

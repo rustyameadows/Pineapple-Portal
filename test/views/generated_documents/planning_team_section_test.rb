@@ -37,9 +37,14 @@ class PlanningTeamSectionTest < ActionView::TestCase
     assert_select ".generated-template--planning-team__card", minimum: 1
     assert_select ".generated-template--planning-team__name", text: "Ada Fixture"
     assert_select ".generated-template--planning-team__title", text: "Lead Planner"
+    assert_match(/--planning-team-card-width:\s*1\.9in/m, rendered)
+    assert_match(/display:\s*flex/m, rendered)
+    assert_match(/flex-wrap:\s*wrap/m, rendered)
     assert_match(/aspect-ratio:\s*1 \/ 1/m, rendered)
     assert_match(/object-position:\s*center center/m, rendered)
     assert_match(/justify-content:\s*center/m, rendered)
+    assert_match(/min-height:\s*var\(--planning-team-details-min-height\)/m, rendered)
+    assert_match(/align-content:\s*center/m, rendered)
     assert_no_match(/border-radius:/, rendered)
   end
 

@@ -15,9 +15,9 @@ class DocumentSegment < ApplicationRecord
     VENDOR_CONTACTS_VIEW_KEY,
     WEDDING_PARTY_REFERENCE_VIEW_KEY
   ].freeze
-  SHARED_PDF_TEMPLATE_VERSION = "packet-base-v2".freeze
-  EVENT_OVERVIEW_TEMPLATE_VERSION = "packet-sheet-v5".freeze
-  VENDOR_CONTACTS_TEMPLATE_VERSION = "packet-sheet-v1".freeze
+  SHARED_PDF_TEMPLATE_VERSION = "packet-base-v3".freeze
+  EVENT_OVERVIEW_TEMPLATE_VERSION = "packet-sheet-v9".freeze
+  VENDOR_CONTACTS_TEMPLATE_VERSION = "packet-sheet-v3".freeze
   WEDDING_PARTY_REFERENCE_TEMPLATE_VERSION = "packet-sheet-v6".freeze
   EVENT_OVERVIEW_DEFAULT_BODY_MARKDOWN = <<~MARKDOWN.freeze
     ### Important Information

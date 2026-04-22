@@ -192,6 +192,7 @@ class Event < ApplicationRecord
       social_media_policy
       parking_details
       getting_ready_details
+      pineapple_team_meals
     ].each do |attribute_name|
       self[attribute_name] = self[attribute_name].to_s.strip.presence
     end

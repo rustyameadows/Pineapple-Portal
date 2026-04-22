@@ -10,6 +10,7 @@ class EventVendor < ApplicationRecord
   before_validation :sync_name_from_global_vendor
   before_validation :normalize_vendor_type
   before_validation :normalize_social_handle
+  before_validation :normalize_team_meals
   before_validation :assign_position, on: :create
   before_validation :apply_contacts_attributes
   before_validation :ensure_contacts_default
@@ -54,6 +55,10 @@ class EventVendor < ApplicationRecord
   def normalize_social_handle
     handle = social_handle.to_s.strip
     self.social_handle = handle.presence
+  end
+
+  def normalize_team_meals
+    self.team_meals = team_meals.to_s.strip.presence
   end
 
   def assign_position

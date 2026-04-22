@@ -21,6 +21,7 @@ class TextPageSectionTest < ActionView::TestCase
     assert_select ".generated-template--text-page__content strong", text: "important"
     assert_select ".generated-template--text-page__content li", text: "First item"
     assert_select ".generated-template--text-page__content li", text: "Second item"
+    assert_match(/\.generated-template--text-page\s*\{[^}]*--generated-document-content-padding-x:\s*1in/m, rendered)
   end
 
   test "sanitizes unsafe html and link protocols" do

@@ -67,12 +67,21 @@ module Events
       get vendors_event_settings_url(@event)
       assert_response :success
       assert_select "h1", text: "Vendors"
+      assert_select "h3", text: "Pineapple Productions"
+      assert_select "textarea[name='event[pineapple_team_meals]'][data-generated-markdown-editor-target='source']", count: 1
+      assert_select "textarea[name='event_vendor[team_meals]'][data-generated-markdown-editor-target='source']", count: @event.event_vendors.count + 1
+      assert_select "button[data-markdown-format='bold']", count: (@event.event_vendors.count + 2) * 2
+      assert_select "button[data-markdown-format='italic']", count: (@event.event_vendors.count + 2) * 2
+      assert_select "button[data-markdown-format='link']", count: (@event.event_vendors.count + 2) * 2
+      assert_select "button[data-markdown-format='headline']", count: 0
+      assert_select ".event-settings__hint", text: /Supports Markdown for bold, italic, and links\./, count: @event.event_vendors.count + 2
     end
 
     test "renders locations page" do
       get locations_event_settings_url(@event)
       assert_response :success
       assert_select "h1", text: "Locations"
+      assert_select "textarea[name='event_venue[address]']", count: @event.event_venues.count + 1
     end
   end
 end

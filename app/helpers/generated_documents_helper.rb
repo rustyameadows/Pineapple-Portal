@@ -203,28 +203,24 @@ module GeneratedDocumentsHelper
     "#{start_label} to #{end_time.strftime("%l:%M %p").strip}"
   end
 
+  def generated_event_overview_venue_addresses(event)
+    event.event_venues.ordered.filter_map do |venue|
+      address = venue.address.to_s.strip.presence
+      next unless address
+
+      {
+        name: venue.name.to_s.strip.presence || "Venue",
+        address: address
+      }
+    end
+  end
+
   def generated_event_overview_vendors(event)
-    event.event_vendors.includes(:global_vendor).ordered.filter_map do |vendor|
-      contacts = Array(vendor.contacts).filter_map do |contact|
-        contact_hash = contact.to_h.stringify_keys
-
-        normalized_contact = {
-          name: contact_hash["name"].to_s.strip.presence,
-          title: contact_hash["title"].to_s.strip.presence,
-          email: contact_hash["email"].to_s.strip.presence,
-          phone: contact_hash["phone"].to_s.strip.presence
-        }
-
-        next if normalized_contact.values.all?(&:blank?)
-
-        normalized_contact
-      end
-
+    event.event_vendors.includes(:global_vendor).ordered.map do |vendor|
       {
         name: generated_event_overview_vendor_name(vendor),
         vendor_type: generated_event_overview_vendor_type(vendor),
-        social_handle: generated_event_overview_social_handle(generated_event_overview_vendor_social_handle(vendor)),
-        contacts: contacts
+        social_handle: generated_event_overview_social_handle(generated_event_overview_vendor_social_handle(vendor))
       }
     end
   end
@@ -277,12 +273,15 @@ module GeneratedDocumentsHelper
       {
         category: "Planning",
         vendor_name: "Pineapple Productions",
+        team_meals: event.pineapple_team_meals.to_s.strip.presence,
+        merge_rows: true,
         rows: generated_vendor_contacts_planner_rows(event)
       }
     ] + event.event_vendors.includes(:global_vendor).ordered.map do |vendor|
       {
         category: generated_vendor_contacts_visible_value(generated_event_overview_vendor_type(vendor).presence),
         vendor_name: generated_vendor_contacts_visible_value(generated_event_overview_vendor_name(vendor).presence),
+        team_meals: vendor.team_meals.to_s.strip.presence,
         rows: generated_vendor_contacts_vendor_rows(vendor)
       }
     end
@@ -293,24 +292,17 @@ module GeneratedDocumentsHelper
   end
 
   def render_generated_packet_rich_text(markdown_text)
-    normalized_markdown = markdown_text.to_s.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
-    html = Commonmarker.to_html(normalized_markdown)
-    sanitized_html = sanitize(
-      html,
-      tags: PACKET_RICH_TEXT_ALLOWED_TAGS,
-      attributes: MARKDOWN_ALLOWED_ATTRIBUTES
-    ).to_s
-
-    fragment = Nokogiri::HTML::DocumentFragment.parse(sanitized_html)
-    fragment.css("a").each do |link|
-      normalize_generated_link!(link)
-    end
-
+    fragment = generated_packet_rich_text_fragment(markdown_text)
     safe_join(
       generated_packet_rich_text_sections(fragment).map do |section|
         generated_packet_rich_text_section_html(section)
       end
     )
+  end
+
+  def render_generated_packet_rich_text_content(markdown_text)
+    fragment = generated_packet_rich_text_fragment(markdown_text)
+    safe_join(fragment.children.map { |node| node.to_html.html_safe })
   end
 
   def generated_packet_text_paragraphs(text)
@@ -368,6 +360,22 @@ module GeneratedDocumentsHelper
   end
 
   private
+
+  def generated_packet_rich_text_fragment(markdown_text)
+    normalized_markdown = markdown_text.to_s.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+    html = Commonmarker.to_html(normalized_markdown)
+    sanitized_html = sanitize(
+      html,
+      tags: PACKET_RICH_TEXT_ALLOWED_TAGS,
+      attributes: MARKDOWN_ALLOWED_ATTRIBUTES
+    ).to_s
+
+    fragment = Nokogiri::HTML::DocumentFragment.parse(sanitized_html)
+    fragment.css("a").each do |link|
+      normalize_generated_link!(link)
+    end
+    fragment
+  end
 
   def generated_event_overview_vendor_name(vendor)
     vendor.global_vendor&.name.to_s.strip.presence || vendor.name.to_s.strip
