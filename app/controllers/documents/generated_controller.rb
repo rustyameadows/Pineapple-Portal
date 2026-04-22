@@ -96,17 +96,7 @@ module Documents
       end
 
       if access.working_available
-        current_token = access.viewer_token
-        if params[:v].to_s != current_token
-          disable_response_cache!
-          redirect_to canonical_working_pdf_path(current_token)
-          return
-        end
-
-        expires_in 12.hours, public: false
-        last_modified = access.rendered_at || @document.updated_at || Time.current
-        return unless stale?(etag: working_pdf_cache_key(current_token), last_modified: last_modified, public: false)
-
+        disable_response_cache!
         pdf_io = R2::Storage.new.download(access.working_storage_uri)
         raise "Live PDF is missing from storage." unless pdf_io
 
@@ -484,10 +474,6 @@ module Documents
       response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
       response.headers["Pragma"] = "no-cache"
       response.headers["Expires"] = "0"
-    end
-
-    def working_pdf_cache_key(viewer_token)
-      %(working-pdf/#{@document.logical_id}/#{viewer_token})
     end
 
     def pdf_viewer_url(url)
