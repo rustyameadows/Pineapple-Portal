@@ -25,6 +25,7 @@ class CoverSheetSectionTest < ActionView::TestCase
     assert_select ".generated-template--cover__meta", text: /#{Regexp.escape(@event.location)}/
     assert_match(/\.generated-template--cover\s*\{[^}]*min-height:\s*100vh/m, rendered)
     assert_match(/\.generated-template--cover\s*\{[^}]*height:\s*11in/m, rendered)
+    assert_match(/--page-padding-horizontal:\s*1in/m, rendered)
     assert_match(/--cover-accent:\s*var\(--color-dark-brown,\s*#3f2211\)/m, rendered)
   end
 

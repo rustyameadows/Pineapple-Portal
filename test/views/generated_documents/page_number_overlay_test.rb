@@ -20,6 +20,7 @@ class PageNumberOverlayTest < ActionView::TestCase
     assert_match(/font-size:\s*16px/m, rendered)
     assert_match(/font-style:\s*italic/m, rendered)
     assert_match(/color:\s*#ffffff/m, rendered)
+    assert_match(/\.generated-page-number-overlay\s*\{[^}]*padding:\s*0 10pt 12pt 0;/m, rendered)
     assert_match(/@font-face/m, rendered)
     assert_match(/data:font\/woff2;base64,stub/m, rendered)
   end
