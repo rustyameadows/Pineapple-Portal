@@ -282,6 +282,22 @@ module Documents
         refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
       end
 
+      test "vendor contacts hash changes when vendor team meals change" do
+        original_hash = SegmentHasher.call(@vendor_contacts_source)
+
+        event_vendors(:catering).update!(team_meals: "**Vendor meals** at 5:00 PM.")
+
+        refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
+      end
+
+      test "vendor contacts hash changes when pineapple team meals change" do
+        original_hash = SegmentHasher.call(@vendor_contacts_source)
+
+        @event.update!(pineapple_team_meals: "**Planner meals** at 5:00 PM.")
+
+        refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
+      end
+
       test "vendor contacts hash changes when vendor ordering changes" do
         original_hash = SegmentHasher.call(@vendor_contacts_source)
 

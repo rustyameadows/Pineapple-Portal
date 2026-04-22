@@ -68,6 +68,19 @@ class EventVendorTest < ActiveSupport::TestCase
     assert_equal "@djcollective", vendor.social_handle
   end
 
+  test "normalizes team meals while preserving markdown and newlines" do
+    vendor = @event.event_vendors.create!(
+      name: "Meal Partner",
+      team_meals: "  **Vendor meals**\n\nPickup from [kitchen](https://example.com/kitchen).  "
+    )
+
+    assert_equal "**Vendor meals**\n\nPickup from [kitchen](https://example.com/kitchen).", vendor.team_meals
+
+    vendor.update!(team_meals: " \n ")
+
+    assert_nil vendor.team_meals
+  end
+
   test "vendor updates no longer enqueue the broad event refresh job" do
     vendor = event_vendors(:catering)
     enqueued_event_ids = []

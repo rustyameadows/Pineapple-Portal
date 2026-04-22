@@ -273,12 +273,15 @@ module GeneratedDocumentsHelper
       {
         category: "Planning",
         vendor_name: "Pineapple Productions",
+        team_meals: event.pineapple_team_meals.to_s.strip.presence,
+        merge_rows: true,
         rows: generated_vendor_contacts_planner_rows(event)
       }
     ] + event.event_vendors.includes(:global_vendor).ordered.map do |vendor|
       {
         category: generated_vendor_contacts_visible_value(generated_event_overview_vendor_type(vendor).presence),
         vendor_name: generated_vendor_contacts_visible_value(generated_event_overview_vendor_name(vendor).presence),
+        team_meals: vendor.team_meals.to_s.strip.presence,
         rows: generated_vendor_contacts_vendor_rows(vendor)
       }
     end

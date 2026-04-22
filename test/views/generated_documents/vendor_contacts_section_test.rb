@@ -27,7 +27,11 @@ class VendorContactsSectionTest < ActionView::TestCase
     view.define_singleton_method(:inline_font_asset_data_uri) { |_path| "data:font/woff2;base64,stub" }
   end
 
-  test "renders a grouped vendor contacts table without rowspans and keeps inherited contacts" do
+  test "renders a grouped vendor contacts table and merges Pineapple cells" do
+    @event.update!(
+      pineapple_team_meals: "**Pineapple meals** available for *four planners*.\n\n[Meal order](https://example.com/pineapple-meals)\n\n[Unsafe](javascript:alert(1))"
+    )
+
     @event.event_team_members.create!(
       user: users(:planner_two),
       member_role: EventTeamMember::TEAM_ROLES[:planner],
@@ -44,6 +48,7 @@ class VendorContactsSectionTest < ActionView::TestCase
         { name: "Avery Ink", phone: "555-111-2222" },
         { title: "On-Site Contact", phone: "555-222-3333" }
       ],
+      team_meals: "**Vendor meals** available for *two staff*.\n\n[Menu](https://example.com/menu)\n\n[Unsafe](javascript:alert(1))",
       position: 9,
       client_visible: false
     )
@@ -82,6 +87,7 @@ class VendorContactsSectionTest < ActionView::TestCase
     assert_select "table thead th", text: "Vendor"
     assert_select "table thead th", text: "Contact"
     assert_select "table thead th", text: "Phone"
+    assert_select "table thead th", text: "Team Meals"
     assert_select "table tbody tr td", text: "Planning", count: 1
     assert_select "table tbody tr td", text: "Catering", count: 1
     assert_select "table tbody tr td", text: "Lighting", count: 2
@@ -97,12 +103,32 @@ class VendorContactsSectionTest < ActionView::TestCase
     assert_select "table tbody tr td", text: "House Band", count: 1
     assert_select "table tbody tr td", text: "Ivy Sound", count: 1
     assert_equal 9, rows.count
-    assert_empty fragment.css("[rowspan]")
+    planning_rows = fragment.css("tbody.generated-template--vendor-contacts__group").first.css("tr")
+    planning_rowspan_cells = planning_rows.first.css("[rowspan]")
+
+    assert_equal 3, fragment.css("[rowspan]").size
+    assert_equal 3, planning_rowspan_cells.size
+    assert planning_rowspan_cells.all? { |cell| cell["rowspan"] == planning_rows.size.to_s }
+    assert_equal 2, planning_rows[1].css("td").size
     assert_equal 6, fragment.css("tbody.generated-template--vendor-contacts__group").size
     assert fragment.css(".generated-template--vendor-contacts__category--continued").any?
     assert fragment.css(".generated-template--vendor-contacts__vendor--continued").any?
+    assert fragment.css(".generated-template--vendor-contacts__team-meals--continued").any?
     assert_match(/Planning Pineapple Productions Ada Fixture 555-111-2222/, rows.first.text.squish)
-    assert_includes rows.map { |row| row.text.squish }, "Catering Sunshine Catering Maria Cater 555-123-4567"
-    assert_includes rows.map { |row| row.text.squish }, "Stationery Stationery Studio Avery Ink 555-111-2222"
+    assert_includes rows.first.text.squish, "Pineapple meals available for four planners."
+    assert rows.map { |row| row.text.squish }.any? { |text| text.include?("Catering Sunshine Catering Maria Cater 555-123-4567") }
+    assert rows.map { |row| row.text.squish }.any? { |text| text.include?("Stationery Stationery Studio Avery Ink 555-111-2222 Vendor meals available for two staff.") }
+    assert fragment.css(".generated-template--vendor-contacts__team-meals").any? { |cell| cell.text.strip == "\u2014" }
+    assert_select ".generated-template--vendor-contacts__team-meals strong", text: "Vendor meals"
+    assert_select ".generated-template--vendor-contacts__team-meals strong", text: "Pineapple meals"
+    assert_select ".generated-template--vendor-contacts__team-meals em", text: "two staff"
+    assert_select ".generated-template--vendor-contacts__team-meals em", text: "four planners"
+    assert_select ".generated-template--vendor-contacts__team-meals a[href='https://example.com/menu'][target='_blank'][rel='noopener noreferrer']", text: "Menu"
+    assert_select ".generated-template--vendor-contacts__team-meals a[href='https://example.com/pineapple-meals'][target='_blank'][rel='noopener noreferrer']", text: "Meal order"
+    assert_equal 6, fragment.css(".generated-template--vendor-contacts__team-meals p").count
+
+    unsafe_links = fragment.css(".generated-template--vendor-contacts__team-meals a").select { |link| link.text == "Unsafe" }
+    assert_equal 2, unsafe_links.size
+    assert unsafe_links.all? { |link| link["href"].nil? }
   end
 end

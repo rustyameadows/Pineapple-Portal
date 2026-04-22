@@ -1,7 +1,10 @@
+<% tools = Array(local_assigns.fetch(:tools, %i[bold italic link headline])) %>
+<% support_text = local_assigns.fetch(:support_text, "Supports Markdown for bold, italic, links, and one headline style.") %>
+
 <div class="event-settings__field event-settings__field--notes">
   <%= form.label field_name, label_text %>
   <div class="event-settings__markdown-editor" data-controller="generated-markdown-editor">
-    <%= render "events/settings/markdown_toolbar", toolbar_label: "#{label_text} formatting" %>
+    <%= render "events/settings/markdown_toolbar", toolbar_label: "#{label_text} formatting", tools: %>
 
     <%= form.text_area field_name,
                        rows: rows,
@@ -13,7 +16,7 @@
                        } %>
 
     <div class="event-settings__markdown-footer">
-      <p class="event-settings__hint"><%= hint_text %> Supports Markdown for bold, italic, links, and one headline style.</p>
+      <p class="event-settings__hint"><%= hint_text %> <%= support_text %></p>
       <button type="button"
               class="button button--tiny button--ghost event-settings__markdown-open"
               data-generated-markdown-editor-target="openButton"
@@ -32,7 +35,7 @@
           <h3><%= label_text %></h3>
         </header>
         <div class="event-settings__markdown-panel-body">
-          <%= render "events/settings/markdown_toolbar", toolbar_label: "#{label_text} formatting" %>
+          <%= render "events/settings/markdown_toolbar", toolbar_label: "#{label_text} formatting", tools: %>
           <textarea class="event-settings__markdown-overlay"
                     aria-label="<%= "#{label_text} markdown editor" %>"
                     data-generated-markdown-editor-target="overlay"

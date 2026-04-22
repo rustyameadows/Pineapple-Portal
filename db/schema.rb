@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_22_123000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_22_131500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -390,6 +390,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_22_123000) do
     t.string "vendor_type"
     t.string "social_handle"
     t.bigint "global_vendor_id"
+    t.text "team_meals"
     t.index "event_id, lower((name)::text)", name: "index_event_vendors_on_event_id_and_lower_name", unique: true
     t.index ["event_id", "position"], name: "index_event_vendors_on_event_id_and_position"
     t.index ["event_id"], name: "index_event_vendors_on_event_id"
@@ -435,6 +436,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_22_123000) do
     t.text "parking_details"
     t.text "getting_ready_details"
     t.string "key_people_label"
+    t.text "pineapple_team_meals"
     t.index ["archived_at"], name: "index_events_on_archived_at"
     t.index ["event_photo_document_id"], name: "index_events_on_event_photo_document_id"
     t.index ["name"], name: "index_events_on_name"

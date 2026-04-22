@@ -156,6 +156,35 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_equal getting_ready_markdown, @event.getting_ready_details
   end
 
+  test "updates pineapple team meals from vendor settings" do
+    pineapple_markdown = "**Planner meals**\n\nPickup from [kitchen](https://example.com/kitchen)."
+
+    patch event_url(@event), params: {
+      event: {
+        pineapple_team_meals: "  #{pineapple_markdown}  "
+      },
+      return_to: vendors_event_settings_path(@event)
+    }
+
+    assert_redirected_to vendors_event_settings_url(@event)
+    assert_equal pineapple_markdown, @event.reload.pineapple_team_meals
+  end
+
+  test "rerenders vendor settings when pineapple team meals update is invalid" do
+    patch event_url(@event), params: {
+      event: {
+        name: "",
+        pineapple_team_meals: "**Planner meals**"
+      },
+      return_to: vendors_event_settings_path(@event)
+    }
+
+    assert_response :unprocessable_content
+    assert_select "h1", text: "Vendors"
+    assert_select "div.event-settings__form-errors li", text: "Name can't be blank"
+    assert_select "textarea[name='event[pineapple_team_meals]'][data-generated-markdown-editor-target='source']", text: "**Planner meals**"
+  end
+
   test "updates key people label from people page" do
     patch event_url(@event), params: {
       event: {

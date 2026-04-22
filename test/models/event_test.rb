@@ -52,7 +52,8 @@ class EventTest < ActiveSupport::TestCase
       key_people_label: " VIPs & Family ",
       social_media_policy: "  Please do not post before the planner's announcement.  ",
       parking_details: "  ",
-      getting_ready_details: "\nReady room opens at 8:00 AM.\n"
+      getting_ready_details: "\nReady room opens at 8:00 AM.\n",
+      pineapple_team_meals: "  **Planner meals**\n\nPickup at [kitchen](https://example.com/kitchen).  "
     )
 
     assert_equal "175", event.guest_count
@@ -63,6 +64,11 @@ class EventTest < ActiveSupport::TestCase
     assert_equal "Please do not post before the planner's announcement.", event.social_media_policy
     assert_nil event.parking_details
     assert_equal "Ready room opens at 8:00 AM.", event.getting_ready_details
+    assert_equal "**Planner meals**\n\nPickup at [kitchen](https://example.com/kitchen).", event.pineapple_team_meals
+
+    event.update!(pineapple_team_meals: " \n ")
+
+    assert_nil event.pineapple_team_meals
   end
 
   test "rejects unknown planning link keys" do

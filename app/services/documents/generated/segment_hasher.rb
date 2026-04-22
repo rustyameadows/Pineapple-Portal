@@ -226,6 +226,7 @@ module Documents
       def vendor_contacts_payload
         {
           template_version: DocumentSegment::VENDOR_CONTACTS_TEMPLATE_VERSION,
+          pineapple_team_meals: segment.event.pineapple_team_meals.to_s.strip.presence,
           planners: segment.event.planner_team_members.includes(:user).ordered_for_display.filter_map do |member|
             user = member.user
             next unless user
@@ -249,6 +250,7 @@ module Documents
               global_vendor_id: vendor.global_vendor_id,
               vendor_type: resolved_vendor_type(vendor),
               name: resolved_vendor_name(vendor),
+              team_meals: vendor.team_meals.to_s.strip.presence,
               contacts: Array(vendor.contacts).map do |contact|
                 contact.to_h.stringify_keys.slice("name", "title", "email", "phone", "notes").transform_values do |value|
                   value.to_s.strip.presence

@@ -68,6 +68,7 @@ module Events
         :name,
         :vendor_type,
         :social_handle,
+        :team_meals,
         :client_visible,
         :position,
         :global_vendor_id,
