@@ -305,24 +305,17 @@ module GeneratedDocumentsHelper
   end
 
   def render_generated_packet_rich_text(markdown_text)
-    normalized_markdown = markdown_text.to_s.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
-    html = Commonmarker.to_html(normalized_markdown)
-    sanitized_html = sanitize(
-      html,
-      tags: PACKET_RICH_TEXT_ALLOWED_TAGS,
-      attributes: MARKDOWN_ALLOWED_ATTRIBUTES
-    ).to_s
-
-    fragment = Nokogiri::HTML::DocumentFragment.parse(sanitized_html)
-    fragment.css("a").each do |link|
-      normalize_generated_link!(link)
-    end
-
+    fragment = generated_packet_rich_text_fragment(markdown_text)
     safe_join(
       generated_packet_rich_text_sections(fragment).map do |section|
         generated_packet_rich_text_section_html(section)
       end
     )
+  end
+
+  def render_generated_packet_rich_text_content(markdown_text)
+    fragment = generated_packet_rich_text_fragment(markdown_text)
+    safe_join(fragment.children.map { |node| node.to_html.html_safe })
   end
 
   def generated_packet_text_paragraphs(text)
@@ -380,6 +373,22 @@ module GeneratedDocumentsHelper
   end
 
   private
+
+  def generated_packet_rich_text_fragment(markdown_text)
+    normalized_markdown = markdown_text.to_s.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+    html = Commonmarker.to_html(normalized_markdown)
+    sanitized_html = sanitize(
+      html,
+      tags: PACKET_RICH_TEXT_ALLOWED_TAGS,
+      attributes: MARKDOWN_ALLOWED_ATTRIBUTES
+    ).to_s
+
+    fragment = Nokogiri::HTML::DocumentFragment.parse(sanitized_html)
+    fragment.css("a").each do |link|
+      normalize_generated_link!(link)
+    end
+    fragment
+  end
 
   def generated_event_overview_vendor_name(vendor)
     vendor.global_vendor&.name.to_s.strip.presence || vendor.name.to_s.strip

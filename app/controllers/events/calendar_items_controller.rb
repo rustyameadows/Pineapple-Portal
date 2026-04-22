@@ -162,6 +162,7 @@ module Events
         :location_name,
         :status,
         :additional_team_members,
+        :guest_count,
         :time_caption,
         :transportation_note,
         team_member_ids: []
