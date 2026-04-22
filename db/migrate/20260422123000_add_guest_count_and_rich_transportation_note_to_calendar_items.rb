@@ -5,7 +5,7 @@ class AddGuestCountAndRichTransportationNoteToCalendarItems < ActiveRecord::Migr
   end
 
   def down
-    change_column :calendar_items, :transportation_note, :string
-    remove_column :calendar_items, :guest_count
+    raise ActiveRecord::IrreversibleMigration,
+          "Cannot safely narrow transportation_note back to 255 characters after rich text notes are in use."
   end
 end
