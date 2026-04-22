@@ -1,6 +1,7 @@
 require "test_helper"
 
 class EventOverviewSectionTest < ActionView::TestCase
+  include CalendarHelper
   include GeneratedDocumentsHelper
 
   fixtures :events, :event_calendars, :calendar_items, :event_calendar_tags, :calendar_item_tags, :event_team_members, :event_vendors, :event_guests, :users
@@ -21,9 +22,12 @@ class EventOverviewSectionTest < ActionView::TestCase
 
   test "renders live event, planner, timeline, and vendor data without markdown content" do
     milestone_tag = @event.run_of_show_calendar.event_calendar_tags.create!(name: "Milestones", position: 9)
+    calendar_items(:decision_flowers).event_calendar_tags << milestone_tag
     calendar_items(:ceremony).event_calendar_tags << milestone_tag
     calendar_items(:reception).event_calendar_tags << milestone_tag
     calendar_items(:afterparty).event_calendar_tags << milestone_tag
+    calendar_items(:ceremony).update!(guest_count: "150 guests")
+    calendar_items(:reception).update!(location_name: "Terrace Garden", guest_count: "175 guests")
     event_venues(:main_hall).update!(address: "123 Pineapple Ave\nSuite 100")
     event_venues(:backup_space).update!(address: "456 Terrace Road\nGarden Level")
 
@@ -52,13 +56,24 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__text--value", text: @event.color_palette
     assert_select ".generated-template--packet-sheet__text--label", text: "Style"
     assert_select ".generated-template--packet-sheet__text--value", text: @event.style
-    assert_select ".generated-template--event-overview__timeline-label", text: "Ceremony"
-    assert_select ".generated-template--event-overview__timeline-label", text: "Reception"
-    assert_select ".generated-template--event-overview__timeline-label", text: "Afterparty"
-    assert_select ".generated-template--event-overview__timeline-time", text: generated_event_overview_timeline_time(calendar_items(:ceremony), @event.run_of_show_calendar.timezone)
-    assert_select ".generated-template--event-overview__timeline-time", text: generated_event_overview_timeline_time(calendar_items(:reception), @event.run_of_show_calendar.timezone)
-    assert_select ".generated-template--event-overview__timeline-time", text: generated_event_overview_timeline_time(calendar_items(:afterparty), @event.run_of_show_calendar.timezone)
-    assert_select ".generated-template--event-overview__timeline-time em", text: "to", count: 3
+    assert_select ".generated-template--event-overview__timeline-groups", count: 1
+    assert_select ".generated-template--event-overview__timeline-group", count: 2
+    assert_select ".generated-template--event-overview__timeline-date", text: "Monday, September 15"
+    assert_select ".generated-template--event-overview__timeline-date", text: "Wednesday, October 1"
+    assert_select ".generated-template--event-overview__timeline-grid", count: 2
+    assert_select ".generated-template--event-overview__timeline-card", count: 4
+    assert_select ".generated-template--event-overview__timeline-title", text: "Select Florist"
+    assert_select ".generated-template--event-overview__timeline-title", text: "Ceremony"
+    assert_select ".generated-template--event-overview__timeline-title", text: "Reception"
+    assert_select ".generated-template--event-overview__timeline-title", text: "Afterparty"
+    assert_select ".generated-template--event-overview__timeline-location", text: "Grand Ballroom"
+    assert_select ".generated-template--event-overview__timeline-location", text: "Terrace Garden"
+    assert_select "u.generated-template--event-overview__timeline-time", text: calendar_item_time_only_label_with_marker(calendar_items(:ceremony), @event.run_of_show_calendar.timezone)
+    assert_select "u.generated-template--event-overview__timeline-time", text: calendar_item_time_only_label_with_marker(calendar_items(:reception), @event.run_of_show_calendar.timezone)
+    assert_select "u.generated-template--event-overview__timeline-time", text: calendar_item_time_only_label_with_marker(calendar_items(:afterparty), @event.run_of_show_calendar.timezone)
+    assert_select "em.generated-template--event-overview__timeline-guest-count", text: "150 guests"
+    assert_select "em.generated-template--event-overview__timeline-guest-count", text: "175 guests"
+    assert_select "em.generated-template--event-overview__timeline-guest-count", count: 2
     assert_select ".generated-template--event-overview__venue-address-grid", count: 1
     assert_select ".generated-template--event-overview__venue-address-card", count: 2
     assert_select ".generated-template--event-overview__venue-address-name strong", text: "Grand Ballroom"

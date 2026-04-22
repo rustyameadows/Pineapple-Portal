@@ -169,6 +169,7 @@ module Documents
             social_media_policy: segment.event.social_media_policy,
             parking_details: segment.event.parking_details
           },
+          milestone_items: event_overview_milestone_items_payload,
           vip_key_people: segment.event.event_guests.key_people.ordered.filter_map do |guest|
             next unless guest.vip?
 
@@ -326,6 +327,45 @@ module Documents
               end
             }
           end
+      end
+
+      def event_overview_milestone_items_payload
+        calendar = segment.event.run_of_show_calendar
+        timezone = calendar&.timezone.presence || Time.zone.name
+        return { timezone: timezone, items: [] } unless calendar
+
+        items = calendar.calendar_items
+                        .includes(:event_calendar_tags, :relative_anchor)
+                        .to_a
+                        .select(&:milestone?)
+                        .sort_by do |item|
+          start_time = item.effective_starts_at&.in_time_zone(timezone)
+          [start_time&.to_f || Float::INFINITY, item.title.to_s.downcase]
+        end
+
+        {
+          timezone: timezone,
+          items: items.map do |item|
+            {
+              item_id: item.id,
+              position: item.position,
+              title: item.title,
+              location_name: item.location_name,
+              guest_count: item.guest_count,
+              time_caption: item.time_caption,
+              starts_at: item.starts_at&.utc&.iso8601,
+              effective_starts_at: item.effective_starts_at&.utc&.iso8601,
+              effective_ends_at: item.effective_ends_at&.utc&.iso8601,
+              duration_minutes: item.duration_minutes,
+              relative_anchor_id: item.relative_anchor_id,
+              relative_offset_minutes: item.relative_offset_minutes,
+              relative_before: item.relative_before,
+              relative_to_anchor_end: item.relative_to_anchor_end,
+              locked: item.locked,
+              updated_at: item.updated_at&.utc&.iso8601
+            }
+          end
+        }
       end
 
       def timeline_payload(run_of_show:)

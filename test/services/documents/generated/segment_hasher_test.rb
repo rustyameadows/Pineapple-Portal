@@ -56,6 +56,29 @@ module Documents
         refute_equal original_hash, SegmentHasher.call(@source)
       end
 
+      test "event overview hash changes when milestone card fields change" do
+        milestone_tag = @event.run_of_show_calendar.event_calendar_tags.create!(name: "Milestones", position: 9)
+        item = calendar_items(:ceremony)
+        item.event_calendar_tags << milestone_tag
+
+        original_hash = SegmentHasher.call(@source)
+
+        item.update!(guest_count: "150 guests")
+        guest_count_hash = SegmentHasher.call(@source)
+        refute_equal original_hash, guest_count_hash
+
+        item.update!(location_name: "Updated Ballroom")
+        location_hash = SegmentHasher.call(@source)
+        refute_equal guest_count_hash, location_hash
+
+        item.update!(title: "Ceremony Updated")
+        title_hash = SegmentHasher.call(@source)
+        refute_equal location_hash, title_hash
+
+        item.update!(starts_at: item.starts_at + 15.minutes)
+        refute_equal title_hash, SegmentHasher.call(@source)
+      end
+
       test "event overview hash changes when linked global vendor data changes" do
         global_vendor = GlobalVendor.create!(
           name: "Northlight Films",
