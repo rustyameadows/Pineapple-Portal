@@ -190,8 +190,6 @@
       <% if vendors.any? %>
         <div class="generated-template--packet-sheet__grid">
           <% vendors.each do |vendor| %>
-            <% first_contact = vendor[:contacts].first %>
-            <% remaining_contacts = vendor[:contacts].drop(1) %>
             <% label_text = vendor[:vendor_type].presence %>
 
             <article>
@@ -201,13 +199,6 @@
                 </div>
                 <div class="generated-template--packet-sheet__grid-cell">
                   <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__vendor-name"><%= vendor[:name] %></p>
-                  <% if first_contact %>
-                    <p class="generated-template--packet-sheet__text generated-template--event-overview__vendor-contact-name">
-                      <em><%= first_contact[:name].presence || first_contact[:title].presence || "Primary contact" %></em>
-                    </p>
-                  <% else %>
-                    <p class="generated-template--packet-sheet__text generated-template--event-overview__vendor-contact-name generated-template--event-overview__vendor-contact-name--empty" aria-hidden="true">&nbsp;</p>
-                  <% end %>
                 </div>
                 <div class="generated-template--packet-sheet__grid-cell">
                   <% if vendor[:social_handle].present? %>
@@ -215,24 +206,6 @@
                   <% end %>
                 </div>
               </div>
-
-              <% remaining_contacts.each do |contact| %>
-                <div class="generated-template--packet-sheet__grid-row">
-                  <div class="generated-template--packet-sheet__grid-cell">
-                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label"></p>
-                  </div>
-                  <div class="generated-template--packet-sheet__grid-cell">
-                    <p class="generated-template--packet-sheet__text generated-template--event-overview__vendor-contact-name">
-                      <em><%= contact[:name].presence || contact[:title].presence || "Additional contact" %></em>
-                    </p>
-                  </div>
-                  <div class="generated-template--packet-sheet__grid-cell">
-                    <% if vendor[:social_handle].present? %>
-                      <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail"><%= vendor[:social_handle] %></p>
-                    <% end %>
-                  </div>
-                </div>
-              <% end %>
             </article>
           <% end %>
         </div>

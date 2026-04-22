@@ -99,6 +99,24 @@ module Documents
         refute_equal original_hash, SegmentHasher.call(@source)
       end
 
+      test "event overview hash ignores vendor contact changes" do
+        original_hash = SegmentHasher.call(@source)
+
+        event_vendors(:catering).update!(
+          contacts_jsonb: [
+            {
+              name: "Maria Updated",
+              title: "Senior Account Manager",
+              email: "maria.updated@sunshine.test",
+              phone: "555-999-0000",
+              notes: "Still hidden from event overview"
+            }
+          ]
+        )
+
+        assert_equal original_hash, SegmentHasher.call(@source)
+      end
+
       test "pdf asset hash stays stable when a newer uploaded version appears for the same logical id" do
         logical_id = SecureRandom.uuid
         pinned_document = create_uploaded_pdf(version: 1, logical_id: logical_id, title: "Ceremony Inserts")

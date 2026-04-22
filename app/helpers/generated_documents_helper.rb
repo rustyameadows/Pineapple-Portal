@@ -216,27 +216,11 @@ module GeneratedDocumentsHelper
   end
 
   def generated_event_overview_vendors(event)
-    event.event_vendors.includes(:global_vendor).ordered.filter_map do |vendor|
-      contacts = Array(vendor.contacts).filter_map do |contact|
-        contact_hash = contact.to_h.stringify_keys
-
-        normalized_contact = {
-          name: contact_hash["name"].to_s.strip.presence,
-          title: contact_hash["title"].to_s.strip.presence,
-          email: contact_hash["email"].to_s.strip.presence,
-          phone: contact_hash["phone"].to_s.strip.presence
-        }
-
-        next if normalized_contact.values.all?(&:blank?)
-
-        normalized_contact
-      end
-
+    event.event_vendors.includes(:global_vendor).ordered.map do |vendor|
       {
         name: generated_event_overview_vendor_name(vendor),
         vendor_type: generated_event_overview_vendor_type(vendor),
-        social_handle: generated_event_overview_social_handle(generated_event_overview_vendor_social_handle(vendor)),
-        contacts: contacts
+        social_handle: generated_event_overview_social_handle(generated_event_overview_vendor_social_handle(vendor))
       }
     end
   end

@@ -210,24 +210,13 @@ module Documents
             }
           end,
           vendors: segment.event.event_vendors.includes(:global_vendor).ordered.filter_map do |vendor|
-            contacts = Array(vendor.contacts).filter_map do |contact|
-              normalized_contact = contact.to_h.stringify_keys.slice("name", "title", "email", "phone").transform_values do |value|
-                value.to_s.strip.presence
-              end
-
-              next if normalized_contact.values.all?(&:blank?)
-
-              normalized_contact
-            end
-
             {
               vendor_id: vendor.id,
               position: vendor.position,
               global_vendor_id: vendor.global_vendor_id,
               name: resolved_vendor_name(vendor),
               vendor_type: resolved_vendor_type(vendor),
-              social_handle: normalized_social_handle(resolved_vendor_social_handle(vendor)),
-              contacts: contacts
+              social_handle: normalized_social_handle(resolved_vendor_social_handle(vendor))
             }
           end
         }

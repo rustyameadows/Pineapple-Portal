@@ -73,9 +73,9 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__planner-phone", count: 0
     assert_select ".generated-template--event-overview__vendor-name", text: "Sunshine Catering"
     assert_select ".generated-template--event-overview__vendor-name", text: "Bright Lights Production"
-    assert_select ".generated-template--event-overview__vendor-contact-name", text: /Maria Cater/
-    assert_select ".generated-template--event-overview__vendor-contact-name em", text: "Maria Cater"
-    assert_select ".generated-template--event-overview__vendor-contact-name em", text: "Leo Light"
+    assert_select ".generated-template--event-overview__vendor-contact-name", count: 0
+    assert_select ".generated-template--event-overview__vendor-contact-name--empty", count: 0
+    assert_no_match(/Maria Cater|Leo Light/, rendered)
     assert_select ".generated-template--event-overview__vendor-contact-phone", count: 0
     assert_select ".generated-template--event-overview__vendor-contact-email", count: 0
     assert_select ".generated-template--packet-sheet__text--detail", text: "@sunshinecatering"
@@ -135,7 +135,8 @@ class EventOverviewSectionTest < ActionView::TestCase
 
     assert_select ".generated-template--event-overview__vendor-name", text: "Silent Vendor"
     assert_select ".generated-template--event-overview__vendor-name", text: "Type Free Vendor"
-    assert_select ".generated-template--event-overview__vendor-contact-name--empty", count: 1
+    assert_select ".generated-template--event-overview__vendor-contact-name", count: 0
+    assert_no_match(/No Type Contact/, rendered)
     assert_no_match(/generated-template--packet-sheet__text--label">Vendor<\/p>/, rendered)
   end
 
