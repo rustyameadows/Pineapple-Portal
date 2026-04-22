@@ -203,6 +203,18 @@ module GeneratedDocumentsHelper
     "#{start_label} to #{end_time.strftime("%l:%M %p").strip}"
   end
 
+  def generated_event_overview_venue_addresses(event)
+    event.event_venues.ordered.filter_map do |venue|
+      address = venue.address.to_s.strip.presence
+      next unless address
+
+      {
+        name: venue.name.to_s.strip.presence || "Venue",
+        address: address
+      }
+    end
+  end
+
   def generated_event_overview_vendors(event)
     event.event_vendors.includes(:global_vendor).ordered.filter_map do |vendor|
       contacts = Array(vendor.contacts).filter_map do |contact|

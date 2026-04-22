@@ -34,6 +34,21 @@ class EventVenueTest < ActiveSupport::TestCase
     assert_equal "Riverside Plaza", venue.name
   end
 
+  test "strips outer address whitespace while preserving multiple lines" do
+    venue = @event.event_venues.create!(
+      name: "Skyline Loft",
+      address: "  123 Pineapple Ave\nSuite 400  "
+    )
+
+    assert_equal "123 Pineapple Ave\nSuite 400", venue.address
+  end
+
+  test "normalizes blank address to nil" do
+    venue = @event.event_venues.create!(name: "Skyline Loft", address: "  \n  ")
+
+    assert_nil venue.address
+  end
+
   test "filters blank contacts" do
     venue = @event.event_venues.new(name: "Green Gardens")
     venue.contacts_attributes = [

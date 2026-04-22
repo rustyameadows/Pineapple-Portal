@@ -66,6 +66,7 @@ module Events
     def event_venue_params
       params.require(:event_venue).permit(
         :name,
+        :address,
         :client_visible,
         :position,
         :global_venue_id,

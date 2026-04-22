@@ -198,6 +198,17 @@ module Documents
               user_updated_at: user.updated_at&.utc&.iso8601
             }
           end,
+          venue_addresses: segment.event.event_venues.ordered.filter_map do |venue|
+            address = venue.address.to_s.strip.presence
+            next unless address
+
+            {
+              venue_id: venue.id,
+              position: venue.position,
+              name: venue.name.to_s.strip,
+              address: address
+            }
+          end,
           vendors: segment.event.event_vendors.includes(:global_vendor).ordered.filter_map do |vendor|
             contacts = Array(vendor.contacts).filter_map do |contact|
               normalized_contact = contact.to_h.stringify_keys.slice("name", "title", "email", "phone").transform_values do |value|

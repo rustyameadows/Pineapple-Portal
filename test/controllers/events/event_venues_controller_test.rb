@@ -12,6 +12,7 @@ module Events
         post event_event_venues_url(@event), params: {
           event_venue: {
             name: "Skyline Loft",
+            address: "123 Pineapple Ave\nSuite 5",
             client_visible: "1",
             contacts_attributes: {
               "0" => {
@@ -25,7 +26,23 @@ module Events
 
       assert_redirected_to locations_event_settings_url(@event)
       venue = EventVenue.find_by(name: "Skyline Loft")
+      assert_equal "123 Pineapple Ave\nSuite 5", venue.address
       assert_equal "111-111-1111", venue.contacts.first["phone"]
+    end
+
+    test "updates venue address" do
+      venue = event_venues(:backup_space)
+
+      patch event_event_venue_url(@event, venue), params: {
+        event_venue: {
+          name: venue.name,
+          address: "456 Portal Road\nFloor 2",
+          client_visible: "0"
+        }
+      }
+
+      assert_redirected_to locations_event_settings_url(@event)
+      assert_equal "456 Portal Road\nFloor 2", venue.reload.address
     end
 
     test "updates venue visibility" do

@@ -48,6 +48,14 @@ module Documents
         refute_equal original_hash, SegmentHasher.call(@source)
       end
 
+      test "event overview hash changes when venue address data changes" do
+        original_hash = SegmentHasher.call(@source)
+
+        event_venues(:main_hall).update!(address: "123 Pineapple Ave\nSuite 100")
+
+        refute_equal original_hash, SegmentHasher.call(@source)
+      end
+
       test "event overview hash changes when linked global vendor data changes" do
         global_vendor = GlobalVendor.create!(
           name: "Northlight Films",

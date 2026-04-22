@@ -73,6 +73,7 @@ module Events
       get locations_event_settings_url(@event)
       assert_response :success
       assert_select "h1", text: "Locations"
+      assert_select "textarea[name='event_venue[address]']", count: @event.event_venues.count + 1
     end
   end
 end

@@ -31,6 +31,10 @@
                             <%= form.label :name, "Venue name" %>
                             <%= form.text_field :name, required: true, data: { remote_options_target: "input" } %>
                           </div>
+                          <div class="event-settings__field">
+                            <%= form.label :address, "Address" %>
+                            <%= form.text_area :address, rows: 3, placeholder: "Street, city, state, zip" %>
+                          </div>
                           <div class="event-settings__field event-settings__field--checkbox">
                             <label class="event-settings__toggle">
                               <%= form.check_box :client_visible %>
@@ -75,6 +79,10 @@
                     <%= form.hidden_field :global_venue_id, data: { remote_options_target: "hidden" } %>
                     <%= form.label :name, "Venue name" %>
                     <%= form.text_field :name, required: true, data: { remote_options_target: "input" } %>
+                  </div>
+                  <div class="event-settings__field">
+                    <%= form.label :address, "Address" %>
+                    <%= form.text_area :address, rows: 3, placeholder: "Street, city, state, zip" %>
                   </div>
                   <div class="event-settings__field event-settings__field--checkbox">
                     <label class="event-settings__toggle">
