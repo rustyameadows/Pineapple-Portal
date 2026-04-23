@@ -11,8 +11,8 @@
     --cover-bg: var(--color-white, #ffffff);
     --cover-accent: var(--color-dark-brown, #3f2211);
     --page-bg: var(--cover-bg);
-    --page-padding-top: 0.52in;
-    --page-padding-bottom: 0.72in;
+    --page-padding-top: 0.6in;
+    --page-padding-bottom: 0.62in;
     --page-padding-horizontal: 0.7in;
     box-sizing: border-box;
     min-height: 11in;
@@ -20,26 +20,29 @@
     padding: var(--page-padding-top) var(--page-padding-horizontal) var(--page-padding-bottom);
     background: var(--cover-bg);
     color: var(--cover-accent);
-    display: grid;
-    grid-template-rows: auto 1fr auto auto;
-    justify-items: center;
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
-    gap: 0.28in;
+    gap: 0;
   }
 
   .generated-template--cover__brand img {
     display: block;
-    width: min(2.1in, 42vw);
+    width: min(3.05in, 54vw);
     margin: 0 auto;
+  }
+
+  .generated-template--cover__brand {
+    margin-top: 0.5in;
+    margin-bottom: 0.16in;
   }
 
   .generated-template--cover__middle {
     width: 100%;
     display: grid;
     justify-items: center;
-    align-content: center;
-    gap: 0.28in;
+    gap: 0.18in;
   }
 
   .generated-template--cover__photo {
@@ -50,8 +53,7 @@
 
   .generated-template--cover__photo img {
     display: block;
-    width: min(6.1in, 100%);
-    max-height: 4.55in;
+    width: 70%;
     border: 2px solid var(--cover-accent);
     object-fit: cover;
   }
@@ -59,31 +61,35 @@
   .generated-template--cover__details {
     display: grid;
     justify-items: center;
-    gap: 0.08in;
+    gap: 0.015in;
+    width: min(6.2in, 100%);
   }
 
-  .generated-template--cover__event-name,
-  .generated-template--cover__event-date,
-  .generated-template--cover__event-location,
-  .generated-template--cover__document-title {
+  .generated-template--cover .generated-template--cover__event-name,
+  .generated-template--cover .generated-template--cover__event-date,
+  .generated-template--cover .generated-template--cover__event-location,
+  .generated-template--cover .generated-template--cover__document-title {
     margin: 0;
     color: var(--cover-accent);
   }
 
-  .generated-template--cover__event-name {
-    font-family: var(--font-family-body, 'BaskervilleNo2', 'Times New Roman', serif);
-    font-size: 0.34in;
+  .generated-template--cover .generated-template--cover__event-name {
+    font-family: var(--font-family-display, 'Didot', 'Times New Roman', serif);
+    font-size: 0.35in;
     font-style: italic;
-    line-height: 1.1;
+    font-weight: 400;
+    line-height: 0.8in;
+    letter-spacing: 0;
     text-transform: none;
   }
 
-  .generated-template--cover__event-date,
-  .generated-template--cover__event-location {
-    font-family: var(--font-family-body, 'BaskervilleNo2', 'Times New Roman', serif);
+  .generated-template--cover .generated-template--cover__event-date,
+  .generated-template--cover .generated-template--cover__event-location {
+    font-family: var(--font-family-display, 'Didot', 'Times New Roman', serif);
     font-size: 0.2in;
     font-style: italic;
-    line-height: 1.15;
+    font-weight: 400;
+    line-height: 0.25in;
     text-transform: none;
   }
 
@@ -94,11 +100,19 @@
     margin: 0 auto;
   }
 
-  .generated-template--cover__document-title {
+  .generated-template--cover__footer {
+    margin-top: 0.5in;
+    width: 100%;
+    display: grid;
+    justify-items: center;
+    gap: 0.08in;
+  }
+
+  .generated-template--cover .generated-template--cover__document-title {
     font-family: var(--font-family-display, 'Didot', 'Times New Roman', serif);
-    font-size: 0.25in;
-    line-height: 1.15;
-    letter-spacing: 0.04em;
+    font-size: 0.20in;
+    line-height: 1.08;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
   }
 </style>
@@ -141,9 +155,11 @@
     </div>
   </div>
 
-  <div class="generated-template--cover__divider">
-    <img src="<%= divider_line %>" alt="" aria-hidden="true">
-  </div>
+  <div class="generated-template--cover__footer">
+    <div class="generated-template--cover__divider">
+      <img src="<%= divider_line %>" alt="" aria-hidden="true">
+    </div>
 
-  <p class="generated-template--cover__document-title"><%= document_title %></p>
+    <p class="generated-template--cover__document-title"><%= document_title %></p>
+  </div>
 </section>
