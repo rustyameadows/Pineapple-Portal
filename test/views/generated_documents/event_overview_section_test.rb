@@ -35,12 +35,11 @@ class EventOverviewSectionTest < ActionView::TestCase
 
     assert_select ".generated-template--event-overview", count: 1
     assert_select ".generated-template--packet-sheet", count: 1
-    assert_select ".generated-template--packet-sheet__grid", minimum: 5
+    assert_select ".generated-template--packet-sheet__grid", minimum: 4
     assert_select ".generated-template--packet-sheet__section-title", text: "Important Information"
     assert_select ".generated-template--packet-sheet__section-title", text: "Timeline"
     assert_select ".generated-template--packet-sheet__section-title", text: "Venue Addresses"
-    assert_select ".generated-template--packet-sheet__section-title", text: "Planner Contact"
-    assert_select ".generated-template--packet-sheet__section-title", text: "Vendor Contacts"
+    assert_select ".generated-template--packet-sheet__section-title", text: "Social Media Handles"
     assert_includes rendered, "grid-template-columns: repeat(4, minmax(0, 1fr));"
     assert_select ".generated-template--event-overview__event-name", count: 0
     assert_select ".generated-template--event-overview__dates", text: "#{@event.starts_on.to_fs(:long)} - #{@event.ends_on.to_fs(:long)}"
@@ -80,28 +79,25 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__venue-address-name strong", text: "Terrace Garden"
     assert_select ".generated-template--event-overview__venue-address", text: /123 Pineapple Ave\s+Suite 100/
     assert_select ".generated-template--event-overview__venue-address", text: /456 Terrace Road\s+Garden Level/
-    assert_select ".generated-template--event-overview__planner-name", text: "Pineapple Productions"
-    assert_select ".generated-template--event-overview__planner-contact-name em", text: "Ada Fixture"
-    assert_select ".generated-template--event-overview__planner-handle", text: "@pineappleprodc"
-    assert_select ".generated-template--event-overview__planner-title", count: 0
-    assert_select ".generated-template--event-overview__planner-email", count: 0
-    assert_select ".generated-template--event-overview__planner-phone", count: 0
-    assert_select ".generated-template--event-overview__vendor-name", text: "Sunshine Catering"
-    assert_select ".generated-template--event-overview__vendor-name", text: "Bright Lights Production"
+    assert_select ".generated-template--event-overview__social-media-category", text: "Planning, Design & Coordination"
+    assert_select ".generated-template--event-overview__social-media-company", text: "Pineapple Productions"
+    assert_select ".generated-template--event-overview__social-media-company", text: "Sunshine Catering"
+    assert_select ".generated-template--event-overview__social-media-company", text: "Bright Lights Production"
+    assert_select ".generated-template--event-overview__social-media-handle", text: "@pineappleprodc"
+    assert_select ".generated-template--event-overview__social-media-handle", text: "@sunshinecatering"
+    assert_select ".generated-template--event-overview__social-media-handle", text: "@brightlights"
     assert_select ".generated-template--event-overview__vendor-contact-name", count: 0
     assert_select ".generated-template--event-overview__vendor-contact-name--empty", count: 0
-    assert_no_match(/Maria Cater|Leo Light/, rendered)
+    assert_no_match(/Ada Fixture|Maria Cater|Leo Light/, rendered)
     assert_select ".generated-template--event-overview__vendor-contact-phone", count: 0
     assert_select ".generated-template--event-overview__vendor-contact-email", count: 0
-    assert_select ".generated-template--packet-sheet__text--detail", text: "@sunshinecatering"
-    assert_select ".generated-template--packet-sheet__text--detail", text: "@brightlights"
     assert_select ".generated-template--packet-sheet__section-title", text: "Social Media Policy"
     assert_select ".generated-template--event-overview__social-media", text: @event.social_media_policy
     assert_select ".generated-template--packet-sheet__section-title", text: "PARKING & GETTING THERE"
     assert_select ".generated-template--event-overview__parking", text: @event.parking_details
     assert_operator rendered.index("Timeline"), :<, rendered.index("Venue Addresses")
-    assert_operator rendered.index("Venue Addresses"), :<, rendered.index("Planner Contact")
-    assert_operator rendered.index("Vendor Contacts"), :<, rendered.index("Social Media Policy")
+    assert_operator rendered.index("Venue Addresses"), :<, rendered.index("Social Media Handles")
+    assert_operator rendered.index("Social Media Handles"), :<, rendered.index("Social Media Policy")
     assert_operator rendered.index("Social Media Policy"), :<, rendered.index("PARKING &amp; GETTING THERE")
     assert_no_match(/555-123-4567|555-987-6543/, rendered)
     assert_no_match(/Client Contact|Gluten-free specialist/, rendered)
@@ -120,8 +116,8 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__event-name", count: 0
     assert_select ".generated-template--event-overview__guest-count", text: @event.guest_count
     assert_select ".generated-template--packet-sheet__text--value", text: "Jordan Rivers"
-    assert_select ".generated-template--event-overview__planner-name", text: "Pineapple Productions"
-    assert_select ".generated-template--event-overview__vendor-name", text: "Sunshine Catering"
+    assert_select ".generated-template--event-overview__social-media-company", text: "Pineapple Productions"
+    assert_select ".generated-template--event-overview__social-media-company", text: "Sunshine Catering"
     assert_no_match(/Custom Heading|Custom body copy|generated-text-columns/, rendered)
   end
 
@@ -148,8 +144,8 @@ class EventOverviewSectionTest < ActionView::TestCase
     view.assign(event: @event, segment: @segment)
     render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
 
-    assert_select ".generated-template--event-overview__vendor-name", text: "Silent Vendor"
-    assert_select ".generated-template--event-overview__vendor-name", text: "Type Free Vendor"
+    assert_select ".generated-template--event-overview__social-media-company", text: "Silent Vendor"
+    assert_select ".generated-template--event-overview__social-media-company", text: "Type Free Vendor"
     assert_select ".generated-template--event-overview__vendor-contact-name", count: 0
     assert_no_match(/No Type Contact/, rendered)
     assert_no_match(/generated-template--packet-sheet__text--label">Vendor<\/p>/, rendered)
@@ -165,10 +161,10 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__location", text: "Location TBD"
     assert_select ".generated-template--packet-sheet__section-title", text: "Timeline"
     assert_select ".generated-template--packet-sheet__section-title", text: "Venue Addresses"
+    assert_select ".generated-template--packet-sheet__section-title", text: "Social Media Handles"
     assert_select ".generated-template--packet-sheet__empty", text: /No milestone items are available/
     assert_select ".generated-template--packet-sheet__empty", text: /No venue addresses are available/
-    assert_select ".generated-template--packet-sheet__empty", text: /No lead planner is linked/
-    assert_select ".generated-template--packet-sheet__empty", text: /No vendor contacts are available/
+    assert_select ".generated-template--packet-sheet__empty", text: /No social media handles are available/
     assert_select ".generated-template--event-overview__guest-count", count: 0
     assert_select ".generated-template--packet-sheet__text--label", text: "Host", count: 0
     assert_select ".generated-template--packet-sheet__text--label", text: "Attire", count: 0

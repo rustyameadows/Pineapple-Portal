@@ -225,6 +225,27 @@ module GeneratedDocumentsHelper
     end
   end
 
+  def generated_event_overview_social_media_rows(event)
+    rows = []
+    lead_planner = generated_event_overview_planners(event).find { |planner| planner[:lead] }
+
+    if lead_planner
+      rows << {
+        label: "Planning, Design & Coordination",
+        company_name: "Pineapple Productions",
+        social_handle: "@pineappleprodc"
+      }
+    end
+
+    rows + generated_event_overview_vendors(event).map do |vendor|
+      {
+        label: vendor[:vendor_type].presence,
+        company_name: vendor[:name],
+        social_handle: vendor[:social_handle]
+      }
+    end
+  end
+
   def generated_builder_return_to(path, open_group_source_id: nil)
     return path if path.blank? || open_group_source_id.blank?
 

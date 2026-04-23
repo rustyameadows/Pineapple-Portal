@@ -4,13 +4,12 @@
 <%= render "generated_documents/sections/packet_sheet_styles" %>
 
 <% event_date_range = generated_event_overview_date_range(@event) %>
-<% planners = generated_event_overview_planners(@event) %>
 <% milestone_data = generated_event_overview_timeline(@event) %>
 <% milestone_groups = milestone_data[:groups] %>
 <% milestone_timezone = milestone_data[:timezone] %>
 <% venue_addresses = generated_event_overview_venue_addresses(@event) %>
 <% venue_address_title = venue_addresses.one? ? "Venue Address" : "Venue Addresses" %>
-<% vendors = generated_event_overview_vendors(@event) %>
+<% social_media_rows = generated_event_overview_social_media_rows(@event) %>
 <% important_information_rows = generated_event_overview_primary_rows(@event) %>
 <% vip_rows = generated_event_overview_vip_rows(@event) %>
 <% style_rows = generated_event_overview_style_rows(@event) %>
@@ -205,50 +204,21 @@
     </section>
 
     <section class="generated-template--packet-sheet__section">
-      <h2 class="generated-template--packet-sheet__section-title">Planner Contact</h2>
-      <% lead_planner = planners.find { |planner| planner[:lead] } %>
-      <% if lead_planner %>
+      <h2 class="generated-template--packet-sheet__section-title">Social Media Handles</h2>
+      <% if social_media_rows.any? %>
         <div class="generated-template--packet-sheet__grid">
-          <article>
-            <div class="generated-template--packet-sheet__grid-row">
-              <div class="generated-template--packet-sheet__grid-cell">
-                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label">Planning, Design &amp; Coordination</p>
-              </div>
-              <div class="generated-template--packet-sheet__grid-cell">
-                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__planner-name">Pineapple Productions</p>
-                <p class="generated-template--packet-sheet__text generated-template--event-overview__planner-contact-name">
-                  <em><%= lead_planner[:name] %></em>
-                </p>
-              </div>
-              <div class="generated-template--packet-sheet__grid-cell">
-                <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail generated-template--event-overview__planner-handle">@pineappleprodc</p>
-              </div>
-            </div>
-          </article>
-        </div>
-      <% else %>
-        <p class="generated-template--packet-sheet__empty">No lead planner is linked to this event yet.</p>
-      <% end %>
-    </section>
-
-    <section class="generated-template--packet-sheet__section">
-      <h2 class="generated-template--packet-sheet__section-title">Vendor Contacts</h2>
-      <% if vendors.any? %>
-        <div class="generated-template--packet-sheet__grid">
-          <% vendors.each do |vendor| %>
-            <% label_text = vendor[:vendor_type].presence %>
-
+          <% social_media_rows.each do |row| %>
             <article>
               <div class="generated-template--packet-sheet__grid-row">
                 <div class="generated-template--packet-sheet__grid-cell">
-                  <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label"><%= label_text %></p>
+                  <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label generated-template--event-overview__social-media-category"><%= row[:label] %></p>
                 </div>
                 <div class="generated-template--packet-sheet__grid-cell">
-                  <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__vendor-name"><%= vendor[:name] %></p>
+                  <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--value generated-template--event-overview__social-media-company"><%= row[:company_name] %></p>
                 </div>
                 <div class="generated-template--packet-sheet__grid-cell">
-                  <% if vendor[:social_handle].present? %>
-                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail"><%= vendor[:social_handle] %></p>
+                  <% if row[:social_handle].present? %>
+                    <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--detail generated-template--event-overview__social-media-handle"><%= row[:social_handle] %></p>
                   <% end %>
                 </div>
               </div>
@@ -256,7 +226,7 @@
           <% end %>
         </div>
       <% else %>
-        <p class="generated-template--packet-sheet__empty">No vendor contacts are available for this event yet.</p>
+        <p class="generated-template--packet-sheet__empty">No social media handles are available for this event yet.</p>
       <% end %>
     </section>
 
