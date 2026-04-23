@@ -40,10 +40,47 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_match(/Ceremony/, rendered)
     assert_match(/Afterparty/, rendered)
     assert_match(/3:00 PM/, rendered)
-    assert_match(/9:00 PM.*10:30 PM\*/m, rendered)
+    assert_match(/9:00 PM\*/, rendered)
+    timeline_text = css_select(".generated-template--wedding-party-reference__timeline-table-body").map(&:text).join(" ")
+    refute_match(/9:00 PM\s*–\s*10:30 PM\*/, timeline_text)
     assert_match(/Please arrive dressed and ready to prep\./, rendered)
     assert_match(/Jordan Rivers/, rendered)
     assert_match(/Maya Chen/, rendered)
+  end
+
+  test "aligns wedding party timeline rows by shared start time" do
+    create_timeline_item(
+      title: "Bride Only Prep",
+      starts_at: "2025-10-01 08:00:00",
+      tag: event_calendar_tags(:wedding_party_side_a)
+    )
+    create_timeline_item(
+      title: "Bride Shared Moment",
+      starts_at: "2025-10-01 09:00:00",
+      tag: event_calendar_tags(:wedding_party_side_a)
+    )
+    create_timeline_item(
+      title: "Groom Shared Moment",
+      starts_at: "2025-10-01 09:00:00",
+      tag: event_calendar_tags(:wedding_party_side_b)
+    )
+    create_timeline_item(
+      title: "Groom Only Prep",
+      starts_at: "2025-10-01 10:00:00",
+      tag: event_calendar_tags(:wedding_party_side_b)
+    )
+
+    render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
+
+    rows = css_select(".generated-template--wedding-party-reference__timeline-table-row")
+    assert_equal 3, rows.count
+    assert_match(/8:00 AM\s*Bride Only Prep/, rows.first.text)
+    refute_match(/Groom Only Prep/, rows.first.text)
+    assert_match(/9:00 AM\s*Bride Shared Moment\s*9:00 AM\s*Groom Shared Moment/, rows[1].text)
+    assert_match(/10:00 AM\s*Groom Only Prep/, rows[2].text)
+    refute_match(/Bride Only Prep/, rows[2].text)
+    assert_select ".generated-template--wedding-party-reference__timeline-slot--empty", count: 2
+    refute_match(/8:00 AM\s*–\s*8:30 AM/, rendered)
   end
 
   test "renders manual timeline columns with multi-day grouping and tag-name fallback labels" do
@@ -131,5 +168,16 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
         "label" => "Wedding Party Reference"
       }
     )
+  end
+
+  def create_timeline_item(title:, starts_at:, tag:, duration_minutes: 30)
+    item = @event.run_of_show_calendar.calendar_items.create!(
+      title: title,
+      starts_at: starts_at,
+      duration_minutes: duration_minutes,
+      position: @event.run_of_show_calendar.calendar_items.maximum(:position).to_i + 1
+    )
+    item.event_calendar_tags << tag
+    item
   end
 end
