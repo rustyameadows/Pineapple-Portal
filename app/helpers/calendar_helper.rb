@@ -185,6 +185,20 @@ module CalendarHelper
     item.relative? ? "#{label}*" : label
   end
 
+  def calendar_item_start_time_only_label(item, timezone)
+    start_time = item.effective_starts_at&.in_time_zone(timezone)
+    return format_clock_time(start_time) if start_time
+
+    calendar_item_relative_label(item) ||
+      item.time_caption.presence ||
+      "Exact time coming soon"
+  end
+
+  def calendar_item_start_time_only_label_with_marker(item, timezone)
+    label = calendar_item_start_time_only_label(item, timezone)
+    item.relative? ? "#{label}*" : label
+  end
+
   def calendar_item_relative_label(item)
     return unless item.relative? && item.relative_anchor
 

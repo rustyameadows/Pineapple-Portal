@@ -139,15 +139,58 @@ module Documents
         buckets = [nil] if buckets.empty?
 
         buckets.map do |bucket|
+          day_columns = columns.map do |column|
+            items = Array(items_by_tag_id[column[:tag_id]]).select { |item| day_bucket_for(item) == bucket }
+
+            column.merge(items: items)
+          end
+
           {
             date_label: bucket&.fetch(:label, nil),
-            columns: columns.map do |column|
-              items = Array(items_by_tag_id[column[:tag_id]]).select { |item| day_bucket_for(item) == bucket }
-
-              column.merge(items: items)
-            end
+            columns: day_columns,
+            column_groups: day_columns.each_slice(2).map { |column_pair| build_column_group(column_pair) }
           }
         end
+      end
+
+      def build_column_group(column_pair)
+        grouped_items = column_pair.to_h do |column|
+          [column[:tag_id], column[:items].group_by { |item| alignment_key_for(item) }]
+        end
+
+        alignment_keys = grouped_items.values.flat_map(&:keys).uniq.sort_by { |key| alignment_sort_key(key) }
+
+        {
+          columns: column_pair,
+          rows: alignment_keys.flat_map do |alignment_key|
+            max_items_for_key = column_pair.map do |column|
+              Array(grouped_items.dig(column[:tag_id], alignment_key)).size
+            end.max.to_i
+
+            max_items_for_key.times.map do |index|
+              {
+                alignment_key: alignment_key,
+                cells: column_pair.map do |column|
+                  {
+                    column: column,
+                    item: Array(grouped_items.dig(column[:tag_id], alignment_key))[index]
+                  }
+                end
+              }
+            end
+          end
+        }
+      end
+
+      def alignment_key_for(item)
+        start_time = item.effective_starts_at&.in_time_zone(timezone)
+        return ["time", start_time.to_i] if start_time
+
+        ["item", item.title.to_s.downcase, item.id.to_i]
+      end
+
+      def alignment_sort_key(key)
+        key.first == "time" ? [0, key.second] : [1, key.second, key.third]
       end
 
       def ordered_day_buckets(items)
