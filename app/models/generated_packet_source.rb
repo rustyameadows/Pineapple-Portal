@@ -83,7 +83,7 @@ class GeneratedPacketSource < ApplicationRecord
       label: "Wedding Party Reference",
       description: "Shared wedding party reference sheet for this event.",
       view_key: DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY,
-      options: ->(_event) { {} }
+      options: ->(_event) { default_wedding_party_reference_options }
     }
   }.freeze
 
@@ -201,6 +201,13 @@ class GeneratedPacketSource < ApplicationRecord
       }
     end
 
+    def default_wedding_party_reference_options
+      {
+        "timeline_mode" => "auto",
+        "timeline_tag_ids" => []
+      }
+    end
+
     private
 
     def sync_canonical_source!(source, canonical_key:, config:, event:)
@@ -208,7 +215,9 @@ class GeneratedPacketSource < ApplicationRecord
       source.kind = KINDS[:html_view]
       source.canonical_key = canonical_key
       source.title = config[:label] if source.title.blank?
-      source.assign_html_view(config[:view_key], options: config[:options].call(event))
+      existing_options = source.html_view_key == config[:view_key] ? source.html_options.stringify_keys : {}
+      default_options = config[:options].call(event).stringify_keys
+      source.assign_html_view(config[:view_key], options: default_options.deep_merge(existing_options))
       source.save! if source.new_record? || source.changed?
     end
   end

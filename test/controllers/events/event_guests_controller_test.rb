@@ -5,6 +5,8 @@ module Events
     setup do
       @event = events(:one)
       @guest = event_guests(:vip_family_primary)
+      @vip_family_group = event_key_person_groups(:vip_family)
+      @jordan_side_group = event_key_person_groups(:jordan_side)
       log_in_as(users(:one))
     end
 
@@ -15,7 +17,7 @@ module Events
             first_name: "Avery",
             last_name: "Brooks",
             relationship: "Officiant",
-            group_name: "VIP Family",
+            event_key_person_group_id: @vip_family_group.id,
             vip: "1"
           },
           return_to: event_people_path(@event)
@@ -30,25 +32,33 @@ module Events
       assert_equal "Brooks", created_guest.last_name
       assert_equal "Officiant", created_guest.relationship
       assert_equal "VIP Family", created_guest.group_name
+      assert_equal @vip_family_group.id, created_guest.event_key_person_group_id
       assert created_guest.vip?
     end
 
     test "creates a key person with a new custom group" do
       assert_difference("EventGuest.count", 1) do
-        post event_event_guests_url(@event), params: {
-          event_guest: {
-            first_name: "Skye",
-            last_name: "Bennett",
-            relationship: "Reader",
-            group_name: "VIP Family",
-            custom_group_name: "Ceremony Readers",
-            vip: "0"
-          },
-          return_to: event_people_path(@event)
-        }
+        assert_difference("EventKeyPersonGroup.count", 1) do
+          assert_difference("EventCalendarTag.count", 1) do
+            post event_event_guests_url(@event), params: {
+              event_guest: {
+                first_name: "Skye",
+                last_name: "Bennett",
+                relationship: "Reader",
+                event_key_person_group_id: "__new__",
+                custom_group_name: "Ceremony Readers",
+                vip: "0"
+              },
+              return_to: event_people_path(@event)
+            }
+          end
+        end
       end
 
-      assert_equal "Ceremony Readers", EventGuest.order(:id).last.group_name
+      created_guest = EventGuest.order(:id).last
+
+      assert_equal "Ceremony Readers", created_guest.group_name
+      assert_equal "Wedding Party Side C", created_guest.event_key_person_group.event_calendar_tag.name
     end
 
     test "updates a key person" do
@@ -57,7 +67,7 @@ module Events
           first_name: "Jordan",
           last_name: "Rivers",
           relationship: "Lead Host",
-          group_name: "VIP Family",
+          event_key_person_group_id: @vip_family_group.id,
           vip: "0"
         },
         return_to: event_people_path(@event)
@@ -68,6 +78,25 @@ module Events
       @guest.reload
       assert_equal "Lead Host", @guest.relationship
       assert_not @guest.vip?
+    end
+
+    test "moves a key person to a different side" do
+      patch event_event_guest_url(@event, @guest), params: {
+        event_guest: {
+          first_name: "Jordan",
+          last_name: "Rivers",
+          relationship: "Host",
+          event_key_person_group_id: @jordan_side_group.id,
+          vip: "1"
+        },
+        return_to: event_people_path(@event)
+      }
+
+      assert_redirected_to event_people_url(@event)
+
+      @guest.reload
+      assert_equal @jordan_side_group.id, @guest.event_key_person_group_id
+      assert_equal "Jordan's Side", @guest.group_name
     end
 
     test "destroys a key person" do

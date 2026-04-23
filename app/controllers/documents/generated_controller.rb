@@ -307,6 +307,7 @@ module Documents
       @available_pdf_documents = uploaded_pdf_documents
       @available_page_views = GeneratedPacketSource.page_view_options
       @available_timeline_views = timeline_view_options
+      @available_wedding_party_timeline_tags = wedding_party_timeline_tag_options
       @available_canonical_sources = @event.generated_packet_sources.where(source_category: GeneratedPacketSource::CATEGORIES[:canonical]).order(:title)
       @available_page_sources = @event.generated_packet_sources.where(source_category: GeneratedPacketSource::CATEGORIES[:page]).order(updated_at: :desc, title: :asc)
       @available_group_sources = @event.generated_packet_sources.group_sources.order(:title)
@@ -390,6 +391,21 @@ module Documents
       end
 
       warnings
+    end
+
+    def wedding_party_timeline_tag_options
+      calendar = @event.run_of_show_calendar
+      return [] unless calendar
+
+      calendar.event_calendar_tags.includes(:event_key_person_group).order(:position, :name).map do |tag|
+        label = if tag.event_key_person_group.present?
+                  "#{tag.event_key_person_group.name} (#{tag.name})"
+                else
+                  tag.name
+                end
+
+        [label, tag.id]
+      end
     end
 
     def timeline_view_options

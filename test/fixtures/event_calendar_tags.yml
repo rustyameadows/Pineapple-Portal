@@ -7,3 +7,15 @@ day_of:
   event_calendar: run_of_show
   name: Day Of
   position: 1
+
+wedding_party_side_a:
+  event_calendar: run_of_show
+  name: Wedding Party Side A
+  color_token: "#8FA7C2"
+  position: 2
+
+wedding_party_side_b:
+  event_calendar: run_of_show
+  name: Wedding Party Side B
+  color_token: "#8FA7C2"
+  position: 3

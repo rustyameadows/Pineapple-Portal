@@ -1,6 +1,7 @@
 vip_family_primary:
   event: one
   kind: key_person
+  event_key_person_group: vip_family
   first_name: Jordan
   last_name: Rivers
   relationship: Host
@@ -11,6 +12,7 @@ vip_family_primary:
 vip_family_secondary:
   event: one
   kind: key_person
+  event_key_person_group: vip_family
   first_name: Maya
   last_name: Chen
   relationship: Sister of the Honoree
@@ -21,6 +23,7 @@ vip_family_secondary:
 jordan_side_primary:
   event: one
   kind: key_person
+  event_key_person_group: jordan_side
   first_name: Elliot
   last_name: Stone
   relationship: Best Friend
@@ -31,6 +34,7 @@ jordan_side_primary:
 jordan_side_secondary:
   event: one
   kind: key_person
+  event_key_person_group: jordan_side
   first_name: Priya
   last_name: Patel
   relationship: Cousin

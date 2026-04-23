@@ -371,9 +371,10 @@ module Documents
           sanitize_run_of_show_options(options)
         when DocumentSegment::TEXT_PAGE_VIEW_KEY
           sanitize_markdown_body_options(options)
+        when DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY
+          sanitize_wedding_party_reference_options(options)
         when DocumentSegment::EVENT_OVERVIEW_VIEW_KEY,
-             DocumentSegment::VENDOR_CONTACTS_VIEW_KEY,
-             DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY
+             DocumentSegment::VENDOR_CONTACTS_VIEW_KEY
           {}
         else
           options
@@ -381,7 +382,12 @@ module Documents
       end
 
       def apply_default_html_view_options(view_key, options)
-        options
+        case view_key.to_s
+        when DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY
+          GeneratedPacketSource.default_wedding_party_reference_options.merge(options)
+        else
+          options
+        end
       end
 
       def sanitize_timeline_options(options)
@@ -412,6 +418,18 @@ module Documents
         { "body_markdown" => normalized_body.first(20_000) }
       end
 
+      def sanitize_wedding_party_reference_options(options)
+        source = options.to_h.stringify_keys
+        mode = source["timeline_mode"].to_s == "manual" ? "manual" : "auto"
+        tag_ids = wedding_party_reference_tag_ids(source["timeline_tag_ids"])
+        mode = "auto" if mode == "manual" && tag_ids.empty?
+
+        {
+          "timeline_mode" => mode,
+          "timeline_tag_ids" => mode == "manual" ? tag_ids : []
+        }
+      end
+
       def sanitize_timeline_view_ref(value)
         allowed_refs = timeline_view_refs
         fallback = allowed_refs.first
@@ -438,6 +456,22 @@ module Documents
                               else
                                 []
                               end
+      end
+
+      def wedding_party_reference_tag_ids(values)
+        allowed_ids = wedding_party_reference_allowed_tag_ids
+        Array(values).map(&:to_i).reject(&:zero?).uniq.select { |id| allowed_ids.include?(id) }.first(4)
+      end
+
+      def wedding_party_reference_allowed_tag_ids
+        return @wedding_party_reference_allowed_tag_ids if defined?(@wedding_party_reference_allowed_tag_ids)
+
+        calendar = @event.run_of_show_calendar
+        @wedding_party_reference_allowed_tag_ids = if calendar
+                                                     calendar.event_calendar_tags.order(:position, :name).pluck(:id)
+                                                   else
+                                                     []
+                                                   end
       end
 
       def enqueue_working_refresh_for_documents(*documents)

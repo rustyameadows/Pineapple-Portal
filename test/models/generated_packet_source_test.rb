@@ -27,7 +27,41 @@ class GeneratedPacketSourceTest < ActiveSupport::TestCase
 
     assert_equal existing.id, canonical.id
     assert_equal DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY, canonical.html_view_key
-    assert_equal({}, canonical.html_options)
+    assert_equal(
+      {
+        "timeline_mode" => "auto",
+        "timeline_tag_ids" => []
+      },
+      canonical.html_options
+    )
+  end
+
+  test "ensure_canonical preserves shared wedding party timeline options" do
+    event = events(:one)
+    existing = event.generated_packet_sources.create!(
+      source_category: GeneratedPacketSource::CATEGORIES[:canonical],
+      canonical_key: GeneratedPacketSource::CANONICAL_KEYS[:wedding_party_reference],
+      kind: GeneratedPacketSource::KINDS[:html_view],
+      title: "Wedding Party Reference",
+      source_ref: {
+        "view_key" => DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY,
+        "options" => {
+          "timeline_mode" => "manual",
+          "timeline_tag_ids" => [event_calendar_tags(:vendor).id]
+        }
+      },
+      spec: {
+        "kind" => GeneratedPacketSource::KINDS[:html_view],
+        "view_key" => DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY,
+        "label" => "Wedding Party Reference"
+      }
+    )
+
+    canonical = GeneratedPacketSource.ensure_canonical!(event, :wedding_party_reference)
+
+    assert_equal existing.id, canonical.id
+    assert_equal "manual", canonical.html_options["timeline_mode"]
+    assert_equal [event_calendar_tags(:vendor).id], canonical.html_options["timeline_tag_ids"]
   end
 
   test "ensure_canonical normalizes vendor contacts sources to the generated template" do

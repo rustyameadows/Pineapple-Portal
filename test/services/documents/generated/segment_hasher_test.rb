@@ -211,6 +211,46 @@ module Documents
         refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
       end
 
+      test "wedding party reference hash changes when a side is renamed" do
+        original_hash = SegmentHasher.call(@wedding_party_source)
+
+        event_key_person_groups(:vip_family).update!(name: "Bride's Side")
+
+        refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
+      end
+
+      test "wedding party reference hash changes when selected timeline options change" do
+        original_hash = SegmentHasher.call(@wedding_party_source)
+
+        @wedding_party_source.assign_html_view(
+          DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY,
+          options: {
+            "timeline_mode" => "manual",
+            "timeline_tag_ids" => [event_calendar_tags(:vendor).id]
+          }
+        )
+        @wedding_party_source.save!
+
+        refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
+      end
+
+      test "wedding party reference hash changes when a tagged timeline item changes" do
+        calendar_items(:ceremony).event_calendar_tags << event_calendar_tags(:wedding_party_side_a)
+        original_hash = SegmentHasher.call(@wedding_party_source)
+
+        calendar_items(:ceremony).update!(notes: "Bride arrives with bouquet and veil.")
+
+        refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
+      end
+
+      test "wedding party reference hash changes when an item gains a selected side tag" do
+        original_hash = SegmentHasher.call(@wedding_party_source)
+
+        calendar_items(:reception).event_calendar_tags << event_calendar_tags(:wedding_party_side_a)
+
+        refute_equal original_hash, SegmentHasher.call(@wedding_party_source)
+      end
+
       test "timeline hash changes when the shared packet template version changes" do
         timeline_source = GeneratedPacketSource.ensure_canonical!(
           @event,

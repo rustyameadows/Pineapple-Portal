@@ -84,7 +84,9 @@ module Documents
       assert_select "textarea.generated-builder__overlay-textarea[data-generated-markdown-editor-target='overlay'][name]", count: 0
       assert_select ".generated-builder__hint", text: /live event, planner, and vendor data/, minimum: 1
       assert_select ".generated-builder__hint", text: /live planner and vendor data/, minimum: 1
-      assert_select ".generated-builder__hint", text: /wedding party reference layout with stubbed content/, minimum: 1
+      assert_select ".generated-builder__hint", text: /Auto mode uses the first two key-person groups/, minimum: 1
+      assert_select "select[name='segment[options][timeline_mode]']", count: 1
+      assert_select "select[name='segment[options][timeline_tag_ids][]']", count: 4
     end
 
     test "edit prefixes cover and section titles in the packet builder list only" do
