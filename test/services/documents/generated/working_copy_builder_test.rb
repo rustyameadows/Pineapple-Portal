@@ -49,12 +49,25 @@ module Documents
           page_numbers: true
         )
         runner_stub = BuildRunnerStub.new(runner_result)
+        segment_storage = Object.new
+        document_storage = Object.new
+        build_runner_kwargs = nil
 
-        BuildRunner.stub :new, ->(**_kwargs) { runner_stub } do
-          result = WorkingCopyBuilder.new(definition_document: @document).call
+        BuildRunner.stub :new, ->(**kwargs) {
+          build_runner_kwargs = kwargs
+          runner_stub
+        } do
+          result = WorkingCopyBuilder.new(
+            definition_document: @document,
+            segment_storage: segment_storage,
+            document_storage: document_storage
+          ).call
 
           build = @document.working_builds.recent_first.first
           assert_equal 1, runner_stub.calls.length
+          assert_equal build, build_runner_kwargs[:build]
+          assert_same segment_storage, build_runner_kwargs[:segment_storage]
+          assert_same document_storage, build_runner_kwargs[:document_storage]
           assert_equal DocumentBuild::STATUSES[:succeeded], build.status
           assert_equal DocumentBuild::BUILD_KINDS[:working], build.build_kind
           assert_equal runner_result.storage_uri, result.storage_key
