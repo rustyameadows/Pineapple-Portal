@@ -330,7 +330,7 @@
                               <div class="generated-template--wedding-party-reference__timeline-slot <%= "generated-template--wedding-party-reference__timeline-slot--empty" if item.blank? %>">
                                 <div class="generated-template--wedding-party-reference__timeline-cell">
                                   <% if item.present? %>
-                                    <p class="generated-template--packet-sheet__text generated-template--wedding-party-reference__timeline-time"><%= calendar_item_start_time_only_label_with_marker(item, wedding_party_timeline[:timezone]) %></p>
+                                    <p class="generated-template--packet-sheet__text generated-template--wedding-party-reference__timeline-time"><%= calendar_item_start_time_only_label(item, wedding_party_timeline[:timezone]) %></p>
                                   <% end %>
                                 </div>
                                 <div class="generated-template--wedding-party-reference__timeline-cell">
