@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_22_131500) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_23_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -342,9 +342,23 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_22_131500) do
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "event_key_person_group_id"
     t.index ["event_id", "kind"], name: "index_event_guests_on_event_id_and_kind"
     t.index ["event_id", "position"], name: "index_event_guests_on_event_id_and_position"
     t.index ["event_id"], name: "index_event_guests_on_event_id"
+    t.index ["event_key_person_group_id"], name: "index_event_guests_on_event_key_person_group_id"
+  end
+
+  create_table "event_key_person_groups", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.bigint "event_calendar_tag_id", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_calendar_tag_id"], name: "index_event_key_person_groups_on_event_calendar_tag_id"
+    t.index ["event_id", "name"], name: "index_event_key_person_groups_on_event_id_and_name", unique: true
+    t.index ["event_id"], name: "index_event_key_person_groups_on_event_id"
   end
 
   create_table "event_links", force: :cascade do |t|
@@ -638,7 +652,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_22_131500) do
   add_foreign_key "event_calendar_views", "event_calendars", on_delete: :cascade
   add_foreign_key "event_calendars", "calendar_templates", column: "template_source_id", on_delete: :nullify
   add_foreign_key "event_calendars", "events"
+  add_foreign_key "event_guests", "event_key_person_groups"
   add_foreign_key "event_guests", "events"
+  add_foreign_key "event_key_person_groups", "event_calendar_tags"
+  add_foreign_key "event_key_person_groups", "events", on_delete: :cascade
   add_foreign_key "event_links", "events"
   add_foreign_key "event_team_members", "events"
   add_foreign_key "event_team_members", "users"

@@ -269,6 +269,16 @@ module Documents
             getting_ready_details: segment.event.getting_ready_details
           },
           milestone_groups: wedding_party_reference_milestone_groups_payload,
+          key_person_groups: segment.event.event_key_person_groups.includes(:event_calendar_tag).ordered.map do |group|
+            {
+              group_id: group.id,
+              name: group.name,
+              position: group.position,
+              event_calendar_tag_id: group.event_calendar_tag_id,
+              event_calendar_tag_name: group.event_calendar_tag&.name,
+              updated_at: group.updated_at&.utc&.iso8601
+            }
+          end,
           key_people: segment.event.event_guests.key_people.ordered.map do |guest|
             {
               guest_id: guest.id,
@@ -277,11 +287,13 @@ module Documents
               last_name: guest.last_name,
               relationship: guest.relationship,
               vip: guest.vip,
+              event_key_person_group_id: guest.event_key_person_group_id,
               group_name: guest.group_name,
               position: guest.position,
               updated_at: guest.updated_at&.utc&.iso8601
             }
-          end
+          end,
+          wedding_party_timeline: wedding_party_reference_timeline_payload
         }
       end
 
@@ -329,6 +341,53 @@ module Documents
               end
             }
           end
+      end
+
+      def wedding_party_reference_timeline_payload
+        timeline_data = Documents::Generated::WeddingPartyReferenceTimeline.new(
+          event: segment.event,
+          options: segment.html_options
+        ).call
+
+        {
+          timezone: timeline_data[:timezone],
+          show_day_headers: timeline_data[:show_day_headers],
+          empty_message: timeline_data[:empty_message],
+          columns: Array(timeline_data[:columns]).map do |column|
+            column.slice(:tag_id, :tag_name, :group_id, :header)
+          end,
+          day_groups: Array(timeline_data[:day_groups]).map do |day_group|
+            {
+              date_label: day_group[:date_label],
+              columns: Array(day_group[:columns]).map do |column|
+                {
+                  tag_id: column[:tag_id],
+                  header: column[:header],
+                  items: Array(column[:items]).map do |item|
+                    {
+                      item_id: item.id,
+                      title: item.title,
+                      notes: item.notes,
+                      time_caption: item.time_caption,
+                      location_name: item.location_name,
+                      starts_at: item.starts_at&.utc&.iso8601,
+                      effective_starts_at: item.effective_starts_at&.utc&.iso8601,
+                      effective_ends_at: item.effective_ends_at&.utc&.iso8601,
+                      duration_minutes: item.duration_minutes,
+                      relative_anchor_id: item.relative_anchor_id,
+                      relative_offset_minutes: item.relative_offset_minutes,
+                      relative_before: item.relative_before,
+                      relative_to_anchor_end: item.relative_to_anchor_end,
+                      locked: item.locked,
+                      tag_ids: item.event_calendar_tags.map(&:id).sort,
+                      updated_at: item.updated_at&.utc&.iso8601
+                    }
+                  end
+                }
+              end
+            }
+          end
+        }
       end
 
       def event_overview_milestone_items_payload

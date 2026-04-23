@@ -337,9 +337,12 @@ module GeneratedDocumentsHelper
   end
 
   def generated_wedding_party_reference_key_people(event)
-    event.event_guests.key_people.ordered.group_by(&:group_name).map do |group_name, guests|
+    event.event_key_person_groups.includes(:event_guests).ordered.filter_map do |group|
+      guests = group.event_guests.select(&:key_person?).sort_by { |guest| [guest.position, guest.id] }
+      next if guests.empty?
+
       {
-        title: group_name,
+        title: group.name,
         members: guests.map do |guest|
           {
             name: guest.full_name,
@@ -348,6 +351,13 @@ module GeneratedDocumentsHelper
         end
       }
     end
+  end
+
+  def generated_wedding_party_reference_timeline(event, segment)
+    Documents::Generated::WeddingPartyReferenceTimeline.new(
+      event: event,
+      options: generated_document_segment_options(segment)
+    ).call
   end
 
   def generated_wedding_party_reference_milestones(event)
@@ -454,6 +464,17 @@ module GeneratedDocumentsHelper
 
   def generated_vendor_contacts_visible_value(value)
     value.presence || "—"
+  end
+
+  def generated_document_segment_options(segment)
+    if segment.respond_to?(:html_options)
+      segment.html_options
+    elsif segment.respond_to?(:source_ref) && segment.source_ref.is_a?(Hash)
+      source_options = segment.source_ref["options"]
+      source_options.is_a?(Hash) ? source_options : {}
+    else
+      {}
+    end
   end
 
   def render_generated_markdown_segments(markdown_text)

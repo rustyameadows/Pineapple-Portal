@@ -23,8 +23,11 @@ module Events
     end
 
     def destroy
-      @tag.destroy
-      redirect_to event_calendars_path(@event), notice: "Tag removed."
+      if @tag.destroy
+        redirect_to event_calendars_path(@event), notice: "Tag removed."
+      else
+        redirect_to event_calendars_path(@event), alert: @tag.errors.full_messages.to_sentence
+      end
     end
 
     def add_defaults

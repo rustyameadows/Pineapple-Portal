@@ -1,0 +1,11 @@
+vip_family:
+  event: one
+  event_calendar_tag: wedding_party_side_a
+  name: VIP Family
+  position: 0
+
+jordan_side:
+  event: one
+  event_calendar_tag: wedding_party_side_b
+  name: Jordan's Side
+  position: 1

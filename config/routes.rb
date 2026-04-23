@@ -126,6 +126,8 @@ post "upload_failures", to: "upload_failures#create"
       end
     end
 
+    resources :event_key_person_groups, only: :update, module: :events
+
     resources :event_venues, only: %i[create update destroy], module: :events do
       member do
         patch :move_up

@@ -183,7 +183,7 @@ module Documents
         assert_equal [@document.logical_id], enqueued_logical_ids
       end
 
-      test "updates wedding party reference packet page without persisting markdown options" do
+      test "updates wedding party reference packet page with sanitized timeline options" do
         reference_placement = GeneratedPacketPlacement.create!(
           document_logical_id: @document.logical_id,
           source: GeneratedPacketSource.build_page_source(
@@ -203,7 +203,13 @@ module Documents
               title: "Wedding Party Reference Updated",
               view_key: DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY,
               options: {
-                body_markdown: "ignore this",
+                timeline_mode: "manual",
+                timeline_tag_ids: [
+                  event_calendar_tags(:vendor).id,
+                  event_calendar_tags(:wedding_party_side_a).id,
+                  "",
+                  999_999
+                ],
                 extra: "ignore this too"
               }
             }
@@ -214,8 +220,54 @@ module Documents
         reference_placement.reload
 
         assert_equal "Wedding Party Reference Updated", reference_placement.source.title
-        assert_equal({}, reference_placement.source.html_options)
+        assert_equal(
+          {
+            "timeline_mode" => "manual",
+            "timeline_tag_ids" => [
+              event_calendar_tags(:vendor).id,
+              event_calendar_tags(:wedding_party_side_a).id
+            ]
+          },
+          reference_placement.source.html_options
+        )
         assert_equal [@document.logical_id], enqueued_logical_ids
+      end
+
+      test "wedding party reference manual mode falls back to auto when no valid tags remain" do
+        reference_placement = GeneratedPacketPlacement.create!(
+          document_logical_id: @document.logical_id,
+          source: GeneratedPacketSource.build_page_source(
+            event: @event,
+            view_key: DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY,
+            title: "Wedding Party Reference",
+            options: {}
+          ).tap(&:save!),
+          position: 3
+        )
+
+        Documents::Generated::WorkingCopyRefresh.stub :enqueue, true do
+          patch event_documents_generated_segment_url(@event, @document.logical_id, reference_placement), params: {
+            segment: {
+              title: "Wedding Party Reference Updated",
+              view_key: DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY,
+              options: {
+                timeline_mode: "manual",
+                timeline_tag_ids: [999_999]
+              }
+            }
+          }
+        end
+
+        assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+        reference_placement.reload
+
+        assert_equal(
+          {
+            "timeline_mode" => "auto",
+            "timeline_tag_ids" => []
+          },
+          reference_placement.source.html_options
+        )
       end
 
       test "updates vendor contacts packet page without persisting markdown options" do

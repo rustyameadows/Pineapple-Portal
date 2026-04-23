@@ -76,12 +76,12 @@
                   </div>
 
                   <div class="event-key-people__field">
-                    <%= form.label :group_name, "Group / Side" %>
+                    <%= form.label :event_key_person_group_id, "Group / Side" %>
                     <% if @key_people_group_options.any? %>
                       <div data-controller="event-group-select"
                            data-event-group-select-new-option-value="__new__">
-                        <%= form.select :group_name,
-                                        options_for_select(@key_people_group_options + [["New group", "__new__"]], form.object.group_name.presence),
+                        <%= form.select :event_key_person_group_id,
+                                        options_for_select(@key_people_group_options + [["New group", "__new__"]], form.object.event_key_person_group_id&.to_s),
                                       { include_blank: "Select a group" },
                                         {
                                           data: {
@@ -102,7 +102,7 @@
                         </div>
                       </div>
                     <% else %>
-                      <%= form.text_field :group_name, required: true, placeholder: "Bride's Side, John's Side, VIP Family" %>
+                      <%= text_field_tag "#{form.object_name}[custom_group_name]", nil, required: true, placeholder: "Bride's Side, John's Side, VIP Family" %>
                     <% end %>
                   </div>
 
@@ -121,46 +121,57 @@
               <% end %>
             </article>
 
-            <% if @key_people.any? %>
+            <% if @key_person_groups.any? %>
               <div class="event-key-people__groups">
-                <% @key_people.group_by(&:group_name).each do |group_name, guests| %>
+                <% @key_person_groups.each do |group| %>
+                  <% guests = group.event_guests.to_a.sort_by { |guest| [guest.position, guest.id] } %>
                   <article class="event-directory-card event-key-people__group-card">
                     <div class="event-key-people__group-header">
-                      <div>
-                        <h3><%= group_name %></h3>
-                        <p class="event-directory-card__meta"><%= pluralize(guests.size, "person") %></p>
-                      </div>
+                      <%= form_with model: [@event, group], class: "event-key-people__row" do |form| %>
+                        <%= hidden_field_tag :return_to, request.fullpath %>
+                        <div class="event-key-people__grid">
+                          <div class="event-key-people__field">
+                            <%= form.label :name, "Group / Side Name" %>
+                            <%= form.text_field :name, required: true %>
+                          </div>
+                        </div>
+                        <div class="event-key-people__actions">
+                          <span class="event-directory-card__meta"><%= pluralize(guests.size, "person") %></span>
+                          <span class="event-directory-card__meta">Timeline tag: <strong><%= group.event_calendar_tag.name %></strong></span>
+                          <%= form.submit "Save group", class: "button button--small" %>
+                        </div>
+                      <% end %>
                     </div>
 
                     <div class="event-key-people__rows">
-                      <% guests.each do |guest| %>
-                        <%= form_with(model: [@event, guest], class: "event-key-people__row") do |form| %>
-                          <% custom_group_field_id = "#{form.object_name}_custom_group_name_#{guest.id}" %>
-                          <%= hidden_field_tag :return_to, request.fullpath %>
+                      <% if guests.any? %>
+                        <% guests.each do |guest| %>
+                          <%= form_with(model: [@event, guest], class: "event-key-people__row") do |form| %>
+                            <% custom_group_field_id = "#{form.object_name}_custom_group_name_#{guest.id}" %>
+                            <%= hidden_field_tag :return_to, request.fullpath %>
 
-                          <div class="event-key-people__grid">
-                            <div class="event-key-people__field">
-                              <%= form.label :first_name, "First Name" %>
-                              <%= form.text_field :first_name, required: true %>
-                            </div>
+                            <div class="event-key-people__grid">
+                              <div class="event-key-people__field">
+                                <%= form.label :first_name, "First Name" %>
+                                <%= form.text_field :first_name, required: true %>
+                              </div>
 
-                            <div class="event-key-people__field">
-                              <%= form.label :last_name, "Last Name" %>
-                              <%= form.text_field :last_name, required: true %>
-                            </div>
+                              <div class="event-key-people__field">
+                                <%= form.label :last_name, "Last Name" %>
+                                <%= form.text_field :last_name, required: true %>
+                              </div>
 
-                            <div class="event-key-people__field">
-                              <%= form.label :relationship, "Relationship" %>
-                              <%= form.text_field :relationship, required: true %>
-                            </div>
+                              <div class="event-key-people__field">
+                                <%= form.label :relationship, "Relationship" %>
+                                <%= form.text_field :relationship, required: true %>
+                              </div>
 
-                            <div class="event-key-people__field">
-                              <%= form.label :group_name, "Group / Side" %>
-                              <% if @key_people_group_options.any? %>
+                              <div class="event-key-people__field">
+                                <%= form.label :event_key_person_group_id, "Group / Side" %>
                                 <div data-controller="event-group-select"
                                      data-event-group-select-new-option-value="__new__">
-                                  <%= form.select :group_name,
-                                                  options_for_select(@key_people_group_options + [["New group", "__new__"]], guest.group_name),
+                                  <%= form.select :event_key_person_group_id,
+                                                  options_for_select(@key_people_group_options + [["New group", "__new__"]], guest.event_key_person_group_id&.to_s),
                                                   {},
                                                   {
                                                     data: {
@@ -180,36 +191,36 @@
                                                        data: { event_group_select_target: "customInput" } %>
                                   </div>
                                 </div>
-                              <% else %>
-                                <%= form.text_field :group_name, required: true %>
-                              <% end %>
+                              </div>
+
+                              <div class="event-key-people__field event-key-people__field--checkbox">
+                                <span class="event-key-people__field-label">VIP</span>
+                                <label class="event-key-people__checkbox">
+                                  <%= form.check_box :vip %>
+                                  <span>Mark as VIP</span>
+                                </label>
+                              </div>
                             </div>
 
-                            <div class="event-key-people__field event-key-people__field--checkbox">
-                              <span class="event-key-people__field-label">VIP</span>
-                              <label class="event-key-people__checkbox">
-                                <%= form.check_box :vip %>
-                                <span>Mark as VIP</span>
-                              </label>
+                            <div class="event-key-people__actions">
+                              <%= link_to "Move up",
+                                          move_up_event_event_guest_path(@event, guest, return_to: request.fullpath),
+                                          data: { turbo_method: :patch },
+                                          class: "button button--ghost button--tiny" %>
+                              <%= link_to "Move down",
+                                          move_down_event_event_guest_path(@event, guest, return_to: request.fullpath),
+                                          data: { turbo_method: :patch },
+                                          class: "button button--ghost button--tiny" %>
+                              <%= form.submit "Save", class: "button button--small" %>
+                              <%= link_to "Delete",
+                                          event_event_guest_path(@event, guest, return_to: request.fullpath),
+                                          data: { turbo_method: :delete, turbo_confirm: "Remove this key person?" },
+                                          class: "button button--ghost button--tiny" %>
                             </div>
-                          </div>
-
-                          <div class="event-key-people__actions">
-                            <%= link_to "Move up",
-                                        move_up_event_event_guest_path(@event, guest, return_to: request.fullpath),
-                                        data: { turbo_method: :patch },
-                                        class: "button button--ghost button--tiny" %>
-                            <%= link_to "Move down",
-                                        move_down_event_event_guest_path(@event, guest, return_to: request.fullpath),
-                                        data: { turbo_method: :patch },
-                                        class: "button button--ghost button--tiny" %>
-                            <%= form.submit "Save", class: "button button--small" %>
-                            <%= link_to "Delete",
-                                        event_event_guest_path(@event, guest, return_to: request.fullpath),
-                                        data: { turbo_method: :delete, turbo_confirm: "Remove this key person?" },
-                                        class: "button button--ghost button--tiny" %>
-                          </div>
+                          <% end %>
                         <% end %>
+                      <% else %>
+                        <p class="event-section__lead">No key people are assigned to this group yet.</p>
                       <% end %>
                     </div>
                   </article>

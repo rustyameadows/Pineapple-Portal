@@ -11,6 +11,9 @@ class Event < ApplicationRecord
   has_many :event_guests,
            -> { order(:position, :id) },
            dependent: :destroy
+  has_many :event_key_person_groups,
+           -> { order(:position, :id) },
+           dependent: :destroy
   has_many :global_vendors, -> { distinct }, through: :event_vendors
   has_many :event_venues,
            -> { order(:position, :id) },
@@ -150,6 +153,30 @@ class Event < ApplicationRecord
 
   def archived?
     archived_at.present?
+  end
+
+  def ensure_key_person_group!(name)
+    normalized_name = name.to_s.strip.presence
+    raise ArgumentError, "name must be present" if normalized_name.blank?
+
+    existing_group = event_key_person_groups.find_by("LOWER(name) = ?", normalized_name.downcase)
+    return existing_group if existing_group
+
+    calendar = event_calendars.master.first || event_calendars.create!(
+      name: "Run of Show",
+      timezone: EventCalendar::DEFAULT_TIMEZONE,
+      kind: EventCalendar::KINDS[:master]
+    )
+
+    tag = calendar.event_calendar_tags.create!(
+      name: EventKeyPersonGroup.next_auto_tag_name(calendar),
+      color_token: EventKeyPersonGroup::AUTO_TAG_COLOR
+    )
+
+    event_key_person_groups.create!(
+      name: normalized_name,
+      event_calendar_tag: tag
+    )
   end
 
   private
