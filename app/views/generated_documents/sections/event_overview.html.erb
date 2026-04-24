@@ -90,6 +90,10 @@
   .generated-template--event-overview__venue-address-grid--single .generated-template--event-overview__venue-address-card {
     border-right: none;
   }
+
+  .generated-template--event-overview__social-media-row {
+    grid-template-columns: 1.35fr 1.8fr 1.15fr;
+  }
 </style>
 
 <section class="generated-template generated-template--packet-sheet generated-template--event-overview">
@@ -209,7 +213,7 @@
         <div class="generated-template--packet-sheet__grid">
           <% social_media_rows.each do |row| %>
             <article>
-              <div class="generated-template--packet-sheet__grid-row">
+              <div class="generated-template--packet-sheet__grid-row generated-template--event-overview__social-media-row">
                 <div class="generated-template--packet-sheet__grid-cell">
                   <p class="generated-template--packet-sheet__text generated-template--packet-sheet__text--label generated-template--event-overview__social-media-category"><%= row[:label] %></p>
                 </div>
