@@ -83,6 +83,7 @@ class VendorContactsSectionTest < ActionView::TestCase
 
     assert_select ".generated-template--vendor-contacts", count: 1
     assert_select ".generated-template__page-header-title", text: "Vendor Contacts"
+    assert_match(/\.generated-template--vendor-contacts\s*\{[^}]*gap:\s*8px/m, rendered)
     assert_select "table thead th", text: "Category"
     assert_select "table thead th", text: "Vendor"
     assert_select "table thead th", text: "Contact"

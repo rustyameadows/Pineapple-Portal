@@ -35,6 +35,7 @@ class TimelineSectionTest < ActionView::TestCase
     assert_select ".generated-template__page-header-title", text: "Photo / Video Timeline", count: 1
     assert_select "table.generated-template--timeline__table", count: 1
     assert_select "table.generated-template--timeline__table thead th", text: "Team", count: 1
+    assert_match(/\.generated-template--timeline\s*\{[^}]*gap:\s*8px/m, rendered)
     assert_match(/\.generated-template--packet-sheet\s*\{[^}]*--generated-document-content-padding-x:\s*0\.7in/m, rendered)
     assert_match(/\.generated-template--timeline\s*\{[^}]*--generated-document-content-padding-x:\s*0\.7in/m, rendered)
     assert_match(/font-family:\s*"Didot"/m, rendered)

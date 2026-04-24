@@ -41,6 +41,11 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__section-title", text: "Venue Addresses"
     assert_select ".generated-template--packet-sheet__section-title", text: "Social Media Handles"
     assert_includes rendered, "grid-template-columns: repeat(4, minmax(0, 1fr));"
+    assert_match(/\.generated-template--packet-sheet\s*\{[^}]*gap:\s*8px/m, rendered)
+    assert_match(/\.generated-template--packet-sheet \.generated-template__page-header\s*\{[^}]*padding-bottom:\s*4px/m, rendered)
+    assert_match(/\.generated-template--packet-sheet \.generated-template__page-header-title\s*\{[^}]*margin-bottom:\s*2px/m, rendered)
+    assert_match(/\.generated-template--packet-sheet__stack,\s*\.generated-template--packet-sheet__one-column\s*\{[^}]*gap:\s*8px/m, rendered)
+    assert_match(/\.generated-template--event-overview__important-information-groups\s*\{[^}]*gap:\s*8px/m, rendered)
     assert_select ".generated-template--event-overview__event-name", count: 0
     assert_select ".generated-template--event-overview__dates", text: "#{@event.starts_on.to_fs(:long)} - #{@event.ends_on.to_fs(:long)}"
     assert_select ".generated-template--event-overview__location", text: @event.location
