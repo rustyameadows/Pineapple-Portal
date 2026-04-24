@@ -42,6 +42,7 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__section-title", text: "Social Media Handles"
     assert_includes rendered, "grid-template-columns: repeat(4, minmax(0, 1fr));"
     assert_match(/\.generated-template--packet-sheet\s*\{[^}]*gap:\s*8px/m, rendered)
+    assert_match(/\.generated-template--packet-sheet\s*\{[^}]*--generated-document-content-padding-bottom:\s*0\.275in/m, rendered)
     assert_match(/\.generated-template--packet-sheet \.generated-template__page-header\s*\{[^}]*padding-bottom:\s*4px/m, rendered)
     assert_match(/\.generated-template--packet-sheet \.generated-template__page-header-title\s*\{[^}]*margin-bottom:\s*2px/m, rendered)
     assert_match(/\.generated-template--packet-sheet__stack,\s*\.generated-template--packet-sheet__one-column\s*\{[^}]*gap:\s*8px/m, rendered)

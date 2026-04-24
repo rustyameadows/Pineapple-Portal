@@ -37,7 +37,9 @@ class TimelineSectionTest < ActionView::TestCase
     assert_select "table.generated-template--timeline__table thead th", text: "Team", count: 1
     assert_match(/\.generated-template--timeline\s*\{[^}]*gap:\s*8px/m, rendered)
     assert_match(/\.generated-template--packet-sheet\s*\{[^}]*--generated-document-content-padding-x:\s*0\.7in/m, rendered)
+    assert_match(/\.generated-template--packet-sheet\s*\{[^}]*--generated-document-content-padding-bottom:\s*0\.275in/m, rendered)
     assert_match(/\.generated-template--timeline\s*\{[^}]*--generated-document-content-padding-x:\s*0\.7in/m, rendered)
+    assert_no_match(/\.generated-template--timeline\s*\{[^}]*--generated-document-content-padding-bottom:/m, rendered)
     assert_match(/font-family:\s*"Didot"/m, rendered)
     assert_match(/font-family:\s*"BaskervilleNo2"/m, rendered)
   end
