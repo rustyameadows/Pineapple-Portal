@@ -87,6 +87,8 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_select ".generated-template--event-overview__venue-address", text: /123 Pineapple Ave\s+Suite 100/
     assert_select ".generated-template--event-overview__venue-address", text: /456 Terrace Road\s+Garden Level/
     assert_select ".generated-template--event-overview__social-media-category", text: "Planning, Design & Coordination"
+    assert_select ".generated-template--event-overview__social-media-row", count: 3
+    assert_match(/\.generated-template--event-overview__social-media-row\s*\{[^}]*grid-template-columns:\s*1\.35fr 1\.8fr 1\.15fr/m, rendered)
     assert_select ".generated-template--event-overview__social-media-company", text: "Pineapple Productions"
     assert_select ".generated-template--event-overview__social-media-company", text: "Sunshine Catering"
     assert_select ".generated-template--event-overview__social-media-company", text: "Bright Lights Production"
