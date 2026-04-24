@@ -34,6 +34,7 @@ class PlanningTeamSectionTest < ActionView::TestCase
     assert_select ".generated-template__page-header-logo", count: 1
     assert_select ".generated-template__page-header-title", text: "Planning Team Directory"
     assert_match(/\.generated-template--planning-team\.generated-template--packet-sheet\s*\{[^}]*gap:\s*8px/m, rendered)
+    assert_no_match(/\.generated-template--planning-team\.generated-template--packet-sheet\s*\{[^}]*--generated-document-content-padding-bottom:/m, rendered)
     assert_select ".generated-template--planning-team__grid", count: 1
     assert_select ".generated-template--planning-team__card", minimum: 1
     assert_select ".generated-template--planning-team__name", text: "Ada Fixture"
