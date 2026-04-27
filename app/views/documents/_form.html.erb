@@ -58,12 +58,7 @@
     <%= form.hidden_field :checksum %>
     <%= form.hidden_field :size_bytes %>
     <%= form.hidden_field :content_type %>
-
-    <div>
-      <%= form.label :logical_id, "Existing logical ID (optional)" %><br>
-      <%= form.text_field :logical_id %>
-      <p>If provided, this upload becomes the next version of that document.</p>
-    </div>
+    <%= form.hidden_field :logical_id %>
   <% else %>
     <div>
       <%= form.label :content_type %><br>

@@ -8,24 +8,39 @@ module Documents
       def call
         return unless source.pdf_asset?
 
-        pinned_document || fallback_document
+        latest_document || original_document
       end
 
       private
 
       attr_reader :source
 
-      def pinned_document
-        return unless source.pdf_document_id.present?
-
-        source.event.documents.find_by(id: source.pdf_document_id)
-      end
-
-      def fallback_document
+      def latest_document
         logical_id = source.pdf_logical_id
         return unless logical_id.present?
 
-        source.event.documents.where(logical_id: logical_id).order(version: :desc).first
+        event_documents
+          .where(doc_kind: Document::DOC_KINDS[:uploaded], logical_id: logical_id)
+          .order(version: :desc, id: :desc)
+          .first
+      end
+
+      def original_document
+        return unless source.pdf_document_id.present?
+
+        event_documents
+          .where(doc_kind: Document::DOC_KINDS[:uploaded])
+          .find_by(id: source.pdf_document_id)
+      end
+
+      def event_documents
+        event = if source.respond_to?(:event)
+                  source.event
+                else
+                  source.document&.event
+                end
+
+        event&.documents || Document.none
       end
     end
   end

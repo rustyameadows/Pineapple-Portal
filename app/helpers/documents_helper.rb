@@ -56,6 +56,8 @@ module DocumentsHelper
       packets_event_documents_path(event)
     when "staff_upload"
       staff_uploads_event_documents_path(event)
+    when "packet_docs"
+      packet_docs_event_documents_path(event)
     when "client_upload"
       client_uploads_event_documents_path(event)
     else

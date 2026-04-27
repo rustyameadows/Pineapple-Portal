@@ -140,7 +140,7 @@ module Documents
         assert_equal original_hash, SegmentHasher.call(@source)
       end
 
-      test "pdf asset hash stays stable when a newer uploaded version appears for the same logical id" do
+      test "pdf asset hash changes when a newer uploaded version appears for the same logical id" do
         logical_id = SecureRandom.uuid
         pinned_document = create_uploaded_pdf(version: 1, logical_id: logical_id, title: "Ceremony Inserts")
         source = GeneratedPacketSource.find_or_create_upload_source!(@event, pinned_document, title: "Ceremony Inserts")
@@ -148,7 +148,7 @@ module Documents
 
         create_uploaded_pdf(version: 2, logical_id: logical_id, title: "Ceremony Inserts")
 
-        assert_equal original_hash, SegmentHasher.call(source)
+        refute_equal original_hash, SegmentHasher.call(source)
       end
 
       test "event overview hash changes when a no-contact vendor is added or renamed" do

@@ -202,6 +202,8 @@ post "upload_failures", to: "upload_failures#create"
 
           member do
             post :duplicate
+            patch :move_to_group
+            patch :move_out_of_group
             get :preview
             get :cached_pdf
           end
@@ -215,6 +217,7 @@ post "upload_failures", to: "upload_failures#create"
       collection do
         get :packets
         get :staff_uploads
+        get :packet_docs
         get :client_uploads
       end
       collection { post :presign, to: "document_uploads#create" }

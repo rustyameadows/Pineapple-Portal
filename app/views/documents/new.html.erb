@@ -9,9 +9,9 @@
         <header class="event-section__header event-section__header--split">
           <div>
             <p class="event-section__eyebrow">Documents</p>
-            <h1 class="event-section__title">Upload document</h1>
+            <h1 class="event-section__title"><%= @existing_versions.any? ? "Replace file" : "Upload document" %></h1>
             <% if @existing_versions.any? %>
-              <p class="event-section__lead">This will be saved as version v<%= @next_version_number %> of the existing file (<code><%= @existing_versions.first.logical_id %></code>).</p>
+              <p class="event-section__lead">Upload a replacement for <%= @existing_versions.first.title %>. It will be saved as version v<%= @next_version_number %>.</p>
             <% else %>
               <p class="event-section__lead">Select a file, upload it to storage, and share it with your planners or clients.</p>
             <% end %>

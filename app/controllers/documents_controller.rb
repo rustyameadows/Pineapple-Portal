@@ -8,9 +8,8 @@ class DocumentsController < ApplicationController
   before_action :authorize_download, only: :download
 
   def index
-    assign_packet_component_filter_state
     @document_groups = build_document_groups
-    @latest_documents = filtered_uploaded_documents(@event.documents)
+    @latest_documents = uploaded_documents(@event.documents)
     @generated_documents = generated_manifest
   end
 
@@ -20,6 +19,16 @@ class DocumentsController < ApplicationController
 
   def staff_uploads
     render_grouped_documents(:staff_upload)
+  end
+
+  def packet_docs
+    @source_key = "packet_docs"
+    @label = "Packet Docs"
+    @documents = packet_component_documents
+    @upload_usage_labels = packet_upload_usage_labels
+    @document_groups = build_document_groups
+    @generated_documents = []
+    render :group
   end
 
   def client_uploads
@@ -114,10 +123,9 @@ class DocumentsController < ApplicationController
   end
 
   def render_grouped_documents(source_key)
-    assign_packet_component_filter_state
     @source_key = source_key.to_s
     @label = Document.source_label(@source_key)
-    @documents = filtered_uploaded_documents(@event.documents.where(source: @source_key))
+    @documents = uploaded_documents(@event.documents.where(source: @source_key))
 
     if @source_key == "packet"
       generated_latest = latest_compiled_generated_documents
@@ -129,15 +137,15 @@ class DocumentsController < ApplicationController
     render :group
   end
 
-  def filtered_uploaded_documents(scope)
-    relation = scope.where(doc_kind: Document::DOC_KINDS[:uploaded]).latest
+  def uploaded_documents(scope)
+    scope.where(doc_kind: Document::DOC_KINDS[:uploaded]).latest.order(updated_at: :desc, title: :asc)
+  end
 
-    unless include_packet_component_documents?
-      packet_component_ids = packet_component_logical_ids_for_event
-      relation = relation.where.not(logical_id: packet_component_ids) if packet_component_ids.any?
-    end
+  def packet_component_documents
+    logical_ids = packet_component_logical_ids_for_event
+    return Document.none if logical_ids.empty?
 
-    relation.order(updated_at: :desc, title: :asc)
+    uploaded_documents(@event.documents.where(logical_id: logical_ids))
   end
 
   def build_document_groups
@@ -195,16 +203,11 @@ class DocumentsController < ApplicationController
     true
   end
 
-  def include_packet_component_documents?
-    ActiveModel::Type::Boolean.new.cast(params[:include_packet_components])
-  end
-
   def packet_component_logical_ids_for_event
     @packet_component_logical_ids_for_event ||= Document.packet_component_logical_ids_for_event(@event)
   end
 
-  def assign_packet_component_filter_state
-    @show_packet_component_documents = include_packet_component_documents?
-    @packet_component_document_count = packet_component_logical_ids_for_event.count
+  def packet_upload_usage_labels
+    @packet_upload_usage_labels ||= Documents::Generated::PacketUsageMap.new(event: @event).call.upload_packets
   end
 end

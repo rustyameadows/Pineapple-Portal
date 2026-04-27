@@ -61,35 +61,32 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/data:image\//, response.body)
   end
 
-  test "hides packet source documents by default and allows explicit toggle" do
+  test "planner uploads include packet docs and packet docs view lists uploads used in packets" do
     definition = @event.documents.create!(
-      title: "Packet Builder",
+      title: "Family Packet",
       doc_kind: Document::DOC_KINDS[:generated],
       logical_id: SecureRandom.uuid,
       version: 1,
       is_latest: false,
-      source: "packet"
+      source: "packet",
+      packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed]
     )
+    source = GeneratedPacketSource.find_or_create_upload_source!(@event, @document)
+    definition.packet_placements.create!(source: source, position: 1)
 
-    DocumentSegment.create!(
-      document_logical_id: definition.logical_id,
-      position: 1,
-      kind: DocumentSegment::KINDS[:pdf_asset],
-      title: "Contract Segment",
-      source_ref: {
-        "document_id" => @document.id,
-        "logical_id" => @document.logical_id
-      },
-      spec: { "kind" => DocumentSegment::KINDS[:pdf_asset] }
-    )
-
-    get event_documents_url(@event)
+    get staff_uploads_event_documents_url(@event)
     assert_response :success
-    assert_select ".documents-table__title-link", text: "Production Contract", count: 0
+    assert_select ".documents-browser__row", text: /Production Contract/
+    assert_no_match(/packet source document/, response.body)
 
-    get event_documents_url(@event, params: { include_packet_components: "1" })
+    get packet_docs_event_documents_url(@event)
     assert_response :success
-    assert_select ".documents-table__title-link", text: "Production Contract"
+    assert_select "h1", text: "Packet Docs"
+    assert_operator response.body.index("Your Uploads"), :<, response.body.index("Packet Docs")
+    assert_operator response.body.index("Packet Docs"), :<, response.body.index("Client Uploads")
+    assert_select ".documents-browser__sort-button", text: /Latest version updated at/
+    assert_select ".documents-browser__row", text: /Production Contract/
+    assert_select ".documents-browser__row", text: /Family Packet/
   end
 
   test "uploads new document" do
@@ -124,6 +121,32 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to event_document_url(@event, Document.last)
     assert_equal 2, Document.last.version
+  end
+
+  test "creating replacement version does not enqueue packet rebuilds" do
+    working_refresh_calls = []
+    broad_refresh_calls = []
+
+    Documents::Generated::WorkingCopyRefresh.stub :enqueue, ->(*args, **kwargs) { working_refresh_calls << [args, kwargs] } do
+      Documents::Generated::RefreshEventPacketCachesJob.stub :perform_later, ->(*args) { broad_refresh_calls << args } do
+        assert_difference("Document.count") do
+          post event_documents_url(@event), params: {
+            document: {
+              title: "Production Contract",
+              storage_uri: "documents/contract-v2.pdf",
+              checksum: "checksum-v2",
+              size_bytes: 4096,
+              content_type: "application/pdf",
+              logical_id: @document.logical_id
+            }
+          }
+        end
+      end
+    end
+
+    assert_redirected_to event_document_url(@event, Document.last)
+    assert_equal [], working_refresh_calls
+    assert_equal [], broad_refresh_calls
   end
 
   test "rejects client upload source from staff document form" do

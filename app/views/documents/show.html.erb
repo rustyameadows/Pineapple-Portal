@@ -22,7 +22,7 @@
             <% unless @document.is_latest? %>
               <%= link_to "Download latest", download_event_document_path(@event, @versions.first), class: "event-section__cta event-section__cta--secondary" %>
             <% end %>
-            <%= link_to "Upload new version", new_event_document_path(@event, logical_id: @document.logical_id), class: "event-section__cta event-section__cta--secondary" %>
+            <%= link_to "Replace file", new_event_document_path(@event, logical_id: @document.logical_id), class: "event-section__cta event-section__cta--secondary" %>
             <%= link_to "Edit", edit_event_document_path(@event, @document), class: "event-section__cta event-section__cta--secondary" %>
           </div>
         </header>

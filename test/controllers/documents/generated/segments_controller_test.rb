@@ -371,6 +371,72 @@ module Documents
         assert_equal "Decor Vision", group_source.reload.display_title
       end
 
+      test "moves a packet page into an existing group" do
+        group_document = create_group_document(title: "Design & Decor")
+        group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
+        group_placement = GeneratedPacketPlacement.create!(
+          document_logical_id: @document.logical_id,
+          source: group_source,
+          position: 2
+        )
+        moved_source = @placement.source
+        enqueued_logical_ids = []
+
+        assert_difference("GeneratedPacketPlacement.where(document_logical_id: @document.logical_id).count", -1) do
+          assert_difference("GeneratedPacketPlacement.where(document_logical_id: group_document.logical_id).count", 1) do
+            Documents::Generated::WorkingCopyRefresh.stub :enqueue, ->(document) { enqueued_logical_ids << document.logical_id; true } do
+              patch move_to_group_event_documents_generated_segment_url(@event, @document.logical_id, @placement), params: {
+                target_group_placement_id: group_placement.id
+              }
+            end
+          end
+        end
+
+        assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+        assert_nil GeneratedPacketPlacement.find_by(id: @placement.id)
+        assert_equal moved_source, group_document.packet_placements.ordered.last.source
+        assert_equal [1], GeneratedPacketPlacement.where(document_logical_id: @document.logical_id).ordered.pluck(:position)
+        assert_equal [@document.logical_id], enqueued_logical_ids.uniq
+      end
+
+      test "moves a group page out to the parent packet after the group row" do
+        group_document = create_group_document(title: "Design & Decor")
+        group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
+        group_placement = GeneratedPacketPlacement.create!(
+          document_logical_id: @document.logical_id,
+          source: group_source,
+          position: 2
+        )
+        moved_source = create_page_source(
+          view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+          title: "Floral Proposal",
+          options: { "body_markdown" => "Flowers" }
+        )
+        child_placement = group_document.packet_placements.create!(
+          source: moved_source,
+          position: 2
+        )
+        enqueued_logical_ids = []
+
+        assert_difference("GeneratedPacketPlacement.where(document_logical_id: group_document.logical_id).count", -1) do
+          assert_difference("GeneratedPacketPlacement.where(document_logical_id: @document.logical_id).count", 1) do
+            Documents::Generated::WorkingCopyRefresh.stub :enqueue, ->(document) { enqueued_logical_ids << document.logical_id; true } do
+              patch move_out_of_group_event_documents_generated_segment_url(@event, group_document.logical_id, child_placement), params: {
+                packet_logical_id: @document.logical_id,
+                group_placement_id: group_placement.id
+              }
+            end
+          end
+        end
+
+        assert_redirected_to edit_event_documents_generated_url(@event, group_document.logical_id)
+        assert_nil GeneratedPacketPlacement.find_by(id: child_placement.id)
+        assert_equal [@placement.source, group_source, moved_source], @document.packet_placements.ordered.map(&:source)
+        assert_equal [1, 2, 3], @document.packet_placements.ordered.pluck(:position)
+        assert_equal [1], group_document.packet_placements.ordered.pluck(:position)
+        assert_equal [@document.logical_id], enqueued_logical_ids.uniq
+      end
+
       test "previewing a group keeps the generated pdf unnumbered" do
         group_document = create_group_document(title: "Design & Decor")
         group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
@@ -402,6 +468,15 @@ module Documents
 
     private
 
+    def create_page_source(view_key:, title:, options: {})
+      GeneratedPacketSource.build_page_source(
+        event: @event,
+        view_key: view_key,
+        title: title,
+        options: options
+      ).tap(&:save!)
+    end
+
     def create_group_document(title:)
       document = @event.documents.create!(
         title: title,
@@ -416,12 +491,7 @@ module Documents
       )
 
       document.packet_placements.create!(
-        source: GeneratedPacketSource.build_page_source(
-          event: @event,
-          view_key: "section_break",
-          title: title,
-          options: {}
-        ).tap(&:save!),
+        source: create_page_source(view_key: "section_break", title: title, options: {}),
         position: 1
       )
       document

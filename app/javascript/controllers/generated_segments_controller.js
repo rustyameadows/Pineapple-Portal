@@ -1,11 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["list", "item", "handle", "viewButton"]
+  static targets = ["list", "item", "handle"]
   static values = {
     reorderUrl: String,
-    csrfToken: String,
-    viewMode: String
+    csrfToken: String
   }
 
   connect() {
@@ -33,10 +32,6 @@ export default class extends Controller {
     this.itemTargets.forEach((item) => {
       item.setAttribute("draggable", "true")
     })
-
-    const storedMode = this.loadViewModePreference()
-    const initialMode = this.viewModeValue || storedMode || "grid"
-    this.setViewMode(initialMode, { persist: false })
   }
 
   disconnect() {
@@ -58,7 +53,8 @@ export default class extends Controller {
   }
 
   handlePressStart(event) {
-    this.draggingAllowed = Boolean(event.target.closest(".generated-builder__drag-handle"))
+    const handle = event.target.closest(".generated-builder__drag-handle")
+    this.draggingAllowed = Boolean(handle && handle.closest("[data-generated-segments-root]") === this.element)
   }
 
   handlePressEnd() {
@@ -66,16 +62,18 @@ export default class extends Controller {
   }
 
   handleDragStart(event) {
-    const item = event.target.closest("[data-segment-id]")
+    const item = this.ownItemFrom(event)
 
-    if (!this.draggingAllowed || !item) {
+    if (!item) return
+
+    if (!this.draggingAllowed) {
       event.preventDefault()
       return
     }
 
     this.draggingItem = item
     this.draggingAllowed = false
-    this.draggingItem.classList.add("generated-builder__list-item--dragging")
+    this.draggingItem.classList.add("generated-builder__toc-item--dragging")
 
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = "move"
@@ -85,10 +83,11 @@ export default class extends Controller {
 
   handleDragOver(event) {
     if (!this.draggingItem) return
-    event.preventDefault()
 
-    const target = event.target.closest("[data-segment-id]")
+    const target = this.ownItemFrom(event)
     if (!target || target === this.draggingItem) return
+
+    event.preventDefault()
 
     const rect = target.getBoundingClientRect()
     const offset = event.clientY - rect.top
@@ -114,7 +113,7 @@ export default class extends Controller {
 
   finalizeDrag() {
     if (!this.draggingItem) return
-    this.draggingItem.classList.remove("generated-builder__list-item--dragging")
+    this.draggingItem.classList.remove("generated-builder__toc-item--dragging")
     this.draggingItem = null
     this.persistOrder()
   }
@@ -123,9 +122,8 @@ export default class extends Controller {
     if (!this.hasReorderUrlValue || !this.reorderUrlValue) return
 
     const source = this.hasListTarget ? this.listTarget : this.element
-    const ids = Array.from(
-      source.querySelectorAll("[data-segment-id]")
-    )
+    const ids = Array.from(source.children)
+      .filter((item) => item.matches("[data-segment-id]"))
       .map((item) => item.dataset.segmentId)
       .filter(Boolean)
 
@@ -153,55 +151,11 @@ export default class extends Controller {
       .catch(() => this.showToast("Unable to save segment order", "alert"))
   }
 
-  changeView(event) {
-    const view = event.currentTarget?.dataset?.view
-    if (!view) return
-    this.setViewMode(view)
-  }
+  ownItemFrom(event) {
+    const item = event.target.closest("[data-segment-id]")
+    if (!item) return null
 
-  viewModeValueChanged(value) {
-    this.applyViewMode(value)
-  }
-
-  setViewMode(value, { persist = true } = {}) {
-    const mode = value === "grid" ? "grid" : "list"
-    if (this.viewModeValue === mode) {
-      this.applyViewMode(mode)
-      if (persist) this.storeViewModePreference(mode)
-      return
-    }
-
-    this.viewModeValue = mode
-    if (persist) this.storeViewModePreference(mode)
-  }
-
-  applyViewMode(mode) {
-    const view = mode === "grid" ? "grid" : "list"
-    if (this.hasListTarget) {
-      this.listTarget.classList.toggle("generated-builder__list--grid", view === "grid")
-    }
-
-    this.viewButtonTargets.forEach((button) => {
-      const isActive = button.dataset.view === view
-      button.classList.toggle("generated-builder__view-button--active", isActive)
-      button.setAttribute("aria-pressed", isActive ? "true" : "false")
-    })
-  }
-
-  loadViewModePreference() {
-    try {
-      return window.localStorage.getItem("generatedSegmentsViewMode")
-    } catch (error) {
-      return null
-    }
-  }
-
-  storeViewModePreference(mode) {
-    try {
-      window.localStorage.setItem("generatedSegmentsViewMode", mode)
-    } catch (error) {
-      // ignore persistence errors (e.g., private mode)
-    }
+    return item.closest("[data-generated-segments-root]") === this.element ? item : null
   }
 
   showToast(message, type = "notice") {

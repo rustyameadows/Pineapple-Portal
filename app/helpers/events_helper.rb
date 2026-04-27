@@ -83,6 +83,7 @@ module EventsHelper
 
     upload_sub_links = [
       { label: "Your Uploads", path: staff_uploads_event_documents_path(event) },
+      { label: "Packet Docs", path: packet_docs_event_documents_path(event) },
       { label: "Client Uploads", path: client_uploads_event_documents_path(event) },
       { label: "Upload Doc", path: new_event_document_path(event) }
     ]
@@ -95,6 +96,7 @@ module EventsHelper
       match_paths: [
         event_documents_path(event),
         staff_uploads_event_documents_path(event),
+        packet_docs_event_documents_path(event),
         client_uploads_event_documents_path(event),
         new_event_document_path(event)
       ]
