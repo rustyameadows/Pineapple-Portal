@@ -106,10 +106,69 @@ module Documents
       get edit_event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
-      assert_select ".generated-builder__list-content strong", text: "Cover - Smith Weekend", count: 1
-      assert_select ".generated-builder__list-content strong", text: "Section - Travel", count: 1
+      assert_select ".generated-builder__toc-title", text: "Cover - Smith Weekend", count: 1
+      assert_select ".generated-builder__toc-title", text: "Section - Travel", count: 1
       assert_select "input[name='segment[title]'][value='Smith Weekend']", count: 1
       assert_select "input[name='segment[title]'][value='Travel']", count: 1
+    end
+
+    test "edit renders group children as nested dense rows with group scoped actions" do
+      group_document = create_group_document(title: "Design & Decor")
+      child_placement = group_document.packet_placements.create!(
+        source: create_page_source(
+          view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+          title: "Floral Proposal",
+          options: { "body_markdown" => "Flowers" }
+        ),
+        position: 2
+      )
+      group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
+      group_placement = @document.packet_placements.create!(source: group_source, position: 1)
+
+      get edit_event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select ".generated-builder__toc-item--group .generated-builder__toc-title", text: "Design & Decor", count: 1
+      assert_select ".generated-builder__toc-item--group .generated-builder__status-tag", text: "Group", count: 0
+      assert_select ".generated-builder__toc-item--group .generated-builder__status-tag", text: "2 pages", count: 0
+      assert_select ".generated-builder__toc-children .generated-builder__toc-title", text: "Section - Design & Decor", count: 1
+      assert_select ".generated-builder__toc-children .generated-builder__toc-title", text: "Floral Proposal", count: 1
+
+      assert_select "a[href='#{preview_event_documents_generated_segment_path(@event, @document.logical_id, group_placement)}']", text: "Preview", count: 1
+      assert_select "form.generated-builder__segment-dialog-form[action^='#{event_documents_generated_segment_path(@event, @document.logical_id, group_placement)}']", count: 1
+      assert_select "form.generated-builder__toc-action-form[action^='#{event_documents_generated_segment_path(@event, @document.logical_id, group_placement)}']", count: 1
+      assert_select ".generated-builder__toc-children a[href='#{preview_event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", text: "Preview", count: 1
+      assert_select ".generated-builder__toc-children form.generated-builder__segment-dialog-form[action^='#{event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", count: 1
+      assert_select ".generated-builder__toc-children form.generated-builder__toc-action-form[action^='#{event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", count: 1
+    end
+
+    test "edit keeps dense row metadata to render status and shared packet tooltip" do
+      shared_source = create_page_source(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Shared Notes",
+        options: { "body_markdown" => "Shared body" }
+      )
+      @document.packet_placements.create!(source: shared_source, position: 1)
+      shared_packet = @event.documents.create!(
+        title: "Vendor Packet",
+        doc_kind: Document::DOC_KINDS[:generated],
+        logical_id: SecureRandom.uuid,
+        version: 1,
+        is_latest: false,
+        source: "packet",
+        built_by_user: @user,
+        packet_schema_version: Document::PACKET_SCHEMA_VERSIONS[:source_backed]
+      )
+      shared_packet.packet_placements.create!(source: shared_source, position: 1)
+
+      get edit_event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select ".generated-builder__toc-title", text: "Shared Notes", count: 1
+      assert_select ".generated-builder__toc-usage", count: 0
+      assert_select ".generated-builder__toc-meta .generated-builder__status-tag", text: "Page", count: 0
+      assert_select ".generated-builder__toc-meta .generated-builder__status-tag", text: "Not rendered", count: 1
+      assert_select ".generated-builder__toc-meta .generated-builder__status-tag[title='Used in: Generated Packet, Vendor Packet']", text: "Shared in 2 packets", count: 1
     end
 
     test "show keeps packet page management off the preview screen" do
@@ -832,11 +891,24 @@ module Documents
     end
 
     test "edit renders packet settings, delete controls, and packet page management" do
+      create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Planner Notes",
+        position: 1,
+        options: { "body_markdown" => "Notes" }
+      )
+
       get edit_event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
+      assert_select "p.event-section__eyebrow", text: "Generated Packet", count: 1
       assert_select "h1", text: "Packet Settings"
       assert_select "h2", text: "Packet Pages", count: 1
+      assert_select ".generated-builder__view-toggle", count: 0
+      assert_select "button", text: "Grid", count: 0
+      assert_select "button", text: "List", count: 0
+      assert_select ".generated-builder__toc-head", count: 1
+      assert_select ".generated-builder__toc-title", text: "Planner Notes", count: 1
       assert_select "select[name='segment[source_id]'] option", text: "Photo / Video Timeline", minimum: 1
       assert_select "select[name='segment[source_id]'] option", text: "Hair & Makeup Timeline", minimum: 1
       assert_select "input[type='submit'][value='Insert canonical']", count: 1
@@ -844,7 +916,12 @@ module Documents
       assert_select "input[type='submit'][value='Create page']", count: 1
       assert_select "input[type='submit'][value='Attach PDF']", count: 1
       assert_select "input[type='submit'][value='Upload and add PDF']", count: 1
+      assert_select ".generated-doc__compact-settings", count: 1
+      assert_select ".generated-doc__compact-settings input[name='document[title]']", count: 1
+      assert_select ".generated-doc__compact-settings input[type='checkbox'][name='document[client_visible]']", count: 0
+      assert_select ".generated-doc__compact-settings input[type='submit'][value='Save']", count: 1
       assert_select "button", text: "Delete packet", count: 1
+      assert_select ".generated-builder__build-details", count: 0
     end
 
     test "edit renders group settings and group pages for a group container" do
@@ -855,6 +932,8 @@ module Documents
       assert_response :success
       assert_select "h1", text: "Group Settings"
       assert_select "h2", text: "Group Pages", count: 1
+      assert_select ".generated-doc__compact-settings input[name='document[title]']", count: 1
+      assert_select ".generated-doc__compact-settings input[type='submit'][value='Save']", count: 1
       assert_select "input[type='submit'][value='Insert group']", count: 0
       assert_select "input[type='submit'][value='Create and insert group']", count: 0
       assert_select "button", text: "Delete group", count: 1

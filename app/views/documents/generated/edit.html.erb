@@ -8,15 +8,11 @@
       <section class="event-section">
         <header class="event-section__header">
           <div>
-            <p class="event-section__eyebrow">Generated packets</p>
+            <p class="event-section__eyebrow"><%= @document.title %></p>
             <h1 class="event-section__title"><%= @document.group_container? ? "Group Settings" : "Packet Settings" %></h1>
-            <p class="event-section__lead">
-              <% if @document.group_container? %>
-                Update the shared group details and manage the pages every consuming packet will render.
-              <% else %>
-                Update packet details and manage packet pages here. The packet view stays focused on preview and snapshots.
-              <% end %>
-            </p>
+            <% if @document.group_container? %>
+              <p class="event-section__lead">Update the shared group details and manage the pages every consuming packet will render.</p>
+            <% end %>
           </div>
           <div class="event-section__actions">
             <% if @document.packet_container? %>
@@ -28,62 +24,6 @@
         </header>
 
         <div class="event-section__body generated-doc__settings-layout">
-          <div class="generated-doc__create-layout">
-            <section class="documents-form__panel">
-              <h2 class="documents-form__heading"><%= @document.group_container? ? "Group details" : "Packet details" %></h2>
-              <p class="generated-doc__help">
-                <% if @document.group_container? %>
-                  These settings apply to the shared group definition.
-                <% else %>
-                  These settings apply to the packet definition and future snapshots.
-                <% end %>
-              </p>
-
-              <%= render "form",
-                         form_url: event_documents_generated_path(@event, @document.logical_id),
-                         form_method: :patch,
-                         submit_label: @document.group_container? ? "Save group settings" : "Save packet settings" %>
-            </section>
-
-            <section class="documents-form__panel">
-              <div class="generated-doc__panel-header">
-                <div>
-                  <h2 class="documents-form__heading"><%= @document.group_container? ? "Delete group" : "Delete packet" %></h2>
-                  <p class="generated-doc__help">
-                    <% if @document.group_container? %>
-                      Deleting removes the shared group and its placements from every consuming packet.
-                    <% else %>
-                      Deleting removes the live packet, its saved snapshots, and all packet-specific placements for this event.
-                    <% end %>
-                  </p>
-                </div>
-              </div>
-
-              <dl class="generated-builder__build-details">
-                <div>
-                  <dt><%= @document.group_container? ? "Group pages" : "Packet pages" %></dt>
-                  <dd><%= @packet_pages_count %></dd>
-                </div>
-                <div>
-                  <dt><%= @document.group_container? ? "Using packets" : "Saved snapshots" %></dt>
-                  <dd><%= @document.group_container? ? Array(@group_usage_labels[@document.logical_id]).size : @compiled_versions_count %></dd>
-                </div>
-                <div>
-                  <dt><%= @document.group_container? ? "Latest update" : "Latest snapshot" %></dt>
-                  <dd><%= @document.group_container? ? @document.updated_at.to_fs(:short) : (@latest_version.present? ? @latest_version.updated_at.to_fs(:short) : "None yet") %></dd>
-                </div>
-              </dl>
-
-              <div class="form-actions">
-                <%= button_to (@document.group_container? ? "Delete group" : "Delete packet"),
-                              event_documents_generated_path(@event, @document.logical_id),
-                              method: :delete,
-                              class: "button button--danger",
-                              form: { data: { turbo_confirm: @document.group_container? ? "Delete this group and remove it from every packet?" : "Delete this packet and all saved snapshots?" } } %>
-              </div>
-            </section>
-          </div>
-
           <%= render "documents/generated/segment_list",
                      event: @event,
                      document: @document,
@@ -101,6 +41,32 @@
                      csrf_token: form_authenticity_token,
                      return_to: request.fullpath,
                      open_group_source_id: params[:open_group_source_id] %>
+
+          <section class="generated-doc__compact-settings" aria-labelledby="generated-doc-settings-title">
+            <h2 class="documents-form__heading" id="generated-doc-settings-title">
+              <%= @document.group_container? ? "Group details" : "Packet details" %>
+            </h2>
+
+            <div class="generated-doc__compact-settings-row">
+              <%= form_with model: @document,
+                            url: event_documents_generated_path(@event, @document.logical_id),
+                            method: :patch,
+                            local: true,
+                            class: "generated-doc__compact-form" do |form| %>
+                <div class="form-field generated-doc__compact-title">
+                  <%= form.label :title, @document.group_container? ? "Group title" : "Packet title" %>
+                  <%= form.text_field :title, required: true %>
+                </div>
+                <%= form.submit "Save", class: "button button--primary" %>
+              <% end %>
+
+              <%= button_to (@document.group_container? ? "Delete group" : "Delete packet"),
+                            event_documents_generated_path(@event, @document.logical_id),
+                            method: :delete,
+                            class: "button button--danger generated-doc__compact-delete",
+                            form: { data: { turbo_confirm: @document.group_container? ? "Delete this group and remove it from every packet?" : "Delete this packet and all saved snapshots?" } } %>
+            </div>
+          </section>
         </div>
       </section>
     </div>
