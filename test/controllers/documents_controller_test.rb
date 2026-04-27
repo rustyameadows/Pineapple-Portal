@@ -126,6 +126,32 @@ class DocumentsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 2, Document.last.version
   end
 
+  test "creating replacement version does not enqueue packet rebuilds" do
+    working_refresh_calls = []
+    broad_refresh_calls = []
+
+    Documents::Generated::WorkingCopyRefresh.stub :enqueue, ->(*args, **kwargs) { working_refresh_calls << [args, kwargs] } do
+      Documents::Generated::RefreshEventPacketCachesJob.stub :perform_later, ->(*args) { broad_refresh_calls << args } do
+        assert_difference("Document.count") do
+          post event_documents_url(@event), params: {
+            document: {
+              title: "Production Contract",
+              storage_uri: "documents/contract-v2.pdf",
+              checksum: "checksum-v2",
+              size_bytes: 4096,
+              content_type: "application/pdf",
+              logical_id: @document.logical_id
+            }
+          }
+        end
+      end
+    end
+
+    assert_redirected_to event_document_url(@event, Document.last)
+    assert_equal [], working_refresh_calls
+    assert_equal [], broad_refresh_calls
+  end
+
   test "rejects client upload source from staff document form" do
     assert_no_difference("Document.count") do
       post event_documents_url(@event), params: {

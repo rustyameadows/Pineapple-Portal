@@ -10,17 +10,16 @@ module Documents
         @source = GeneratedPacketSource.find_or_create_upload_source!(@event, @pinned_document, title: "Pinned PDF")
       end
 
-      test "prefers the pinned uploaded document over newer versions with the same logical id" do
+      test "resolves the newest uploaded document version for the same logical id" do
         newer_document = create_uploaded_pdf(version: 2, logical_id: @logical_id, title: "Pinned PDF")
 
         resolved = UploadedDocumentResolver.new(@source).call
 
-        assert_equal @pinned_document.id, resolved.id
-        assert_not_equal newer_document.id, resolved.id
+        assert_equal newer_document.id, resolved.id
+        assert_not_equal @pinned_document.id, resolved.id
       end
 
-      test "falls back to the latest uploaded document when the pinned record is missing" do
-        @pinned_document.destroy!
+      test "uses the newest uploaded document even when the original record still exists" do
         newer_document = create_uploaded_pdf(version: 2, logical_id: @logical_id, title: "Pinned PDF")
 
         resolved = UploadedDocumentResolver.new(@source).call
