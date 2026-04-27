@@ -217,6 +217,7 @@ post "upload_failures", to: "upload_failures#create"
       collection do
         get :packets
         get :staff_uploads
+        get :packet_docs
         get :client_uploads
       end
       collection { post :presign, to: "document_uploads#create" }
