@@ -4,7 +4,7 @@ module Documents
       before_action :set_event
       before_action :set_document
       before_action :ensure_source_backed_document!
-      before_action :set_placement, only: %i[update destroy preview cached_pdf duplicate]
+      before_action :set_placement, only: %i[update destroy preview cached_pdf duplicate move_to_group move_out_of_group]
 
       def create
         source = build_source_from_params(segment_params)
@@ -76,6 +76,65 @@ module Documents
         refresh_after_structure_change!
 
         head :ok
+      end
+
+      def move_to_group
+        unless @document.packet_container? && !@placement.source.group?
+          redirect_to safe_return_to(fallback: builder_path), alert: "Only packet pages can move into groups."
+          return
+        end
+
+        group_placement = placements_scope.find_by(id: params[:target_group_placement_id])
+        group_document = group_placement&.source&.group_document
+
+        unless group_placement&.source&.group? && group_document.present?
+          redirect_to safe_return_to(fallback: builder_path), alert: "Choose a valid group."
+          return
+        end
+
+        GeneratedPacketPlacement.transaction do
+          group_document.packet_placements.create!(source: @placement.source)
+          @placement.destroy!
+          resequence_placements!
+          resequence_placements_for!(group_document)
+        end
+        refresh_after_move!(group_document)
+
+        redirect_to safe_return_to(fallback: builder_path), notice: "Page moved to #{group_document.title}."
+      end
+
+      def move_out_of_group
+        unless @document.group_container?
+          redirect_to safe_return_to(fallback: builder_path), alert: "Only group pages can move out of groups."
+          return
+        end
+
+        packet = packet_definition_for_move_out
+        group_placement = packet&.packet_placements&.includes(:source)&.find_by(id: params[:group_placement_id])
+
+        unless packet&.packet_container? && group_placement&.source&.group_document_logical_id == @document.logical_id
+          redirect_to safe_return_to(fallback: builder_path), alert: "Choose a valid packet group."
+          return
+        end
+
+        new_position = group_placement.position.to_i + 1
+
+        GeneratedPacketPlacement.transaction do
+          GeneratedPacketPlacement.where(document_logical_id: packet.logical_id)
+                                  .where("position >= ?", new_position)
+                                  .update_all("position = position + 1")
+          GeneratedPacketPlacement.create!(
+            document_logical_id: packet.logical_id,
+            source: @placement.source,
+            position: new_position
+          )
+          @placement.destroy!
+          resequence_placements!
+          resequence_placements_for!(packet)
+        end
+        refresh_after_move!(packet)
+
+        redirect_to safe_return_to(fallback: builder_path), notice: "Page moved out of #{@document.title}."
       end
 
       def preview
@@ -350,7 +409,11 @@ module Documents
       end
 
       def resequence_placements!
-        placements_scope.ordered.each_with_index do |placement, index|
+        resequence_placements_for!(@document)
+      end
+
+      def resequence_placements_for!(document)
+        GeneratedPacketPlacement.where(document_logical_id: document.logical_id).ordered.each_with_index do |placement, index|
           next if placement.position == index + 1
 
           placement.update_column(:position, index + 1)
@@ -508,6 +571,31 @@ module Documents
                       [document]
                     end
         enqueue_working_refresh_for_documents(documents)
+      end
+
+      def refresh_after_move!(other_document)
+        documents = []
+        if @document.group_container?
+          documents.concat(packet_consumer_resolver.for_container(@document))
+        else
+          documents << @document
+        end
+
+        if other_document&.group_container?
+          documents.concat(packet_consumer_resolver.for_container(other_document))
+        else
+          documents << other_document
+        end
+
+        enqueue_working_refresh_for_documents(documents)
+      end
+
+      def packet_definition_for_move_out
+        logical_id = params[:packet_logical_id].to_s
+        return if logical_id.blank?
+
+        @event.documents.generated.packet_containers.where(storage_uri: nil).find_by(logical_id: logical_id) ||
+          @event.documents.generated.packet_containers.where(logical_id: logical_id).order(version: :asc).first
       end
 
       def packet_consumer_resolver

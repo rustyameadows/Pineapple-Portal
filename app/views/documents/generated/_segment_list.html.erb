@@ -9,6 +9,8 @@
 <% nested = local_assigns.fetch(:nested, false) %>
 <% show_header = local_assigns.fetch(:show_header, true) %>
 <% show_insert_panels = local_assigns.fetch(:show_insert_panels, true) %>
+<% parent_packet_document = local_assigns.fetch(:parent_packet_document, nil) %>
+<% parent_group_placement = local_assigns.fetch(:parent_group_placement, nil) %>
 <% container_label = document.group_container? ? "Group" : "Packet" %>
 <% container_item_label = document.group_container? ? "group page" : "packet page" %>
 <% empty_message = if document.group_container?
@@ -33,6 +35,7 @@
                          end %>
 <% segment_list_classes = ["generated-builder__segments"] %>
 <% segment_list_classes << "generated-builder__segments--nested" if nested %>
+<% packet_group_placements = document.packet_container? ? segments.select { |segment| segment.group? && segment.group_document.present? } : [] %>
 
 <div class="<%= segment_list_classes.join(' ') %>"
      data-controller="generated-segments"
@@ -85,6 +88,9 @@
                      available_timeline_views: available_timeline_views,
                      available_wedding_party_timeline_tags: available_wedding_party_timeline_tags,
                      segment_warnings: segment_warnings,
+                     packet_group_placements: packet_group_placements,
+                     parent_packet_document: parent_packet_document,
+                     parent_group_placement: parent_group_placement,
                      csrf_token: csrf_token,
                      return_to: return_to,
                      open_group_source_id: open_group_source_id,

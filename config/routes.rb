@@ -202,6 +202,8 @@ post "upload_failures", to: "upload_failures#create"
 
           member do
             post :duplicate
+            patch :move_to_group
+            patch :move_out_of_group
             get :preview
             get :cached_pdf
           end

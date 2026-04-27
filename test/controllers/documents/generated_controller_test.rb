@@ -124,6 +124,14 @@ module Documents
       )
       group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
       group_placement = @document.packet_placements.create!(source: group_source, position: 1)
+      top_level_placement = @document.packet_placements.create!(
+        source: create_page_source(
+          view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+          title: "Standalone Notes",
+          options: { "body_markdown" => "Standalone" }
+        ),
+        position: 2
+      )
 
       get edit_event_documents_generated_url(@event, @document.logical_id)
 
@@ -140,6 +148,10 @@ module Documents
       assert_select ".generated-builder__toc-children a[href='#{preview_event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", text: "Preview", count: 1
       assert_select ".generated-builder__toc-children form.generated-builder__segment-dialog-form[action^='#{event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", count: 1
       assert_select ".generated-builder__toc-children form.generated-builder__toc-action-form[action^='#{event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", count: 1
+      assert_select "form.generated-builder__move-form[action^='#{move_to_group_event_documents_generated_segment_path(@event, @document.logical_id, top_level_placement)}'] select[name='target_group_placement_id'] option[value='#{group_placement.id}']", text: "Design & Decor", count: 1
+      assert_select ".generated-builder__toc-children form.generated-builder__move-form[action^='#{move_out_of_group_event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", count: 1
+      assert_select ".generated-builder__toc-children form.generated-builder__move-form input[name='packet_logical_id'][value='#{@document.logical_id}']", count: 2
+      assert_select ".generated-builder__toc-children form.generated-builder__move-form input[name='group_placement_id'][value='#{group_placement.id}']", count: 2
     end
 
     test "edit keeps dense row metadata to render status and shared packet tooltip" do

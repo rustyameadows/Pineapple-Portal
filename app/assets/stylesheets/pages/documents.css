@@ -661,6 +661,22 @@
   padding-top: 0.9rem;
 }
 
+.generated-builder__segment-dialog-move {
+  border-top: 1px solid color-mix(in srgb, var(--color-sea-foam) 30%, white);
+  padding: 0.9rem 1rem 1rem;
+}
+
+.generated-builder__move-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.generated-builder__move-form .generated-builder__form-row {
+  margin: 0;
+}
+
 .generated-builder__inline-form {
   display: inline;
 }
@@ -1639,7 +1655,8 @@ button.generated-builder__live-pill {
   }
 
   .generated-doc__compact-settings-row,
-  .generated-doc__compact-form {
+  .generated-doc__compact-form,
+  .generated-builder__move-form {
     grid-template-columns: 1fr;
     align-items: stretch;
   }
