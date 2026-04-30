@@ -12,7 +12,7 @@ module Documents
       GeneratedPacketSource.ensure_canonical_sources_for_event!(@event)
       @packet_definitions = packet_definitions
       @group_sources = @event.generated_packet_sources.group_sources.order(:title)
-      @canonical_sources = @event.generated_packet_sources.where(source_category: GeneratedPacketSource::CATEGORIES[:canonical]).order(:title)
+      @canonical_sources = GeneratedPacketSource.available_canonical_sources_for_event(@event)
       @page_sources = @event.generated_packet_sources.where(source_category: GeneratedPacketSource::CATEGORIES[:page]).order(updated_at: :desc, title: :asc)
       @uploaded_pdf_documents = uploaded_pdf_documents
       usage_map = usage_map_result
@@ -308,7 +308,7 @@ module Documents
       @available_page_views = GeneratedPacketSource.page_view_options
       @available_timeline_views = timeline_view_options
       @available_wedding_party_timeline_tags = wedding_party_timeline_tag_options
-      @available_canonical_sources = @event.generated_packet_sources.where(source_category: GeneratedPacketSource::CATEGORIES[:canonical]).order(:title)
+      @available_canonical_sources = GeneratedPacketSource.available_canonical_sources_for_event(@event)
       @available_page_sources = @event.generated_packet_sources.where(source_category: GeneratedPacketSource::CATEGORIES[:page]).order(updated_at: :desc, title: :asc)
       @available_group_sources = @event.generated_packet_sources.group_sources.order(:title)
       @packet_definitions = packet_definitions.reject { |definition| definition.logical_id == @document.logical_id }

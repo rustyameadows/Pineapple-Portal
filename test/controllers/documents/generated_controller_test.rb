@@ -89,6 +89,15 @@ module Documents
       assert_select "select[name='segment[options][timeline_tag_ids][]']", count: 4
     end
 
+    test "edit exposes custom timeline views in the canonical segment picker" do
+      get edit_event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select "select[name='segment[source_id]'] option", text: "Vendor Only", count: 1
+      assert_select "select[name='segment[source_id]'] option", text: "Decision Calendar", count: 0
+      assert_select "select[name='segment[source_id]'] option", text: "Photo / Video Timeline", count: 1
+    end
+
     test "edit prefixes cover and section titles in the packet builder list only" do
       create_page_placement(
         view_key: "cover_sheet",
@@ -334,6 +343,8 @@ module Documents
       assert_select "td", text: "Event Overview", minimum: 1
       assert_select "td", text: "Photo / Video Timeline", minimum: 1
       assert_select "td", text: "Hair & Makeup Timeline", minimum: 1
+      assert_select "td", text: "Vendor Only", count: 1
+      assert_select "td", text: "Decision Calendar", count: 0
       assert_select "td", text: "Vendor Contacts", minimum: 1
       assert_select "td", text: "Shared Notes", count: 1
       assert_select "td", text: "Ceremony Inserts", count: 1

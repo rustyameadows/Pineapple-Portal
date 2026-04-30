@@ -93,6 +93,34 @@ module Documents
         assert_redirected_to return_to
       end
 
+      test "creates a placement for a custom timeline canonical source" do
+        view = event_calendar_views(:vendor_view)
+        GeneratedPacketSource.ensure_canonical_sources_for_event!(@event)
+        source = @event.generated_packet_sources.find_by!(
+          canonical_key: GeneratedPacketSource.custom_timeline_canonical_key(view)
+        )
+        enqueued_logical_ids = []
+
+        assert_no_difference("GeneratedPacketSource.count") do
+          assert_difference("GeneratedPacketPlacement.count", 1) do
+            Documents::Generated::WorkingCopyRefresh.stub :enqueue, ->(document) { enqueued_logical_ids << document.logical_id; true } do
+              post event_documents_generated_segments_url(@event, @document.logical_id), params: {
+                segment: {
+                  source_id: source.id
+                }
+              }
+            end
+          end
+        end
+
+        assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+        placement = GeneratedPacketPlacement.order(:id).last
+        assert_equal source, placement.source
+        assert_equal DocumentSegment::TIMELINE_VIEW_KEY, placement.source.html_view_key
+        assert_equal view.id.to_s, placement.source.html_options["view_ref"]
+        assert_equal [@document.logical_id], enqueued_logical_ids
+      end
+
       test "updates text page packet page and drops unknown option keys" do
         enqueued_logical_ids = []
 

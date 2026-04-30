@@ -21,6 +21,7 @@ class GeneratedPacketSource < ApplicationRecord
     hair_makeup_timeline: "hair_makeup_timeline",
     wedding_party_reference: "wedding_party_reference"
   }.freeze
+  CUSTOM_TIMELINE_CANONICAL_KEY_PREFIX = "custom_timeline_view:".freeze
 
   CANONICAL_CONFIGS = {
     CANONICAL_KEYS[:event_overview] => {
@@ -135,9 +136,12 @@ class GeneratedPacketSource < ApplicationRecord
     end
 
     def ensure_canonical_sources_for_event!(event)
-      CANONICAL_CONFIGS.keys.index_with do |key|
+      built_in_sources = CANONICAL_CONFIGS.keys.index_with do |key|
         ensure_canonical!(event, key)
       end
+      custom_sources = ensure_custom_timeline_sources_for_event!(event)
+
+      built_in_sources.merge(custom_sources)
     end
 
     def ensure_canonical!(event, key)
@@ -148,6 +152,26 @@ class GeneratedPacketSource < ApplicationRecord
       event.generated_packet_sources.find_or_initialize_by(canonical_key: canonical_key).tap do |source|
         sync_canonical_source!(source, canonical_key:, config:, event:)
       end
+    end
+
+    def available_canonical_sources_for_event(event)
+      live_custom_keys = custom_timeline_views_for_event(event).map { |view| custom_timeline_canonical_key(view) }
+
+      event.generated_packet_sources
+           .where(source_category: CATEGORIES[:canonical])
+           .order(:title, :id)
+           .select do |source|
+             !custom_timeline_canonical_key?(source.canonical_key) || live_custom_keys.include?(source.canonical_key)
+           end
+    end
+
+    def custom_timeline_canonical_key(view_or_id)
+      id = view_or_id.respond_to?(:id) ? view_or_id.id : view_or_id
+      "#{CUSTOM_TIMELINE_CANONICAL_KEY_PREFIX}#{id}"
+    end
+
+    def custom_timeline_canonical_key?(key)
+      key.to_s.start_with?(CUSTOM_TIMELINE_CANONICAL_KEY_PREFIX)
     end
 
     def find_or_create_upload_source!(event, document, title: nil)
@@ -209,6 +233,45 @@ class GeneratedPacketSource < ApplicationRecord
     end
 
     private
+
+    def ensure_custom_timeline_sources_for_event!(event)
+      custom_timeline_views_for_event(event).index_with do |view|
+        ensure_custom_timeline_source!(event, view)
+      end
+    end
+
+    def ensure_custom_timeline_source!(event, view)
+      canonical_key = custom_timeline_canonical_key(view)
+
+      event.generated_packet_sources.find_or_initialize_by(canonical_key: canonical_key).tap do |source|
+        existing_options = source.html_view_key == DocumentSegment::TIMELINE_VIEW_KEY ? source.html_options.stringify_keys : {}
+        options = default_timeline_options.deep_merge(existing_options).merge("view_ref" => view.id.to_s)
+
+        source.source_category = CATEGORIES[:canonical]
+        source.kind = KINDS[:html_view]
+        source.canonical_key = canonical_key
+        source.assign_html_view(DocumentSegment::TIMELINE_VIEW_KEY, options: options)
+        source.title = view.name
+        source.save! if source.new_record? || source.changed?
+      end
+    end
+
+    def custom_timeline_views_for_event(event)
+      calendar = event.run_of_show_calendar
+      return [] unless calendar
+
+      calendar.event_calendar_views.order(:name, :id).reject do |view|
+        default_timeline_view_name?(view.name)
+      end
+    end
+
+    def default_timeline_view_name?(name)
+      default_timeline_view_names.include?(name.to_s.strip.downcase)
+    end
+
+    def default_timeline_view_names
+      @default_timeline_view_names ||= RunOfShowDefaultViews::VIEWS.map { |view| view[:name].to_s.strip.downcase }
+    end
 
     def sync_canonical_source!(source, canonical_key:, config:, event:)
       source.source_category = CATEGORIES[:canonical]
