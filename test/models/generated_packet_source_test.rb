@@ -111,6 +111,78 @@ class GeneratedPacketSourceTest < ActiveSupport::TestCase
     end
   end
 
+  test "ensure_canonical_sources_for_event creates custom timeline canonicals" do
+    event = events(:one)
+    view = event_calendar_views(:vendor_view)
+    canonical_key = GeneratedPacketSource.custom_timeline_canonical_key(view)
+
+    assert_nil event.generated_packet_sources.find_by(canonical_key: canonical_key)
+
+    GeneratedPacketSource.ensure_canonical_sources_for_event!(event)
+    source = event.generated_packet_sources.find_by!(canonical_key: canonical_key)
+
+    assert source.canonical?
+    assert_equal DocumentSegment::TIMELINE_VIEW_KEY, source.html_view_key
+    assert_equal "Vendor Only", source.display_title
+    assert_equal view.id.to_s, source.html_options["view_ref"]
+    assert_equal true, source.html_options["show_location"]
+    assert_equal true, source.html_options["show_vendor"]
+    assert_equal true, source.html_options["show_team_members"]
+  end
+
+  test "ensure_canonical_sources_for_event excludes default timeline views from custom canonicals" do
+    event = events(:one)
+    default_view = event_calendar_views(:decision_view)
+
+    GeneratedPacketSource.ensure_canonical_sources_for_event!(event)
+
+    assert_nil event.generated_packet_sources.find_by(canonical_key: GeneratedPacketSource.custom_timeline_canonical_key(default_view))
+  end
+
+  test "ensure_canonical_sources_for_event updates custom timeline source title while preserving display options" do
+    event = events(:one)
+    view = event_calendar_views(:vendor_view)
+
+    GeneratedPacketSource.ensure_canonical_sources_for_event!(event)
+    source = event.generated_packet_sources.find_by!(canonical_key: GeneratedPacketSource.custom_timeline_canonical_key(view))
+    source.update!(
+      source_ref: source.source_ref.deep_merge(
+        "options" => {
+          "show_location" => false,
+          "show_vendor" => true,
+          "show_team_members" => false,
+          "view_ref" => view.id.to_s
+        }
+      )
+    )
+
+    view.update!(name: "Vendor Meals Timeline")
+    GeneratedPacketSource.ensure_canonical_sources_for_event!(event)
+
+    source.reload
+    assert_equal "Vendor Meals Timeline", source.display_title
+    assert_equal view.id.to_s, source.html_options["view_ref"]
+    assert_equal false, source.html_options["show_location"]
+    assert_equal true, source.html_options["show_vendor"]
+    assert_equal false, source.html_options["show_team_members"]
+  end
+
+  test "available_canonical_sources_for_event hides stale custom timeline sources" do
+    event = events(:one)
+    view = event.run_of_show_calendar.event_calendar_views.create!(
+      name: "Late Night Timeline",
+      tag_filter: [event_calendar_tags(:vendor).id]
+    )
+
+    GeneratedPacketSource.ensure_canonical_sources_for_event!(event)
+    source = event.generated_packet_sources.find_by!(canonical_key: GeneratedPacketSource.custom_timeline_canonical_key(view))
+
+    view.destroy!
+
+    assert event.generated_packet_sources.exists?(source.id)
+    assert_not_includes GeneratedPacketSource.available_canonical_sources_for_event(event), source
+  end
+
   test "find_or_create_group_source creates a shared group source for a group document" do
     event = events(:one)
     group_document = event.documents.create!(
