@@ -84,6 +84,22 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     refute_match(/8:00 AM\s*–\s*8:30 AM/, rendered)
   end
 
+  test "preserves line breaks in wedding party timeline item notes" do
+    create_timeline_item(
+      title: "Holding Area Move",
+      starts_at: "2025-10-01 14:10:00",
+      tag: event_calendar_tags(:wedding_party_side_a),
+      notes: "Maggie, Kathy, Bridesmaids: Bridal Room\nWill and his parents: Groom's Room\nGroomsmen: ready with programs"
+    )
+
+    render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
+
+    notes = css_select(".generated-template--wedding-party-reference__timeline-notes")
+    assert_equal 1, notes.count
+    assert_includes notes.first.to_html, "<br"
+    assert_match(/Maggie, Kathy, Bridesmaids: Bridal Room\s*Will and his parents: Groom's Room\s*Groomsmen: ready with programs/, notes.first.text)
+  end
+
   test "renders manual timeline columns with multi-day grouping and tag-name fallback labels" do
     calendar_items(:decision_flowers).event_calendar_tags << event_calendar_tags(:day_of)
     @segment = build_segment(
@@ -171,9 +187,10 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     )
   end
 
-  def create_timeline_item(title:, starts_at:, tag:, duration_minutes: 30)
+  def create_timeline_item(title:, starts_at:, tag:, duration_minutes: 30, notes: nil)
     item = @event.run_of_show_calendar.calendar_items.create!(
       title: title,
+      notes: notes,
       starts_at: starts_at,
       duration_minutes: duration_minutes,
       position: @event.run_of_show_calendar.calendar_items.maximum(:position).to_i + 1

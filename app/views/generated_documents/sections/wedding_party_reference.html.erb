@@ -333,7 +333,7 @@
                                   <% if item.present? %>
                                     <p class="generated-template--packet-sheet__text"><%= item.title %></p>
                                     <% if item.notes.present? %>
-                                      <p class="generated-template--packet-sheet__text generated-template--wedding-party-reference__timeline-notes"><%= item.notes %></p>
+                                      <%= simple_format(item.notes, { class: "generated-template--packet-sheet__text generated-template--wedding-party-reference__timeline-notes" }, wrapper_tag: "p") %>
                                     <% end %>
                                   <% end %>
                                 </div>
