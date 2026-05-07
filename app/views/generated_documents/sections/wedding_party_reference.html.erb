@@ -89,6 +89,16 @@
     border-bottom: none;
   }
 
+  .generated-template--wedding-party-reference__timeline-section {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .generated-template.generated-template--packet-sheet h2.generated-template--wedding-party-reference__timeline-section-title {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
   .generated-template--wedding-party-reference__timeline-stack,
   .generated-template--wedding-party-reference__timeline-rows {
     display: grid;
@@ -100,80 +110,87 @@
     gap: 0.08in;
   }
 
-  .generated-template--wedding-party-reference__timeline-pair {
-    display: grid;
-    align-content: start;
-    break-inside: avoid;
-  }
-
-  .generated-template--wedding-party-reference__timeline-column-headers {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .generated-template.generated-template--packet-sheet table.generated-template--wedding-party-reference__timeline-table {
+    width: 100%;
+    margin: 0;
+    table-layout: fixed;
+    border-collapse: collapse;
     border-left: 1px solid rgba(0, 0, 0, 0.06);
     border-right: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    font-size: 12px;
+    break-inside: auto;
+    page-break-inside: auto;
   }
 
-  .generated-template--wedding-party-reference__timeline-pair--single .generated-template--wedding-party-reference__timeline-column-headers,
-  .generated-template--wedding-party-reference__timeline-pair--single .generated-template--wedding-party-reference__timeline-table-row {
-    grid-template-columns: minmax(0, 1fr);
+  .generated-template--wedding-party-reference__timeline-table thead {
+    display: table-header-group;
   }
 
-  .generated-template.generated-template--packet-sheet h3.generated-template--wedding-party-reference__timeline-column-title {
+  .generated-template--wedding-party-reference__timeline-table tbody {
+    display: table-row-group;
+  }
+
+  .generated-template--wedding-party-reference__timeline-time-col {
+    width: 0.72in;
+  }
+
+  .generated-template.generated-template--packet-sheet table.generated-template--wedding-party-reference__timeline-table th,
+  .generated-template.generated-template--packet-sheet table.generated-template--wedding-party-reference__timeline-table td {
+    padding: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    vertical-align: top;
+  }
+
+  .generated-template.generated-template--packet-sheet table.generated-template--wedding-party-reference__timeline-table th {
+    background: #f4f1ed;
+  }
+
+  .generated-template.generated-template--packet-sheet table.generated-template--wedding-party-reference__timeline-table th.generated-template--wedding-party-reference__timeline-column-title {
+    padding: 5px 6px;
+    color: #5b4639;
+    font-family: var(--font-family-body, "BaskervilleNo2", "Times New Roman", serif);
     text-align: center;
     text-transform: none;
     letter-spacing: 0;
+    line-height: 15px;
     font-size: 12px;
     font-weight: 600;
     border-right: 1px solid rgba(0, 0, 0, 0.06);
   }
 
-  .generated-template.generated-template--packet-sheet h3.generated-template--wedding-party-reference__timeline-column-title:last-child {
+  .generated-template.generated-template--packet-sheet table.generated-template--wedding-party-reference__timeline-table th.generated-template--wedding-party-reference__timeline-column-title:last-child {
     border-right: none;
-  }
-
-  .generated-template--wedding-party-reference__timeline-table-body {
-    display: grid;
-    border-left: 1px solid rgba(0, 0, 0, 0.06);
-    border-right: 1px solid rgba(0, 0, 0, 0.06);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
 
   .generated-template--wedding-party-reference__timeline-table-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: stretch;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     break-inside: avoid;
+    page-break-inside: avoid;
   }
 
-  .generated-template--wedding-party-reference__timeline-table-row:last-child {
+  .generated-template--wedding-party-reference__timeline-table-row:last-child td {
     border-bottom: none;
   }
 
-  .generated-template--wedding-party-reference__timeline-slot {
-    display: grid;
-    grid-template-columns: 0.72in minmax(0, 1fr);
-    min-width: 0;
-    border-right: 1px solid rgba(0, 0, 0, 0.06);
-  }
-
-  .generated-template--wedding-party-reference__timeline-slot:last-child {
-    border-right: none;
-  }
-
   .generated-template--wedding-party-reference__timeline-slot--empty {
-    min-height: 0.18in;
+    height: 0.18in;
   }
 
-  .generated-template--wedding-party-reference__timeline-cell {
-    display: grid;
-    align-content: start;
-    gap: 2px;
+  .generated-template.generated-template--packet-sheet table.generated-template--wedding-party-reference__timeline-table td.generated-template--wedding-party-reference__timeline-cell {
     padding: 3px 4px;
     border-right: 1px solid rgba(0, 0, 0, 0.06);
   }
 
-  .generated-template--wedding-party-reference__timeline-slot .generated-template--wedding-party-reference__timeline-cell:last-child {
+  .generated-template.generated-template--packet-sheet table.generated-template--wedding-party-reference__timeline-table td.generated-template--wedding-party-reference__timeline-cell--time {
+    padding-right: 6px;
+  }
+
+  .generated-template.generated-template--packet-sheet table.generated-template--wedding-party-reference__timeline-table td.generated-template--wedding-party-reference__timeline-cell--details {
+    padding-left: 8px;
+    width: auto;
+  }
+
+  .generated-template.generated-template--packet-sheet table.generated-template--wedding-party-reference__timeline-table .generated-template--wedding-party-reference__timeline-cell--last {
     border-right: none;
   }
 
@@ -195,6 +212,10 @@
     margin: 0;
     padding: 0.06in;
     border: none;
+  }
+
+  .generated-template--wedding-party-reference__timeline-empty-cell {
+    border-right: none;
   }
 </style>
 
@@ -296,8 +317,8 @@
       </section>
     <% end %>
 
-    <section class="generated-template--packet-sheet__section">
-      <h2 class="generated-template--packet-sheet__section-title">Wedding Party Timeline</h2>
+    <section class="generated-template--packet-sheet__section generated-template--wedding-party-reference__timeline-section">
+      <h2 class="generated-template--packet-sheet__section-title generated-template--wedding-party-reference__timeline-section-title">Wedding Party Timeline</h2>
 
       <% if wedding_party_timeline[:columns].any? %>
         <div class="generated-template--wedding-party-reference__timeline-stack">
@@ -310,42 +331,55 @@
               <div class="generated-template--wedding-party-reference__timeline-rows">
                 <% day_group[:column_groups].each do |column_group| %>
                   <% columns = column_group[:columns] %>
-                  <section class="generated-template--wedding-party-reference__timeline-pair generated-template--packet-sheet__subsection <%= "generated-template--wedding-party-reference__timeline-pair--single" if columns.one? %>">
-                    <div class="generated-template--wedding-party-reference__timeline-column-headers">
+                  <% column_count = columns.length %>
+                  <% table_column_count = column_count * 2 %>
+                  <table class="generated-template--wedding-party-reference__timeline-table <%= "generated-template--wedding-party-reference__timeline-table--single" if columns.one? %>">
+                    <colgroup>
                       <% columns.each do |column| %>
-                        <h3 class="generated-template--packet-sheet__subsection-title generated-template--wedding-party-reference__timeline-column-title"><%= column[:header] %></h3>
+                        <col class="generated-template--wedding-party-reference__timeline-time-col">
+                        <col class="generated-template--wedding-party-reference__timeline-detail-col">
                       <% end %>
-                    </div>
+                    </colgroup>
+                    <thead class="generated-template--wedding-party-reference__timeline-column-headers">
+                      <tr>
+                        <% columns.each_with_index do |column, index| %>
+                          <th colspan="2" class="generated-template--wedding-party-reference__timeline-column-title <%= "generated-template--wedding-party-reference__timeline-cell--last" if index == column_count - 1 %>"><%= column[:header] %></th>
+                        <% end %>
+                      </tr>
+                    </thead>
 
-                    <div class="generated-template--wedding-party-reference__timeline-table-body">
+                    <tbody class="generated-template--wedding-party-reference__timeline-table-body">
                       <% if column_group[:rows].any? %>
                         <% column_group[:rows].each do |row| %>
-                          <div class="generated-template--wedding-party-reference__timeline-table-row">
-                            <% row[:cells].each do |cell| %>
+                          <tr class="generated-template--wedding-party-reference__timeline-table-row">
+                            <% row[:cells].each_with_index do |cell, index| %>
                               <% item = cell[:item] %>
-                              <div class="generated-template--wedding-party-reference__timeline-slot <%= "generated-template--wedding-party-reference__timeline-slot--empty" if item.blank? %>">
-                                <div class="generated-template--wedding-party-reference__timeline-cell">
-                                  <% if item.present? %>
-                                    <p class="generated-template--packet-sheet__text generated-template--wedding-party-reference__timeline-time"><%= calendar_item_start_time_only_label(item, wedding_party_timeline[:timezone]) %></p>
+                              <% last_column = index == column_count - 1 %>
+                              <td class="generated-template--wedding-party-reference__timeline-cell generated-template--wedding-party-reference__timeline-cell--time">
+                                <% if item.present? %>
+                                  <p class="generated-template--packet-sheet__text generated-template--wedding-party-reference__timeline-time"><%= calendar_item_start_time_only_label(item, wedding_party_timeline[:timezone]) %></p>
+                                <% end %>
+                              </td>
+                              <td class="generated-template--wedding-party-reference__timeline-cell generated-template--wedding-party-reference__timeline-cell--details <%= "generated-template--wedding-party-reference__timeline-slot--empty" if item.blank? %> <%= "generated-template--wedding-party-reference__timeline-cell--last" if last_column %>">
+                                <% if item.present? %>
+                                  <p class="generated-template--packet-sheet__text"><%= item.title %></p>
+                                  <% if item.notes.present? %>
+                                    <%= simple_format(item.notes, { class: "generated-template--packet-sheet__text generated-template--wedding-party-reference__timeline-notes" }, wrapper_tag: "p") %>
                                   <% end %>
-                                </div>
-                                <div class="generated-template--wedding-party-reference__timeline-cell">
-                                  <% if item.present? %>
-                                    <p class="generated-template--packet-sheet__text"><%= item.title %></p>
-                                    <% if item.notes.present? %>
-                                      <%= simple_format(item.notes, { class: "generated-template--packet-sheet__text generated-template--wedding-party-reference__timeline-notes" }, wrapper_tag: "p") %>
-                                    <% end %>
-                                  <% end %>
-                                </div>
-                              </div>
+                                <% end %>
+                              </td>
                             <% end %>
-                          </div>
+                          </tr>
                         <% end %>
                       <% else %>
-                        <p class="generated-template--packet-sheet__empty generated-template--wedding-party-reference__timeline-empty">No timeline items.</p>
+                        <tr class="generated-template--wedding-party-reference__timeline-table-row">
+                          <td colspan="<%= table_column_count %>" class="generated-template--wedding-party-reference__timeline-empty-cell">
+                            <p class="generated-template--packet-sheet__empty generated-template--wedding-party-reference__timeline-empty">No timeline items.</p>
+                          </td>
+                        </tr>
                       <% end %>
-                    </div>
-                  </section>
+                    </tbody>
+                  </table>
                 <% end %>
               </div>
             </section>

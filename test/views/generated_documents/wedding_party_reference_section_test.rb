@@ -33,10 +33,16 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details"
     assert_select ".generated-template--packet-sheet__section-title", text: "VIPs & Family", count: 1
     assert_select ".generated-template--packet-sheet__section-title", text: "Wedding Party Timeline", count: 1
+    assert_select ".generated-template--wedding-party-reference__timeline-section", count: 1
+    assert_select "table.generated-template--wedding-party-reference__timeline-table", count: 1
+    assert_select "table.generated-template--wedding-party-reference__timeline-table thead.generated-template--wedding-party-reference__timeline-column-headers", count: 1
+    assert_select "tbody.generated-template--wedding-party-reference__timeline-table-body", count: 1
     assert_select ".generated-template--wedding-party-reference__timeline-column-title", text: "VIP Family", count: 1
     assert_select ".generated-template--wedding-party-reference__timeline-column-title", text: "Jordan's Side", count: 1
     assert_select ".generated-template--wedding-party-reference__timeline-day-title", count: 0
     assert_select ".generated-template--wedding-party-reference__timeline-table-row", minimum: 2
+    assert_match(/\.generated-template--wedding-party-reference__timeline-section\s*\{[^}]*break-inside:\s*auto/m, rendered)
+    assert_match(/\.generated-template--wedding-party-reference__timeline-table thead\s*\{[^}]*display:\s*table-header-group/m, rendered)
     assert_match(/Ceremony/, rendered)
     assert_match(/Afterparty/, rendered)
     assert_match(/3:00 PM/, rendered)
