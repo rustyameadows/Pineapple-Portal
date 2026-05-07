@@ -142,7 +142,7 @@
   <% if items.any? %>
     <% sorted_items = items.sort_by { |item|
       start_time = item.effective_starts_at&.in_time_zone(timezone)
-      [start_time || far_future, item.title.to_s.downcase]
+      [start_time || far_future, item.position.to_i, item.title.to_s.downcase, item.id.to_i]
     } %>
     <% decision_calendar = defined?(view) && view&.slug == "decision-calendar" %>
     <% grouped_items = sorted_items.group_by { |item|

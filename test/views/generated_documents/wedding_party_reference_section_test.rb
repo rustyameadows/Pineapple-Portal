@@ -106,6 +106,24 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_match(/Maggie, Kathy, Bridesmaids: Bridal Room\s*Will and his parents: Groom's Room\s*Groomsmen: ready with programs/, notes.first.text)
   end
 
+  test "keeps same-time wedding party timeline items in calendar position order" do
+    create_timeline_item(
+      title: "Shuttle to Photo Location",
+      starts_at: "2025-10-01 15:45:00",
+      tag: event_calendar_tags(:wedding_party_side_a)
+    )
+    create_timeline_item(
+      title: "Photos at Garden",
+      starts_at: "2025-10-01 15:45:00",
+      tag: event_calendar_tags(:wedding_party_side_a)
+    )
+
+    render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
+
+    timeline_text = css_select(".generated-template--wedding-party-reference__timeline-table-body").map(&:text).join(" ")
+    assert_operator timeline_text.index("Shuttle to Photo Location"), :<, timeline_text.index("Photos at Garden")
+  end
+
   test "renders manual timeline columns with multi-day grouping and tag-name fallback labels" do
     calendar_items(:decision_flowers).event_calendar_tags << event_calendar_tags(:day_of)
     @segment = build_segment(

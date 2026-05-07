@@ -117,7 +117,7 @@ module Documents
 
           calendar.calendar_items.includes(:event_calendar_tags, :relative_anchor).to_a.sort_by do |item|
             start_time = item.effective_starts_at&.in_time_zone(timezone)
-            [start_time || far_future, item.title.to_s.downcase, item.id]
+            [start_time || far_future, item.position.to_i, item.title.to_s.downcase, item.id.to_i]
           end
         end
       end
