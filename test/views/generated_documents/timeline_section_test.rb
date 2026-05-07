@@ -1,7 +1,7 @@
 require "test_helper"
 
 class TimelineSectionTest < ActionView::TestCase
-  fixtures :events, :users, :event_calendars, :event_calendar_views, :calendar_items
+  fixtures :events, :users, :event_calendars, :event_calendar_views, :event_calendar_tags, :calendar_items, :calendar_item_tags
 
   setup do
     @event = events(:one)
@@ -42,5 +42,36 @@ class TimelineSectionTest < ActionView::TestCase
     assert_no_match(/\.generated-template--timeline\s*\{[^}]*--generated-document-content-padding-bottom:/m, rendered)
     assert_match(/font-family:\s*"Didot"/m, rendered)
     assert_match(/font-family:\s*"BaskervilleNo2"/m, rendered)
+  end
+
+  test "keeps same-time timeline items in calendar position order" do
+    create_timeline_item(
+      title: "Shuttle to Photo Location",
+      starts_at: "2025-10-01 15:45:00",
+      tag: event_calendar_tags(:vendor)
+    )
+    create_timeline_item(
+      title: "Photos at Garden",
+      starts_at: "2025-10-01 15:45:00",
+      tag: event_calendar_tags(:vendor)
+    )
+
+    render template: "generated_documents/sections/timeline"
+
+    timeline_text = css_select("table.generated-template--timeline__table tbody").map(&:text).join(" ")
+    assert_operator timeline_text.index("Shuttle to Photo Location"), :<, timeline_text.index("Photos at Garden")
+  end
+
+  private
+
+  def create_timeline_item(title:, starts_at:, tag:, duration_minutes: 30)
+    item = @event.run_of_show_calendar.calendar_items.create!(
+      title: title,
+      starts_at: starts_at,
+      duration_minutes: duration_minutes,
+      position: @event.run_of_show_calendar.calendar_items.maximum(:position).to_i + 1
+    )
+    item.event_calendar_tags << tag
+    item
   end
 end

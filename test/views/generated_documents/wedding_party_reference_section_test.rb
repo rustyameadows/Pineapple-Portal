@@ -33,10 +33,16 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_select ".generated-template--packet-sheet__section-title", text: "Getting Ready Details"
     assert_select ".generated-template--packet-sheet__section-title", text: "VIPs & Family", count: 1
     assert_select ".generated-template--packet-sheet__section-title", text: "Wedding Party Timeline", count: 1
+    assert_select ".generated-template--wedding-party-reference__timeline-section", count: 1
+    assert_select "table.generated-template--wedding-party-reference__timeline-table", count: 1
+    assert_select "table.generated-template--wedding-party-reference__timeline-table thead.generated-template--wedding-party-reference__timeline-column-headers", count: 1
+    assert_select "tbody.generated-template--wedding-party-reference__timeline-table-body", count: 1
     assert_select ".generated-template--wedding-party-reference__timeline-column-title", text: "VIP Family", count: 1
     assert_select ".generated-template--wedding-party-reference__timeline-column-title", text: "Jordan's Side", count: 1
     assert_select ".generated-template--wedding-party-reference__timeline-day-title", count: 0
     assert_select ".generated-template--wedding-party-reference__timeline-table-row", minimum: 2
+    assert_match(/\.generated-template--wedding-party-reference__timeline-section\s*\{[^}]*break-inside:\s*auto/m, rendered)
+    assert_match(/\.generated-template--wedding-party-reference__timeline-table thead\s*\{[^}]*display:\s*table-header-group/m, rendered)
     assert_match(/Ceremony/, rendered)
     assert_match(/Afterparty/, rendered)
     assert_match(/3:00 PM/, rendered)
@@ -98,6 +104,24 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
     assert_equal 1, notes.count
     assert_includes notes.first.to_html, "<br"
     assert_match(/Maggie, Kathy, Bridesmaids: Bridal Room\s*Will and his parents: Groom's Room\s*Groomsmen: ready with programs/, notes.first.text)
+  end
+
+  test "keeps same-time wedding party timeline items in calendar position order" do
+    create_timeline_item(
+      title: "Shuttle to Photo Location",
+      starts_at: "2025-10-01 15:45:00",
+      tag: event_calendar_tags(:wedding_party_side_a)
+    )
+    create_timeline_item(
+      title: "Photos at Garden",
+      starts_at: "2025-10-01 15:45:00",
+      tag: event_calendar_tags(:wedding_party_side_a)
+    )
+
+    render template: "generated_documents/sections/wedding_party_reference", locals: { render_base_styles: false }
+
+    timeline_text = css_select(".generated-template--wedding-party-reference__timeline-table-body").map(&:text).join(" ")
+    assert_operator timeline_text.index("Shuttle to Photo Location"), :<, timeline_text.index("Photos at Garden")
   end
 
   test "renders manual timeline columns with multi-day grouping and tag-name fallback labels" do
