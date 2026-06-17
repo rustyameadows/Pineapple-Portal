@@ -248,14 +248,35 @@
 }
 
 .calendar-grid__cell--relative {
-  min-width: 340px;
+  min-width: 460px;
 }
 
 .calendar-grid__relative {
   display: grid;
-  grid-template-columns: minmax(68px, 0.7fr) minmax(92px, 1fr) minmax(82px, 0.85fr) minmax(82px, 0.85fr);
+  grid-template-columns: minmax(54px, 0.55fr) minmax(82px, 0.85fr) minmax(68px, 0.7fr) minmax(76px, 0.75fr) minmax(82px, 0.8fr) minmax(82px, 0.8fr);
   align-items: center;
   gap: 0.35rem;
+}
+
+.calendar-grid__time-amount {
+  display: grid;
+  grid-template-columns: minmax(54px, 0.55fr) minmax(82px, 0.85fr) minmax(68px, 0.7fr) minmax(76px, 0.75fr);
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.calendar-grid__time-amount--duration {
+  min-width: 320px;
+}
+
+.calendar-grid__time-piece {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  color: var(--color-neutral-600);
+  font-size: 0.78rem;
+  font-weight: var(--font-weight-semibold);
 }
 
 .calendar-grid__select--anchor {

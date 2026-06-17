@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_23_140000) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_17_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -91,12 +91,28 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_23_140000) do
     t.string "time_caption"
     t.text "transportation_note"
     t.string "guest_count"
+    t.integer "relative_offset_display_value", default: 0, null: false
+    t.string "relative_offset_display_unit", default: "days", null: false
+    t.integer "relative_offset_display_hours", default: 0, null: false
+    t.integer "relative_offset_display_minutes", default: 0, null: false
+    t.integer "duration_display_value"
+    t.string "duration_display_unit"
+    t.integer "duration_display_hours"
+    t.integer "duration_display_minutes"
     t.index ["event_calendar_id", "position"], name: "index_calendar_items_on_calendar_and_position"
     t.index ["event_calendar_id"], name: "index_calendar_items_on_event_calendar_id"
     t.index ["relative_anchor_id"], name: "index_calendar_items_on_relative_anchor_id"
     t.index ["starts_at"], name: "index_calendar_items_on_starts_at"
     t.index ["status"], name: "index_calendar_items_on_status"
+    t.check_constraint "duration_display_hours IS NULL OR duration_display_hours >= 0", name: "calendar_items_duration_display_hours_non_negative"
+    t.check_constraint "duration_display_minutes IS NULL OR duration_display_minutes >= 0", name: "calendar_items_duration_display_minutes_non_negative"
+    t.check_constraint "duration_display_unit IS NULL OR (duration_display_unit::text = ANY (ARRAY['days'::character varying, 'weeks'::character varying, 'months'::character varying]::text[]))", name: "calendar_items_duration_display_unit_valid"
+    t.check_constraint "duration_display_value IS NULL OR duration_display_value >= 0", name: "calendar_items_duration_display_value_non_negative"
     t.check_constraint "duration_minutes IS NULL OR duration_minutes >= 0", name: "calendar_items_duration_non_negative"
+    t.check_constraint "relative_offset_display_hours >= 0", name: "calendar_items_relative_offset_display_hours_non_negative"
+    t.check_constraint "relative_offset_display_minutes >= 0", name: "calendar_items_relative_offset_display_minutes_non_negative"
+    t.check_constraint "relative_offset_display_unit::text = ANY (ARRAY['days'::character varying, 'weeks'::character varying, 'months'::character varying]::text[])", name: "calendar_items_relative_offset_display_unit_valid"
+    t.check_constraint "relative_offset_display_value >= 0", name: "calendar_items_relative_offset_display_value_non_negative"
     t.check_constraint "relative_offset_minutes IS NOT NULL", name: "calendar_items_relative_offset_present"
   end
 

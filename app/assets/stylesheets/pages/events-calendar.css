@@ -1489,10 +1489,17 @@
 .calendar-item-form__sentence-field {
   display: inline-flex;
   min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .calendar-item-form__sentence-field--offset {
-  flex: 0 1 5.5rem;
+  flex: 0 1 5rem;
+}
+
+.calendar-item-form__sentence-field--hours,
+.calendar-item-form__sentence-field--minutes {
+  flex: 0 1 6.25rem;
 }
 
 .calendar-item-form__sentence-field--unit,
@@ -1524,6 +1531,13 @@
   min-width: 0;
 }
 
+.calendar-item-form__sentence-unit-label {
+  color: var(--color-neutral-600);
+  font-size: 0.86rem;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
 .calendar-item-form__timing-summary {
   margin: 0.55rem 0 0;
   color: var(--color-neutral-600);
@@ -1532,9 +1546,16 @@
 
 .calendar-item-form__duration {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(4.5rem, 0.75fr) minmax(7rem, 1fr) repeat(2, minmax(5.5rem, 0.8fr));
   gap: 0.5rem;
   align-items: center;
+}
+
+.calendar-item-form__duration-piece {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
 .calendar-item-form__duration-value {

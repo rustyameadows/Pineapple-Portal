@@ -110,11 +110,40 @@
                       <% end %>
                     </td>
                     <td class="calendar-grid__cell">
-                      <%= number_field_tag "calendar_item[duration_minutes]",
-                                           item.duration_minutes,
-                                           form: form_id,
-                                           class: "calendar-grid__input calendar-grid__input--mini",
-                                           min: 0 %>
+                      <% duration_amount = item.duration_time_amount %>
+                      <div class="calendar-grid__time-amount calendar-grid__time-amount--duration">
+                        <%= number_field_tag "calendar_item[duration_display_value]",
+                                             duration_amount.value,
+                                             form: form_id,
+                                             class: "calendar-grid__input calendar-grid__input--mini",
+                                             min: 0,
+                                             step: 1,
+                                             placeholder: "0" %>
+                        <%= select_tag "calendar_item[duration_display_unit]",
+                                       options_for_select(time_amount_unit_options, duration_amount.unit || "days"),
+                                       form: form_id,
+                                       class: "calendar-grid__select calendar-grid__select--unit" %>
+                        <label class="calendar-grid__time-piece">
+                          <%= number_field_tag "calendar_item[duration_display_hours]",
+                                               duration_amount.hours,
+                                               form: form_id,
+                                               class: "calendar-grid__input calendar-grid__input--mini",
+                                               min: 0,
+                                               step: 0.25,
+                                               placeholder: "0" %>
+                          <span>hr</span>
+                        </label>
+                        <label class="calendar-grid__time-piece">
+                          <%= number_field_tag "calendar_item[duration_display_minutes]",
+                                               duration_amount.minutes,
+                                               form: form_id,
+                                               class: "calendar-grid__input calendar-grid__input--mini",
+                                               min: 0,
+                                               step: 1,
+                                               placeholder: "0" %>
+                          <span>min</span>
+                        </label>
+                      </div>
                     </td>
                     <td class="calendar-grid__cell calendar-grid__cell--anchor" data-anchor-cell>
                       <%= select_tag "calendar_item[relative_anchor_id]",
@@ -127,21 +156,40 @@
                                      } %>
                     </td>
                     <td class="calendar-grid__cell calendar-grid__cell--relative" data-anchor-relation>
-                      <% offset_value = relative_offset_value(item) %>
-                      <% offset_unit = relative_offset_unit(item) %>
+                      <% offset_amount = item.relative_offset_time_amount %>
                       <div class="calendar-grid__relative" data-anchor-controls style="<%= item.relative_anchor_id.present? ? '' : 'display:none;' %>">
-                        <%= number_field_tag "calendar_item[relative_offset_value]",
-                                             offset_value,
+                        <%= number_field_tag "calendar_item[relative_offset_display_value]",
+                                             offset_amount.value,
                                              form: form_id,
                                              class: "calendar-grid__input calendar-grid__input--offset",
                                              min: 0,
-                                             step: 0.25,
+                                             step: 1,
                                              data: { relative_summary_input: "offsetValue" } %>
-                        <%= select_tag "calendar_item[relative_offset_unit]",
-                                       options_for_select(Events::CalendarGridsController::OFFSET_UNITS, offset_unit),
+                        <%= select_tag "calendar_item[relative_offset_display_unit]",
+                                       options_for_select(time_amount_unit_options, offset_amount.unit),
                                        form: form_id,
                                        class: "calendar-grid__select calendar-grid__select--unit",
                                        data: { relative_summary_input: "offsetUnit" } %>
+                        <label class="calendar-grid__time-piece">
+                          <%= number_field_tag "calendar_item[relative_offset_display_hours]",
+                                               offset_amount.hours,
+                                               form: form_id,
+                                               class: "calendar-grid__input calendar-grid__input--offset",
+                                               min: 0,
+                                               step: 0.25,
+                                               data: { relative_summary_input: "offsetHours" } %>
+                          <span>hr</span>
+                        </label>
+                        <label class="calendar-grid__time-piece">
+                          <%= number_field_tag "calendar_item[relative_offset_display_minutes]",
+                                               offset_amount.minutes,
+                                               form: form_id,
+                                               class: "calendar-grid__input calendar-grid__input--offset",
+                                               min: 0,
+                                               step: 1,
+                                               data: { relative_summary_input: "offsetMinutes" } %>
+                          <span>min</span>
+                        </label>
                         <%= select_tag "calendar_item[relative_before]",
                                        options_for_select([["after", false], ["before", true]], item.relative_before?),
                                        form: form_id,
@@ -278,23 +326,46 @@
       return option.dataset.anchorTitle || option.textContent.replace(/\s+\([^)]*\)\s*$/, "").trim();
     };
 
-    const pluralizedUnit = (value, unit) => {
-      const numericValue = Number(value);
-      const singular = unit.replace(/s$/, "");
-      return numericValue === 1 ? singular : unit;
+    const numericValue = (value) => {
+      const parsed = Number(value || 0);
+      return Number.isFinite(parsed) ? parsed : 0;
     };
 
-    const offsetMinutesFor = (value, unit) => {
-      const numericValue = Number(value || 0);
-      if (!Number.isFinite(numericValue)) return null;
-
-      let multiplier = 1;
-      if (unit === "hours") multiplier = 60;
-      if (unit === "days") multiplier = 60 * 24;
+    const majorUnitMultiplier = (unit) => {
+      let multiplier = 60 * 24;
       if (unit === "weeks") multiplier = 60 * 24 * 7;
       if (unit === "months") multiplier = 60 * 24 * 30;
+      return multiplier;
+    };
 
-      return numericValue * multiplier;
+    const pluralizedUnit = (value, unit) => value === 1 ? unit.replace(/s$/, "") : unit;
+
+    const normalizedOffsetAmount = (row) => {
+      const valueField = fieldFor(row, "offsetValue");
+      const unitField = fieldFor(row, "offsetUnit");
+      const hoursField = fieldFor(row, "offsetHours");
+      const minutesField = fieldFor(row, "offsetMinutes");
+      const unit = unitField ? unitField.value : "days";
+      const multiplier = majorUnitMultiplier(unit);
+      const totalMinutes = Math.floor(
+        (numericValue(valueField?.value) * multiplier) +
+        (numericValue(hoursField?.value) * 60) +
+        numericValue(minutesField?.value)
+      );
+      const majorValue = Math.floor(totalMinutes / multiplier);
+      const remainder = totalMinutes % multiplier;
+      const hours = Math.floor(remainder / 60);
+      const minutes = remainder % 60;
+      const parts = [];
+
+      if (majorValue > 0) parts.push(majorValue + " " + pluralizedUnit(majorValue, unit));
+      if (hours > 0) parts.push(hours + " hr");
+      if (minutes > 0) parts.push(minutes + " min");
+
+      return {
+        totalMinutes: totalMinutes,
+        label: parts.length ? parts.join(" ") : "0 " + unit
+      };
     };
 
     const formatProjectedTime = (date) => {
@@ -316,7 +387,7 @@
       return month + " " + parts.day + " " + parts.hour + ":" + parts.minute + parts.dayPeriod;
     };
 
-    const projectedTimeSuffix = (row, offsetValue, unit, direction, anchorPoint) => {
+    const projectedTimeSuffix = (row, offsetMinutes, direction, anchorPoint) => {
       const option = selectedAnchor(row);
       if (!option) return "";
 
@@ -326,8 +397,7 @@
       if (!baseIso) return "";
 
       const baseTime = new Date(baseIso);
-      let offsetMinutes = offsetMinutesFor(offsetValue, unit);
-      if (Number.isNaN(baseTime.getTime()) || offsetMinutes === null) return "";
+      if (Number.isNaN(baseTime.getTime())) return "";
 
       if (direction === "before") offsetMinutes *= -1;
 
@@ -355,20 +425,17 @@
         return;
       }
 
-      const offsetInput = fieldFor(row, "offsetValue");
-      const unitField = fieldFor(row, "offsetUnit");
-      const offsetValue = offsetInput ? offsetInput.value.trim() : "";
-      const unit = unitField ? unitField.value : "minutes";
+      const amount = normalizedOffsetAmount(row);
       const direction = selectedText(row, "direction") || "after";
       const anchorPoint = selectedText(row, "anchorPoint") || "starts";
-      const projection = projectedTimeSuffix(row, offsetValue, unit, direction, anchorPoint);
+      const projection = projectedTimeSuffix(row, amount.totalMinutes, direction, anchorPoint);
 
-      if (!offsetValue || Number(offsetValue) === 0) {
+      if (amount.totalMinutes === 0) {
         summary.textContent = "Starts when " + anchorTitle + " " + anchorPoint + projection;
         return;
       }
 
-      summary.textContent = "Starts " + offsetValue + " " + pluralizedUnit(offsetValue, unit) + " " + direction + " " + anchorTitle + " " + anchorPoint + projection;
+      summary.textContent = "Starts " + amount.label + " " + direction + " " + anchorTitle + " " + anchorPoint + projection;
     };
 
     document.querySelectorAll("[data-grid-row]").forEach((row) => {

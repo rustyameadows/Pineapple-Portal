@@ -29,13 +29,19 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: @view.name
   end
 
-  test "grid renders relative timing in friendly units with projected summary" do
+  test "grid renders relative timing and duration as display intent controls" do
     get grid_event_calendar_url(@event)
 
     assert_response :success
-    assert_select "input[name='calendar_item[relative_offset_value]'][value='2']"
-    assert_select "select[name='calendar_item[relative_offset_unit]'] option[selected][value='hours']", text: "Hours"
-    assert_select "[data-relative-summary]", text: /Starts 2 hours after Ceremony starts → Oct 1 5:00PM/
+    assert_select "input[name='calendar_item[relative_offset_display_value]'][value='0']"
+    assert_select "select[name='calendar_item[relative_offset_display_unit]'] option[selected][value='days']", text: "Days"
+    assert_select "input[name='calendar_item[relative_offset_display_hours]'][value='2']"
+    assert_select "input[name='calendar_item[relative_offset_display_minutes]'][value='0']"
+    assert_select "input[name='calendar_item[duration_display_value]']"
+    assert_select "select[name='calendar_item[duration_display_unit]'] option[value='days']", text: "Days"
+    assert_select "input[name='calendar_item[duration_display_hours]']"
+    assert_select "input[name='calendar_item[duration_display_minutes]']"
+    assert_select "[data-relative-summary]", text: /Starts 2 hr after Ceremony starts → Oct 1 5:00PM/
     assert_select "[data-relative-summary]", text: "Absolute start"
     assert_no_match "120 min", response.body
   end
@@ -52,7 +58,10 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
       calendar_item: {
         title: "Updated Ceremony",
         starts_at: "2025-10-01T16:00",
-        duration_minutes: 60,
+        duration_display_value: "0",
+        duration_display_unit: "days",
+        duration_display_hours: "1",
+        duration_display_minutes: "0",
         status: "in_progress",
         locked: "1",
         event_calendar_tag_ids: [event_calendar_tags(:vendor).id]
@@ -62,24 +71,34 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to grid_event_calendar_url(@event)
     @item.reload
     assert_equal "Updated Ceremony", @item.title
+    assert_equal 60, @item.duration_minutes
+    assert_equal 0, @item.duration_display_value
+    assert_equal "days", @item.duration_display_unit
+    assert_equal 1, @item.duration_display_hours
+    assert_equal 0, @item.duration_display_minutes
     assert_equal "in_progress", @item.status
     assert @item.locked?
     assert_equal [event_calendar_tags(:vendor).id], @item.event_calendar_tag_ids.sort
   end
 
-  test "updates relative timing from value and unit controls" do
+  test "updates relative timing from display intent controls" do
     item = calendar_items(:reception)
     anchor = calendar_items(:ceremony)
 
     patch grid_item_event_calendar_url(@event, item_id: item), params: {
       calendar_item: {
         title: item.title,
-        duration_minutes: item.duration_minutes,
+        duration_display_value: "0",
+        duration_display_unit: "days",
+        duration_display_hours: "3",
+        duration_display_minutes: "0",
         status: item.status,
         locked: "0",
         relative_anchor_id: anchor.id,
-        relative_offset_value: "2",
-        relative_offset_unit: "hours",
+        relative_offset_display_value: "0",
+        relative_offset_display_unit: "days",
+        relative_offset_display_hours: "6.5",
+        relative_offset_display_minutes: "0",
         relative_before: "false",
         relative_to_anchor_end: "false",
         event_calendar_tag_ids: []
@@ -88,9 +107,46 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to grid_event_calendar_url(@event)
     item.reload
-    assert_equal 120, item.relative_offset_minutes
+    assert_equal 390, item.relative_offset_minutes
+    assert_equal 0, item.relative_offset_display_value
+    assert_equal "days", item.relative_offset_display_unit
+    assert_equal 6, item.relative_offset_display_hours
+    assert_equal 30, item.relative_offset_display_minutes
     assert_not item.relative_before?
     assert_not item.relative_to_anchor_end?
+  end
+
+  test "updates relative timing for decision calendar week offsets" do
+    item = calendar_items(:reception)
+    anchor = calendar_items(:ceremony)
+
+    patch grid_item_event_calendar_url(@event, item_id: item), params: {
+      calendar_item: {
+        title: item.title,
+        duration_display_value: "0",
+        duration_display_unit: "days",
+        duration_display_hours: "3",
+        duration_display_minutes: "0",
+        status: item.status,
+        locked: "0",
+        relative_anchor_id: anchor.id,
+        relative_offset_display_value: "2",
+        relative_offset_display_unit: "weeks",
+        relative_offset_display_hours: "0",
+        relative_offset_display_minutes: "0",
+        relative_before: "false",
+        relative_to_anchor_end: "false",
+        event_calendar_tag_ids: []
+      }
+    }
+
+    assert_redirected_to grid_event_calendar_url(@event)
+    item.reload
+    assert_equal 20_160, item.relative_offset_minutes
+    assert_equal 2, item.relative_offset_display_value
+    assert_equal "weeks", item.relative_offset_display_unit
+    assert_equal 0, item.relative_offset_display_hours
+    assert_equal 0, item.relative_offset_display_minutes
   end
 
   test "updates relative direction and anchor point selections" do
@@ -100,12 +156,17 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     patch grid_item_event_calendar_url(@event, item_id: item), params: {
       calendar_item: {
         title: item.title,
-        duration_minutes: item.duration_minutes,
+        duration_display_value: "0",
+        duration_display_unit: "days",
+        duration_display_hours: "3",
+        duration_display_minutes: "0",
         status: item.status,
         locked: "0",
         relative_anchor_id: anchor.id,
-        relative_offset_value: "30",
-        relative_offset_unit: "minutes",
+        relative_offset_display_value: "0",
+        relative_offset_display_unit: "days",
+        relative_offset_display_hours: "0",
+        relative_offset_display_minutes: "30",
         relative_before: "true",
         relative_to_anchor_end: "true",
         event_calendar_tag_ids: []

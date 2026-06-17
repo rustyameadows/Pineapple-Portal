@@ -164,7 +164,6 @@ module Events
         :notes,
         :starts_at,
         :relative_anchor_id,
-        :relative_offset_minutes,
         :relative_before,
         :locked,
         :relative_to_anchor_end,
@@ -203,49 +202,25 @@ module Events
     end
 
     def assign_duration(item)
-      raw_value = params.dig(:calendar_item, :duration_value).to_s.strip
-      unit = params.dig(:calendar_item, :duration_unit).to_s.strip.presence || "minutes"
+      return unless time_amount_params_present?(:duration)
 
-      if raw_value.blank?
-        item.duration_minutes = nil
-        return
-      end
-
-      value = raw_value.to_f
-
-      multiplier = case unit
-                   when "minutes" then 1
-                   when "hours" then 60
-                   when "days" then 60 * 24
-                   when "weeks" then 60 * 24 * 7
-                   when "months" then 60 * 24 * 30
-                   else 1
-                   end
-
-      item.duration_minutes = (value * multiplier).to_i
+      amount = time_amount_from_params(:duration, nullable: true)
+      item.duration_minutes = amount.total_minutes
+      item.duration_display_value = amount.value
+      item.duration_display_unit = amount.unit
+      item.duration_display_hours = amount.hours
+      item.duration_display_minutes = amount.minutes
     end
 
     def assign_offset(item)
-      raw_value = params.dig(:calendar_item, :relative_offset_value).to_s.strip
-      unit = params.dig(:calendar_item, :relative_offset_unit).to_s.strip.presence || "minutes"
+      return unless time_amount_params_present?(:relative_offset)
 
-      if raw_value.blank?
-        item.relative_offset_minutes = 0
-        return
-      end
-
-      value = raw_value.to_f
-
-      multiplier = case unit
-                   when "minutes" then 1
-                   when "hours" then 60
-                   when "days" then 60 * 24
-                   when "weeks" then 60 * 24 * 7
-                   when "months" then 60 * 24 * 30
-                   else 1
-                   end
-
-      item.relative_offset_minutes = (value * multiplier).to_i
+      amount = time_amount_from_params(:relative_offset)
+      item.relative_offset_minutes = amount.total_minutes
+      item.relative_offset_display_value = amount.value
+      item.relative_offset_display_unit = amount.unit
+      item.relative_offset_display_hours = amount.hours
+      item.relative_offset_display_minutes = amount.minutes
     end
 
     def apply_timing_mode(item)
@@ -255,9 +230,63 @@ module Events
       if mode == "absolute"
         item.relative_anchor_id = nil
         item.relative_offset_minutes = 0
+        item.relative_offset_display_value = 0
+        item.relative_offset_display_unit = "days"
+        item.relative_offset_display_hours = 0
+        item.relative_offset_display_minutes = 0
         item.relative_before = false
         item.relative_to_anchor_end = false
       end
+    end
+
+    def time_amount_from_params(prefix, nullable: false)
+      if display_time_amount_params_present?(prefix)
+        return Calendars::TimeAmount.from_display(
+          value: params.dig(:calendar_item, :"#{prefix}_display_value"),
+          unit: params.dig(:calendar_item, :"#{prefix}_display_unit"),
+          hours: params.dig(:calendar_item, :"#{prefix}_display_hours"),
+          minutes: params.dig(:calendar_item, :"#{prefix}_display_minutes"),
+          nullable:
+        )
+      end
+
+      legacy_time_amount_from_params(prefix, nullable:)
+    end
+
+    def time_amount_params_present?(prefix)
+      display_time_amount_params_present?(prefix) || legacy_time_amount_params_present?(prefix)
+    end
+
+    def display_time_amount_params_present?(prefix)
+      calendar_item_params_hash.key?(:"#{prefix}_display_value") ||
+        calendar_item_params_hash.key?(:"#{prefix}_display_unit") ||
+        calendar_item_params_hash.key?(:"#{prefix}_display_hours") ||
+        calendar_item_params_hash.key?(:"#{prefix}_display_minutes")
+    end
+
+    def legacy_time_amount_params_present?(prefix)
+      calendar_item_params_hash.key?(:"#{prefix}_value") || calendar_item_params_hash.key?(:"#{prefix}_unit")
+    end
+
+    def legacy_time_amount_from_params(prefix, nullable:)
+      raw_value = params.dig(:calendar_item, :"#{prefix}_value").to_s.strip
+      unit = params.dig(:calendar_item, :"#{prefix}_unit").to_s.strip
+      return Calendars::TimeAmount.from_display(value: "", unit: "days", hours: "", minutes: "", nullable:) if raw_value.blank?
+
+      multiplier = case unit
+                   when "hours" then 60
+                   when "days" then 60 * 24
+                   when "weeks" then 60 * 24 * 7
+                   when "months" then 60 * 24 * 30
+                   else 1
+                   end
+      preferred_unit = unit.in?(Calendars::TimeAmount::MAJOR_UNITS.keys) ? unit : "days"
+
+      Calendars::TimeAmount.from_minutes((raw_value.to_f * multiplier).to_i, preferred_unit:, nullable:)
+    end
+
+    def calendar_item_params_hash
+      params.fetch(:calendar_item, {})
     end
 
     def run_scheduler
