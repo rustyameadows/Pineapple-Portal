@@ -14,6 +14,9 @@ export default class extends Controller {
     "actionLabel",
     "actionSelect",
     "additionalTeamMembersRow",
+    "absoluteTimingButton",
+    "absoluteTimingFields",
+    "absoluteTimingSummary",
     "applyButton",
     "checkbox",
     "clearFiltersButton",
@@ -28,6 +31,14 @@ export default class extends Controller {
     "panel",
     "returnLink",
     "returnToInput",
+    "relativeAnchorPointSelect",
+    "relativeAnchorSelect",
+    "relativeTargetSelect",
+    "relativeTimingButton",
+    "relativeTimingDialog",
+    "relativeTimingFields",
+    "relativeTimingForm",
+    "relativeTimingSummary",
     "row",
     "searchableText",
     "searchInput",
@@ -36,6 +47,14 @@ export default class extends Controller {
     "tagsRow",
     "teamMembersRow",
     "timeLabelRow",
+    "timingAnchorInput",
+    "timingAnchorPointInput",
+    "timingDialogCopy",
+    "timingDialogTitle",
+    "timingModeInput",
+    "timingReturnToInput",
+    "timingSubmitButton",
+    "timingTargetInput",
     "vendorRow",
     "visibleSelectionButton"
   ]
@@ -130,6 +149,7 @@ export default class extends Controller {
     })
 
     this.closeDialog()
+    this.closeTimingDialog()
     this.updateSelectionState()
   }
 
@@ -178,6 +198,91 @@ export default class extends Controller {
     } else {
       this.dialogTarget.setAttribute("open", "open")
     }
+  }
+
+  openRelativeTimingDialog(event) {
+    event.preventDefault()
+
+    const items = this.selectedItemData
+    if (items.length !== 2) return
+
+    const defaultTarget = this.defaultRelativeTarget(items)
+    const defaultAnchor = items.find((item) => item.id !== defaultTarget.id) || items[1]
+
+    this.populateTimingSelect(this.relativeTargetSelectTarget, items, defaultTarget.id)
+    this.populateTimingSelect(this.relativeAnchorSelectTarget, items, defaultAnchor.id)
+    this.relativeAnchorPointSelectTarget.value = "start"
+
+    this.timingModeInputTarget.value = "relative"
+    this.relativeTimingFieldsTarget.hidden = false
+    this.absoluteTimingFieldsTarget.hidden = true
+    this.timingDialogTitleTarget.textContent = "Change relative timing"
+    this.timingDialogCopyTarget.textContent = "Choose which selected item should move, and which selected item should anchor it."
+    this.timingSubmitButtonTarget.textContent = "Save timing"
+
+    this.updateRelativeTimingPreview()
+    this.showTimingDialog()
+  }
+
+  openAbsoluteTimingDialog(event) {
+    event.preventDefault()
+
+    const items = this.selectedItemData
+    if (items.length !== 1 || !items[0].relative) return
+
+    this.timingModeInputTarget.value = "absolute"
+    this.timingTargetInputTarget.value = items[0].id
+    this.timingAnchorInputTarget.value = ""
+    this.timingAnchorPointInputTarget.value = "start"
+    this.relativeTimingFieldsTarget.hidden = true
+    this.absoluteTimingFieldsTarget.hidden = false
+    this.timingDialogTitleTarget.textContent = "Make absolute"
+    this.timingDialogCopyTarget.textContent = "This will keep the item at its current projected time and remove its anchor."
+    this.timingSubmitButtonTarget.textContent = "Make absolute"
+    this.absoluteTimingSummaryTarget.textContent = this.absoluteTimingSummary(items[0])
+    this.timingSubmitButtonTarget.disabled = !items[0].startAt
+
+    this.showTimingDialog()
+  }
+
+  timingSelectionChanged() {
+    this.ensureDistinctRelativeSelections()
+    this.updateRelativeTimingPreview()
+  }
+
+  swapRelativeTiming(event) {
+    event.preventDefault()
+
+    const targetValue = this.relativeTargetSelectTarget.value
+    this.relativeTargetSelectTarget.value = this.relativeAnchorSelectTarget.value
+    this.relativeAnchorSelectTarget.value = targetValue
+    this.updateRelativeTimingPreview()
+  }
+
+  prepareTimingSubmit(event) {
+    this.updateReturnArtifacts()
+
+    if (this.timingModeInputTarget.value === "relative") {
+      this.updateRelativeTimingPreview()
+      if (!this.timingTargetInputTarget.value || !this.timingAnchorInputTarget.value) {
+        event.preventDefault()
+      }
+    }
+  }
+
+  closeTimingDialog() {
+    if (!this.hasRelativeTimingDialogTarget) return
+    if (!this.timingDialogOpen) return
+
+    if (typeof this.relativeTimingDialogTarget.close === "function") {
+      this.relativeTimingDialogTarget.close()
+    } else {
+      this.relativeTimingDialogTarget.removeAttribute("open")
+    }
+  }
+
+  timingBackdropClose(event) {
+    if (event.target === this.relativeTimingDialogTarget) this.closeTimingDialog()
   }
 
   closeDialog() {
@@ -232,8 +337,10 @@ export default class extends Controller {
     })
 
     if (!this.hasSelection) this.closeDialog()
+    if (!this.hasSelection) this.closeTimingDialog()
     this.updateGroupSelectionButtons()
     this.updateVisibleSelectionButtons()
+    this.updateTimingActionState()
     this.updateApplyState()
   }
 
@@ -259,6 +366,116 @@ export default class extends Controller {
   updateApplyState() {
     if (!this.hasApplyButtonTarget) return
     this.applyButtonTarget.disabled = !this.hasSelection || !this.currentAction
+  }
+
+  updateTimingActionState() {
+    const items = this.selectedItemData
+
+    if (this.hasRelativeTimingButtonTarget) {
+      this.relativeTimingButtonTarget.hidden = items.length !== 2
+      this.relativeTimingButtonTarget.disabled = items.length !== 2
+    }
+
+    if (this.hasAbsoluteTimingButtonTarget) {
+      const canMakeAbsolute = items.length === 1 && items[0].relative
+      this.absoluteTimingButtonTarget.hidden = !canMakeAbsolute
+      this.absoluteTimingButtonTarget.disabled = !canMakeAbsolute
+    }
+  }
+
+  showTimingDialog() {
+    if (this.timingDialogOpen) return
+
+    if (typeof this.relativeTimingDialogTarget.showModal === "function") {
+      this.relativeTimingDialogTarget.showModal()
+    } else {
+      this.relativeTimingDialogTarget.setAttribute("open", "open")
+    }
+  }
+
+  populateTimingSelect(select, items, selectedId) {
+    select.innerHTML = ""
+
+    items.forEach((item) => {
+      const option = document.createElement("option")
+      option.value = item.id
+      option.textContent = item.title
+      option.selected = item.id === selectedId
+      select.append(option)
+    })
+  }
+
+  defaultRelativeTarget(items) {
+    const relativeItem = items.find((item) => item.relative)
+    return relativeItem || items[0]
+  }
+
+  ensureDistinctRelativeSelections() {
+    if (this.relativeTargetSelectTarget.value !== this.relativeAnchorSelectTarget.value) return
+
+    const nextAnchor = this.selectedItemData.find((item) => item.id !== this.relativeTargetSelectTarget.value)
+    if (nextAnchor) this.relativeAnchorSelectTarget.value = nextAnchor.id
+  }
+
+  updateRelativeTimingPreview() {
+    const target = this.selectedItemById(this.relativeTargetSelectTarget.value)
+    const anchor = this.selectedItemById(this.relativeAnchorSelectTarget.value)
+    const anchorPoint = this.relativeAnchorPointSelectTarget.value || "start"
+
+    this.timingTargetInputTarget.value = target?.id || ""
+    this.timingAnchorInputTarget.value = anchor?.id || ""
+    this.timingAnchorPointInputTarget.value = anchorPoint
+
+    const summary = this.relativeTimingSummary(target, anchor, anchorPoint)
+    this.relativeTimingSummaryTarget.textContent = summary.text
+    this.timingSubmitButtonTarget.disabled = !summary.valid
+  }
+
+  relativeTimingSummary(target, anchor, anchorPoint) {
+    if (!target || !anchor || target.id === anchor.id) {
+      return { valid: false, text: "Choose two different selected items." }
+    }
+
+    if (!target.startAt) {
+      return { valid: false, text: `${target.title} does not have a scheduled start time.` }
+    }
+
+    const baseIso = anchorPoint === "end" ? (anchor.endAt || anchor.startAt) : anchor.startAt
+    if (!baseIso) {
+      return { valid: false, text: `${anchor.title} does not have a scheduled time.` }
+    }
+
+    const targetTime = new Date(target.startAt)
+    const anchorTime = new Date(baseIso)
+    if (Number.isNaN(targetTime.getTime()) || Number.isNaN(anchorTime.getTime())) {
+      return { valid: false, text: "Choose two scheduled items." }
+    }
+
+    const signedOffsetMinutes = Math.round((targetTime.getTime() - anchorTime.getTime()) / 60000)
+    const offsetMinutes = Math.abs(signedOffsetMinutes)
+    const direction = signedOffsetMinutes < 0 ? "before" : "after"
+    const anchorPointLabel = anchorPoint === "end" ? "ends" : "starts"
+    const projected = this.formatTimingDate(targetTime)
+    const projectedSuffix = projected ? ` → ${projected}` : ""
+
+    if (offsetMinutes === 0) {
+      return {
+        valid: true,
+        text: `${target.title} will start when ${anchor.title} ${anchorPointLabel}${projectedSuffix}`
+      }
+    }
+
+    return {
+      valid: true,
+      text: `${target.title} will start ${this.formatDuration(offsetMinutes)} ${direction} ${anchor.title} ${anchorPointLabel}${projectedSuffix}`
+    }
+  }
+
+  absoluteTimingSummary(item) {
+    const projected = this.formatTimingDate(item.startAt)
+    if (!projected) return `${item.title} does not have a scheduled start time.`
+
+    return `${item.title} will keep its current projected start → ${projected}`
   }
 
   applyFilters() {
@@ -364,6 +581,10 @@ export default class extends Controller {
       this.returnToInputTarget.value = filteredUrl
     }
 
+    if (this.hasTimingReturnToInputTarget) {
+      this.timingReturnToInputTarget.value = filteredUrl
+    }
+
     this.returnLinkTargets.forEach((link) => {
       const basePath = link.dataset.basePath
       const rowId = link.dataset.rowId
@@ -437,6 +658,75 @@ export default class extends Controller {
       .trim()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
+  }
+
+  selectedItemById(id) {
+    return this.selectedItemData.find((item) => item.id === id)
+  }
+
+  itemDataForCheckbox(checkbox) {
+    const row = checkbox.closest("[data-calendar-item-id]")
+    if (!row) return null
+
+    return {
+      id: row.dataset.calendarItemId || "",
+      title: row.dataset.calendarItemTitle || "Selected item",
+      startAt: row.dataset.calendarItemStartAt || "",
+      endAt: row.dataset.calendarItemEndAt || "",
+      relative: row.dataset.calendarItemRelative === "true"
+    }
+  }
+
+  formatDuration(totalMinutes) {
+    const monthMinutes = 60 * 24 * 30
+    const weekMinutes = 60 * 24 * 7
+    const dayMinutes = 60 * 24
+    let unit = "days"
+    let multiplier = dayMinutes
+
+    if (totalMinutes > 0 && totalMinutes % monthMinutes === 0) {
+      unit = "months"
+      multiplier = monthMinutes
+    } else if (totalMinutes > 0 && totalMinutes % weekMinutes === 0) {
+      unit = "weeks"
+      multiplier = weekMinutes
+    }
+
+    const majorValue = Math.floor(totalMinutes / multiplier)
+    const remainder = totalMinutes % multiplier
+    const hours = Math.floor(remainder / 60)
+    const minutes = remainder % 60
+    const parts = []
+
+    if (majorValue > 0) parts.push(`${majorValue} ${majorValue === 1 ? unit.replace(/s$/, "") : unit}`)
+    if (hours > 0) parts.push(`${hours} hr`)
+    if (minutes > 0) parts.push(`${minutes} min`)
+
+    return parts.length > 0 ? parts.join(" ") : "0 days"
+  }
+
+  formatTimingDate(value) {
+    if (!value) return ""
+
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return ""
+
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: this.calendarTimezone,
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    })
+    const parts = {}
+
+    formatter.formatToParts(date).forEach((part) => {
+      if (part.type !== "literal") parts[part.type] = part.value
+    })
+
+    const month = parts.month === "Sep" ? "Sept" : parts.month
+    return `${month} ${parts.day} ${parts.hour}:${parts.minute}${parts.dayPeriod}`
   }
 
   updateHighlights(query) {
@@ -656,6 +946,16 @@ export default class extends Controller {
     return this.checkboxTargets.filter((checkbox) => checkbox.checked).length
   }
 
+  get selectedCheckboxes() {
+    return this.checkboxTargets.filter((checkbox) => checkbox.checked)
+  }
+
+  get selectedItemData() {
+    return this.selectedCheckboxes
+      .map((checkbox) => this.itemDataForCheckbox(checkbox))
+      .filter((item) => item)
+  }
+
   get currentAction() {
     return this.hasActionSelectTarget ? this.actionSelectTarget.value : ""
   }
@@ -672,5 +972,16 @@ export default class extends Controller {
     if ("open" in this.dialogTarget) return this.dialogTarget.open
 
     return this.dialogTarget.hasAttribute("open")
+  }
+
+  get timingDialogOpen() {
+    if (!this.hasRelativeTimingDialogTarget) return false
+    if ("open" in this.relativeTimingDialogTarget) return this.relativeTimingDialogTarget.open
+
+    return this.relativeTimingDialogTarget.hasAttribute("open")
+  }
+
+  get calendarTimezone() {
+    return this.element.dataset.calendarTimezone || undefined
   }
 }

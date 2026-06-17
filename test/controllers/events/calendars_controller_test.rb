@@ -35,6 +35,16 @@ module Events
       assert_select ".event-calendars__filter-menu label", text: "None", minimum: 4
     end
 
+    test "shows timing conversion actions for selected run of show rows" do
+      get event_calendar_path(@event)
+
+      assert_response :success
+      assert_select "button[data-calendar-bulk-edit-target='relativeTimingButton']", text: "Change relative timing", count: 1
+      assert_select "button[data-calendar-bulk-edit-target='absoluteTimingButton']", text: "Make absolute", count: 1
+      assert_select "form[action='#{event_calendar_timing_conversion_path(@event)}'][method='post']", count: 1
+      assert_select "tr[data-calendar-item-id][data-calendar-item-title][data-calendar-item-start-at]", minimum: 1
+    end
+
     test "run of show timeline links preserve filtered return_to and row anchor" do
       item = calendar_items(:ceremony)
       row_anchor = ActionView::RecordIdentifier.dom_id(item, :timeline_row)

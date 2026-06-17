@@ -14,6 +14,9 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: @calendar.name
     assert_select "form#calendar-grid-bulk-form select[name='bulk[bulk_action]']"
+    assert_select "option[value='set_locked']", count: 0
+    assert_select "th", text: "Locked", count: 0
+    assert_select "input[name='calendar_item[locked]']", count: 0
   end
 
   test "run of show links to grid edit mode" do
@@ -54,6 +57,8 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "updates a calendar item" do
+    @item.update!(locked: true)
+
     patch grid_item_event_calendar_url(@event, item_id: @item), params: {
       calendar_item: {
         title: "Updated Ceremony",
@@ -63,7 +68,6 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
         duration_display_hours: "1",
         duration_display_minutes: "0",
         status: "in_progress",
-        locked: "1",
         event_calendar_tag_ids: [event_calendar_tags(:vendor).id]
       }
     }
@@ -93,7 +97,6 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
         duration_display_hours: "3",
         duration_display_minutes: "0",
         status: item.status,
-        locked: "0",
         relative_anchor_id: anchor.id,
         relative_offset_display_value: "0",
         relative_offset_display_unit: "days",
@@ -128,7 +131,6 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
         duration_display_hours: "3",
         duration_display_minutes: "0",
         status: item.status,
-        locked: "0",
         relative_anchor_id: anchor.id,
         relative_offset_display_value: "2",
         relative_offset_display_unit: "weeks",
@@ -161,7 +163,6 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
         duration_display_hours: "3",
         duration_display_minutes: "0",
         status: item.status,
-        locked: "0",
         relative_anchor_id: anchor.id,
         relative_offset_display_value: "0",
         relative_offset_display_unit: "days",
@@ -206,16 +207,12 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_includes @item.reload.event_calendar_tag_ids, event_calendar_tags(:day_of).id
   end
 
-  test "applies bulk lock update" do
-    patch grid_bulk_event_calendar_url(@event), params: {
-      item_ids: [@item.id],
-      bulk: {
-        bulk_action: "set_locked",
-        locked: "1"
-      }
-    }
+  test "does not expose bulk lock updates in grid mode" do
+    get grid_event_calendar_url(@event)
 
-    assert_redirected_to grid_event_calendar_url(@event)
-    assert_predicate @item.reload, :locked?
+    assert_response :success
+    assert_select "select[name='bulk[bulk_action]'] option", text: "Update lock state", count: 0
+    assert_no_match "Lock selected", response.body
+    assert_no_match "Unlock selected", response.body
   end
 end

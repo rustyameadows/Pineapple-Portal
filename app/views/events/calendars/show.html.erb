@@ -5,7 +5,9 @@
     <div class="event-layout__main">
       <%= render "shared/flash" %>
 
-      <section class="event-section event-calendars__timeline-section" data-controller="calendar-bulk-edit anchor-scroll">
+      <section class="event-section event-calendars__timeline-section"
+               data-controller="calendar-bulk-edit anchor-scroll"
+               data-calendar-timezone="<%= @calendar.timezone %>">
         <header class="event-section__header">
           <div>
             <p class="event-section__eyebrow"></p>
@@ -26,6 +28,7 @@
                      calendar: @calendar,
                      group_by_date: @group_by_date,
                      bulk_edit: true,
+                     show_timing_actions: true,
                      bulk_return_to: request.fullpath,
                      show_tags: true,
                      show_edit_button: true,

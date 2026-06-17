@@ -59,6 +59,7 @@ post "upload_failures", to: "upload_failures#create"
       patch "grid/items/:item_id", to: "calendar_grids#update", as: :grid_item
       patch "grid/bulk", to: "calendar_grids#bulk_update", as: :grid_bulk
       get :timeline_preview, to: "calendars#timeline_preview"
+      resource :timing_conversion, only: :create, controller: "calendar_timing_conversions"
       resources :items,
                 controller: "calendar_items",
                 except: :index do

@@ -91,7 +91,6 @@ module Events
         :duration_display_hours,
         :duration_display_minutes,
         :status,
-        :locked,
         :vendor_name,
         :location_name,
         :notes,
@@ -111,7 +110,6 @@ module Events
 
       assign_duration_params(permitted)
       permitted[:starts_at] = permitted[:starts_at].presence if permitted.key?(:starts_at)
-      permitted[:locked] = ActiveModel::Type::Boolean.new.cast(permitted[:locked]) if permitted.key?(:locked)
       if permitted.key?(:event_calendar_tag_ids)
         tag_ids = Array(permitted.delete(:event_calendar_tag_ids)).reject(&:blank?).map(&:to_i)
         permitted[:event_calendar_tag_ids] = tag_ids
@@ -141,7 +139,7 @@ module Events
     end
 
     def bulk_params
-      params.fetch(:bulk, {}).permit(:bulk_action, :status, :locked, tag_ids: [])
+      params.fetch(:bulk, {}).permit(:bulk_action, :status, tag_ids: [])
     end
 
     def grid_path

@@ -18,8 +18,6 @@ module Calendars
       performed = case action
                   when "set_status"
                     apply_status
-                  when "set_locked"
-                    apply_locked
                   when "add_tags"
                     apply_tag_additions
                   when "remove_tags"
@@ -76,14 +74,6 @@ module Calendars
 
       items.find_each { |item| item.update!(status: status) }
       @success_message = "Status updated for #{items.count} item#{'s' if items.count != 1}."
-      true
-    end
-
-    def apply_locked
-      value = ActiveModel::Type::Boolean.new.cast(params[:locked])
-      items.find_each { |item| item.update!(locked: value) }
-      state = value ? "locked" : "unlocked"
-      @success_message = "#{items.count} item#{'s' if items.count != 1} #{state}."
       true
     end
 

@@ -7,6 +7,7 @@
 <% show_status_first = !!local_assigns[:show_status_first] %>
 <% show_edit_button = !!local_assigns[:show_edit_button] %>
 <% bulk_edit = !!local_assigns[:bulk_edit] %>
+<% show_timing_actions = !!local_assigns[:show_timing_actions] %>
 <% render_actions = local_assigns[:render_actions] %>
 <% actions_header = local_assigns[:actions_header] || "" %>
 <% item_link_proc = local_assigns[:item_link_proc] || ->(item) { [item.title, edit_event_calendar_item_path(calendar.event, item, return_to: request.fullpath)] } %>
@@ -153,6 +154,22 @@
                   data-action="calendar-bulk-edit#clearSelection">
             Deselect all
           </button>
+          <% if show_timing_actions %>
+            <button type="button"
+                    class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
+                    data-action="calendar-bulk-edit#openRelativeTimingDialog"
+                    data-calendar-bulk-edit-target="relativeTimingButton"
+                    hidden>
+              Change relative timing
+            </button>
+            <button type="button"
+                    class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
+                    data-action="calendar-bulk-edit#openAbsoluteTimingDialog"
+                    data-calendar-bulk-edit-target="absoluteTimingButton"
+                    hidden>
+              Make absolute
+            </button>
+          <% end %>
         </div>
 
         <div class="event-calendars__bulk-control">
@@ -297,6 +314,91 @@
         </div>
       </div>
     </dialog>
+
+    <% if show_timing_actions %>
+      <dialog class="event-calendars__bulk-dialog event-calendars__bulk-dialog--wide"
+              data-calendar-bulk-edit-target="relativeTimingDialog"
+              data-action="click->calendar-bulk-edit#timingBackdropClose">
+        <%= form_with url: event_calendar_timing_conversion_path(calendar.event),
+                      method: :post,
+                      scope: :timing_conversion,
+                      local: true,
+                      html: {
+                        class: "event-calendars__timing-form",
+                        data: {
+                          action: "submit->calendar-bulk-edit#prepareTimingSubmit",
+                          calendar_bulk_edit_target: "relativeTimingForm"
+                        }
+                      } do |form| %>
+          <%= hidden_field_tag :return_to,
+                               bulk_return_to,
+                               data: { calendar_bulk_edit_target: "timingReturnToInput" } %>
+          <%= form.hidden_field :mode, value: "relative", data: { calendar_bulk_edit_target: "timingModeInput" } %>
+          <%= form.hidden_field :target_item_id, data: { calendar_bulk_edit_target: "timingTargetInput" } %>
+          <%= form.hidden_field :anchor_item_id, data: { calendar_bulk_edit_target: "timingAnchorInput" } %>
+          <%= form.hidden_field :anchor_point, value: "start", data: { calendar_bulk_edit_target: "timingAnchorPointInput" } %>
+
+          <div class="event-calendars__bulk-dialog-content">
+            <header class="event-calendars__bulk-dialog-header">
+              <p class="event-calendars__bulk-eyebrow">Timing</p>
+              <h2 class="event-calendars__bulk-dialog-title" data-calendar-bulk-edit-target="timingDialogTitle">Change relative timing</h2>
+              <p class="event-calendars__bulk-dialog-copy" data-calendar-bulk-edit-target="timingDialogCopy">
+                Choose which selected item should move, and which selected item should anchor it.
+              </p>
+            </header>
+
+            <div class="event-calendars__timing-fields" data-calendar-bulk-edit-target="relativeTimingFields">
+              <label class="event-calendars__timing-field">
+                <span>Move item</span>
+                <select class="event-form__select"
+                        data-calendar-bulk-edit-target="relativeTargetSelect"
+                        data-action="change->calendar-bulk-edit#timingSelectionChanged"></select>
+              </label>
+              <button type="button"
+                      class="event-calendars__bulk-button event-calendars__bulk-button--secondary event-calendars__timing-swap"
+                      data-action="calendar-bulk-edit#swapRelativeTiming">
+                Swap
+              </button>
+              <label class="event-calendars__timing-field">
+                <span>Anchor item</span>
+                <select class="event-form__select"
+                        data-calendar-bulk-edit-target="relativeAnchorSelect"
+                        data-action="change->calendar-bulk-edit#timingSelectionChanged"></select>
+              </label>
+              <label class="event-calendars__timing-field event-calendars__timing-field--small">
+                <span>Anchor point</span>
+                <select class="event-form__select"
+                        data-calendar-bulk-edit-target="relativeAnchorPointSelect"
+                        data-action="change->calendar-bulk-edit#timingSelectionChanged">
+                  <option value="start">starts</option>
+                  <option value="end">ends</option>
+                </select>
+              </label>
+              <p class="event-calendars__timing-summary" data-calendar-bulk-edit-target="relativeTimingSummary"></p>
+            </div>
+
+            <div class="event-calendars__timing-fields event-calendars__timing-fields--absolute"
+                 data-calendar-bulk-edit-target="absoluteTimingFields"
+                 hidden>
+              <p class="event-calendars__timing-summary" data-calendar-bulk-edit-target="absoluteTimingSummary"></p>
+            </div>
+
+            <div class="event-calendars__bulk-dialog-actions">
+              <button type="button"
+                      class="event-section__cta event-section__cta--secondary"
+                      data-action="calendar-bulk-edit#closeTimingDialog">
+                Cancel
+              </button>
+              <button type="submit"
+                      class="event-section__cta"
+                      data-calendar-bulk-edit-target="timingSubmitButton">
+                Save timing
+              </button>
+            </div>
+          </div>
+        <% end %>
+      </dialog>
+    <% end %>
   <% end %>
 
   <table class="event-table event-calendars__table">
@@ -373,6 +475,11 @@
         <tr id="<%= timeline_row_id %>"
             class="event-calendars__row <%= calendar_item_row_classes(item) %>"
             data-calendar-bulk-edit-target="row"
+            data-calendar-item-id="<%= item.id %>"
+            data-calendar-item-title="<%= item.title %>"
+            data-calendar-item-start-at="<%= item.effective_starts_at&.iso8601 %>"
+            data-calendar-item-end-at="<%= item.effective_ends_at&.iso8601 %>"
+            data-calendar-item-relative="<%= item.relative? %>"
             data-calendar-search-text="<%= calendar_item_search_text(item) %>"
             data-calendar-vendor-values="<%= calendar_item_filter_values_json(item, :vendor) %>"
             data-calendar-location-values="<%= calendar_item_filter_values_json(item, :location) %>"

@@ -27,7 +27,6 @@
               <%= form.select :bulk_action,
                               options_for_select([
                                 ["Set status", "set_status"],
-                                ["Update lock state", "set_locked"],
                                 ["Add tags", "add_tags"],
                                 ["Remove tags", "remove_tags"]
                               ]),
@@ -39,14 +38,6 @@
               <%= form.label :status, "Status", class: "calendar-grid__bulk-label" %>
               <%= form.select :status,
                               options_for_select(@statuses.map { |status| [status.humanize, status] }),
-                              {},
-                              class: "calendar-grid__bulk-select" %>
-            </div>
-
-            <div class="calendar-grid__bulk-row" data-calendar-grid-bulk-target="locked">
-              <%= form.label :locked, "Lock state", class: "calendar-grid__bulk-label" %>
-              <%= form.select :locked,
-                              options_for_select([["Lock selected", true], ["Unlock selected", false]]),
                               {},
                               class: "calendar-grid__bulk-select" %>
             </div>
@@ -81,7 +72,6 @@
                   <th scope="col">Anchor</th>
                   <th scope="col">Relation</th>
                   <th scope="col">Status</th>
-                  <th scope="col">Locked</th>
                   <th scope="col">Tags</th>
                   <th scope="col">Location</th>
                   <th scope="col">Vendor</th>
@@ -93,7 +83,7 @@
               <tbody>
                 <% @items.each do |item| %>
                   <% form_id = dom_id(item, :grid_form) %>
-                  <tr class="calendar-grid__row <%= 'calendar-grid__row--locked' if item.locked? %>" data-grid-row>
+                  <tr class="calendar-grid__row" data-grid-row>
                     <td class="calendar-grid__cell calendar-grid__cell--select">
                       <%= check_box_tag "item_ids[]", item.id, false, form: "calendar-grid-bulk-form", class: "calendar-grid__select", data: { bulk_toggle: true } %>
                     </td>
@@ -209,13 +199,6 @@
                                      form: form_id,
                                      class: "calendar-grid__select" %>
                     </td>
-                    <td class="calendar-grid__cell calendar-grid__cell--toggle">
-                      <%= hidden_field_tag "calendar_item[locked]", "0", form: form_id, id: nil %>
-                      <label class="calendar-grid__checkbox">
-                        <%= check_box_tag "calendar_item[locked]", "1", item.locked?, form: form_id %>
-                        <span>Locked</span>
-                      </label>
-                    </td>
                     <td class="calendar-grid__cell calendar-grid__cell--tags">
                       <%= hidden_field_tag "calendar_item[event_calendar_tag_ids][]", "", form: form_id, id: nil %>
                       <div class="calendar-grid__tags" data-tags-container>
@@ -287,13 +270,11 @@
 
       const actionSelect = form.querySelector("select[name='bulk[bulk_action]']");
       const statusRow = form.querySelector('[data-calendar-grid-bulk-target="status"]');
-      const lockedRow = form.querySelector('[data-calendar-grid-bulk-target="locked"]');
       const tagsRow = form.querySelector('[data-calendar-grid-bulk-target="tags"]');
 
       const updateVisibility = () => {
         const action = actionSelect.value;
         if (statusRow) statusRow.style.display = action === "set_status" ? "flex" : "none";
-        if (lockedRow) lockedRow.style.display = action === "set_locked" ? "flex" : "none";
         if (tagsRow) tagsRow.style.display = action === "add_tags" || action === "remove_tags" ? "flex" : "none";
       };
 
