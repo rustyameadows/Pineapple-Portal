@@ -59,6 +59,19 @@ module Events
       assert_select ".calendar-item-form__markdown-editor button[data-markdown-format='headline']", count: 0
     end
 
+    test "edit renders relative timing controls as a sentence with smart offset units" do
+      item = calendar_items(:reception)
+
+      get edit_event_calendar_item_url(@event, item)
+
+      assert_response :success
+      assert_select ".calendar-item-form__relative-sentence", count: 1
+      assert_select "input[name='calendar_item[relative_offset_value]'][value='2']", count: 1
+      assert_select "select[name='calendar_item[relative_offset_unit]'] option[selected][value='hours']", text: "Hours", count: 1
+      assert_select "select[name='calendar_item[relative_anchor_id]'] option[value='']", text: "Choose an anchor...", count: 1
+      assert_select ".calendar-item-form__timing-summary", text: /Starts 2 hours after Ceremony starts/
+    end
+
     test "update respects anchored return_to" do
       item = calendar_items(:ceremony)
       row_anchor = ActionView::RecordIdentifier.dom_id(item, :timeline_row)
@@ -80,6 +93,78 @@ module Events
       assert_equal "Ceremony Updated", item.reload.title
       assert_equal "Approx. 175", item.reload.guest_count
       assert_equal "**Guests** leave from the [front drive](https://example.com/map) at 2:15 PM.", item.reload.transportation_note
+    end
+
+    test "update converts relative timing sentence fields to existing stored values" do
+      item = calendar_items(:reception)
+      anchor = calendar_items(:ceremony)
+
+      patch event_calendar_item_url(@event, item), params: {
+        calendar_item: {
+          title: item.title,
+          timing_mode: "relative",
+          relative_anchor_id: anchor.id,
+          relative_offset_value: "2",
+          relative_offset_unit: "hours",
+          relative_before: "false",
+          relative_to_anchor_end: "true",
+          duration_value: item.duration_minutes,
+          duration_unit: "minutes"
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      item.reload
+      assert_equal anchor.id, item.relative_anchor_id
+      assert_equal 120, item.relative_offset_minutes
+      assert_equal false, item.relative_before?
+      assert_equal true, item.relative_to_anchor_end?
+    end
+
+    test "update maps before start selections without changing backend fields" do
+      item = calendar_items(:reception)
+      anchor = calendar_items(:ceremony)
+
+      patch event_calendar_item_url(@event, item), params: {
+        calendar_item: {
+          title: item.title,
+          timing_mode: "relative",
+          relative_anchor_id: anchor.id,
+          relative_offset_value: "30",
+          relative_offset_unit: "minutes",
+          relative_before: "true",
+          relative_to_anchor_end: "false",
+          duration_value: item.duration_minutes,
+          duration_unit: "minutes"
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      item.reload
+      assert_equal anchor.id, item.relative_anchor_id
+      assert_equal 30, item.relative_offset_minutes
+      assert_equal true, item.relative_before?
+      assert_equal false, item.relative_to_anchor_end?
+    end
+
+    test "update preserves absolute starts_at semantics" do
+      item = calendar_items(:ceremony)
+
+      patch event_calendar_item_url(@event, item), params: {
+        calendar_item: {
+          title: item.title,
+          timing_mode: "absolute",
+          starts_at: "2025-10-01T16:30",
+          duration_value: item.duration_minutes,
+          duration_unit: "minutes"
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      item.reload
+      assert_nil item.relative_anchor_id
+      assert_equal 0, item.relative_offset_minutes
+      assert_equal Time.utc(2025, 10, 1, 16, 30), item.starts_at
     end
 
     test "create persists item guest count and transportation note" do
