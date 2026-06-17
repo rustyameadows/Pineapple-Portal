@@ -215,7 +215,7 @@
 }
 
 .calendar-grid__cell--anchor {
-  min-width: 180px;
+  min-width: 240px;
 }
 
 .calendar-grid__anchor {
@@ -248,13 +248,34 @@
 }
 
 .calendar-grid__cell--relative {
-  min-width: 180px;
+  min-width: 340px;
 }
 
 .calendar-grid__relative {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(68px, 0.7fr) minmax(92px, 1fr) minmax(82px, 0.85fr) minmax(82px, 0.85fr);
   align-items: center;
   gap: 0.35rem;
+}
+
+.calendar-grid__select--anchor {
+  min-width: 220px;
+}
+
+.calendar-grid__input--offset {
+  min-width: 68px;
+}
+
+.calendar-grid__select--unit,
+.calendar-grid__select--direction,
+.calendar-grid__select--point {
+  min-width: 82px;
+  padding-right: 1.4rem;
+}
+
+.calendar-grid__hint--summary {
+  line-height: 1.35;
+  max-width: 320px;
 }
 
 .calendar-grid__checkbox--inline {

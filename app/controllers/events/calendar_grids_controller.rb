@@ -11,8 +11,17 @@ module Events
                   :return_path,
                   :calendar_timezone_label,
                   :anchor_options_for,
-                  :anchor_alignment_options,
-                  :anchor_alignment_value
+                  :relative_offset_value,
+                  :relative_offset_unit,
+                  :relative_timing_summary
+
+    OFFSET_UNITS = [
+      ["Minutes", "minutes"],
+      ["Hours", "hours"],
+      ["Days", "days"],
+      ["Weeks", "weeks"],
+      ["Months", "months"]
+    ].freeze
 
     def show
       load_grid
@@ -71,7 +80,6 @@ module Events
       @statuses = CalendarItem.statuses.keys
       @timezone = ActiveSupport::TimeZone[@calendar.timezone] || ActiveSupport::TimeZone[EventCalendar::DEFAULT_TIMEZONE]
       @anchor_options = build_anchor_options
-      @anchor_label_map = @anchor_options.to_h { |label, id| [id, label] }
     end
 
     def replace_item_in_collection(updated_item)
@@ -92,39 +100,32 @@ module Events
         :notes,
         :relative_anchor_id,
         :relative_offset_minutes,
+        :relative_offset_value,
+        :relative_offset_unit,
         :relative_alignment,
+        :relative_before,
+        :relative_to_anchor_end,
         event_calendar_tag_ids: []
       )
 
-      permitted[:duration_minutes] = permitted[:duration_minutes].presence
-      permitted[:starts_at] = permitted[:starts_at].presence
-      permitted[:locked] = ActiveModel::Type::Boolean.new.cast(permitted[:locked])
-      tag_ids = Array(permitted.delete(:event_calendar_tag_ids)).reject(&:blank?).map(&:to_i)
-      permitted[:event_calendar_tag_ids] = tag_ids
+      permitted[:duration_minutes] = permitted[:duration_minutes].presence if permitted.key?(:duration_minutes)
+      permitted[:starts_at] = permitted[:starts_at].presence if permitted.key?(:starts_at)
+      permitted[:locked] = ActiveModel::Type::Boolean.new.cast(permitted[:locked]) if permitted.key?(:locked)
+      if permitted.key?(:event_calendar_tag_ids)
+        tag_ids = Array(permitted.delete(:event_calendar_tag_ids)).reject(&:blank?).map(&:to_i)
+        permitted[:event_calendar_tag_ids] = tag_ids
+      end
 
       anchor_id = permitted[:relative_anchor_id].presence
       permitted[:relative_anchor_id] = anchor_id
 
       alignment = permitted.delete(:relative_alignment)
+      offset_value = permitted.delete(:relative_offset_value)
+      offset_unit = permitted.delete(:relative_offset_unit)
 
       if anchor_id.present?
-        permitted[:relative_offset_minutes] = permitted[:relative_offset_minutes].presence || 0
-        permitted[:relative_offset_minutes] = permitted[:relative_offset_minutes].to_i
-
-        case alignment
-        when "before_start"
-          permitted[:relative_before] = true
-          permitted[:relative_to_anchor_end] = false
-        when "after_end"
-          permitted[:relative_before] = false
-          permitted[:relative_to_anchor_end] = true
-        when "before_end"
-          permitted[:relative_before] = true
-          permitted[:relative_to_anchor_end] = true
-        else # default to after_start
-          permitted[:relative_before] = false
-          permitted[:relative_to_anchor_end] = false
-        end
+        permitted[:relative_offset_minutes] = relative_offset_minutes_from(offset_value, offset_unit, permitted[:relative_offset_minutes])
+        apply_relative_reference_params(permitted, alignment)
       else
         permitted[:relative_offset_minutes] = 0
         permitted[:relative_before] = false
@@ -180,41 +181,133 @@ module Events
 
     def build_anchor_options
       @calendar.calendar_items.order(:starts_at, :position, :id).map do |item|
-        [anchor_option_label(item), item.id]
+        [anchor_option_label(item), item.id, anchor_option_attributes(item)]
       end
     end
 
     def anchor_option_label(item)
-      time = item.starts_at&.in_time_zone(@timezone)
-      time_label = time ? time.strftime("%b %-d %H:%M") : "TBD"
+      start_time = item.effective_starts_at&.in_time_zone(@timezone)
+      end_time = item.effective_ends_at&.in_time_zone(@timezone)
+      time_label = if start_time && end_time
+                     "#{format_anchor_time(start_time)} – #{end_time.strftime('%-l:%M %p')}"
+                   elsif start_time
+                     format_anchor_time(start_time)
+                   else
+                     "TBD"
+                   end
       "#{item.title} (#{time_label})"
     end
 
+    def anchor_option_attributes(item)
+      {
+        data: {
+          anchor_title: item.title,
+          anchor_start_at: item.effective_starts_at&.iso8601,
+          anchor_end_at: item.effective_ends_at&.iso8601
+        }.compact
+      }
+    end
+
     def anchor_options_for(item)
-      [["None (absolute)", ""]] + @anchor_options.reject { |(_, id)| id == item.id }
+      [["None (absolute)", ""]] + @anchor_options.reject { |(_label, id, _attributes)| id == item.id }
     end
 
-    def anchor_alignment_options(_item = nil)
-      [
-        ["After anchor start", "after_start"],
-        ["Before anchor start", "before_start"],
-        ["After anchor end", "after_end"],
-        ["Before anchor end", "before_end"]
-      ]
+    def relative_offset_value(item)
+      relative_offset_parts(item).first
     end
 
-    def anchor_alignment_value(item)
-      return "after_start" unless item.relative_anchor_id.present?
+    def relative_offset_unit(item)
+      relative_offset_parts(item).last
+    end
 
-      if item.relative_before? && item.relative_to_anchor_end?
-        "before_end"
-      elsif item.relative_before?
-        "before_start"
-      elsif item.relative_to_anchor_end?
-        "after_end"
+    def relative_timing_summary(item)
+      return "Absolute start" unless item.relative_anchor
+
+      value, unit = relative_offset_parts(item)
+      direction = item.relative_before? ? "before" : "after"
+      anchor_point = item.relative_to_anchor_end? ? "ends" : "starts"
+      projected_label = item.effective_starts_at&.in_time_zone(@timezone)&.then { |time| format_projected_time(time) }
+      projected_suffix = projected_label.present? ? " → #{projected_label}" : ""
+
+      if value.to_f.zero?
+        "Starts when #{item.relative_anchor.title} #{anchor_point}#{projected_suffix}"
       else
-        "after_start"
+        "Starts #{value} #{unit_label(value, unit)} #{direction} #{item.relative_anchor.title} #{anchor_point}#{projected_suffix}"
       end
+    end
+
+    def relative_offset_parts(item)
+      minutes = item.relative_offset_minutes.to_i.abs
+      return [0, "minutes"] if minutes.zero?
+
+      if (minutes % (60 * 24 * 30)).zero?
+        [minutes / (60 * 24 * 30), "months"]
+      elsif (minutes % (60 * 24 * 7)).zero?
+        [minutes / (60 * 24 * 7), "weeks"]
+      elsif (minutes % (60 * 24)).zero?
+        [minutes / (60 * 24), "days"]
+      elsif minutes >= 60 && (minutes % 15).zero?
+        [trim_decimal(minutes / 60.0), "hours"]
+      else
+        [minutes, "minutes"]
+      end
+    end
+
+    def apply_relative_reference_params(permitted, alignment)
+      if permitted.key?(:relative_before) || permitted.key?(:relative_to_anchor_end)
+        permitted[:relative_before] = ActiveModel::Type::Boolean.new.cast(permitted[:relative_before])
+        permitted[:relative_to_anchor_end] = ActiveModel::Type::Boolean.new.cast(permitted[:relative_to_anchor_end])
+        return
+      end
+
+      case alignment
+      when "before_start"
+        permitted[:relative_before] = true
+        permitted[:relative_to_anchor_end] = false
+      when "after_end"
+        permitted[:relative_before] = false
+        permitted[:relative_to_anchor_end] = true
+      when "before_end"
+        permitted[:relative_before] = true
+        permitted[:relative_to_anchor_end] = true
+      else # default to after_start
+        permitted[:relative_before] = false
+        permitted[:relative_to_anchor_end] = false
+      end
+    end
+
+    def relative_offset_minutes_from(value, unit, fallback_minutes)
+      raw_value = value.to_s.strip
+      return fallback_minutes.to_i if raw_value.blank? && fallback_minutes.present?
+      return 0 if raw_value.blank?
+
+      multiplier = case unit.to_s
+                   when "hours" then 60
+                   when "days" then 60 * 24
+                   when "weeks" then 60 * 24 * 7
+                   when "months" then 60 * 24 * 30
+                   else 1
+                   end
+
+      (raw_value.to_f * multiplier).to_i
+    end
+
+    def unit_label(value, unit)
+      value.to_f == 1.0 ? unit.singularize : unit
+    end
+
+    def trim_decimal(value)
+      return value.to_i if value == value.to_i
+
+      value.round(2).to_s.sub(/\.?0+\z/, "")
+    end
+
+    def format_anchor_time(time)
+      time.strftime("%b %-d %-l:%M %p")
+    end
+
+    def format_projected_time(time)
+      time.strftime("%b %-d %-l:%M%p").sub(/^Sep /, "Sept ")
     end
   end
 end

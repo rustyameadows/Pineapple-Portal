@@ -5,7 +5,7 @@
     <div class="event-layout__main">
       <%= render "shared/flash" %>
 
-      <section class="event-section calendar-grid">
+      <section class="event-section calendar-grid" data-calendar-timezone="<%= @calendar.timezone %>">
         <header class="event-section__header calendar-grid__header">
           <div>
             <p class="event-section__eyebrow">Calendar Grid</p>
@@ -15,13 +15,13 @@
             </p>
           </div>
           <div class="calendar-grid__header-actions">
-            <%= link_to "Back to Calendar", return_path, class: "event-section__cta event-section__cta--secondary" %>
+            <%= link_to "View mode", return_path, class: "event-section__cta event-section__cta--secondary" %>
           </div>
         </header>
 
         <div class="calendar-grid__bulk" data-bulk-panel>
           <h2 class="calendar-grid__bulk-title">Bulk actions</h2>
-          <%= form_with url: grid_bulk_path, method: :patch, local: true, html: { id: "calendar-grid-bulk-form", class: "calendar-grid__bulk-form" } do |form| %>
+          <%= form_with url: grid_bulk_path, method: :patch, scope: :bulk, local: true, html: { id: "calendar-grid-bulk-form", class: "calendar-grid__bulk-form" } do |form| %>
             <div class="calendar-grid__bulk-row">
               <%= form.label :bulk_action, "Action", class: "calendar-grid__bulk-label" %>
               <%= form.select :bulk_action,
@@ -93,7 +93,7 @@
               <tbody>
                 <% @items.each do |item| %>
                   <% form_id = dom_id(item, :grid_form) %>
-                  <tr class="calendar-grid__row <%= 'calendar-grid__row--locked' if item.locked? %>">
+                  <tr class="calendar-grid__row <%= 'calendar-grid__row--locked' if item.locked? %>" data-grid-row>
                     <td class="calendar-grid__cell calendar-grid__cell--select">
                       <%= check_box_tag "item_ids[]", item.id, false, form: "calendar-grid-bulk-form", class: "calendar-grid__select", data: { bulk_toggle: true } %>
                     </td>
@@ -101,12 +101,12 @@
                       <%= text_field_tag "calendar_item[title]", item.title, form: form_id, class: "calendar-grid__input" %>
                     </td>
                     <td class="calendar-grid__cell">
-                      <% start_value = item.starts_at&.in_time_zone(@timezone)&.strftime("%Y-%m-%dT%H:%M") %>
+                      <% start_value = item.effective_starts_at&.in_time_zone(@timezone)&.strftime("%Y-%m-%dT%H:%M") %>
                       <% if item.absolute? %>
                         <%= text_field_tag "calendar_item[starts_at]", start_value, form: form_id, class: "calendar-grid__input", type: "datetime-local" %>
                       <% else %>
                         <%= text_field_tag "calendar_item[starts_at]", start_value, form: form_id, class: "calendar-grid__input", type: "datetime-local", disabled: true %>
-                        <p class="calendar-grid__hint">Relative to <%= item.relative_anchor&.title || "—" %> (<%= item.relative_before? ? "before" : "after" %> <%= item.relative_offset_minutes %> min)</p>
+                        <p class="calendar-grid__hint">Projected from anchor.</p>
                       <% end %>
                     </td>
                     <td class="calendar-grid__cell">
@@ -117,36 +117,43 @@
                                            min: 0 %>
                     </td>
                     <td class="calendar-grid__cell calendar-grid__cell--anchor" data-anchor-cell>
-                      <div class="calendar-grid__anchor">
-                        <% anchor_label = @anchor_label_map[item.relative_anchor_id] %>
-                        <%= tag.input type: "text",
-                                      value: anchor_label,
-                                      class: "calendar-grid__input calendar-grid__input--anchor",
-                                      list: "calendar-grid-anchor-options",
-                                      placeholder: "None",
-                                      autocomplete: "off",
-                                      data: { anchor_input: true },
-                                      form: form_id,
-                                      name: nil %>
-                        <%= hidden_field_tag "calendar_item[relative_anchor_id]", item.relative_anchor_id, form: form_id, data: { anchor_hidden: true } %>
-                        <button type="button" class="calendar-grid__anchor-clear" data-anchor-clear title="Clear anchor">×</button>
-                      </div>
+                      <%= select_tag "calendar_item[relative_anchor_id]",
+                                     options_for_select(anchor_options_for(item), item.relative_anchor_id),
+                                     form: form_id,
+                                     class: "calendar-grid__select calendar-grid__select--anchor",
+                                     data: {
+                                       anchor_select: true,
+                                       relative_summary_input: "anchor"
+                                     } %>
                     </td>
                     <td class="calendar-grid__cell calendar-grid__cell--relative" data-anchor-relation>
+                      <% offset_value = relative_offset_value(item) %>
+                      <% offset_unit = relative_offset_unit(item) %>
                       <div class="calendar-grid__relative" data-anchor-controls style="<%= item.relative_anchor_id.present? ? '' : 'display:none;' %>">
-                        <%= select_tag "calendar_item[relative_alignment]",
-                                       options_for_select(anchor_alignment_options, anchor_alignment_value(item)),
-                                       form: form_id,
-                                       class: "calendar-grid__select calendar-grid__select--alignment",
-                                       data: { anchor_alignment: true } %>
-                        <%= number_field_tag "calendar_item[relative_offset_minutes]",
-                                             item.relative_offset_minutes,
+                        <%= number_field_tag "calendar_item[relative_offset_value]",
+                                             offset_value,
                                              form: form_id,
-                                             class: "calendar-grid__input calendar-grid__input--micro",
+                                             class: "calendar-grid__input calendar-grid__input--offset",
                                              min: 0,
-                                             data: { anchor_offset: true } %>
+                                             step: 0.25,
+                                             data: { relative_summary_input: "offsetValue" } %>
+                        <%= select_tag "calendar_item[relative_offset_unit]",
+                                       options_for_select(Events::CalendarGridsController::OFFSET_UNITS, offset_unit),
+                                       form: form_id,
+                                       class: "calendar-grid__select calendar-grid__select--unit",
+                                       data: { relative_summary_input: "offsetUnit" } %>
+                        <%= select_tag "calendar_item[relative_before]",
+                                       options_for_select([["after", false], ["before", true]], item.relative_before?),
+                                       form: form_id,
+                                       class: "calendar-grid__select calendar-grid__select--direction",
+                                       data: { relative_summary_input: "direction" } %>
+                        <%= select_tag "calendar_item[relative_to_anchor_end]",
+                                       options_for_select([["starts", false], ["ends", true]], item.relative_to_anchor_end?),
+                                       form: form_id,
+                                       class: "calendar-grid__select calendar-grid__select--point",
+                                       data: { relative_summary_input: "anchorPoint" } %>
                       </div>
-                      <p class="calendar-grid__hint" data-anchor-hint style="<%= item.relative_anchor_id.present? ? 'display: none;' : '' %>">Select an anchor to enable offsets.</p>
+                      <p class="calendar-grid__hint calendar-grid__hint--summary" data-relative-summary><%= relative_timing_summary(item) %></p>
                     </td>
                     <td class="calendar-grid__cell">
                       <%= select_tag "calendar_item[status]",
@@ -219,11 +226,6 @@
             <p>No items available yet.</p>
           </div>
         <% end %>
-        <datalist id="calendar-grid-anchor-options">
-          <% @anchor_options.each do |label, id| %>
-            <option value="<%= label %>" data-anchor-id="<%= id %>"></option>
-          <% end %>
-        </datalist>
       </section>
     </div>
   </div>
@@ -253,64 +255,130 @@
       }
     });
 
-    const anchorOptionsList = document.getElementById("calendar-grid-anchor-options");
-    if (anchorOptionsList) {
-      const options = Array.from(anchorOptionsList.options);
+    const gridRoot = document.querySelector(".calendar-grid");
+    const timezone = gridRoot?.dataset.calendarTimezone || undefined;
 
-      const findOptionByValue = (value) => options.find((opt) => opt.value === value);
+    const fieldFor = (row, name) => row.querySelector('[data-relative-summary-input="' + name + '"]');
 
-      document.querySelectorAll("[data-anchor-input]").forEach((input) => {
-        const cell = input.closest("[data-anchor-cell]");
-        const hiddenField = cell.querySelector("[data-anchor-hidden]");
-        const clearButton = cell.querySelector("[data-anchor-clear]");
-        const row = cell.parentElement;
-        const relationCell = row.querySelector("[data-anchor-relation]");
-        const controls = relationCell?.querySelector("[data-anchor-controls]");
-        const alignment = relationCell?.querySelector("[data-anchor-alignment]");
-        const offsetInput = relationCell?.querySelector("[data-anchor-offset]");
-        const hint = relationCell?.querySelector("[data-anchor-hint]");
+    const selectedText = (row, name) => {
+      const field = fieldFor(row, name);
+      if (!field || !field.selectedOptions || !field.selectedOptions.length) return "";
+      return field.selectedOptions[0].textContent.trim();
+    };
 
-        const setState = (hasAnchor) => {
-          if (controls) controls.style.display = hasAnchor ? "flex" : "none";
-          if (alignment) {
-            alignment.disabled = !hasAnchor;
-            if (!hasAnchor) alignment.value = "after_start";
-          }
-          if (offsetInput) {
-            offsetInput.disabled = !hasAnchor;
-            if (!hasAnchor) offsetInput.value = 0;
-          }
-          if (hint) hint.style.display = hasAnchor ? "none" : "block";
-          if (clearButton) clearButton.style.display = hasAnchor ? "inline-flex" : "none";
-        };
+    const selectedAnchor = (row) => {
+      const field = fieldFor(row, "anchor");
+      if (!field || !field.selectedOptions || !field.selectedOptions.length || !field.value) return null;
+      return field.selectedOptions[0];
+    };
 
-        const applyValue = () => {
-          const match = findOptionByValue(input.value.trim());
-          if (match) {
-            hiddenField.value = match.dataset.anchorId || "";
-            setState(true);
-          } else {
-            hiddenField.value = "";
-            input.value = "";
-            setState(false);
-          }
-        };
+    const selectedAnchorTitle = (row) => {
+      const option = selectedAnchor(row);
+      if (!option) return "";
+      return option.dataset.anchorTitle || option.textContent.replace(/\s+\([^)]*\)\s*$/, "").trim();
+    };
 
-        input.addEventListener("change", applyValue);
-        input.addEventListener("blur", applyValue);
+    const pluralizedUnit = (value, unit) => {
+      const numericValue = Number(value);
+      const singular = unit.replace(/s$/, "");
+      return numericValue === 1 ? singular : unit;
+    };
 
-        if (clearButton) {
-          clearButton.style.display = (hiddenField.value || "").length > 0 ? "inline-flex" : "none";
-          clearButton.addEventListener("click", () => {
-            input.value = "";
-            hiddenField.value = "";
-            setState(false);
-          });
-        }
+    const offsetMinutesFor = (value, unit) => {
+      const numericValue = Number(value || 0);
+      if (!Number.isFinite(numericValue)) return null;
 
-        setState((hiddenField?.value || "").length > 0);
+      let multiplier = 1;
+      if (unit === "hours") multiplier = 60;
+      if (unit === "days") multiplier = 60 * 24;
+      if (unit === "weeks") multiplier = 60 * 24 * 7;
+      if (unit === "months") multiplier = 60 * 24 * 30;
+
+      return numericValue * multiplier;
+    };
+
+    const formatProjectedTime = (date) => {
+      const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
       });
-    }
+      const parts = {};
+
+      formatter.formatToParts(date).forEach((part) => {
+        if (part.type !== "literal") parts[part.type] = part.value;
+      });
+
+      const month = parts.month === "Sep" ? "Sept" : parts.month;
+      return month + " " + parts.day + " " + parts.hour + ":" + parts.minute + parts.dayPeriod;
+    };
+
+    const projectedTimeSuffix = (row, offsetValue, unit, direction, anchorPoint) => {
+      const option = selectedAnchor(row);
+      if (!option) return "";
+
+      const baseIso = anchorPoint === "ends"
+        ? (option.dataset.anchorEndAt || option.dataset.anchorStartAt)
+        : option.dataset.anchorStartAt;
+      if (!baseIso) return "";
+
+      const baseTime = new Date(baseIso);
+      let offsetMinutes = offsetMinutesFor(offsetValue, unit);
+      if (Number.isNaN(baseTime.getTime()) || offsetMinutes === null) return "";
+
+      if (direction === "before") offsetMinutes *= -1;
+
+      return " → " + formatProjectedTime(new Date(baseTime.getTime() + (offsetMinutes * 60 * 1000)));
+    };
+
+    const syncRelativeRow = (row) => {
+      const controls = row.querySelector("[data-anchor-controls]");
+      const summary = row.querySelector("[data-relative-summary]");
+      const anchorField = fieldFor(row, "anchor");
+      const hasAnchor = !!(anchorField && anchorField.value);
+
+      if (controls) {
+        controls.style.display = hasAnchor ? "flex" : "none";
+        controls.querySelectorAll("input, select").forEach((field) => {
+          field.disabled = !hasAnchor;
+        });
+      }
+
+      if (!summary) return;
+
+      const anchorTitle = selectedAnchorTitle(row);
+      if (!anchorTitle) {
+        summary.textContent = "Absolute start";
+        return;
+      }
+
+      const offsetInput = fieldFor(row, "offsetValue");
+      const unitField = fieldFor(row, "offsetUnit");
+      const offsetValue = offsetInput ? offsetInput.value.trim() : "";
+      const unit = unitField ? unitField.value : "minutes";
+      const direction = selectedText(row, "direction") || "after";
+      const anchorPoint = selectedText(row, "anchorPoint") || "starts";
+      const projection = projectedTimeSuffix(row, offsetValue, unit, direction, anchorPoint);
+
+      if (!offsetValue || Number(offsetValue) === 0) {
+        summary.textContent = "Starts when " + anchorTitle + " " + anchorPoint + projection;
+        return;
+      }
+
+      summary.textContent = "Starts " + offsetValue + " " + pluralizedUnit(offsetValue, unit) + " " + direction + " " + anchorTitle + " " + anchorPoint + projection;
+    };
+
+    document.querySelectorAll("[data-grid-row]").forEach((row) => {
+      row.querySelectorAll("[data-relative-summary-input]").forEach((field) => {
+        field.addEventListener("change", () => syncRelativeRow(row));
+        field.addEventListener("input", () => syncRelativeRow(row));
+      });
+
+      syncRelativeRow(row);
+    });
 
     document.querySelectorAll("[data-tags-container]").forEach((container) => {
       container.addEventListener("change", (event) => {
