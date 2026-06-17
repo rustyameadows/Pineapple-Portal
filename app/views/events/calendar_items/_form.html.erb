@@ -169,13 +169,36 @@
                           data: { relative_summary_input: "direction" } %>
         </div>
 
-        <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--anchor">
+        <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--anchor"
+             data-controller="local-select"
+             data-local-select-empty-label-value="Choose an anchor..."
+             data-local-select-limit-value="24">
+          <% selected_anchor_option = @anchor_options.find { |(_label, id, _attributes)| id.to_s == item.relative_anchor_id.to_s } %>
           <%= form.label :relative_anchor_id, "Anchor", class: "visually-hidden" %>
+          <%= text_field_tag nil,
+                             selected_anchor_option&.first,
+                             placeholder: "Choose an anchor...",
+                             autocomplete: "off",
+                             role: "combobox",
+                             aria: { expanded: "false" },
+                             class: "calendar-item-form__sentence-control calendar-item-form__sentence-control--anchor",
+                             data: {
+                               local_select_target: "input",
+                               action: "input->local-select#search focus->local-select#search keydown->local-select#handleInputKeydown"
+                             } %>
           <%= form.select :relative_anchor_id,
                           options_for_select(@anchor_options, item.relative_anchor_id),
                           { include_blank: "Choose an anchor..." },
-                          class: "calendar-item-form__sentence-control calendar-item-form__sentence-control--anchor",
-                          data: { relative_summary_input: "anchor" } %>
+                          class: "calendar-item-form__native-select",
+                          data: {
+                            local_select_target: "select",
+                            relative_summary_input: "anchor",
+                            action: "change->local-select#syncFromSelect"
+                          } %>
+          <div class="calendar-item-form__autocomplete-menu calendar-item-form__autocomplete-menu--anchor"
+               data-local-select-target="menu"
+               role="listbox"
+               hidden></div>
         </div>
 
         <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--reference">

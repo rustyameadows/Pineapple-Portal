@@ -139,9 +139,9 @@ module Events
       start = item.effective_starts_at&.in_time_zone(@calendar.timezone)
       finish = item.effective_ends_at&.in_time_zone(@calendar.timezone)
       time_label = if start && finish
-                     "#{start.strftime('%b %-d %l:%M %p')} – #{finish.strftime('%l:%M %p').strip}"
+                     "#{start.strftime('%b %-d %-l:%M %p')} – #{finish.strftime('%-l:%M %p')}"
                    elsif start
-                     start.strftime("%b %-d %l:%M %p")
+                     start.strftime("%b %-d %-l:%M %p")
                    else
                      "TBD"
                    end

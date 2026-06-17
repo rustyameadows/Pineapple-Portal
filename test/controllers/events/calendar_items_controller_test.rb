@@ -70,6 +70,10 @@ module Events
       assert_select "select[name='calendar_item[relative_offset_display_unit]'] option[selected][value='days']", text: "Days", count: 1
       assert_select "input[name='calendar_item[relative_offset_display_hours]'][value='2']", count: 1
       assert_select "input[name='calendar_item[relative_offset_display_minutes]'][value='0']", count: 1
+      assert_select "[data-controller='local-select']", count: 1
+      assert_select "input[data-local-select-target='input'][role='combobox'][placeholder='Choose an anchor...']", count: 1
+      assert_select "select[name='calendar_item[relative_anchor_id]'][data-local-select-target='select']", count: 1
+      assert_select "[data-local-select-target='menu'][role='listbox'][hidden]", count: 1
       assert_select "select[name='calendar_item[relative_anchor_id]'] option[value='']", text: "Choose an anchor...", count: 1
       assert_select "[data-relative-timing-summary]", text: /Starts 2 hr after Ceremony starts → Oct 1 5:00PM/
     end
@@ -91,6 +95,21 @@ module Events
       assert_select "input[name='calendar_item[relative_offset_display_hours]'][value='6']", count: 1
       assert_select "input[name='calendar_item[relative_offset_display_minutes]'][value='30']", count: 1
       assert_select "[data-relative-timing-summary]", text: /Starts 6 hr 30 min after Ceremony starts/
+    end
+
+    test "edit renders anchor search labels without doubled time spacing" do
+      anchor = @calendar.calendar_items.create!(
+        title: "Wedding Ceremony",
+        starts_at: Time.zone.local(2025, 10, 1, 14, 15),
+        duration_minutes: 45
+      )
+      item = calendar_items(:reception)
+
+      get edit_event_calendar_item_url(@event, item)
+
+      assert_response :success
+      assert_select "select[name='calendar_item[relative_anchor_id]'] option[value='#{anchor.id}']", text: /Wedding Ceremony \(Oct 1 2:15 PM/
+      assert_no_match "Oct 1  2:15 PM", response.body
     end
 
     test "update respects anchored return_to" do
