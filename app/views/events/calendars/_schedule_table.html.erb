@@ -327,7 +327,8 @@
                         class: "event-calendars__timing-form",
                         data: {
                           action: "submit->calendar-bulk-edit#prepareTimingSubmit",
-                          calendar_bulk_edit_target: "relativeTimingForm"
+                          calendar_bulk_edit_target: "relativeTimingForm",
+                          turbo: false
                         }
                       } do |form| %>
           <%= hidden_field_tag :return_to,
@@ -336,45 +337,42 @@
           <%= form.hidden_field :mode, value: "relative", data: { calendar_bulk_edit_target: "timingModeInput" } %>
           <%= form.hidden_field :target_item_id, data: { calendar_bulk_edit_target: "timingTargetInput" } %>
           <%= form.hidden_field :anchor_item_id, data: { calendar_bulk_edit_target: "timingAnchorInput" } %>
-          <%= form.hidden_field :anchor_point, value: "start", data: { calendar_bulk_edit_target: "timingAnchorPointInput" } %>
+          <%= form.hidden_field :anchor_point, value: "", data: { calendar_bulk_edit_target: "timingAnchorPointInput" } %>
 
           <div class="event-calendars__bulk-dialog-content">
             <header class="event-calendars__bulk-dialog-header">
               <p class="event-calendars__bulk-eyebrow">Timing</p>
               <h2 class="event-calendars__bulk-dialog-title" data-calendar-bulk-edit-target="timingDialogTitle">Change relative timing</h2>
               <p class="event-calendars__bulk-dialog-copy" data-calendar-bulk-edit-target="timingDialogCopy">
-                Choose which selected item should move, and which selected item should anchor it.
+                Choose which relationship to save.
               </p>
             </header>
 
             <div class="event-calendars__timing-fields" data-calendar-bulk-edit-target="relativeTimingFields">
-              <label class="event-calendars__timing-field">
-                <span>Move item</span>
-                <select class="event-form__select"
-                        data-calendar-bulk-edit-target="relativeTargetSelect"
-                        data-action="change->calendar-bulk-edit#timingSelectionChanged"></select>
-              </label>
-              <button type="button"
-                      class="event-calendars__bulk-button event-calendars__bulk-button--secondary event-calendars__timing-swap"
-                      data-action="calendar-bulk-edit#swapRelativeTiming">
-                Swap
-              </button>
-              <label class="event-calendars__timing-field">
-                <span>Anchor item</span>
-                <select class="event-form__select"
-                        data-calendar-bulk-edit-target="relativeAnchorSelect"
-                        data-action="change->calendar-bulk-edit#timingSelectionChanged"></select>
-              </label>
-              <label class="event-calendars__timing-field event-calendars__timing-field--small">
-                <span>Anchor point</span>
-                <select class="event-form__select"
-                        data-calendar-bulk-edit-target="relativeAnchorPointSelect"
-                        data-action="change->calendar-bulk-edit#timingSelectionChanged">
-                  <option value="start">starts</option>
-                  <option value="end">ends</option>
-                </select>
-              </label>
-              <p class="event-calendars__timing-summary" data-calendar-bulk-edit-target="relativeTimingSummary"></p>
+              <div class="event-calendars__timing-options" data-calendar-bulk-edit-target="relativeTimingOptions">
+                <button type="button"
+                        class="event-calendars__timing-option"
+                        data-calendar-bulk-edit-target="relativeTimingOption"
+                        data-action="calendar-bulk-edit#selectRelativeTimingOption"
+                        data-timing-option-index="0"></button>
+                <button type="button"
+                        class="event-calendars__timing-option"
+                        data-calendar-bulk-edit-target="relativeTimingOption"
+                        data-action="calendar-bulk-edit#selectRelativeTimingOption"
+                        data-timing-option-index="1"></button>
+              </div>
+              <div class="event-calendars__timing-anchor-options" data-calendar-bulk-edit-target="relativeAnchorPointOptions">
+                <button type="button"
+                        class="event-calendars__timing-anchor-option"
+                        data-calendar-bulk-edit-target="relativeAnchorPointOption"
+                        data-action="calendar-bulk-edit#selectRelativeAnchorPoint"
+                        data-timing-anchor-point="start"></button>
+                <button type="button"
+                        class="event-calendars__timing-anchor-option"
+                        data-calendar-bulk-edit-target="relativeAnchorPointOption"
+                        data-action="calendar-bulk-edit#selectRelativeAnchorPoint"
+                        data-timing-anchor-point="end"></button>
+              </div>
             </div>
 
             <div class="event-calendars__timing-fields event-calendars__timing-fields--absolute"

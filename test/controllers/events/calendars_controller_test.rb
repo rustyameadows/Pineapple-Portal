@@ -42,6 +42,15 @@ module Events
       assert_select "button[data-calendar-bulk-edit-target='relativeTimingButton']", text: "Change relative timing", count: 1
       assert_select "button[data-calendar-bulk-edit-target='absoluteTimingButton']", text: "Make absolute", count: 1
       assert_select "form[action='#{event_calendar_timing_conversion_path(@event)}'][method='post']", count: 1
+      assert_select "form[action='#{event_calendar_timing_conversion_path(@event)}'][method='post'][data-turbo='false']", count: 1
+      assert_select "button[data-calendar-bulk-edit-target='relativeTimingOption']", count: 2
+      assert_select "button[data-calendar-bulk-edit-target='relativeAnchorPointOption']", count: 2
+      assert_select "select[data-calendar-bulk-edit-target='relativeAnchorPointSelect']", count: 0
+      assert_select "select[data-calendar-bulk-edit-target='relativeTargetSelect']", count: 0
+      assert_select "select[data-calendar-bulk-edit-target='relativeAnchorSelect']", count: 0
+      assert_no_match "Move item", response.body
+      assert_no_match "Anchor item", response.body
+      assert_no_match "Swap", response.body
       assert_select "tr[data-calendar-item-id][data-calendar-item-title][data-calendar-item-start-at]", minimum: 1
     end
 

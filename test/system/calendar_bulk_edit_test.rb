@@ -38,6 +38,44 @@ class CalendarBulkEditTest < ApplicationSystemTestCase
     assert_equal "Golden Pine Events", @ceremony.reload.vendor_name
   end
 
+  test "run of show relative timing sheet offers two relationship choices" do
+    login_as_planner
+    visit event_calendar_path(@event)
+
+    check_bulk_item(@ceremony)
+    check_bulk_item(@reception)
+
+    click_button "Change relative timing"
+
+    within "dialog[open]" do
+      top_row_anchor = ActionView::RecordIdentifier.dom_id(@ceremony, :timeline_row)
+      assert_equal "#{event_calendar_path(@event)}##{top_row_anchor}",
+                   find("[data-calendar-bulk-edit-target='timingReturnToInput']", visible: :all).value
+      assert_text "Choose which relationship to save."
+      assert_no_text "Move item"
+      assert_no_text "Anchor item"
+      assert_no_button "Swap"
+      assert_no_selector "select[data-calendar-bulk-edit-target='relativeAnchorPointSelect']"
+      assert_button "Ceremony will start 2 hr before Reception starts → Oct 1 3:00PM"
+      assert_button "Reception will start 2 hr after Ceremony starts → Oct 1 5:00PM"
+      assert_button "Anchor to selected item start", disabled: true
+      assert_button "Anchor to selected item end", disabled: true
+      assert_selector "button[data-calendar-bulk-edit-target='timingSubmitButton'][disabled]"
+
+      find("[data-calendar-bulk-edit-target='relativeTimingOption'][data-timing-option-index='1']").click
+      assert_button "Anchor to Ceremony start"
+      assert_button "Anchor to Ceremony end"
+      assert_selector "button[data-calendar-bulk-edit-target='timingSubmitButton'][disabled]"
+
+      find("[data-calendar-bulk-edit-target='relativeAnchorPointOption'][data-timing-anchor-point='end']").click
+      assert_button "Reception will start 1 hr 15 min after Ceremony ends → Oct 1 5:00PM"
+      assert_equal @reception.id.to_s, find("[data-calendar-bulk-edit-target='timingTargetInput']", visible: :all).value
+      assert_equal @ceremony.id.to_s, find("[data-calendar-bulk-edit-target='timingAnchorInput']", visible: :all).value
+      assert_equal "end", find("[data-calendar-bulk-edit-target='timingAnchorPointInput']", visible: :all).value
+      assert_no_selector "button[data-calendar-bulk-edit-target='timingSubmitButton'][disabled]"
+    end
+  end
+
   test "run of show filter bar uses labeled sections and wide desktop alignment" do
     login_as_planner
     page.current_window.resize_to(1800, 1400)

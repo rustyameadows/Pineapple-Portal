@@ -31,14 +31,14 @@ export default class extends Controller {
     "panel",
     "returnLink",
     "returnToInput",
-    "relativeAnchorPointSelect",
-    "relativeAnchorSelect",
-    "relativeTargetSelect",
+    "relativeAnchorPointOption",
+    "relativeAnchorPointOptions",
     "relativeTimingButton",
     "relativeTimingDialog",
     "relativeTimingFields",
     "relativeTimingForm",
-    "relativeTimingSummary",
+    "relativeTimingOption",
+    "relativeTimingOptions",
     "row",
     "searchableText",
     "searchInput",
@@ -206,20 +206,22 @@ export default class extends Controller {
     const items = this.selectedItemData
     if (items.length !== 2) return
 
-    const defaultTarget = this.defaultRelativeTarget(items)
-    const defaultAnchor = items.find((item) => item.id !== defaultTarget.id) || items[1]
-
-    this.populateTimingSelect(this.relativeTargetSelectTarget, items, defaultTarget.id)
-    this.populateTimingSelect(this.relativeAnchorSelectTarget, items, defaultAnchor.id)
-    this.relativeAnchorPointSelectTarget.value = "start"
+    this.relativeTimingItems = items
+    this.selectedRelativeTimingOptionIndex = null
+    this.selectedRelativeAnchorPoint = null
+    this.timingReturnRowId = items[0]?.rowId || ""
 
     this.timingModeInputTarget.value = "relative"
+    this.timingTargetInputTarget.value = ""
+    this.timingAnchorInputTarget.value = ""
+    this.timingAnchorPointInputTarget.value = ""
     this.relativeTimingFieldsTarget.hidden = false
     this.absoluteTimingFieldsTarget.hidden = true
     this.timingDialogTitleTarget.textContent = "Change relative timing"
-    this.timingDialogCopyTarget.textContent = "Choose which selected item should move, and which selected item should anchor it."
-    this.timingSubmitButtonTarget.textContent = "Save timing"
+    this.timingDialogCopyTarget.textContent = "Choose which relationship to save."
+    this.timingSubmitButtonTarget.textContent = "Save relationship"
 
+    this.updateReturnArtifacts()
     this.updateRelativeTimingPreview()
     this.showTimingDialog()
   }
@@ -231,6 +233,7 @@ export default class extends Controller {
     if (items.length !== 1 || !items[0].relative) return
 
     this.timingModeInputTarget.value = "absolute"
+    this.timingReturnRowId = items[0]?.rowId || ""
     this.timingTargetInputTarget.value = items[0].id
     this.timingAnchorInputTarget.value = ""
     this.timingAnchorPointInputTarget.value = "start"
@@ -242,20 +245,21 @@ export default class extends Controller {
     this.absoluteTimingSummaryTarget.textContent = this.absoluteTimingSummary(items[0])
     this.timingSubmitButtonTarget.disabled = !items[0].startAt
 
+    this.updateReturnArtifacts()
     this.showTimingDialog()
   }
 
-  timingSelectionChanged() {
-    this.ensureDistinctRelativeSelections()
+  selectRelativeTimingOption(event) {
+    event.preventDefault()
+
+    this.selectedRelativeTimingOptionIndex = Number(event.currentTarget.dataset.timingOptionIndex || 0)
     this.updateRelativeTimingPreview()
   }
 
-  swapRelativeTiming(event) {
+  selectRelativeAnchorPoint(event) {
     event.preventDefault()
 
-    const targetValue = this.relativeTargetSelectTarget.value
-    this.relativeTargetSelectTarget.value = this.relativeAnchorSelectTarget.value
-    this.relativeAnchorSelectTarget.value = targetValue
+    this.selectedRelativeAnchorPoint = event.currentTarget.dataset.timingAnchorPoint || "start"
     this.updateRelativeTimingPreview()
   }
 
@@ -264,7 +268,7 @@ export default class extends Controller {
 
     if (this.timingModeInputTarget.value === "relative") {
       this.updateRelativeTimingPreview()
-      if (!this.timingTargetInputTarget.value || !this.timingAnchorInputTarget.value) {
+      if (!this.timingTargetInputTarget.value || !this.timingAnchorInputTarget.value || !this.timingAnchorPointInputTarget.value) {
         event.preventDefault()
       }
     }
@@ -273,6 +277,11 @@ export default class extends Controller {
   closeTimingDialog() {
     if (!this.hasRelativeTimingDialogTarget) return
     if (!this.timingDialogOpen) return
+
+    this.relativeTimingItems = []
+    this.selectedRelativeTimingOptionIndex = null
+    this.selectedRelativeAnchorPoint = null
+    this.timingReturnRowId = ""
 
     if (typeof this.relativeTimingDialogTarget.close === "function") {
       this.relativeTimingDialogTarget.close()
@@ -393,62 +402,71 @@ export default class extends Controller {
     }
   }
 
-  populateTimingSelect(select, items, selectedId) {
-    select.innerHTML = ""
-
-    items.forEach((item) => {
-      const option = document.createElement("option")
-      option.value = item.id
-      option.textContent = item.title
-      option.selected = item.id === selectedId
-      select.append(option)
-    })
-  }
-
-  defaultRelativeTarget(items) {
-    const relativeItem = items.find((item) => item.relative)
-    return relativeItem || items[0]
-  }
-
-  ensureDistinctRelativeSelections() {
-    if (this.relativeTargetSelectTarget.value !== this.relativeAnchorSelectTarget.value) return
-
-    const nextAnchor = this.selectedItemData.find((item) => item.id !== this.relativeTargetSelectTarget.value)
-    if (nextAnchor) this.relativeAnchorSelectTarget.value = nextAnchor.id
-  }
-
   updateRelativeTimingPreview() {
-    const target = this.selectedItemById(this.relativeTargetSelectTarget.value)
-    const anchor = this.selectedItemById(this.relativeAnchorSelectTarget.value)
-    const anchorPoint = this.relativeAnchorPointSelectTarget.value || "start"
+    const items = this.relativeTimingItems || this.selectedItemData
+    const selectedAnchorPoint = this.selectedRelativeAnchorPoint
+    const displayAnchorPoint = selectedAnchorPoint || "start"
+    const options = this.relativeTimingOptionsFor(items, displayAnchorPoint)
+    const selectedOption = options[this.selectedRelativeTimingOptionIndex]
 
-    this.timingTargetInputTarget.value = target?.id || ""
-    this.timingAnchorInputTarget.value = anchor?.id || ""
-    this.timingAnchorPointInputTarget.value = anchorPoint
+    this.timingTargetInputTarget.value = selectedOption?.target?.id || ""
+    this.timingAnchorInputTarget.value = selectedOption?.anchor?.id || ""
+    this.timingAnchorPointInputTarget.value = selectedAnchorPoint || ""
+    this.timingSubmitButtonTarget.disabled = !(selectedOption?.valid && selectedAnchorPoint)
 
-    const summary = this.relativeTimingSummary(target, anchor, anchorPoint)
-    this.relativeTimingSummaryTarget.textContent = summary.text
-    this.timingSubmitButtonTarget.disabled = !summary.valid
+    this.relativeTimingOptionTargets.forEach((button, index) => {
+      const option = options[index]
+      button.textContent = option?.text || "Choose two scheduled items."
+      button.disabled = !(option?.valid)
+      button.classList.toggle("event-calendars__timing-option--selected", index === this.selectedRelativeTimingOptionIndex)
+      button.setAttribute("aria-pressed", index === this.selectedRelativeTimingOptionIndex ? "true" : "false")
+    })
+
+    this.updateRelativeAnchorPointOptions(selectedOption, selectedAnchorPoint)
+  }
+
+  relativeTimingOptionsFor(items, anchorPoint) {
+    if (items.length !== 2) return []
+
+    return [
+      this.relativeTimingSummary(items[0], items[1], anchorPoint),
+      this.relativeTimingSummary(items[1], items[0], anchorPoint)
+    ]
+  }
+
+  updateRelativeAnchorPointOptions(selectedOption, selectedAnchorPoint) {
+    const anchorTitle = selectedOption?.anchor?.title || "selected item"
+    const disabled = !(selectedOption?.valid)
+
+    this.relativeAnchorPointOptionTargets.forEach((button) => {
+      const anchorPoint = button.dataset.timingAnchorPoint || "start"
+      const isSelected = !disabled && selectedAnchorPoint === anchorPoint
+
+      button.textContent = `Anchor to ${anchorTitle} ${anchorPoint}`
+      button.disabled = disabled
+      button.classList.toggle("event-calendars__timing-anchor-option--selected", isSelected)
+      button.setAttribute("aria-pressed", isSelected ? "true" : "false")
+    })
   }
 
   relativeTimingSummary(target, anchor, anchorPoint) {
     if (!target || !anchor || target.id === anchor.id) {
-      return { valid: false, text: "Choose two different selected items." }
+      return { valid: false, text: "Choose two different selected items.", target, anchor }
     }
 
     if (!target.startAt) {
-      return { valid: false, text: `${target.title} does not have a scheduled start time.` }
+      return { valid: false, text: `${target.title} does not have a scheduled start time.`, target, anchor }
     }
 
     const baseIso = anchorPoint === "end" ? (anchor.endAt || anchor.startAt) : anchor.startAt
     if (!baseIso) {
-      return { valid: false, text: `${anchor.title} does not have a scheduled time.` }
+      return { valid: false, text: `${anchor.title} does not have a scheduled time.`, target, anchor }
     }
 
     const targetTime = new Date(target.startAt)
     const anchorTime = new Date(baseIso)
     if (Number.isNaN(targetTime.getTime()) || Number.isNaN(anchorTime.getTime())) {
-      return { valid: false, text: "Choose two scheduled items." }
+      return { valid: false, text: "Choose two scheduled items.", target, anchor }
     }
 
     const signedOffsetMinutes = Math.round((targetTime.getTime() - anchorTime.getTime()) / 60000)
@@ -460,12 +478,16 @@ export default class extends Controller {
 
     if (offsetMinutes === 0) {
       return {
+        target,
+        anchor,
         valid: true,
         text: `${target.title} will start when ${anchor.title} ${anchorPointLabel}${projectedSuffix}`
       }
     }
 
     return {
+      target,
+      anchor,
       valid: true,
       text: `${target.title} will start ${this.formatDuration(offsetMinutes)} ${direction} ${anchor.title} ${anchorPointLabel}${projectedSuffix}`
     }
@@ -582,7 +604,7 @@ export default class extends Controller {
     }
 
     if (this.hasTimingReturnToInputTarget) {
-      this.timingReturnToInputTarget.value = filteredUrl
+      this.timingReturnToInputTarget.value = this.returnUrlWithRow(filteredUrl, this.timingReturnRowId)
     }
 
     this.returnLinkTargets.forEach((link) => {
@@ -627,6 +649,10 @@ export default class extends Controller {
     return params.toString()
   }
 
+  returnUrlWithRow(baseUrl, rowId) {
+    return rowId ? `${baseUrl}#${rowId}` : baseUrl
+  }
+
   buildHrefWithReturnTo(basePath, returnTo) {
     const url = new URL(basePath, window.location.origin)
     url.searchParams.set("return_to", returnTo)
@@ -660,16 +686,13 @@ export default class extends Controller {
       .replace(/^-+|-+$/g, "")
   }
 
-  selectedItemById(id) {
-    return this.selectedItemData.find((item) => item.id === id)
-  }
-
   itemDataForCheckbox(checkbox) {
     const row = checkbox.closest("[data-calendar-item-id]")
     if (!row) return null
 
     return {
       id: row.dataset.calendarItemId || "",
+      rowId: row.id || "",
       title: row.dataset.calendarItemTitle || "Selected item",
       startAt: row.dataset.calendarItemStartAt || "",
       endAt: row.dataset.calendarItemEndAt || "",

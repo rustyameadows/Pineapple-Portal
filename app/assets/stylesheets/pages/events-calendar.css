@@ -856,9 +856,9 @@
 
 .event-calendars__timing-fields {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1.2fr) minmax(9rem, 0.5fr);
-  gap: 0.75rem;
-  align-items: end;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
 }
 
 .event-calendars__timing-fields[hidden] {
@@ -889,10 +889,69 @@
   text-transform: none;
 }
 
-.event-calendars__timing-swap {
-  align-self: end;
-  min-width: 5.5rem;
+.event-calendars__timing-options {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.event-calendars__timing-anchor-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.event-calendars__timing-option {
+  width: 100%;
+  min-height: 4.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 72%, white);
   border-radius: 8px;
+  background: color-mix(in srgb, var(--color-light-cream) 72%, white);
+  color: var(--color-dark-brown);
+  font: inherit;
+  font-size: 0.98rem;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.event-calendars__timing-anchor-option {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 72%, white);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--color-dark-brown);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  text-align: center;
+  cursor: pointer;
+}
+
+.event-calendars__timing-option:not(:disabled):hover,
+.event-calendars__timing-option:not(:disabled):focus,
+.event-calendars__timing-anchor-option:not(:disabled):hover,
+.event-calendars__timing-anchor-option:not(:disabled):focus {
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-sea-foam));
+  background: color-mix(in srgb, var(--color-accent) 9%, white);
+  outline: none;
+}
+
+.event-calendars__timing-option--selected,
+.event-calendars__timing-anchor-option--selected {
+  border-color: var(--color-dark-brown);
+  background: var(--color-white);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-dark-brown) 12%, transparent);
+}
+
+.event-calendars__timing-option:disabled,
+.event-calendars__timing-anchor-option:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .event-calendars__timing-summary {
@@ -1378,8 +1437,8 @@
     grid-template-columns: 1fr;
   }
 
-  .event-calendars__timing-swap {
-    width: 100%;
+  .event-calendars__timing-anchor-options {
+    grid-template-columns: 1fr;
   }
 
   .event-calendars__filter-bar,
