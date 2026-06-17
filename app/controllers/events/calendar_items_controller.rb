@@ -129,7 +129,7 @@ module Events
         @calendar.calendar_items.order(:title).map do |item|
           next if @item && item.id == @item.id
 
-          [anchor_label(item), item.id]
+          [anchor_label(item), item.id, anchor_option_attributes(item)]
         end
       ).compact
       @default_start_time = default_calendar_start_time
@@ -146,6 +146,16 @@ module Events
                      "TBD"
                    end
       "#{item.title} (#{time_label})"
+    end
+
+    def anchor_option_attributes(item)
+      {
+        data: {
+          anchor_title: item.title,
+          anchor_start_at: item.effective_starts_at&.iso8601,
+          anchor_end_at: item.effective_ends_at&.iso8601
+        }.compact
+      }
     end
 
     def item_params

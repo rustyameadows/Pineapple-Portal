@@ -69,7 +69,7 @@ module Events
       assert_select "input[name='calendar_item[relative_offset_value]'][value='2']", count: 1
       assert_select "select[name='calendar_item[relative_offset_unit]'] option[selected][value='hours']", text: "Hours", count: 1
       assert_select "select[name='calendar_item[relative_anchor_id]'] option[value='']", text: "Choose an anchor...", count: 1
-      assert_select ".calendar-item-form__timing-summary", text: /Starts 2 hours after Ceremony starts/
+      assert_select "[data-relative-timing-summary]", text: /Starts 2 hours after Ceremony starts → Oct 1 5:00PM/
     end
 
     test "update respects anchored return_to" do

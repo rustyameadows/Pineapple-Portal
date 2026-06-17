@@ -113,17 +113,28 @@
       <% offset_unit_label = offset_value.to_f == 1.0 ? offset_unit.singularize : offset_unit %>
       <% relative_direction_label = item.relative_before? ? "before" : "after" %>
       <% relative_anchor_point_label = item.relative_to_anchor_end? ? "ends" : "starts" %>
+      <% relative_projected_start = nil %>
+      <% if item.relative_anchor.present? %>
+        <% anchor_base_time = item.relative_to_anchor_end? ? (item.relative_anchor.effective_ends_at || item.relative_anchor.effective_starts_at) : item.relative_anchor.effective_starts_at %>
+        <% if anchor_base_time %>
+          <% projected_offset_minutes = item.relative_offset_minutes.to_i %>
+          <% projected_offset_minutes *= -1 if item.relative_before? %>
+          <% relative_projected_start = anchor_base_time + projected_offset_minutes.minutes %>
+        <% end %>
+      <% end %>
+      <% relative_projected_label = relative_projected_start&.in_time_zone(@calendar.timezone)&.strftime("%b %-d %-l:%M%p")&.sub(/^Sep /, "Sept ") %>
+      <% relative_projected_suffix = relative_projected_label.present? ? " → #{relative_projected_label}" : "" %>
       <% relative_summary = if item.relative_anchor.present?
                               if offset_value.to_f.zero?
-                                "Starts when #{item.relative_anchor.title} #{relative_anchor_point_label}"
+                                "Starts when #{item.relative_anchor.title} #{relative_anchor_point_label}#{relative_projected_suffix}"
                               else
-                                "Starts #{offset_value} #{offset_unit_label} #{relative_direction_label} #{item.relative_anchor.title} #{relative_anchor_point_label}"
+                                "Starts #{offset_value} #{offset_unit_label} #{relative_direction_label} #{item.relative_anchor.title} #{relative_anchor_point_label}#{relative_projected_suffix}"
                               end
                             else
                               "Choose an anchor to preview relative timing."
                             end %>
 
-      <div class="calendar-item-form__relative-sentence">
+      <div class="calendar-item-form__relative-sentence" data-calendar-timezone="<%= @calendar.timezone %>">
         <span class="calendar-item-form__sentence-text">Start this item</span>
 
         <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--offset">
@@ -404,6 +415,7 @@
       var absoluteSummary = form.querySelector("[data-absolute-timing-summary]");
       var relativeSummary = form.querySelector("[data-relative-timing-summary]");
       var relativeInputs = form.querySelectorAll("[data-relative-summary-input]");
+      var relativeSentence = form.querySelector(".calendar-item-form__relative-sentence");
 
       function syncTiming() {
         var mode = Array.from(radios).find(function(r) { return r.checked; });
@@ -421,13 +433,65 @@
       function selectedAnchorTitle() {
         var field = form.querySelector('[data-relative-summary-input="anchor"]');
         if (!field || !field.selectedOptions || !field.selectedOptions.length || !field.value) return "";
-        return field.selectedOptions[0].textContent.replace(/\s+\([^)]*\)\s*$/, "").trim();
+        return field.selectedOptions[0].dataset.anchorTitle || field.selectedOptions[0].textContent.replace(/\s+\([^)]*\)\s*$/, "").trim();
       }
 
       function pluralizedUnit(value, unit) {
         var numericValue = Number(value);
         var singular = unit.replace(/s$/, "");
         return numericValue === 1 ? singular : unit;
+      }
+
+      function offsetMinutesFor(value, unit) {
+        var numericValue = Number(value || 0);
+        if (!Number.isFinite(numericValue)) return null;
+
+        var multiplier = 1;
+        if (unit === "hours") multiplier = 60;
+        if (unit === "days") multiplier = 60 * 24;
+        if (unit === "weeks") multiplier = 60 * 24 * 7;
+        if (unit === "months") multiplier = 60 * 24 * 30;
+
+        return numericValue * multiplier;
+      }
+
+      function formatProjectedTime(date) {
+        var timezone = relativeSentence?.dataset.calendarTimezone || undefined;
+        var formatter = new Intl.DateTimeFormat("en-US", {
+          timeZone: timezone,
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true
+        });
+        var parts = {};
+
+        formatter.formatToParts(date).forEach(function(part) {
+          if (part.type !== "literal") parts[part.type] = part.value;
+        });
+
+        var month = parts.month === "Sep" ? "Sept" : parts.month;
+        return month + " " + parts.day + " " + parts.hour + ":" + parts.minute + parts.dayPeriod;
+      }
+
+      function projectedTimeSuffix(offsetValue, unit, direction, anchorPoint) {
+        var anchorField = form.querySelector('[data-relative-summary-input="anchor"]');
+        if (!anchorField || !anchorField.selectedOptions || !anchorField.selectedOptions.length || !anchorField.value) return "";
+
+        var selectedAnchor = anchorField.selectedOptions[0];
+        var baseIso = anchorPoint === "ends"
+          ? (selectedAnchor.dataset.anchorEndAt || selectedAnchor.dataset.anchorStartAt)
+          : selectedAnchor.dataset.anchorStartAt;
+        if (!baseIso) return "";
+
+        var baseTime = new Date(baseIso);
+        var offsetMinutes = offsetMinutesFor(offsetValue, unit);
+        if (Number.isNaN(baseTime.getTime()) || offsetMinutes === null) return "";
+
+        if (direction === "before") offsetMinutes *= -1;
+
+        return " → " + formatProjectedTime(new Date(baseTime.getTime() + (offsetMinutes * 60 * 1000)));
       }
 
       function syncRelativeSummary() {
@@ -439,6 +503,7 @@
         var direction = selectedText("direction") || "after";
         var anchorPoint = selectedText("anchorPoint") || "starts";
         var unit = (selectedText("offsetUnit") || "minutes").toLowerCase();
+        var projection = projectedTimeSuffix(offsetValue, unit, direction, anchorPoint);
 
         if (!anchorTitle) {
           relativeSummary.textContent = "Choose an anchor to preview relative timing.";
@@ -446,11 +511,11 @@
         }
 
         if (!offsetValue || Number(offsetValue) === 0) {
-          relativeSummary.textContent = "Starts when " + anchorTitle + " " + anchorPoint;
+          relativeSummary.textContent = "Starts when " + anchorTitle + " " + anchorPoint + projection;
           return;
         }
 
-        relativeSummary.textContent = "Starts " + offsetValue + " " + pluralizedUnit(offsetValue, unit) + " " + direction + " " + anchorTitle + " " + anchorPoint;
+        relativeSummary.textContent = "Starts " + offsetValue + " " + pluralizedUnit(offsetValue, unit) + " " + direction + " " + anchorTitle + " " + anchorPoint + projection;
       }
 
       function syncAbsoluteSummary() {
