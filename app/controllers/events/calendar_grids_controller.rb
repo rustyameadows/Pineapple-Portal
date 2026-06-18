@@ -42,7 +42,7 @@ module Events
       ).call
 
       flash[result.success? ? :notice : :alert] = result.message
-      redirect_to grid_path
+      redirect_to safe_return_to(fallback: grid_path)
     end
 
     private
@@ -71,6 +71,7 @@ module Events
                end
       @tags = @calendar.event_calendar_tags.order(:position, :name)
       @statuses = CalendarItem.statuses.keys
+      @bulk_team_members = @event.team_members.where.not(role: User::ROLES[:client]).order(:name)
       @timezone = ActiveSupport::TimeZone[@calendar.timezone] || ActiveSupport::TimeZone[EventCalendar::DEFAULT_TIMEZONE]
       @anchor_options = build_anchor_options
     end
@@ -139,7 +140,16 @@ module Events
     end
 
     def bulk_params
-      params.fetch(:bulk, {}).permit(:bulk_action, :status, tag_ids: [])
+      params.fetch(:bulk, {}).permit(
+        :bulk_action,
+        :status,
+        :vendor_name,
+        :location_name,
+        :time_caption,
+        :additional_team_members,
+        tag_ids: [],
+        team_member_ids: []
+      )
     end
 
     def grid_path

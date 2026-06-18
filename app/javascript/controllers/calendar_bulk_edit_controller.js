@@ -43,6 +43,7 @@ export default class extends Controller {
     "searchableText",
     "searchInput",
     "selectionCount",
+    "statusRow",
     "tableShell",
     "tagsRow",
     "teamMembersRow",
@@ -355,6 +356,7 @@ export default class extends Controller {
 
   updateActionState() {
     const action = this.currentAction
+    const showStatus = action === "set_status"
     const showTags = action === "add_tags" || action === "remove_tags"
     const showVendor = action === "set_vendor"
     const showLocation = action === "set_location"
@@ -362,6 +364,7 @@ export default class extends Controller {
     const showTeamMembers = action === "add_team_members" || action === "remove_team_members"
     const showAdditionalTeamMembers = action === "set_additional_team_members"
 
+    if (this.hasStatusRowTarget) this.statusRowTarget.hidden = !showStatus
     if (this.hasTagsRowTarget) this.tagsRowTarget.hidden = !showTags
     if (this.hasVendorRowTarget) this.vendorRowTarget.hidden = !showVendor
     if (this.hasLocationRowTarget) this.locationRowTarget.hidden = !showLocation

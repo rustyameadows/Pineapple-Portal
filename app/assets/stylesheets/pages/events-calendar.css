@@ -512,6 +512,10 @@
   left: calc(5rem + 1rem);
 }
 
+.event-layout--grid .event-calendars__bulk-toolbar {
+  left: 1rem;
+}
+
 .event-calendars__bulk-form {
   display: flex;
   align-items: center;
@@ -652,6 +656,10 @@
 
   .event-layout:has(.event-sidebar--collapsed) .event-calendars__bulk-toolbar {
     left: calc(5rem + 1rem);
+  }
+
+  .event-layout--grid .event-calendars__bulk-toolbar {
+    left: 1rem;
   }
 }
 

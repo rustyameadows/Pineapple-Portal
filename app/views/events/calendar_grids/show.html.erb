@@ -1,248 +1,457 @@
 <% provide :page_shell do %>
-  <div class="event-layout">
-    <%= render "events/sidebar_navigation", event: @event %>
-
+  <% grid_columns = [
+       { key: "title", label: "Title", default: true },
+       { key: "start", label: "Start", default: true },
+       { key: "duration", label: "Duration", default: true },
+       { key: "anchor", label: "Anchor", default: true },
+       { key: "relation", label: "Relation", default: true },
+       { key: "status", label: "Status", default: false },
+       { key: "tags", label: "Tags", default: false },
+       { key: "location", label: "Location", default: true },
+       { key: "vendor", label: "Vendor", default: true },
+       { key: "notes", label: "Notes", default: true }
+     ] %>
+  <% default_grid_column_keys = grid_columns.select { |column| column[:default] }.map { |column| column[:key] } %>
+  <% grid_bulk_action_options = [
+       ["Choose action", ""],
+       ["Set status", "set_status"],
+       ["Add tags", "add_tags"],
+       ["Remove tags", "remove_tags"],
+       ["Set vendor", "set_vendor"],
+       ["Clear vendor", "clear_vendor"],
+       ["Set location", "set_location"],
+       ["Clear location", "clear_location"],
+       ["Set time label", "set_time_label"],
+       ["Clear time label", "clear_time_label"],
+       ["Add PP members", "add_team_members"],
+       ["Remove PP members", "remove_team_members"],
+       ["Set other people", "set_additional_team_members"],
+       ["Clear other people", "clear_additional_team_members"],
+       ["Delete items", "delete_items"]
+     ] %>
+  <div class="event-layout event-layout--grid">
     <div class="event-layout__main">
       <%= render "shared/flash" %>
 
-      <section class="event-section calendar-grid" data-calendar-timezone="<%= @calendar.timezone %>">
+      <section class="event-section calendar-grid"
+               data-controller="calendar-bulk-edit"
+               data-calendar-timezone="<%= @calendar.timezone %>"
+               data-grid-column-storage-key="calendar-grid-columns:<%= request.path %>"
+               data-grid-default-columns="<%= default_grid_column_keys.join(',') %>">
         <header class="event-section__header calendar-grid__header">
           <div>
             <p class="event-section__eyebrow">Calendar Grid</p>
             <h1 class="event-section__title"><%= @view ? @view.name : @calendar.name %></h1>
-            <p class="event-section__subtitle">
-              Edit schedule details in a dense table. Times use <strong><%= calendar_timezone_label %></strong>.
-            </p>
           </div>
           <div class="calendar-grid__header-actions">
             <%= link_to "View mode", return_path, class: "event-section__cta event-section__cta--secondary" %>
           </div>
         </header>
 
-        <div class="calendar-grid__bulk" data-bulk-panel>
-          <h2 class="calendar-grid__bulk-title">Bulk actions</h2>
-          <%= form_with url: grid_bulk_path, method: :patch, scope: :bulk, local: true, html: { id: "calendar-grid-bulk-form", class: "calendar-grid__bulk-form" } do |form| %>
-            <div class="calendar-grid__bulk-row">
-              <%= form.label :bulk_action, "Action", class: "calendar-grid__bulk-label" %>
-              <%= form.select :bulk_action,
-                              options_for_select([
-                                ["Set status", "set_status"],
-                                ["Add tags", "add_tags"],
-                                ["Remove tags", "remove_tags"]
-                              ]),
-                              {},
-                              class: "calendar-grid__bulk-select" %>
-            </div>
-
-            <div class="calendar-grid__bulk-row" data-calendar-grid-bulk-target="status">
-              <%= form.label :status, "Status", class: "calendar-grid__bulk-label" %>
-              <%= form.select :status,
-                              options_for_select(@statuses.map { |status| [status.humanize, status] }),
-                              {},
-                              class: "calendar-grid__bulk-select" %>
-            </div>
-
-            <div class="calendar-grid__bulk-row" data-calendar-grid-bulk-target="tags">
-              <%= form.label :tag_ids, "Tags", class: "calendar-grid__bulk-label" %>
-              <%= hidden_field_tag "bulk[tag_ids][]", "", form: "calendar-grid-bulk-form", id: nil %>
-              <%= select_tag "bulk[tag_ids][]",
-                             options_from_collection_for_select(@tags, :id, :name),
-                             multiple: true,
-                             size: 4,
-                             class: "calendar-grid__bulk-select calendar-grid__bulk-select--tags" %>
-            </div>
-
-            <div class="calendar-grid__bulk-actions">
-              <%= form.submit "Apply", class: "event-section__cta" %>
-            </div>
-
-            <p class="calendar-grid__bulk-hint">Select rows with the checkboxes before applying a bulk action.</p>
-          <% end %>
+        <div class="calendar-grid__column-controls" data-grid-column-controls>
+          <div class="calendar-grid__column-controls-header">
+            <span class="calendar-grid__column-controls-label">Columns</span>
+            <button type="button" class="calendar-grid__column-reset" data-grid-column-reset>Reset</button>
+          </div>
+          <div class="calendar-grid__column-toggle-list" role="group" aria-label="Grid columns">
+            <% grid_columns.each do |column| %>
+              <label class="calendar-grid__column-toggle">
+                <%= check_box_tag "grid_column_#{column[:key]}",
+                                  column[:key],
+                                  column[:default],
+                                  data: { grid_column_toggle: true } %>
+                <span><%= column[:label] %></span>
+              </label>
+            <% end %>
+          </div>
         </div>
 
         <% if @items.any? %>
-          <div class="calendar-grid__table-wrapper">
-            <table class="calendar-grid__table">
-              <thead>
-                <tr>
-                  <th scope="col" class="calendar-grid__column--select">Select</th>
-                  <th scope="col">Title</th>
-                  <th scope="col">Start</th>
-                  <th scope="col">Duration</th>
-                  <th scope="col">Anchor</th>
-                  <th scope="col">Relation</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Tags</th>
-                  <th scope="col">Location</th>
-                  <th scope="col">Vendor</th>
-                  <th scope="col">Notes</th>
-                  <th scope="col" class="calendar-grid__column--edit"></th>
-                  <th scope="col" class="calendar-grid__column--actions"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <% @items.each do |item| %>
-                  <% form_id = dom_id(item, :grid_form) %>
-                  <tr class="calendar-grid__row" data-grid-row>
-                    <td class="calendar-grid__cell calendar-grid__cell--select">
-                      <%= check_box_tag "item_ids[]", item.id, false, form: "calendar-grid-bulk-form", class: "calendar-grid__select", data: { bulk_toggle: true } %>
-                    </td>
-                    <td class="calendar-grid__cell">
-                      <%= text_field_tag "calendar_item[title]", item.title, form: form_id, class: "calendar-grid__input" %>
-                    </td>
-                    <td class="calendar-grid__cell">
-                      <% start_value = item.effective_starts_at&.in_time_zone(@timezone)&.strftime("%Y-%m-%dT%H:%M") %>
-                      <% if item.absolute? %>
-                        <%= text_field_tag "calendar_item[starts_at]", start_value, form: form_id, class: "calendar-grid__input", type: "datetime-local" %>
-                      <% else %>
-                        <%= text_field_tag "calendar_item[starts_at]", start_value, form: form_id, class: "calendar-grid__input", type: "datetime-local", disabled: true %>
-                        <p class="calendar-grid__hint">Projected from anchor.</p>
-                      <% end %>
-                    </td>
-                    <td class="calendar-grid__cell">
-                      <% duration_amount = item.duration_time_amount %>
-                      <div class="calendar-grid__time-amount calendar-grid__time-amount--duration">
-                        <%= number_field_tag "calendar_item[duration_display_value]",
-                                             duration_amount.value,
-                                             form: form_id,
-                                             class: "calendar-grid__input calendar-grid__input--mini",
-                                             min: 0,
-                                             step: 1,
-                                             placeholder: "0" %>
-                        <%= select_tag "calendar_item[duration_display_unit]",
-                                       options_for_select(time_amount_unit_options, duration_amount.unit || "days"),
-                                       form: form_id,
-                                       class: "calendar-grid__select calendar-grid__select--unit" %>
-                        <label class="calendar-grid__time-piece">
-                          <%= number_field_tag "calendar_item[duration_display_hours]",
-                                               duration_amount.hours,
-                                               form: form_id,
-                                               class: "calendar-grid__input calendar-grid__input--mini",
-                                               min: 0,
-                                               step: 0.25,
-                                               placeholder: "0" %>
-                          <span>hr</span>
-                        </label>
-                        <label class="calendar-grid__time-piece">
-                          <%= number_field_tag "calendar_item[duration_display_minutes]",
-                                               duration_amount.minutes,
-                                               form: form_id,
-                                               class: "calendar-grid__input calendar-grid__input--mini",
-                                               min: 0,
-                                               step: 1,
-                                               placeholder: "0" %>
-                          <span>min</span>
-                        </label>
-                      </div>
-                    </td>
-                    <td class="calendar-grid__cell calendar-grid__cell--anchor" data-anchor-cell>
-                      <%= select_tag "calendar_item[relative_anchor_id]",
-                                     options_for_select(anchor_options_for(item), item.relative_anchor_id),
-                                     form: form_id,
-                                     class: "calendar-grid__select calendar-grid__select--anchor",
-                                     data: {
-                                       anchor_select: true,
-                                       relative_summary_input: "anchor"
-                                     } %>
-                    </td>
-                    <td class="calendar-grid__cell calendar-grid__cell--relative" data-anchor-relation>
-                      <% offset_amount = item.relative_offset_time_amount %>
-                      <div class="calendar-grid__relative" data-anchor-controls style="<%= item.relative_anchor_id.present? ? '' : 'display:none;' %>">
-                        <%= number_field_tag "calendar_item[relative_offset_display_value]",
-                                             offset_amount.value,
-                                             form: form_id,
-                                             class: "calendar-grid__input calendar-grid__input--offset",
-                                             min: 0,
-                                             step: 1,
-                                             data: { relative_summary_input: "offsetValue" } %>
-                        <%= select_tag "calendar_item[relative_offset_display_unit]",
-                                       options_for_select(time_amount_unit_options, offset_amount.unit),
-                                       form: form_id,
-                                       class: "calendar-grid__select calendar-grid__select--unit",
-                                       data: { relative_summary_input: "offsetUnit" } %>
-                        <label class="calendar-grid__time-piece">
-                          <%= number_field_tag "calendar_item[relative_offset_display_hours]",
-                                               offset_amount.hours,
-                                               form: form_id,
-                                               class: "calendar-grid__input calendar-grid__input--offset",
-                                               min: 0,
-                                               step: 0.25,
-                                               data: { relative_summary_input: "offsetHours" } %>
-                          <span>hr</span>
-                        </label>
-                        <label class="calendar-grid__time-piece">
-                          <%= number_field_tag "calendar_item[relative_offset_display_minutes]",
-                                               offset_amount.minutes,
-                                               form: form_id,
-                                               class: "calendar-grid__input calendar-grid__input--offset",
-                                               min: 0,
-                                               step: 1,
-                                               data: { relative_summary_input: "offsetMinutes" } %>
-                          <span>min</span>
-                        </label>
-                        <%= select_tag "calendar_item[relative_before]",
-                                       options_for_select([["after", false], ["before", true]], item.relative_before?),
-                                       form: form_id,
-                                       class: "calendar-grid__select calendar-grid__select--direction",
-                                       data: { relative_summary_input: "direction" } %>
-                        <%= select_tag "calendar_item[relative_to_anchor_end]",
-                                       options_for_select([["starts", false], ["ends", true]], item.relative_to_anchor_end?),
-                                       form: form_id,
-                                       class: "calendar-grid__select calendar-grid__select--point",
-                                       data: { relative_summary_input: "anchorPoint" } %>
-                      </div>
-                      <p class="calendar-grid__hint calendar-grid__hint--summary" data-relative-summary><%= relative_timing_summary(item) %></p>
-                    </td>
-                    <td class="calendar-grid__cell">
-                      <%= select_tag "calendar_item[status]",
-                                     options_for_select(@statuses.map { |status| [status.humanize, status] }, item.status),
-                                     form: form_id,
-                                     class: "calendar-grid__select" %>
-                    </td>
-                    <td class="calendar-grid__cell calendar-grid__cell--tags">
-                      <%= hidden_field_tag "calendar_item[event_calendar_tag_ids][]", "", form: form_id, id: nil %>
-                      <div class="calendar-grid__tags" data-tags-container>
-                        <% @tags.each do |tag| %>
-                          <% checked = item.event_calendar_tag_ids.include?(tag.id) %>
-                          <label class="calendar-grid__tag-pill <%= 'calendar-grid__tag-pill--selected' if checked %>" style="<%= calendar_tag_style(tag) %>">
-                            <%= check_box_tag "calendar_item[event_calendar_tag_ids][]", tag.id, checked, form: form_id, class: "calendar-grid__tag-checkbox" %>
-                            <span class="calendar-grid__tag-color"></span>
-                            <span class="calendar-grid__tag-label"><%= tag.name %></span>
-                          </label>
-                        <% end %>
-                      </div>
-                    </td>
-                    <td class="calendar-grid__cell calendar-grid__cell--location">
-                      <%= text_field_tag "calendar_item[location_name]",
-                                         item.location_name,
-                                         form: form_id,
-                                         class: "calendar-grid__input",
-                                         data: { controller: "remote-options", remote_options_url_value: event_venue_options_path(@event), remote_options_target: "input" } %>
-                    </td>
-                    <td class="calendar-grid__cell calendar-grid__cell--vendor">
-                      <%= text_field_tag "calendar_item[vendor_name]",
-                                         item.vendor_name,
-                                         form: form_id,
-                                         class: "calendar-grid__input",
-                                         data: { controller: "remote-options", remote_options_url_value: event_vendor_options_path(@event), remote_options_target: "input" } %>
-                    </td>
-                    <td class="calendar-grid__cell calendar-grid__cell--notes">
-                      <%= text_area_tag "calendar_item[notes]", item.notes, form: form_id, rows: 2, class: "calendar-grid__textarea" %>
-                    </td>
-                    <td class="calendar-grid__cell calendar-grid__cell--edit">
-                      <%= link_to edit_event_calendar_item_path(@event, item, return_to: request.fullpath), class: "calendar-grid__edit" do %>
-                        <span class="calendar-grid__edit-icon" aria-hidden="true">✎</span>
-                        <span class="visually-hidden">Open full edit</span>
-                      <% end %>
-                    </td>
-                    <td class="calendar-grid__cell calendar-grid__cell--actions">
-                      <%= submit_tag "Save", form: form_id, class: "calendar-grid__save" %>
-                    </td>
+          <div class="calendar-grid__table-wrapper event-calendars__table-shell event-calendars__table-shell--bulk"
+               data-calendar-bulk-edit-target="tableShell"
+               id="calendar-bulk-edit-table">
+              <table class="calendar-grid__table">
+                <thead>
+                  <tr>
+                    <th scope="col" class="calendar-grid__column--select">Select</th>
+                    <th scope="col" data-grid-column="title">Title</th>
+                    <th scope="col" data-grid-column="start">Start</th>
+                    <th scope="col" data-grid-column="duration">Duration</th>
+                    <th scope="col" data-grid-column="anchor">Anchor</th>
+                    <th scope="col" data-grid-column="relation">Relation</th>
+                    <th scope="col" data-grid-column="status" hidden>Status</th>
+                    <th scope="col" data-grid-column="tags" hidden>Tags</th>
+                    <th scope="col" data-grid-column="location">Location</th>
+                    <th scope="col" data-grid-column="vendor">Vendor</th>
+                    <th scope="col" data-grid-column="notes">Notes</th>
+                    <th scope="col" class="calendar-grid__column--edit"></th>
+                    <th scope="col" class="calendar-grid__column--actions"></th>
                   </tr>
-                <% end %>
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  <% @items.each do |item| %>
+                    <% form_id = dom_id(item, :grid_form) %>
+                    <tr class="calendar-grid__row"
+                        data-grid-row
+                        data-calendar-bulk-edit-target="row">
+                      <td class="calendar-grid__cell calendar-grid__cell--select">
+                        <%= check_box_tag "item_ids[]",
+                                          item.id,
+                                          false,
+                                          form: "calendar-grid-bulk-form",
+                                          class: "calendar-grid__select event-calendars__bulk-checkbox",
+                                          data: {
+                                            bulk_toggle: true,
+                                            action: "calendar-bulk-edit#selectionChanged",
+                                            calendar_bulk_edit_target: "checkbox"
+                                          } %>
+                      </td>
+                      <td class="calendar-grid__cell" data-grid-column="title">
+                        <%= text_field_tag "calendar_item[title]", item.title, form: form_id, class: "calendar-grid__input" %>
+                      </td>
+                      <td class="calendar-grid__cell" data-grid-column="start">
+                        <% start_value = item.effective_starts_at&.in_time_zone(@timezone)&.strftime("%Y-%m-%dT%H:%M") %>
+                        <% if item.absolute? %>
+                          <%= text_field_tag "calendar_item[starts_at]", start_value, form: form_id, class: "calendar-grid__input", type: "datetime-local" %>
+                        <% else %>
+                          <%= text_field_tag "calendar_item[starts_at]", start_value, form: form_id, class: "calendar-grid__input", type: "datetime-local", disabled: true %>
+                          <p class="calendar-grid__hint">Projected from anchor.</p>
+                        <% end %>
+                      </td>
+                      <td class="calendar-grid__cell" data-grid-column="duration">
+                        <% duration_amount = item.duration_time_amount %>
+                        <div class="calendar-grid__time-amount calendar-grid__time-amount--duration">
+                          <%= number_field_tag "calendar_item[duration_display_value]",
+                                               duration_amount.value,
+                                               form: form_id,
+                                               class: "calendar-grid__input calendar-grid__input--mini",
+                                               min: 0,
+                                               step: 1,
+                                               placeholder: "0" %>
+                          <%= select_tag "calendar_item[duration_display_unit]",
+                                         options_for_select(time_amount_unit_options, duration_amount.unit || "days"),
+                                         form: form_id,
+                                         class: "calendar-grid__select calendar-grid__select--unit" %>
+                          <label class="calendar-grid__time-piece">
+                            <%= number_field_tag "calendar_item[duration_display_hours]",
+                                                 duration_amount.hours,
+                                                 form: form_id,
+                                                 class: "calendar-grid__input calendar-grid__input--mini",
+                                                 min: 0,
+                                                 step: 0.25,
+                                                 placeholder: "0" %>
+                            <span>hr</span>
+                          </label>
+                          <label class="calendar-grid__time-piece">
+                            <%= number_field_tag "calendar_item[duration_display_minutes]",
+                                                 duration_amount.minutes,
+                                                 form: form_id,
+                                                 class: "calendar-grid__input calendar-grid__input--mini",
+                                                 min: 0,
+                                                 step: 1,
+                                                 placeholder: "0" %>
+                            <span>min</span>
+                          </label>
+                        </div>
+                      </td>
+                      <td class="calendar-grid__cell calendar-grid__cell--anchor" data-anchor-cell data-grid-column="anchor">
+                        <%= select_tag "calendar_item[relative_anchor_id]",
+                                       options_for_select(anchor_options_for(item), item.relative_anchor_id),
+                                       form: form_id,
+                                       class: "calendar-grid__select calendar-grid__select--anchor",
+                                       data: {
+                                         anchor_select: true,
+                                         relative_summary_input: "anchor"
+                                       } %>
+                      </td>
+                      <td class="calendar-grid__cell calendar-grid__cell--relative" data-anchor-relation data-grid-column="relation">
+                        <% offset_amount = item.relative_offset_time_amount %>
+                        <div class="calendar-grid__relative" data-anchor-controls style="<%= item.relative_anchor_id.present? ? '' : 'display:none;' %>">
+                          <%= number_field_tag "calendar_item[relative_offset_display_value]",
+                                               offset_amount.value,
+                                               form: form_id,
+                                               class: "calendar-grid__input calendar-grid__input--offset",
+                                               min: 0,
+                                               step: 1,
+                                               data: { relative_summary_input: "offsetValue" } %>
+                          <%= select_tag "calendar_item[relative_offset_display_unit]",
+                                         options_for_select(time_amount_unit_options, offset_amount.unit),
+                                         form: form_id,
+                                         class: "calendar-grid__select calendar-grid__select--unit",
+                                         data: { relative_summary_input: "offsetUnit" } %>
+                          <label class="calendar-grid__time-piece">
+                            <%= number_field_tag "calendar_item[relative_offset_display_hours]",
+                                                 offset_amount.hours,
+                                                 form: form_id,
+                                                 class: "calendar-grid__input calendar-grid__input--offset",
+                                                 min: 0,
+                                                 step: 0.25,
+                                                 data: { relative_summary_input: "offsetHours" } %>
+                            <span>hr</span>
+                          </label>
+                          <label class="calendar-grid__time-piece">
+                            <%= number_field_tag "calendar_item[relative_offset_display_minutes]",
+                                                 offset_amount.minutes,
+                                                 form: form_id,
+                                                 class: "calendar-grid__input calendar-grid__input--offset",
+                                                 min: 0,
+                                                 step: 1,
+                                                 data: { relative_summary_input: "offsetMinutes" } %>
+                            <span>min</span>
+                          </label>
+                          <%= select_tag "calendar_item[relative_before]",
+                                         options_for_select([["after", false], ["before", true]], item.relative_before?),
+                                         form: form_id,
+                                         class: "calendar-grid__select calendar-grid__select--direction",
+                                         data: { relative_summary_input: "direction" } %>
+                          <%= select_tag "calendar_item[relative_to_anchor_end]",
+                                         options_for_select([["starts", false], ["ends", true]], item.relative_to_anchor_end?),
+                                         form: form_id,
+                                         class: "calendar-grid__select calendar-grid__select--point",
+                                         data: { relative_summary_input: "anchorPoint" } %>
+                        </div>
+                        <p class="calendar-grid__hint calendar-grid__hint--summary" data-relative-summary><%= relative_timing_summary(item) %></p>
+                      </td>
+                      <td class="calendar-grid__cell" data-grid-column="status" hidden>
+                        <%= select_tag "calendar_item[status]",
+                                       options_for_select(@statuses.map { |status| [status.humanize, status] }, item.status),
+                                       form: form_id,
+                                       class: "calendar-grid__select" %>
+                      </td>
+                      <td class="calendar-grid__cell calendar-grid__cell--tags" data-grid-column="tags" hidden>
+                        <%= hidden_field_tag "calendar_item[event_calendar_tag_ids][]", "", form: form_id, id: nil %>
+                        <div class="calendar-grid__tags" data-tags-container>
+                          <% @tags.each do |tag| %>
+                            <% checked = item.event_calendar_tag_ids.include?(tag.id) %>
+                            <label class="calendar-grid__tag-pill <%= 'calendar-grid__tag-pill--selected' if checked %>" style="<%= calendar_tag_style(tag) %>">
+                              <%= check_box_tag "calendar_item[event_calendar_tag_ids][]", tag.id, checked, form: form_id, class: "calendar-grid__tag-checkbox" %>
+                              <span class="calendar-grid__tag-color"></span>
+                              <span class="calendar-grid__tag-label"><%= tag.name %></span>
+                            </label>
+                          <% end %>
+                        </div>
+                      </td>
+                      <td class="calendar-grid__cell calendar-grid__cell--location" data-grid-column="location">
+                        <%= text_field_tag "calendar_item[location_name]",
+                                           item.location_name,
+                                           form: form_id,
+                                           class: "calendar-grid__input",
+                                           data: { controller: "remote-options", remote_options_url_value: event_venue_options_path(@event), remote_options_target: "input" } %>
+                      </td>
+                      <td class="calendar-grid__cell calendar-grid__cell--vendor" data-grid-column="vendor">
+                        <%= text_field_tag "calendar_item[vendor_name]",
+                                           item.vendor_name,
+                                           form: form_id,
+                                           class: "calendar-grid__input",
+                                           data: { controller: "remote-options", remote_options_url_value: event_vendor_options_path(@event), remote_options_target: "input" } %>
+                      </td>
+                      <td class="calendar-grid__cell calendar-grid__cell--notes" data-grid-column="notes">
+                        <%= text_area_tag "calendar_item[notes]", item.notes, form: form_id, rows: 2, class: "calendar-grid__textarea" %>
+                      </td>
+                      <td class="calendar-grid__cell calendar-grid__cell--edit">
+                        <%= link_to edit_event_calendar_item_path(@event, item, return_to: request.fullpath), class: "calendar-grid__edit" do %>
+                          <span class="calendar-grid__edit-icon" aria-hidden="true">✎</span>
+                          <span class="visually-hidden">Open full edit</span>
+                        <% end %>
+                      </td>
+                      <td class="calendar-grid__cell calendar-grid__cell--actions">
+                        <%= submit_tag "Save", form: form_id, class: "calendar-grid__save" %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
           </div>
+
+          <div class="event-calendars__bulk-toolbar calendar-grid__bulk-toolbar" data-calendar-bulk-edit-target="panel" hidden>
+            <%= form_with url: grid_bulk_path,
+                          method: :patch,
+                          scope: :bulk,
+                          local: true,
+                          html: {
+                            id: "calendar-grid-bulk-form",
+                            class: "event-calendars__bulk-form",
+                            data: {
+                              action: "submit->calendar-bulk-edit#prepareSubmit",
+                              calendar_bulk_edit_target: "form"
+                            }
+                          } do |form| %>
+              <%= hidden_field_tag :return_to,
+                                   request.fullpath,
+                                   data: { calendar_bulk_edit_target: "returnToInput" } %>
+
+              <div class="event-calendars__bulk-count">
+                <strong><span data-calendar-bulk-edit-target="selectionCount">0</span></strong>
+                <span>selected</span>
+              </div>
+
+              <div class="event-calendars__bulk-shortcuts" aria-label="Bulk selection shortcuts">
+                <button type="button"
+                        class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
+                        data-action="calendar-bulk-edit#toggleVisibleSelection"
+                        data-calendar-bulk-edit-target="visibleSelectionButton">
+                  Select all <%= @items.count %> item<%= "s" unless @items.count == 1 %>
+                </button>
+                <button type="button"
+                        class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
+                        data-action="calendar-bulk-edit#clearSelection">
+                  Deselect all
+                </button>
+              </div>
+
+              <div class="event-calendars__bulk-control">
+                <%= form.select :bulk_action,
+                                options_for_select(grid_bulk_action_options),
+                                {},
+                                class: "event-form__select event-calendars__bulk-select",
+                                aria: { label: "Bulk action" },
+                                data: {
+                                  action: "change->calendar-bulk-edit#actionChanged",
+                                  calendar_bulk_edit_target: "actionSelect"
+                                } %>
+              </div>
+
+              <div class="event-calendars__bulk-field event-calendars__bulk-field--input"
+                   data-calendar-bulk-edit-target="statusRow"
+                   hidden>
+                <%= form.select :status,
+                                options_for_select(@statuses.map { |status| [status.humanize, status] }),
+                                {},
+                                class: "event-calendars__bulk-input",
+                                aria: { label: "Status" } %>
+              </div>
+
+              <div class="event-calendars__bulk-field event-calendars__bulk-field--tags"
+                   data-calendar-bulk-edit-target="tagsRow"
+                   hidden>
+                <%= hidden_field_tag "bulk[tag_ids][]", "", id: nil %>
+                <div class="event-calendars__bulk-tag-list" role="group" aria-label="Tags">
+                  <% @tags.each do |tag| %>
+                    <% field_id = "grid_bulk_tag_#{tag.id}" %>
+                    <label class="calendar-item-form__pill calendar-item-form__pill--tag" style="<%= calendar_tag_style(tag) %>">
+                      <%= check_box_tag "bulk[tag_ids][]", tag.id, false, id: field_id %>
+                      <span><%= tag.name %></span>
+                    </label>
+                  <% end %>
+                </div>
+              </div>
+
+              <div class="calendar-item-form__autocomplete event-calendars__bulk-field event-calendars__bulk-field--input"
+                   data-calendar-bulk-edit-target="vendorRow"
+                   data-controller="custom-select"
+                   data-custom-select-url-value="<%= event_vendor_options_path(@event) %>"
+                   data-custom-select-link-url-value="<%= ensure_event_vendor_links_path(@event) %>"
+                   data-custom-select-link-kind-value="vendor"
+                   hidden>
+                <%= form.text_field :vendor_name,
+                                    placeholder: "Vendor",
+                                    autocomplete: "off",
+                                    aria: { label: "Vendor" },
+                                    class: "event-calendars__bulk-input",
+                                    data: {
+                                      custom_select_target: "input",
+                                      action: "input->custom-select#search focus->custom-select#search keydown->custom-select#handleInputKeydown"
+                                    } %>
+                <div class="calendar-item-form__autocomplete-menu" data-custom-select-target="menu" role="listbox" hidden></div>
+              </div>
+
+              <div class="calendar-item-form__autocomplete event-calendars__bulk-field event-calendars__bulk-field--input"
+                   data-calendar-bulk-edit-target="locationRow"
+                   data-controller="custom-select"
+                   data-custom-select-url-value="<%= event_venue_options_path(@event) %>"
+                   data-custom-select-link-url-value="<%= ensure_event_venue_links_path(@event) %>"
+                   data-custom-select-link-kind-value="venue"
+                   hidden>
+                <%= form.text_field :location_name,
+                                    placeholder: "Location",
+                                    autocomplete: "off",
+                                    aria: { label: "Location" },
+                                    class: "event-calendars__bulk-input",
+                                    data: {
+                                      custom_select_target: "input",
+                                      action: "input->custom-select#search focus->custom-select#search keydown->custom-select#handleInputKeydown"
+                                    } %>
+                <div class="calendar-item-form__autocomplete-menu" data-custom-select-target="menu" role="listbox" hidden></div>
+              </div>
+
+              <div class="event-calendars__bulk-field event-calendars__bulk-field--input"
+                   data-calendar-bulk-edit-target="timeLabelRow"
+                   hidden>
+                <%= form.text_field :time_caption,
+                                    placeholder: "Time label",
+                                    autocomplete: "off",
+                                    aria: { label: "Time label" },
+                                    class: "event-calendars__bulk-input" %>
+              </div>
+
+              <div class="event-calendars__bulk-field event-calendars__bulk-field--tags"
+                   data-calendar-bulk-edit-target="teamMembersRow"
+                   hidden>
+                <%= hidden_field_tag "bulk[team_member_ids][]", "", id: nil %>
+                <% if @bulk_team_members.any? %>
+                  <div class="calendar-item-form__pill-list calendar-item-form__pill-list--stack" role="group" aria-label="PP members">
+                    <% @bulk_team_members.each do |member| %>
+                      <% field_id = "grid_bulk_team_member_#{member.id}" %>
+                      <label class="calendar-item-form__pill" for="<%= field_id %>">
+                        <%= check_box_tag "bulk[team_member_ids][]", member.id, false, id: field_id %>
+                        <span><%= member.name %></span>
+                      </label>
+                    <% end %>
+                  </div>
+                <% else %>
+                  <p class="calendar-item-form__help-text">Assign planners from the event team to bulk edit PP members.</p>
+                <% end %>
+              </div>
+
+              <div class="event-calendars__bulk-field event-calendars__bulk-field--input"
+                   data-calendar-bulk-edit-target="additionalTeamMembersRow"
+                   hidden>
+                <%= form.text_field :additional_team_members,
+                                    placeholder: "Other people",
+                                    autocomplete: "off",
+                                    aria: { label: "Other people" },
+                                    class: "event-calendars__bulk-input" %>
+              </div>
+
+              <div class="event-calendars__bulk-actions">
+                <button type="button"
+                        class="event-calendars__bulk-button"
+                        data-action="calendar-bulk-edit#confirm"
+                        data-calendar-bulk-edit-target="applyButton"
+                        disabled>
+                  Apply
+                </button>
+              </div>
+            <% end %>
+          </div>
+
+          <dialog class="event-calendars__bulk-dialog"
+                  data-calendar-bulk-edit-target="dialog"
+                  data-action="click->calendar-bulk-edit#backdropClose">
+            <div class="event-calendars__bulk-dialog-content">
+              <header class="event-calendars__bulk-dialog-header">
+                <p class="event-calendars__bulk-eyebrow">Confirm Changes</p>
+                <h2 class="event-calendars__bulk-dialog-title">Apply bulk edit?</h2>
+                <p class="event-calendars__bulk-dialog-copy">
+                  This will apply <strong data-calendar-bulk-edit-target="actionLabel">the selected action</strong>
+                  to <strong><span data-calendar-bulk-edit-target="selectionCount">0</span> item(s)</strong>.
+                </p>
+              </header>
+              <div class="event-calendars__bulk-dialog-actions">
+                <button type="button"
+                        class="event-section__cta event-section__cta--secondary"
+                        data-action="calendar-bulk-edit#closeDialog">
+                  Cancel
+                </button>
+                <button type="button"
+                        class="event-section__cta"
+                        data-action="calendar-bulk-edit#submitConfirmed">
+                  Confirm changes
+                </button>
+              </div>
+            </div>
+          </dialog>
+
           <% @items.each do |item| %>
             <% form_id = dom_id(item, :grid_form) %>
             <%= form_with model: item,
@@ -264,28 +473,74 @@
 
 <% content_for :scripts do %>
   <script type="module">
-    document.addEventListener("DOMContentLoaded", () => {
-      const form = document.getElementById("calendar-grid-bulk-form");
-      if (!form) return;
-
-      const actionSelect = form.querySelector("select[name='bulk[bulk_action]']");
-      const statusRow = form.querySelector('[data-calendar-grid-bulk-target="status"]');
-      const tagsRow = form.querySelector('[data-calendar-grid-bulk-target="tags"]');
-
-      const updateVisibility = () => {
-        const action = actionSelect.value;
-        if (statusRow) statusRow.style.display = action === "set_status" ? "flex" : "none";
-        if (tagsRow) tagsRow.style.display = action === "add_tags" || action === "remove_tags" ? "flex" : "none";
-      };
-
-      if (actionSelect) {
-        actionSelect.addEventListener("change", updateVisibility);
-        updateVisibility();
-      }
-    });
-
     const gridRoot = document.querySelector(".calendar-grid");
     const timezone = gridRoot?.dataset.calendarTimezone || undefined;
+    const columnControls = document.querySelector("[data-grid-column-controls]");
+
+    if (gridRoot && columnControls) {
+      const storageKey = gridRoot.dataset.gridColumnStorageKey;
+      const defaultColumns = new Set((gridRoot.dataset.gridDefaultColumns || "").split(",").filter(Boolean));
+      const toggles = Array.from(columnControls.querySelectorAll("[data-grid-column-toggle]"));
+      const resetButton = columnControls.querySelector("[data-grid-column-reset]");
+      const columnKeys = toggles.map((toggle) => toggle.value);
+
+      const readStoredColumns = () => {
+        if (!storageKey || !window.sessionStorage) return null;
+
+        try {
+          const stored = JSON.parse(window.sessionStorage.getItem(storageKey));
+          if (!Array.isArray(stored)) return null;
+
+          const validColumns = stored.filter((column) => columnKeys.includes(column));
+          return validColumns.length ? new Set(validColumns) : null;
+        } catch (_error) {
+          return null;
+        }
+      };
+
+      const writeStoredColumns = (visibleColumns) => {
+        if (!storageKey || !window.sessionStorage) return;
+
+        try {
+          window.sessionStorage.setItem(storageKey, JSON.stringify(Array.from(visibleColumns)));
+        } catch (_error) {
+          // Session storage can be unavailable in private or locked-down browser contexts.
+        }
+      };
+
+      let visibleColumns = readStoredColumns() || new Set(defaultColumns);
+
+      const applyColumnVisibility = ({ persist = false } = {}) => {
+        toggles.forEach((toggle) => {
+          toggle.checked = visibleColumns.has(toggle.value);
+        });
+
+        document.querySelectorAll("[data-grid-column]").forEach((cell) => {
+          cell.hidden = !visibleColumns.has(cell.dataset.gridColumn);
+        });
+
+        if (persist) writeStoredColumns(visibleColumns);
+      };
+
+      toggles.forEach((toggle) => {
+        toggle.addEventListener("change", () => {
+          if (toggle.checked) {
+            visibleColumns.add(toggle.value);
+          } else {
+            visibleColumns.delete(toggle.value);
+          }
+
+          applyColumnVisibility({ persist: true });
+        });
+      });
+
+      resetButton?.addEventListener("click", () => {
+        visibleColumns = new Set(defaultColumns);
+        applyColumnVisibility({ persist: true });
+      });
+
+      applyColumnVisibility();
+    }
 
     const fieldFor = (row, name) => row.querySelector('[data-relative-summary-input="' + name + '"]');
 
@@ -439,23 +694,5 @@
       });
     });
 
-    const bulkPanel = document.querySelector("[data-bulk-panel]");
-    const bulkCheckboxes = Array.from(document.querySelectorAll("[data-bulk-toggle]"));
-
-    const updateBulkPanel = () => {
-      if (!bulkPanel) return;
-      const hasSelection = bulkCheckboxes.some((checkbox) => checkbox.checked);
-      bulkPanel.style.display = hasSelection ? "block" : "none";
-    };
-
-    if (bulkPanel) {
-      bulkPanel.style.display = "none";
-    }
-
-    bulkCheckboxes.forEach((checkbox) => {
-      checkbox.addEventListener("change", updateBulkPanel);
-    });
-
-    updateBulkPanel();
   </script>
 <% end %>

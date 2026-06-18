@@ -13,7 +13,30 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     get grid_event_calendar_url(@event)
     assert_response :success
     assert_select "h1", text: @calendar.name
+    assert_select ".event-layout.event-layout--grid", count: 1
+    assert_select ".event-sidebar", count: 0
+    assert_select ".event-section__subtitle", count: 0
+    assert_select "a[href='#{event_calendar_path(@event)}']", text: "View mode", count: 1
+    assert_select ".calendar-grid__column-controls", count: 1
+    assert_select "input[data-grid-column-toggle][value='title'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='start'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='duration'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='anchor'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='relation'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='location'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='vendor'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='notes'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='status'][checked='checked']", count: 0
+    assert_select "input[data-grid-column-toggle][value='tags'][checked='checked']", count: 0
+    assert_select "th[data-grid-column='status'][hidden]", text: "Status", count: 1
+    assert_select "th[data-grid-column='tags'][hidden]", text: "Tags", count: 1
+    assert_select ".calendar-grid__bulk", count: 0
+    assert_select ".calendar-grid__table-wrapper", count: 1
+    assert_select ".event-calendars__bulk-toolbar[hidden]", count: 1
     assert_select "form#calendar-grid-bulk-form select[name='bulk[bulk_action]']"
+    assert_select "form#calendar-grid-bulk-form option[value='set_vendor']", text: "Set vendor", count: 1
+    assert_select "[data-calendar-bulk-edit-target='statusRow'][hidden]", count: 1
+    assert_select "input.event-calendars__bulk-checkbox[data-calendar-bulk-edit-target='checkbox']", minimum: 1
     assert_select "option[value='set_locked']", count: 0
     assert_select "th", text: "Locked", count: 0
     assert_select "input[name='calendar_item[locked]']", count: 0
@@ -205,6 +228,22 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to grid_event_calendar_url(@event)
     assert_includes @item.reload.event_calendar_tag_ids, event_calendar_tags(:day_of).id
+  end
+
+  test "applies shared bulk toolbar vendor update and respects return_to" do
+    return_to = "#{grid_event_calendar_path(@event)}?grid=1"
+
+    patch grid_bulk_event_calendar_url(@event), params: {
+      return_to:,
+      item_ids: [@item.id],
+      bulk: {
+        bulk_action: "set_vendor",
+        vendor_name: "Shared Toolbar Vendor"
+      }
+    }
+
+    assert_redirected_to return_to
+    assert_equal "Shared Toolbar Vendor", @item.reload.vendor_name
   end
 
   test "does not expose bulk lock updates in grid mode" do
