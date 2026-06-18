@@ -89,9 +89,6 @@
       <%= yield %>
     <% end %>
     <%= yield :scripts %>
-    <% if defined?(RailsAgentAnnotator) %>
-      <%= rails_agent_annotator %>
-    <% end %>
 
 </body>
 </html>
