@@ -82,6 +82,8 @@ module Events
 
       assert_response :success
       assert_select "form.calendar-view-form", count: 1
+      assert_select "p.event-section__subtitle", count: 0
+      assert_select ".calendar-view-form__eyebrow", text: "View Details", count: 0
       assert_select "input[name='event_calendar_view[name]']", count: 1
       assert_select "input[name='event_calendar_view[slug]']", count: 0
       assert_select "input[name='event_calendar_view[hide_locked]']", count: 0
@@ -89,7 +91,20 @@ module Events
       assert_select ".calendar-view-form__choice-card input[type='radio'][value='day'][checked='checked']", count: 1
       assert_select ".calendar-item-form__pill.calendar-item-form__pill--tag", text: "Vendor", count: 1
       assert_select ".calendar-item-form__pill.calendar-item-form__pill--tag input[type='checkbox'][checked='checked']", minimum: 1
+      assert_select ".calendar-view-form__actions .calendar-item-form__actions-left button[form]", text: "Delete Derived Calendar", count: 1
+      assert_select ".calendar-view-form__actions .calendar-item-form__actions-right a", text: "Cancel", count: 1
+      assert_select ".calendar-view-form__actions .calendar-item-form__actions-right input[type='submit']", count: 1
+      assert_select ".calendar-view-form__danger-zone", count: 0
       assert_select ".event-form__group--checkbox", count: 0
+    end
+
+    test "new derived view form starts with name field after page title" do
+      get new_event_calendar_view_url(@event)
+
+      assert_response :success
+      assert_select "p.event-section__subtitle", count: 0
+      assert_select ".calendar-view-form__eyebrow", text: "View Details", count: 0
+      assert_select "input[name='event_calendar_view[name]']", count: 1
     end
 
     test "decision view uses monthly segments and shows item day in schedule column" do

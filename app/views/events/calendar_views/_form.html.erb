@@ -1,5 +1,6 @@
 <% form_url = view.persisted? ? event_calendar_view_path(@event, view) : event_calendar_views_path(@event) %>
 <% selected_tag_ids = Array(view.tag_filter).map(&:to_i) %>
+<% delete_form_id = "calendar-view-delete-form-#{view.id}" if view.persisted? %>
 <%= form_with model: view, url: form_url, class: "event-form calendar-view-form", method: (view.persisted? ? :patch : :post) do |form| %>
   <% if view.errors.any? %>
     <div class="event-form__errors">
@@ -13,10 +14,6 @@
   <% end %>
 
   <div class="calendar-view-form__panel">
-    <div class="calendar-view-form__section-header">
-      <p class="calendar-view-form__eyebrow">View Details</p>
-    </div>
-
     <div class="event-form__group">
       <%= form.label :name %>
       <%= form.text_field :name, required: true %>
@@ -84,8 +81,28 @@
     </div>
   </div>
 
-  <div class="event-form__actions calendar-view-form__actions">
-    <%= form.submit class: "event-form__submit" %>
-    <%= link_to "Cancel", event_calendar_path(@event), class: "event-form__cancel" %>
+  <div class="event-form__actions calendar-item-form__actions calendar-view-form__actions">
+    <% if view.persisted? %>
+      <div class="calendar-item-form__actions-left">
+        <%= button_tag "Delete Derived Calendar",
+                       type: "submit",
+                       form: delete_form_id,
+                       class: "event-form__submit event-form__submit--danger" %>
+      </div>
+    <% else %>
+      <div></div>
+    <% end %>
+    <div class="calendar-item-form__actions-right">
+      <%= link_to "Cancel", event_calendar_path(@event), class: "event-form__cancel" %>
+      <%= form.submit class: "event-form__submit" %>
+    </div>
   </div>
+<% end %>
+
+<% if view.persisted? %>
+  <%= form_with url: event_calendar_view_path(@event, view),
+                method: :delete,
+                id: delete_form_id,
+                data: { turbo_confirm: "Remove this derived calendar?" } do %>
+  <% end %>
 <% end %>

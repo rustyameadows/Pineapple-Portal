@@ -1572,7 +1572,9 @@
 }
 
 .calendar-view-form__panel:first-of-type {
-  margin-top: 0.5rem;
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .calendar-view-form__section-header {
@@ -1589,12 +1591,6 @@
   font-weight: var(--font-weight-semibold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-}
-
-.calendar-view-form__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem 1rem;
 }
 
 .calendar-view-form .event-form__group {
@@ -1694,18 +1690,7 @@
   padding-top: 1rem;
 }
 
-.calendar-view-form__danger-zone {
-  width: min(58rem, 100%);
-  margin-top: 1.5rem;
-  border-top: 1px solid color-mix(in srgb, var(--color-brown) 22%, transparent);
-  padding-top: 1rem;
-}
-
 @media (max-width: 760px) {
-  .calendar-view-form__grid {
-    grid-template-columns: 1fr;
-  }
-
   .calendar-view-form__choice-grid {
     grid-template-columns: 1fr;
   }
