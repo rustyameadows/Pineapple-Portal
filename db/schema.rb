@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_17_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_17_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -165,9 +165,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_17_120000) do
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "segment_granularity", default: "day", null: false
     t.index ["calendar_template_id", "slug"], name: "index_calendar_template_views_on_template_and_slug", unique: true
     t.index ["calendar_template_id"], name: "index_calendar_template_views_on_calendar_template_id"
     t.check_constraint "jsonb_typeof(tag_filter) = 'array'::text", name: "calendar_template_views_tag_filter_array"
+    t.check_constraint "segment_granularity::text = ANY (ARRAY['day'::character varying, 'month'::character varying]::text[])", name: "calendar_template_views_segment_granularity_valid"
   end
 
   create_table "calendar_templates", force: :cascade do |t|
@@ -321,9 +323,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_17_120000) do
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "segment_granularity", default: "day", null: false
     t.index ["event_calendar_id", "slug"], name: "index_event_calendar_views_on_calendar_and_slug", unique: true
     t.index ["event_calendar_id"], name: "index_event_calendar_views_on_event_calendar_id"
     t.check_constraint "jsonb_typeof(tag_filter) = 'array'::text", name: "event_calendar_views_tag_filter_array"
+    t.check_constraint "segment_granularity::text = ANY (ARRAY['day'::character varying, 'month'::character varying]::text[])", name: "event_calendar_views_segment_granularity_valid"
   end
 
   create_table "event_calendars", force: :cascade do |t|

@@ -1,14 +1,25 @@
 class EventCalendarView < ApplicationRecord
+  SEGMENT_GRANULARITIES = {
+    day: "day",
+    month: "month"
+  }.freeze
+
   belongs_to :event_calendar
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: { scope: :event_calendar_id }
+  validates :segment_granularity, inclusion: { in: SEGMENT_GRANULARITIES.values }
   validate :validate_calendar_is_master
   validate :validate_tag_filter
 
   before_validation :generate_slug, if: -> { slug.blank? && name.present? }
   before_validation :normalize_tag_filter
+  before_validation :default_segment_granularity
   scope :client_visible, -> { where(client_visible: true) }
+
+  def monthly_segments?
+    segment_granularity == SEGMENT_GRANULARITIES[:month]
+  end
 
   private
 
@@ -40,6 +51,10 @@ class EventCalendarView < ApplicationRecord
                         .reject(&:blank?)
                         .map { |value| value.to_i }
                         .uniq
+  end
+
+  def default_segment_granularity
+    self.segment_granularity = SEGMENT_GRANULARITIES[:day] if segment_granularity.blank?
   end
 
   def validate_tag_filter

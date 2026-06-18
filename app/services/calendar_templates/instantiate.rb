@@ -103,6 +103,7 @@ module CalendarTemplates
           tag_filter: mapped_tag_ids,
           hide_locked: template_view.hide_locked,
           client_visible: template_view.client_visible_by_default,
+          segment_granularity: template_view.segment_granularity,
           position: template_view.position
         )
       end

@@ -77,20 +77,38 @@ module Events
       assert_select "a.event-calendars__title-link[href='#{expected_href}']", text: item.title, count: 1
     end
 
-    test "decision view uses month year segment labels when no caption exists" do
+    test "decision view uses monthly segments and shows item day in schedule column" do
       get event_calendar_view_url(@event, @decision_view)
 
       assert_response :success
-      assert_select ".event-calendars__date-label", text: "September 2025", minimum: 1
+      assert_select ".event-calendars__date-label", text: "September 2025", count: 1
+      assert_select "td.event-calendars__schedule-column", text: "Sep 15", minimum: 1
+      assert_select "td.event-calendars__schedule-column", text: /12:00 PM/, count: 0
     end
 
-    test "decision view segment label uses caption when present" do
+    test "monthly decision view ignores time captions for segment labels" do
       calendar_items(:decision_flowers).update!(time_caption: "Contracts Month")
 
       get event_calendar_view_url(@event, @decision_view)
 
       assert_response :success
-      assert_select ".event-calendars__date-label", text: "Contracts Month", minimum: 1
+      assert_select ".event-calendars__date-label", text: "Contracts Month", count: 0
+      assert_select ".event-calendars__date-label", text: "September 2025", count: 1
+    end
+
+    test "view settings can switch segment granularity" do
+      patch event_calendar_view_url(@event, @non_decision_view), params: {
+        event_calendar_view: {
+          name: @non_decision_view.name,
+          slug: @non_decision_view.slug,
+          description: @non_decision_view.description,
+          segment_granularity: EventCalendarView::SEGMENT_GRANULARITIES[:month],
+          tag_filter: @non_decision_view.tag_filter
+        }
+      }
+
+      assert_redirected_to event_calendar_view_path(@event, @non_decision_view)
+      assert @non_decision_view.reload.monthly_segments?
     end
   end
 end

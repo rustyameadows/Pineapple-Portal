@@ -28,6 +28,20 @@
   </div>
 
   <div class="event-form__group">
+    <%= form.label :segment_granularity, "Timeline segments" %>
+    <%= form.select :segment_granularity,
+                    options_for_select(
+                      [
+                        ["Daily segments", EventCalendarView::SEGMENT_GRANULARITIES[:day]],
+                        ["Monthly segments", EventCalendarView::SEGMENT_GRANULARITIES[:month]]
+                      ],
+                      view.segment_granularity
+                    ),
+                    {},
+                    class: "event-form__select" %>
+  </div>
+
+  <div class="event-form__group">
     <%= form.label :tag_filter, "Include Tags" %>
     <% if @tags.any? %>
       <% selected_tag_ids = Array(view.tag_filter).map(&:to_i) %>

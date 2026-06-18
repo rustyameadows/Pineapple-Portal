@@ -38,6 +38,7 @@ module CalendarTemplates
         tag_filter: [@tag.id],
         hide_locked: false,
         client_visible_by_default: true,
+        segment_granularity: EventCalendarView::SEGMENT_GRANULARITIES[:month],
         position: 0
       )
     end
@@ -54,6 +55,7 @@ module CalendarTemplates
       assert_equal 2, calendar.calendar_items.count
       assert_equal 1, calendar.event_calendar_tags.count
       assert_equal 1, calendar.event_calendar_views.count
+      assert calendar.event_calendar_views.first.monthly_segments?
 
       ceremony = calendar.calendar_items.find_by(title: "Ceremony")
       setup = calendar.calendar_items.find_by(title: "Setup")

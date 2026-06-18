@@ -1,7 +1,10 @@
 <% items ||= [] %>
 <% calendar ||= nil %>
 <% group_by_date = !!group_by_date %>
+<% segment_granularity = local_assigns[:segment_granularity].presence || EventCalendarView::SEGMENT_GRANULARITIES[:day] %>
+<% monthly_segments = segment_granularity.to_s == EventCalendarView::SEGMENT_GRANULARITIES[:month] %>
 <% group_label_proc = local_assigns[:group_label_proc] %>
+<% schedule_label_proc = local_assigns[:schedule_label_proc] %>
 <% show_tags = true if local_assigns[:show_tags].nil? %>
 <% show_relative = !!local_assigns[:show_relative] %>
 <% show_status_first = !!local_assigns[:show_status_first] %>
@@ -431,8 +434,8 @@
     <tbody>
       <% current_bucket = nil %>
       <% items.each do |item| %>
-        <% bucket_key = calendar_item_date_bucket(item, calendar.timezone) %>
-        <% bucket_label = group_label_proc ? group_label_proc.call(item) : bucket_key %>
+        <% bucket_key = calendar_item_segment_key(item, calendar.timezone, segment_granularity) %>
+        <% bucket_label = group_label_proc ? group_label_proc.call(item) : calendar_item_segment_label(item, calendar.timezone, segment_granularity) %>
         <% if group_by_date && bucket_key != current_bucket %>
           <% current_bucket = bucket_key %>
           <tr class="event-calendars__date-row"
@@ -488,7 +491,14 @@
           <% if show_status_first %>
             <td class="event-calendars__status-value"><%= calendar_item_status_label(item) %></td>
           <% end %>
-          <td class="event-calendars__schedule-column" title="<%= tooltip.to_s %>"><%= calendar_item_time_only_label_with_marker(item, calendar.timezone) %></td>
+          <% schedule_label = if schedule_label_proc
+                                schedule_label_proc.call(item)
+                              elsif monthly_segments
+                                calendar_item_day_label_with_marker(item, calendar.timezone)
+                              else
+                                calendar_item_time_only_label_with_marker(item, calendar.timezone)
+                              end %>
+          <td class="event-calendars__schedule-column" title="<%= tooltip.to_s %>"><%= schedule_label %></td>
           <td class="event-calendars__title-column">
             <%= link_to title_text,
                         title_path,

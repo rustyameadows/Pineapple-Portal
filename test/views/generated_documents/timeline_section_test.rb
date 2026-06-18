@@ -62,6 +62,30 @@ class TimelineSectionTest < ActionView::TestCase
     assert_operator timeline_text.index("Shuttle to Photo Location"), :<, timeline_text.index("Photos at Garden")
   end
 
+  test "monthly segmented timeline view renders month headers and day column" do
+    decision_view = event_calendar_views(:decision_view)
+    calendar_items(:decision_flowers).update!(time_caption: "Contracts Month")
+    @segment.assign_attributes(
+      title: "Decision Calendar",
+      source_ref: {
+        "view_key" => DocumentSegment::TIMELINE_VIEW_KEY,
+        "options" => { "view_ref" => decision_view.id.to_s }
+      },
+      spec: {
+        "kind" => DocumentSegment::KINDS[:html_view],
+        "view_key" => DocumentSegment::TIMELINE_VIEW_KEY,
+        "label" => "Decision Calendar"
+      }
+    )
+
+    render template: "generated_documents/sections/timeline"
+
+    assert_select "table.generated-template--timeline__table thead th", text: "Day", count: 1
+    assert_select ".generated-template--timeline__date-row td", text: "September 2025", count: 1
+    assert_select ".generated-template--timeline__date-row td", text: "Contracts Month", count: 0
+    assert_select "td", text: "Sep 15", minimum: 1
+  end
+
   private
 
   def create_timeline_item(title:, starts_at:, tag:, duration_minutes: 30)

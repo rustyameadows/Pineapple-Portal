@@ -7,6 +7,7 @@ vendor_view:
     - <%= ActiveRecord::FixtureSet.identify(:vendor) %>
   hide_locked: true
   client_visible: true
+  segment_granularity: day
   position: 0
 
 decision_view:
@@ -16,4 +17,5 @@ decision_view:
   description: Key decisions and approvals.
   hide_locked: false
   client_visible: true
+  segment_granularity: month
   position: 1

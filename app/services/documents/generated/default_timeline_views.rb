@@ -24,6 +24,7 @@ module Documents
           view.description = config[:description]
           view.hide_locked = config.fetch(:hide_locked, false)
           view.client_visible = config.fetch(:client_visible, false)
+          view.segment_granularity = config.fetch(:segment_granularity, EventCalendarView::SEGMENT_GRANULARITIES[:day])
           view.tag_filter = tag_ids_for(config[:tag_names])
           view.save!
         end

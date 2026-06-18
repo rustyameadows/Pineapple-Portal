@@ -25,6 +25,14 @@ module Client
         assert_equal @view.description, subject.description
         assert subject.hide_locked?
         assert_equal Array(@view.tag_filter), subject.tag_filter
+        assert_equal @view.segment_granularity, subject.segment_granularity
+      end
+
+      test "run of show uses daily segments" do
+        subject = SelectedView.run_of_show(@calendar)
+
+        assert_equal EventCalendarView::SEGMENT_GRANULARITIES[:day], subject.segment_granularity
+        assert_not subject.monthly_segments?
       end
     end
   end
