@@ -136,115 +136,164 @@
                               <p class="event-calendars__bulk-dialog-copy" data-timing-dialog-summary><%= grid_timing_summary(item) %></p>
                             </header>
 
-                            <div class="calendar-grid__timing-sheet">
-                              <section class="calendar-grid__timing-panel">
-                                <div>
-                                  <h3 class="calendar-grid__timing-panel-title">Start</h3>
-                                  <p class="calendar-grid__timing-panel-copy">Use this when the item has a hard-coded time. Choosing an anchor below makes this projected instead.</p>
-                                </div>
-                                <label class="calendar-grid__field">
-                                  <span>Absolute start</span>
-                                  <%= text_field_tag "timing_dialog[starts_at]",
-                                                     start_value,
-                                                     type: "datetime-local",
-                                                     class: "calendar-grid__input",
-                                                     data: { timing_dialog_field: "startsAt" } %>
+                            <div class="calendar-grid__timing-sheet calendar-grid__timing-sheet--form">
+                              <div class="calendar-item-form__toggle calendar-grid__timing-mode-toggle">
+                                <label class="calendar-item-form__toggle-option">
+                                  <%= radio_button_tag "timing_dialog[#{item.id}][timing_mode]",
+                                                       "absolute",
+                                                       item.absolute?,
+                                                       data: { timing_dialog_field: "mode" } %>
+                                  <span>Absolute</span>
                                 </label>
-                              </section>
+                                <label class="calendar-item-form__toggle-option">
+                                  <%= radio_button_tag "timing_dialog[#{item.id}][timing_mode]",
+                                                       "relative",
+                                                       item.relative?,
+                                                       data: { timing_dialog_field: "mode" } %>
+                                  <span>Relative</span>
+                                </label>
+                              </div>
 
-                              <section class="calendar-grid__timing-panel">
-                                <div>
-                                  <h3 class="calendar-grid__timing-panel-title">Duration</h3>
+                              <div class="calendar-item-form__timing-group" data-timing-dialog-mode="absolute">
+                                <div class="event-form__group calendar-item-form__absolute-field">
+                                  <label>Date and time</label>
+                                  <div class="calendar-item__datetime calendar-item__datetime--absolute" data-timezone="<%= @calendar.timezone %>">
+                                    <div class="calendar-item__time-wrapper calendar-item__time-wrapper--absolute">
+                                      <%= text_field_tag "timing_dialog[starts_at]",
+                                                         start_value,
+                                                         type: "datetime-local",
+                                                         class: "calendar-item__time-field",
+                                                         data: { timing_dialog_field: "startsAt" } %>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div class="calendar-grid__time-amount calendar-grid__time-amount--sheet">
-                                  <%= number_field_tag "timing_dialog[duration_display_value]",
-                                                       duration_amount.value,
-                                                       class: "calendar-grid__input calendar-grid__input--mini",
-                                                       min: 0,
-                                                       step: 1,
-                                                       placeholder: "0",
-                                                       data: { timing_dialog_field: "durationValue" } %>
-                                  <%= select_tag "timing_dialog[duration_display_unit]",
-                                                 options_for_select(time_amount_unit_options, duration_amount.unit || "days"),
-                                                 class: "calendar-grid__select calendar-grid__select--unit",
-                                                 data: { timing_dialog_field: "durationUnit" } %>
-                                  <label class="calendar-grid__time-piece">
-                                    <%= number_field_tag "timing_dialog[duration_display_hours]",
-                                                         duration_amount.hours,
-                                                         class: "calendar-grid__input calendar-grid__input--mini",
-                                                         min: 0,
-                                                         step: 0.25,
-                                                         placeholder: "0",
-                                                         data: { timing_dialog_field: "durationHours" } %>
-                                    <span>hr</span>
-                                  </label>
-                                  <label class="calendar-grid__time-piece">
-                                    <%= number_field_tag "timing_dialog[duration_display_minutes]",
-                                                         duration_amount.minutes,
-                                                         class: "calendar-grid__input calendar-grid__input--mini",
+                              </div>
+
+                              <div class="calendar-item-form__timing-group" data-timing-dialog-mode="relative">
+                                <div class="calendar-item-form__relative-sentence" data-calendar-timezone="<%= @calendar.timezone %>">
+                                  <span class="calendar-item-form__sentence-text">Start this item</span>
+
+                                  <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--offset">
+                                    <%= number_field_tag "timing_dialog[relative_offset_display_value]",
+                                                         offset_amount.value,
+                                                         class: "calendar-item-form__sentence-control calendar-item-form__sentence-control--number",
                                                          min: 0,
                                                          step: 1,
-                                                         placeholder: "0",
-                                                         data: { timing_dialog_field: "durationMinutes" } %>
-                                    <span>min</span>
-                                  </label>
-                                </div>
-                              </section>
+                                                         data: { timing_dialog_field: "offsetValue" } %>
+                                  </div>
 
-                              <section class="calendar-grid__timing-panel">
-                                <div>
-                                  <h3 class="calendar-grid__timing-panel-title">Anchor</h3>
-                                  <p class="calendar-grid__timing-panel-copy">Choose an anchor to make this item relative. Leave it as none for an absolute start.</p>
-                                </div>
-                                <%= select_tag "timing_dialog[relative_anchor_id]",
-                                               options_for_select(anchor_options_for(item), item.relative_anchor_id),
-                                               class: "calendar-grid__select calendar-grid__select--anchor calendar-grid__select--sheet-anchor",
-                                               data: { timing_dialog_field: "anchor" } %>
-                              </section>
+                                  <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--unit">
+                                    <%= select_tag "timing_dialog[relative_offset_display_unit]",
+                                                   options_for_select(time_amount_unit_options, offset_amount.unit),
+                                                   class: "calendar-item-form__sentence-control",
+                                                   data: { timing_dialog_field: "offsetUnit" } %>
+                                  </div>
 
-                              <section class="calendar-grid__timing-panel">
-                                <div>
-                                  <h3 class="calendar-grid__timing-panel-title">Relationship</h3>
-                                </div>
-                                <div class="calendar-grid__relative calendar-grid__relative--sheet">
-                                  <%= number_field_tag "timing_dialog[relative_offset_display_value]",
-                                                       offset_amount.value,
-                                                       class: "calendar-grid__input calendar-grid__input--offset",
-                                                       min: 0,
-                                                       step: 1,
-                                                       data: { timing_dialog_field: "offsetValue" } %>
-                                  <%= select_tag "timing_dialog[relative_offset_display_unit]",
-                                                 options_for_select(time_amount_unit_options, offset_amount.unit),
-                                                 class: "calendar-grid__select calendar-grid__select--unit",
-                                                 data: { timing_dialog_field: "offsetUnit" } %>
-                                  <label class="calendar-grid__time-piece">
+                                  <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--hours">
                                     <%= number_field_tag "timing_dialog[relative_offset_display_hours]",
                                                          offset_amount.hours,
-                                                         class: "calendar-grid__input calendar-grid__input--offset",
+                                                         class: "calendar-item-form__sentence-control calendar-item-form__sentence-control--number",
                                                          min: 0,
                                                          step: 0.25,
                                                          data: { timing_dialog_field: "offsetHours" } %>
-                                    <span>hr</span>
-                                  </label>
-                                  <label class="calendar-grid__time-piece">
+                                    <span class="calendar-item-form__sentence-unit-label">hr</span>
+                                  </div>
+
+                                  <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--minutes">
                                     <%= number_field_tag "timing_dialog[relative_offset_display_minutes]",
                                                          offset_amount.minutes,
-                                                         class: "calendar-grid__input calendar-grid__input--offset",
+                                                         class: "calendar-item-form__sentence-control calendar-item-form__sentence-control--number",
                                                          min: 0,
                                                          step: 1,
                                                          data: { timing_dialog_field: "offsetMinutes" } %>
-                                    <span>min</span>
-                                  </label>
-                                  <%= select_tag "timing_dialog[relative_before]",
-                                                 options_for_select([["after", false], ["before", true]], item.relative_before?),
-                                                 class: "calendar-grid__select calendar-grid__select--direction",
-                                                 data: { timing_dialog_field: "direction" } %>
-                                  <%= select_tag "timing_dialog[relative_to_anchor_end]",
-                                                 options_for_select([["starts", false], ["ends", true]], item.relative_to_anchor_end?),
-                                                 class: "calendar-grid__select calendar-grid__select--point",
-                                                 data: { timing_dialog_field: "anchorPoint" } %>
+                                    <span class="calendar-item-form__sentence-unit-label">min</span>
+                                  </div>
+
+                                  <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--direction">
+                                    <%= select_tag "timing_dialog[relative_before]",
+                                                   options_for_select([["after", false], ["before", true]], item.relative_before?),
+                                                   class: "calendar-item-form__sentence-control",
+                                                   data: { timing_dialog_field: "direction" } %>
+                                  </div>
+
+                                  <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--anchor"
+                                       data-controller="local-select"
+                                       data-local-select-empty-label-value="Choose an anchor..."
+                                       data-local-select-limit-value="24">
+                                    <% selected_dialog_anchor_option = anchor_options_for(item).find { |(_label, id, _attributes)| id.to_s == item.relative_anchor_id.to_s } %>
+                                    <%= text_field_tag nil,
+                                                       selected_dialog_anchor_option&.first,
+                                                       placeholder: "Choose an anchor...",
+                                                       autocomplete: "off",
+                                                       role: "combobox",
+                                                       aria: { expanded: "false" },
+                                                       class: "calendar-item-form__sentence-control calendar-item-form__sentence-control--anchor",
+                                                       data: {
+                                                         local_select_target: "input",
+                                                         action: "input->local-select#search focus->local-select#search keydown->local-select#handleInputKeydown"
+                                                       } %>
+                                    <%= select_tag "timing_dialog[relative_anchor_id]",
+                                                   options_for_select(anchor_options_for(item), item.relative_anchor_id),
+                                                   include_blank: "Choose an anchor...",
+                                                   class: "calendar-item-form__native-select",
+                                                   data: {
+                                                     local_select_target: "select",
+                                                     timing_dialog_field: "anchor",
+                                                     action: "change->local-select#syncFromSelect"
+                                                   } %>
+                                    <div class="calendar-item-form__autocomplete-menu calendar-item-form__autocomplete-menu--anchor"
+                                         data-local-select-target="menu"
+                                         role="listbox"
+                                         hidden></div>
+                                  </div>
+
+                                  <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--reference">
+                                    <%= select_tag "timing_dialog[relative_to_anchor_end]",
+                                                   options_for_select([["starts", false], ["ends", true]], item.relative_to_anchor_end?),
+                                                   class: "calendar-item-form__sentence-control",
+                                                   data: { timing_dialog_field: "anchorPoint" } %>
+                                  </div>
                                 </div>
-                              </section>
+                              </div>
+
+                              <div class="calendar-item-form__grid calendar-grid__timing-duration-row">
+                                <div class="event-form__group">
+                                  <label>Duration</label>
+                                  <div class="calendar-item-form__duration">
+                                    <%= number_field_tag "timing_dialog[duration_display_value]",
+                                                         duration_amount.value,
+                                                         class: "calendar-item-form__duration-value",
+                                                         min: 0,
+                                                         step: 1,
+                                                         placeholder: "0",
+                                                         data: { timing_dialog_field: "durationValue" } %>
+                                    <%= select_tag "timing_dialog[duration_display_unit]",
+                                                   options_for_select(time_amount_unit_options, duration_amount.unit || "days"),
+                                                   class: "calendar-item-form__duration-unit",
+                                                   data: { timing_dialog_field: "durationUnit" } %>
+                                    <div class="calendar-item-form__duration-piece">
+                                      <%= number_field_tag "timing_dialog[duration_display_hours]",
+                                                           duration_amount.hours,
+                                                           class: "calendar-item-form__duration-value",
+                                                           min: 0,
+                                                           step: 0.25,
+                                                           placeholder: "0",
+                                                           data: { timing_dialog_field: "durationHours" } %>
+                                      <span class="calendar-item-form__sentence-unit-label">hr</span>
+                                    </div>
+                                    <div class="calendar-item-form__duration-piece">
+                                      <%= number_field_tag "timing_dialog[duration_display_minutes]",
+                                                           duration_amount.minutes,
+                                                           class: "calendar-item-form__duration-value",
+                                                           min: 0,
+                                                           step: 1,
+                                                           placeholder: "0",
+                                                           data: { timing_dialog_field: "durationMinutes" } %>
+                                      <span class="calendar-item-form__sentence-unit-label">min</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
 
                             <div class="event-calendars__bulk-dialog-actions">
@@ -694,6 +743,7 @@
 
     const fieldFor = (row, name) => row.querySelector('[data-relative-summary-input="' + name + '"]');
     const dialogField = (dialog, name) => dialog.querySelector('[data-timing-dialog-field="' + name + '"]');
+    const dialogFields = (dialog, name) => Array.from(dialog.querySelectorAll('[data-timing-dialog-field="' + name + '"]'));
     const rowFormField = (row, name) => {
       const expectedName = "calendar_item[" + name + "]";
       return Array.from(row.querySelectorAll("input, select, textarea")).find((field) => field.name === expectedName);
@@ -922,12 +972,21 @@
       return option.dataset.anchorTitle || option.textContent.replace(/\s+\([^)]*\)\s*$/, "").trim();
     };
 
+    const selectedDialogMode = (dialog) => {
+      const selectedMode = dialogFields(dialog, "mode").find((field) => field.checked);
+      return selectedMode ? selectedMode.value : "absolute";
+    };
+
     const timingDialogSummary = (dialog) => {
+      if (selectedDialogMode(dialog) === "absolute") {
+        const startLabel = formatInputDateTime(dialogField(dialog, "startsAt")?.value);
+        return startLabel ? "Starts " + startLabel : "Start time TBD";
+      }
+
       const anchorTitle = selectedDialogAnchorTitle(dialog);
 
       if (!anchorTitle) {
-        const startLabel = formatInputDateTime(dialogField(dialog, "startsAt")?.value);
-        return startLabel ? "Starts " + startLabel : "Start time TBD";
+        return "Choose an anchor to preview relative timing.";
       }
 
       const amount = normalizedDialogOffsetAmount(dialog);
@@ -954,14 +1013,19 @@
     };
 
     const syncTimingDialog = (dialog) => {
-      const anchorSelected = !!dialogField(dialog, "anchor")?.value;
+      const mode = selectedDialogMode(dialog);
       const startsAtField = dialogField(dialog, "startsAt");
       const summary = dialog.querySelector("[data-timing-dialog-summary]");
+      const absoluteGroup = dialog.querySelector('[data-timing-dialog-mode="absolute"]');
+      const relativeGroup = dialog.querySelector('[data-timing-dialog-mode="relative"]');
 
-      if (startsAtField) startsAtField.disabled = anchorSelected;
-      ["offsetValue", "offsetUnit", "offsetHours", "offsetMinutes", "direction", "anchorPoint"].forEach((name) => {
+      if (absoluteGroup) absoluteGroup.style.display = mode === "absolute" ? "" : "none";
+      if (relativeGroup) relativeGroup.style.display = mode === "relative" ? "" : "none";
+
+      if (startsAtField) startsAtField.disabled = mode !== "absolute";
+      ["anchor", "offsetValue", "offsetUnit", "offsetHours", "offsetMinutes", "direction", "anchorPoint"].forEach((name) => {
         const field = dialogField(dialog, name);
-        if (field) field.disabled = !anchorSelected;
+        if (field) field.disabled = mode !== "relative";
       });
 
       if (summary) {
@@ -985,11 +1049,16 @@
         ["relative_before", "direction"],
         ["relative_to_anchor_end", "anchorPoint"]
       ];
+      const relativeMode = !!rowFormField(row, "relative_anchor_id")?.value;
 
       pairs.forEach(([rowName, dialogName]) => {
         const source = rowFormField(row, rowName);
         const target = dialogField(dialog, dialogName);
         if (source && target) target.value = source.value;
+      });
+
+      dialogFields(dialog, "mode").forEach((field) => {
+        field.checked = field.value === (relativeMode ? "relative" : "absolute");
       });
 
       syncTimingDialog(dialog);
@@ -1009,12 +1078,12 @@
         ["relative_before", "direction"],
         ["relative_to_anchor_end", "anchorPoint"]
       ];
-      const anchorSelected = !!dialogField(dialog, "anchor")?.value;
+      const mode = selectedDialogMode(dialog);
       const startsAtField = rowFormField(row, "starts_at");
 
       if (startsAtField) {
         startsAtField.value = dialogField(dialog, "startsAt")?.value || "";
-        startsAtField.disabled = anchorSelected;
+        startsAtField.disabled = mode === "relative";
       }
 
       pairs.forEach(([rowName, dialogName]) => {
@@ -1022,6 +1091,11 @@
         const source = dialogField(dialog, dialogName);
         if (source && target) target.value = source.value;
       });
+
+      if (mode === "absolute") {
+        const anchorField = rowFormField(row, "relative_anchor_id");
+        if (anchorField) anchorField.value = "";
+      }
 
       syncRelativeRow(row);
     };

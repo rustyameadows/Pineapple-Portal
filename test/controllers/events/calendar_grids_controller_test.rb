@@ -62,6 +62,11 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Duration TBD", response.body
     assert_select "button[data-timing-dialog-open]", text: "Edit timing", minimum: 1
     assert_select "dialog.calendar-grid__timing-dialog[data-grid-timing-dialog]", minimum: 1
+    assert_select ".calendar-grid__timing-mode-toggle .calendar-item-form__toggle-option", minimum: 2
+    assert_select "input[data-timing-dialog-field='mode'][value='absolute']", minimum: 1
+    assert_select "input[data-timing-dialog-field='mode'][value='relative']", minimum: 1
+    assert_select ".calendar-item-form__relative-sentence", minimum: 1
+    assert_select ".calendar-item-form__sentence-text", text: "Start this item", minimum: 1
     assert_select "[data-timing-dialog-field='startsAt']", minimum: 1
     assert_select "[data-timing-dialog-field='durationValue']", minimum: 1
     assert_select "[data-timing-dialog-field='durationUnit']", minimum: 1

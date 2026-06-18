@@ -259,11 +259,11 @@
 }
 
 .calendar-grid__timing-dialog {
-  max-width: min(820px, 94vw);
+  max-width: min(1040px, 94vw);
 }
 
 .calendar-grid__timing-dialog-content {
-  gap: 1.1rem;
+  gap: 1rem;
 }
 
 .calendar-grid__timing-dialog-header .event-calendars__bulk-dialog-copy {
@@ -271,41 +271,21 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.calendar-grid__timing-sheet {
+.calendar-grid__timing-sheet--form {
   display: grid;
-  gap: 0.85rem;
+  gap: 1rem;
 }
 
-.calendar-grid__timing-panel {
-  display: grid;
-  gap: 0.65rem;
-  padding: 0.9rem;
-  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 70%, white);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--color-light-cream) 70%, white);
-}
-
-.calendar-grid__timing-panel-title {
+.calendar-grid__timing-mode-toggle {
   margin: 0;
-  color: var(--color-dark-brown);
-  font-size: 0.95rem;
 }
 
-.calendar-grid__timing-panel-copy {
-  margin: 0.2rem 0 0;
-  color: var(--color-brown);
-  font-size: 0.82rem;
-  line-height: 1.35;
+.calendar-grid__timing-sheet--form .calendar-item-form__timing-group {
+  margin: 0;
 }
 
-.calendar-grid__field {
-  display: grid;
-  gap: 0.35rem;
-  color: var(--color-brown);
-  font-size: 0.78rem;
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.calendar-grid__timing-duration-row {
+  display: block;
 }
 
 .calendar-grid__select--tags {
@@ -386,11 +366,6 @@
   min-width: 320px;
 }
 
-.calendar-grid__time-amount--sheet {
-  min-width: 0;
-  grid-template-columns: minmax(64px, 0.65fr) minmax(120px, 1fr) minmax(82px, 0.8fr) minmax(90px, 0.85fr);
-}
-
 .calendar-grid__time-piece {
   display: inline-flex;
   align-items: center;
@@ -405,10 +380,6 @@
   min-width: 220px;
 }
 
-.calendar-grid__select--sheet-anchor {
-  min-width: 0;
-}
-
 .calendar-grid__input--offset {
   min-width: 68px;
 }
@@ -418,10 +389,6 @@
 .calendar-grid__select--point {
   min-width: 82px;
   padding-right: 1.4rem;
-}
-
-.calendar-grid__relative--sheet {
-  grid-template-columns: minmax(64px, 0.6fr) minmax(120px, 1fr) minmax(82px, 0.8fr) minmax(90px, 0.85fr) minmax(100px, 0.9fr) minmax(100px, 0.9fr);
 }
 
 .calendar-grid__hint--summary {
