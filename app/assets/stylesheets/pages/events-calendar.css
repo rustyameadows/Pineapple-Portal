@@ -4,6 +4,10 @@
   gap: 1.5rem;
 }
 
+.event-calendars__settings-page {
+  padding-bottom: 5rem;
+}
+
 .calendar-card {
   padding: 1.5rem;
   border: 1px solid var(--color-neutral-200);
@@ -70,7 +74,55 @@
 }
 
 .calendar-card__table {
-  margin-top: 1.5rem;
+  margin-top: 0;
+}
+
+.event-calendars__timezone-settings {
+  gap: 1.15rem;
+}
+
+.event-calendars__timezone-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.event-calendars__timezone-field {
+  flex: 1 1 20rem;
+  margin: 0;
+}
+
+.event-calendars__timezone-field > label {
+  margin: 0;
+  color: var(--color-brown);
+  font-size: 0.78rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.event-calendars__timezone-field .event-form__select {
+  width: 100%;
+  min-height: 2.75rem;
+  box-sizing: border-box;
+  border: 1px solid var(--color-neutral-300);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--color-dark-brown);
+  font-size: 0.98rem;
+  line-height: 1.35;
+  padding: 0.55rem 0.65rem;
+}
+
+.event-calendars__timezone-field .event-form__select:focus {
+  outline: 2px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  outline-offset: 2px;
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-neutral-300));
+}
+
+.event-calendars__timezone-actions {
+  flex: 0 0 auto;
 }
 
 .calendar-item__datetime {

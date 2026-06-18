@@ -31,7 +31,7 @@ module Events
 
     def update
       if @calendar.update(calendar_params)
-        redirect_to event_calendar_path(@event), notice: "Calendar details updated."
+        redirect_to safe_return_to(fallback: event_calendar_path(@event)), notice: "Calendar details updated."
       else
         flash.now[:alert] = @calendar.errors.full_messages.to_sentence
         render :show, status: :unprocessable_content

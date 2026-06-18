@@ -12,7 +12,26 @@ module Events
 
       assert_response :success
       assert_select "h1", text: "Timeline Views"
-      assert_select "h2.calendar-card__title", text: /Run of Show/
+      assert_select "h2.calendar-card__title", text: /Run of Show/, count: 0
+      assert_select ".calendar-card__badge", text: "Run of Show", count: 0
+      assert_select "section.event-section.event-calendars__timezone-settings", count: 1
+      assert_select "form.event-calendars__timezone-form[action='#{event_calendar_path(@event)}']", count: 1 do
+        assert_select "input[name='return_to'][value='#{event_calendars_path(@event)}']", count: 1
+        assert_select "select[name='event_calendar[timezone]']", count: 1
+        assert_select "input[type='submit'][value='Save Timezone']", count: 1
+      end
+    end
+
+    test "timezone update can return to timeline settings" do
+      patch event_calendar_path(@event), params: {
+        return_to: event_calendars_path(@event),
+        event_calendar: {
+          timezone: "America/New_York"
+        }
+      }
+
+      assert_redirected_to event_calendars_path(@event)
+      assert_equal "America/New_York", @event.run_of_show_calendar.reload.timezone
     end
 
     test "shows run of show detail" do
