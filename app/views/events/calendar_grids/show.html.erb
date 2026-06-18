@@ -419,15 +419,64 @@
                       </td>
                       <td class="calendar-grid__cell calendar-grid__cell--tags" data-grid-column="tags" hidden>
                         <%= hidden_field_tag "calendar_item[event_calendar_tag_ids][]", "", form: form_id, id: nil %>
-                        <div class="calendar-grid__tags" data-tags-container>
-                          <% @tags.each do |tag| %>
-                            <% checked = item.event_calendar_tag_ids.include?(tag.id) %>
-                            <label class="calendar-grid__tag-pill <%= 'calendar-grid__tag-pill--selected' if checked %>" style="<%= calendar_tag_style(tag) %>">
-                              <%= check_box_tag "calendar_item[event_calendar_tag_ids][]", tag.id, checked, form: form_id, class: "calendar-grid__tag-checkbox" %>
-                              <span class="calendar-grid__tag-color"></span>
-                              <span class="calendar-grid__tag-label"><%= tag.name %></span>
-                            </label>
-                          <% end %>
+                        <% selected_tag_ids = item.event_calendar_tag_ids %>
+                        <div class="calendar-grid__tag-editor" data-tags-container>
+                          <div class="calendar-grid__active-tags" data-active-tags>
+                            <% @tags.each do |tag| %>
+                              <% checked = selected_tag_ids.include?(tag.id) %>
+                              <button type="button"
+                                      class="calendar-grid__tag-pill calendar-grid__tag-pill--selected calendar-grid__active-tag"
+                                      style="<%= calendar_tag_style(tag) %>"
+                                      data-active-tag-id="<%= tag.id %>"
+                                      data-active-tag-remove
+                                      aria-label="Remove <%= tag.name %>"
+                                      <%= "hidden" unless checked %>>
+                                <span class="calendar-grid__tag-color"></span>
+                                <span class="calendar-grid__tag-label"><%= tag.name %></span>
+                                <span class="calendar-grid__tag-remove" aria-hidden="true">×</span>
+                              </button>
+                            <% end %>
+                          </div>
+
+                          <button type="button"
+                                  class="calendar-grid__tag-add"
+                                  data-tag-dialog-open
+                                  aria-haspopup="dialog">
+                            Add tag
+                          </button>
+
+                          <dialog class="event-calendars__bulk-dialog calendar-grid__tag-dialog" data-tag-dialog>
+                            <div class="event-calendars__bulk-dialog-content calendar-grid__tag-dialog-content">
+                              <header class="event-calendars__bulk-dialog-header">
+                                <p class="event-calendars__bulk-eyebrow">Tags</p>
+                                <h2 class="event-calendars__bulk-dialog-title">Choose tags</h2>
+                              </header>
+
+                              <div class="calendar-grid__tag-options" role="group" aria-label="Tags">
+                                <% @tags.each do |tag| %>
+                                  <% checked = selected_tag_ids.include?(tag.id) %>
+                                  <label class="calendar-grid__tag-pill <%= 'calendar-grid__tag-pill--selected' if checked %>" style="<%= calendar_tag_style(tag) %>">
+                                    <%= check_box_tag "calendar_item[event_calendar_tag_ids][]",
+                                                      tag.id,
+                                                      checked,
+                                                      form: form_id,
+                                                      class: "calendar-grid__tag-checkbox",
+                                                      data: { tag_id: tag.id } %>
+                                    <span class="calendar-grid__tag-color"></span>
+                                    <span class="calendar-grid__tag-label"><%= tag.name %></span>
+                                  </label>
+                                <% end %>
+                              </div>
+
+                              <div class="event-calendars__bulk-dialog-actions">
+                                <button type="button"
+                                        class="event-section__cta"
+                                        data-tag-dialog-save>
+                                  Save
+                                </button>
+                              </div>
+                            </div>
+                          </dialog>
                         </div>
                       </td>
                       <td class="calendar-grid__cell calendar-grid__cell--location" data-grid-column="location">
@@ -747,6 +796,17 @@
     const rowFormField = (row, name) => {
       const expectedName = "calendar_item[" + name + "]";
       return Array.from(row.querySelectorAll("input, select, textarea")).find((field) => field.name === expectedName);
+    };
+
+    const submitGridRow = (row) => {
+      const form = document.getElementById(row.dataset.gridFormId);
+      if (!form) return;
+
+      if (typeof form.requestSubmit === "function") {
+        form.requestSubmit();
+      } else {
+        form.submit();
+      }
     };
 
     const selectedText = (row, name) => {
@@ -1157,26 +1217,77 @@
           dialog.removeAttribute("open");
         }
 
-        const form = document.getElementById(row.dataset.gridFormId);
-        if (!form) return;
-
-        if (typeof form.requestSubmit === "function") {
-          form.requestSubmit();
-        } else {
-          form.submit();
-        }
+        submitGridRow(row);
       });
     });
 
+    const syncTagContainer = (container) => {
+      let selectedCount = 0;
+
+      container.querySelectorAll(".calendar-grid__tag-checkbox").forEach((checkbox) => {
+        const pill = checkbox.closest(".calendar-grid__tag-pill");
+        const activeTag = container.querySelector('[data-active-tag-id="' + checkbox.value + '"]');
+
+        if (checkbox.checked) selectedCount += 1;
+        if (pill) pill.classList.toggle("calendar-grid__tag-pill--selected", checkbox.checked);
+        if (activeTag) activeTag.hidden = !checkbox.checked;
+      });
+
+    };
+
     document.querySelectorAll("[data-tags-container]").forEach((container) => {
+      const row = container.closest("[data-grid-row]");
+      const dialog = container.querySelector("[data-tag-dialog]");
+      const closeDialog = () => {
+        if (!dialog) return;
+        if (typeof dialog.close === "function") {
+          dialog.close();
+        } else {
+          dialog.removeAttribute("open");
+        }
+      };
+
+      container.addEventListener("click", (event) => {
+        const openButton = event.target.closest("[data-tag-dialog-open]");
+        if (openButton) {
+          if (dialog && typeof dialog.showModal === "function") {
+            dialog.showModal();
+          } else if (dialog) {
+            dialog.setAttribute("open", "open");
+          }
+          return;
+        }
+
+        if (event.target.closest("[data-tag-dialog-save]")) {
+          syncTagContainer(container);
+          closeDialog();
+          if (row) submitGridRow(row);
+          return;
+        }
+
+        const removeButton = event.target.closest("[data-active-tag-remove]");
+        if (!removeButton) return;
+
+        const checkbox = container.querySelector('.calendar-grid__tag-checkbox[value="' + removeButton.dataset.activeTagId + '"]');
+        if (!checkbox) return;
+
+        checkbox.checked = false;
+        checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+        if (row) submitGridRow(row);
+      });
+
+      dialog?.addEventListener("click", (event) => {
+        if (event.target === dialog) closeDialog();
+      });
+
       container.addEventListener("change", (event) => {
         const checkbox = event.target.closest(".calendar-grid__tag-checkbox");
         if (!checkbox) return;
-        const pill = checkbox.closest(".calendar-grid__tag-pill");
-        if (pill) {
-          pill.classList.toggle("calendar-grid__tag-pill--selected", checkbox.checked);
-        }
+
+        syncTagContainer(container);
       });
+
+      syncTagContainer(container);
     });
 
   </script>

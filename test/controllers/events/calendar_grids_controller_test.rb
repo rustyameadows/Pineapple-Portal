@@ -82,6 +82,31 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[data-timing-dialog-save]", text: "Save timing", minimum: 1
   end
 
+  test "grid tags column renders compact active tags with add dialog" do
+    tag = event_calendar_tags(:day_of)
+    inactive_tag = event_calendar_tags(:vendor)
+    @item.event_calendar_tags << tag unless @item.event_calendar_tag_ids.include?(tag.id)
+    @item.event_calendar_tags.delete(inactive_tag)
+
+    get grid_event_calendar_url(@event)
+
+    assert_response :success
+    assert_select "td.calendar-grid__cell--tags", minimum: 1
+    assert_select ".calendar-grid__tag-editor[data-tags-container]", minimum: 1
+    assert_select ".calendar-grid__active-tags", minimum: 1
+    assert_select "button[data-active-tag-id='#{tag.id}']", text: /#{tag.name}/, minimum: 1
+    assert_select "button.calendar-grid__active-tag[data-active-tag-id='#{inactive_tag.id}'][hidden]", minimum: 1
+    assert_select "button[data-tag-dialog-open]", text: "Add tag", minimum: 1
+    assert_select "dialog.calendar-grid__tag-dialog[data-tag-dialog]", minimum: 1
+    assert_select "button[data-tag-dialog-save]", text: "Save", minimum: 1
+    assert_select "button[data-tag-dialog-close]", count: 0
+    assert_select ".calendar-grid__tag-options .calendar-grid__tag-pill", minimum: 1
+    assert_select "input.calendar-grid__tag-checkbox[name='calendar_item[event_calendar_tag_ids][]']", minimum: 1
+    assert_select ".calendar-grid__tags-empty", count: 0
+    assert_no_match "No tags", response.body
+    assert_select ".calendar-grid__tags", count: 0
+  end
+
   test "run of show links to grid edit mode" do
     get event_calendar_url(@event)
 
