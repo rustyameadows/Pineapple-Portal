@@ -20,10 +20,10 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".calendar-grid__column-controls", count: 1
     assert_select "input[data-grid-column-toggle][value='title'][checked='checked']", count: 1
     assert_select "input[data-grid-column-toggle][value='timing'][checked='checked']", count: 1
-    assert_select "input[data-grid-column-toggle][value='start'][checked='checked']", count: 0
-    assert_select "input[data-grid-column-toggle][value='duration'][checked='checked']", count: 0
-    assert_select "input[data-grid-column-toggle][value='anchor'][checked='checked']", count: 0
-    assert_select "input[data-grid-column-toggle][value='relation'][checked='checked']", count: 0
+    assert_select "input[data-grid-column-toggle][value='start']", count: 0
+    assert_select "input[data-grid-column-toggle][value='duration']", count: 0
+    assert_select "input[data-grid-column-toggle][value='anchor']", count: 0
+    assert_select "input[data-grid-column-toggle][value='relation']", count: 0
     assert_select "input[data-grid-column-toggle][value='location'][checked='checked']", count: 1
     assert_select "input[data-grid-column-toggle][value='vendor'][checked='checked']", count: 1
     assert_select "input[data-grid-column-toggle][value='notes'][checked='checked']", count: 1
