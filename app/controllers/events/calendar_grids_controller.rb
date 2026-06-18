@@ -12,7 +12,9 @@ module Events
                   :calendar_timezone_label,
                   :anchor_options_for,
                   :time_amount_unit_options,
-                  :relative_timing_summary
+                  :relative_timing_summary,
+                  :grid_timing_summary,
+                  :grid_duration_summary
 
     TIME_AMOUNT_UNIT_OPTIONS = Calendars::TimeAmount::UNIT_OPTIONS
 
@@ -243,6 +245,18 @@ module Events
       else
         "Starts #{amount.label} #{direction} #{item.relative_anchor.title} #{anchor_point}#{projected_suffix}"
       end
+    end
+
+    def grid_timing_summary(item)
+      return relative_timing_summary(item) if item.relative_anchor
+
+      start_label = item.effective_starts_at&.in_time_zone(@timezone)&.then { |time| format_projected_time(time) }
+      start_label.present? ? "Starts #{start_label}" : "Start time TBD"
+    end
+
+    def grid_duration_summary(item)
+      amount = item.duration_time_amount
+      amount.null? ? "" : "Duration #{amount.label}"
     end
 
     def apply_relative_reference_params(permitted, alignment)

@@ -203,6 +203,99 @@
   color: var(--color-brown);
 }
 
+.calendar-grid__cell--timing {
+  min-width: 320px;
+  max-width: 380px;
+}
+
+.calendar-grid__timing-card {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.calendar-grid__timing-summary {
+  margin: 0;
+  color: var(--color-dark-brown);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.35;
+}
+
+.calendar-grid__timing-meta {
+  margin: 0;
+  color: var(--color-brown);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.calendar-grid__timing-edit {
+  justify-self: start;
+  border: 1px solid var(--color-sea-foam);
+  border-radius: var(--radius-pill);
+  background: var(--color-white);
+  color: var(--color-dark-brown);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.65rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.calendar-grid__timing-edit:hover,
+.calendar-grid__timing-edit:focus {
+  border-color: var(--color-brown);
+  background: var(--color-light-cream);
+}
+
+.calendar-grid__timing-dialog {
+  max-width: min(820px, 94vw);
+}
+
+.calendar-grid__timing-dialog-content {
+  gap: 1.1rem;
+}
+
+.calendar-grid__timing-dialog-header .event-calendars__bulk-dialog-copy {
+  color: var(--color-dark-brown);
+  font-weight: var(--font-weight-semibold);
+}
+
+.calendar-grid__timing-sheet {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.calendar-grid__timing-panel {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 70%, white);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-light-cream) 70%, white);
+}
+
+.calendar-grid__timing-panel-title {
+  margin: 0;
+  color: var(--color-dark-brown);
+  font-size: 0.95rem;
+}
+
+.calendar-grid__timing-panel-copy {
+  margin: 0.2rem 0 0;
+  color: var(--color-brown);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.calendar-grid__field {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--color-brown);
+  font-size: 0.78rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .calendar-grid__select--tags {
   min-height: 5.5rem;
 }
@@ -281,6 +374,11 @@
   min-width: 320px;
 }
 
+.calendar-grid__time-amount--sheet {
+  min-width: 0;
+  grid-template-columns: minmax(64px, 0.65fr) minmax(120px, 1fr) minmax(82px, 0.8fr) minmax(90px, 0.85fr);
+}
+
 .calendar-grid__time-piece {
   display: inline-flex;
   align-items: center;
@@ -295,6 +393,10 @@
   min-width: 220px;
 }
 
+.calendar-grid__select--sheet-anchor {
+  min-width: 0;
+}
+
 .calendar-grid__input--offset {
   min-width: 68px;
 }
@@ -304,6 +406,10 @@
 .calendar-grid__select--point {
   min-width: 82px;
   padding-right: 1.4rem;
+}
+
+.calendar-grid__relative--sheet {
+  grid-template-columns: minmax(64px, 0.6fr) minmax(120px, 1fr) minmax(82px, 0.8fr) minmax(90px, 0.85fr) minmax(100px, 0.9fr) minmax(100px, 0.9fr);
 }
 
 .calendar-grid__hint--summary {

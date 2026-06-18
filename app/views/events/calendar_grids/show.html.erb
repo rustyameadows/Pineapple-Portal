@@ -1,10 +1,11 @@
 <% provide :page_shell do %>
   <% grid_columns = [
        { key: "title", label: "Title", default: true },
-       { key: "start", label: "Start", default: true },
-       { key: "duration", label: "Duration", default: true },
-       { key: "anchor", label: "Anchor", default: true },
-       { key: "relation", label: "Relation", default: true },
+       { key: "timing", label: "Timing", default: true },
+       { key: "start", label: "Start", default: false },
+       { key: "duration", label: "Duration", default: false },
+       { key: "anchor", label: "Anchor", default: false },
+       { key: "relation", label: "Relation", default: false },
        { key: "status", label: "Status", default: false },
        { key: "tags", label: "Tags", default: false },
        { key: "location", label: "Location", default: true },
@@ -36,7 +37,7 @@
       <section class="event-section calendar-grid"
                data-controller="calendar-bulk-edit"
                data-calendar-timezone="<%= @calendar.timezone %>"
-               data-grid-column-storage-key="calendar-grid-columns:<%= request.path %>"
+               data-grid-column-storage-key="calendar-grid-columns-v2:<%= request.path %>"
                data-grid-default-columns="<%= default_grid_column_keys.join(',') %>">
         <header class="event-section__header calendar-grid__header">
           <div>
@@ -75,10 +76,11 @@
                   <tr>
                     <th scope="col" class="calendar-grid__column--select">Select</th>
                     <th scope="col" data-grid-column="title">Title</th>
-                    <th scope="col" data-grid-column="start">Start</th>
-                    <th scope="col" data-grid-column="duration">Duration</th>
-                    <th scope="col" data-grid-column="anchor">Anchor</th>
-                    <th scope="col" data-grid-column="relation">Relation</th>
+                    <th scope="col" data-grid-column="timing">Timing</th>
+                    <th scope="col" data-grid-column="start" hidden>Start</th>
+                    <th scope="col" data-grid-column="duration" hidden>Duration</th>
+                    <th scope="col" data-grid-column="anchor" hidden>Anchor</th>
+                    <th scope="col" data-grid-column="relation" hidden>Relation</th>
                     <th scope="col" data-grid-column="status" hidden>Status</th>
                     <th scope="col" data-grid-column="tags" hidden>Tags</th>
                     <th scope="col" data-grid-column="location">Location</th>
@@ -93,6 +95,7 @@
                     <% form_id = dom_id(item, :grid_form) %>
                     <tr class="calendar-grid__row"
                         data-grid-row
+                        data-grid-form-id="<%= form_id %>"
                         data-calendar-bulk-edit-target="row">
                       <td class="calendar-grid__cell calendar-grid__cell--select">
                         <%= check_box_tag "item_ids[]",
@@ -109,8 +112,157 @@
                       <td class="calendar-grid__cell" data-grid-column="title">
                         <%= text_field_tag "calendar_item[title]", item.title, form: form_id, class: "calendar-grid__input" %>
                       </td>
-                      <td class="calendar-grid__cell" data-grid-column="start">
-                        <% start_value = item.effective_starts_at&.in_time_zone(@timezone)&.strftime("%Y-%m-%dT%H:%M") %>
+                      <% start_value = item.effective_starts_at&.in_time_zone(@timezone)&.strftime("%Y-%m-%dT%H:%M") %>
+                      <% duration_amount = item.duration_time_amount %>
+                      <% offset_amount = item.relative_offset_time_amount %>
+                      <td class="calendar-grid__cell calendar-grid__cell--timing" data-grid-column="timing">
+                        <div class="calendar-grid__timing-card">
+                          <p class="calendar-grid__timing-summary" data-timing-summary><%= grid_timing_summary(item) %></p>
+                          <p class="calendar-grid__timing-meta" data-duration-summary><%= grid_duration_summary(item) %></p>
+                          <button type="button"
+                                  class="calendar-grid__timing-edit"
+                                  data-timing-dialog-open
+                                  aria-haspopup="dialog">
+                            Edit timing
+                          </button>
+                        </div>
+
+                        <dialog class="event-calendars__bulk-dialog event-calendars__bulk-dialog--wide calendar-grid__timing-dialog"
+                                data-grid-timing-dialog>
+                          <div class="event-calendars__bulk-dialog-content calendar-grid__timing-dialog-content">
+                            <header class="event-calendars__bulk-dialog-header calendar-grid__timing-dialog-header">
+                              <p class="event-calendars__bulk-eyebrow">Timing</p>
+                              <h2 class="event-calendars__bulk-dialog-title">Edit <%= item.title %></h2>
+                              <p class="event-calendars__bulk-dialog-copy" data-timing-dialog-summary><%= grid_timing_summary(item) %></p>
+                            </header>
+
+                            <div class="calendar-grid__timing-sheet">
+                              <section class="calendar-grid__timing-panel">
+                                <div>
+                                  <h3 class="calendar-grid__timing-panel-title">Start</h3>
+                                  <p class="calendar-grid__timing-panel-copy">Use this when the item has a hard-coded time. Choosing an anchor below makes this projected instead.</p>
+                                </div>
+                                <label class="calendar-grid__field">
+                                  <span>Absolute start</span>
+                                  <%= text_field_tag "timing_dialog[starts_at]",
+                                                     start_value,
+                                                     type: "datetime-local",
+                                                     class: "calendar-grid__input",
+                                                     data: { timing_dialog_field: "startsAt" } %>
+                                </label>
+                              </section>
+
+                              <section class="calendar-grid__timing-panel">
+                                <div>
+                                  <h3 class="calendar-grid__timing-panel-title">Duration</h3>
+                                </div>
+                                <div class="calendar-grid__time-amount calendar-grid__time-amount--sheet">
+                                  <%= number_field_tag "timing_dialog[duration_display_value]",
+                                                       duration_amount.value,
+                                                       class: "calendar-grid__input calendar-grid__input--mini",
+                                                       min: 0,
+                                                       step: 1,
+                                                       placeholder: "0",
+                                                       data: { timing_dialog_field: "durationValue" } %>
+                                  <%= select_tag "timing_dialog[duration_display_unit]",
+                                                 options_for_select(time_amount_unit_options, duration_amount.unit || "days"),
+                                                 class: "calendar-grid__select calendar-grid__select--unit",
+                                                 data: { timing_dialog_field: "durationUnit" } %>
+                                  <label class="calendar-grid__time-piece">
+                                    <%= number_field_tag "timing_dialog[duration_display_hours]",
+                                                         duration_amount.hours,
+                                                         class: "calendar-grid__input calendar-grid__input--mini",
+                                                         min: 0,
+                                                         step: 0.25,
+                                                         placeholder: "0",
+                                                         data: { timing_dialog_field: "durationHours" } %>
+                                    <span>hr</span>
+                                  </label>
+                                  <label class="calendar-grid__time-piece">
+                                    <%= number_field_tag "timing_dialog[duration_display_minutes]",
+                                                         duration_amount.minutes,
+                                                         class: "calendar-grid__input calendar-grid__input--mini",
+                                                         min: 0,
+                                                         step: 1,
+                                                         placeholder: "0",
+                                                         data: { timing_dialog_field: "durationMinutes" } %>
+                                    <span>min</span>
+                                  </label>
+                                </div>
+                              </section>
+
+                              <section class="calendar-grid__timing-panel">
+                                <div>
+                                  <h3 class="calendar-grid__timing-panel-title">Anchor</h3>
+                                  <p class="calendar-grid__timing-panel-copy">Choose an anchor to make this item relative. Leave it as none for an absolute start.</p>
+                                </div>
+                                <%= select_tag "timing_dialog[relative_anchor_id]",
+                                               options_for_select(anchor_options_for(item), item.relative_anchor_id),
+                                               class: "calendar-grid__select calendar-grid__select--anchor calendar-grid__select--sheet-anchor",
+                                               data: { timing_dialog_field: "anchor" } %>
+                              </section>
+
+                              <section class="calendar-grid__timing-panel">
+                                <div>
+                                  <h3 class="calendar-grid__timing-panel-title">Relationship</h3>
+                                </div>
+                                <div class="calendar-grid__relative calendar-grid__relative--sheet">
+                                  <%= number_field_tag "timing_dialog[relative_offset_display_value]",
+                                                       offset_amount.value,
+                                                       class: "calendar-grid__input calendar-grid__input--offset",
+                                                       min: 0,
+                                                       step: 1,
+                                                       data: { timing_dialog_field: "offsetValue" } %>
+                                  <%= select_tag "timing_dialog[relative_offset_display_unit]",
+                                                 options_for_select(time_amount_unit_options, offset_amount.unit),
+                                                 class: "calendar-grid__select calendar-grid__select--unit",
+                                                 data: { timing_dialog_field: "offsetUnit" } %>
+                                  <label class="calendar-grid__time-piece">
+                                    <%= number_field_tag "timing_dialog[relative_offset_display_hours]",
+                                                         offset_amount.hours,
+                                                         class: "calendar-grid__input calendar-grid__input--offset",
+                                                         min: 0,
+                                                         step: 0.25,
+                                                         data: { timing_dialog_field: "offsetHours" } %>
+                                    <span>hr</span>
+                                  </label>
+                                  <label class="calendar-grid__time-piece">
+                                    <%= number_field_tag "timing_dialog[relative_offset_display_minutes]",
+                                                         offset_amount.minutes,
+                                                         class: "calendar-grid__input calendar-grid__input--offset",
+                                                         min: 0,
+                                                         step: 1,
+                                                         data: { timing_dialog_field: "offsetMinutes" } %>
+                                    <span>min</span>
+                                  </label>
+                                  <%= select_tag "timing_dialog[relative_before]",
+                                                 options_for_select([["after", false], ["before", true]], item.relative_before?),
+                                                 class: "calendar-grid__select calendar-grid__select--direction",
+                                                 data: { timing_dialog_field: "direction" } %>
+                                  <%= select_tag "timing_dialog[relative_to_anchor_end]",
+                                                 options_for_select([["starts", false], ["ends", true]], item.relative_to_anchor_end?),
+                                                 class: "calendar-grid__select calendar-grid__select--point",
+                                                 data: { timing_dialog_field: "anchorPoint" } %>
+                                </div>
+                              </section>
+                            </div>
+
+                            <div class="event-calendars__bulk-dialog-actions">
+                              <button type="button"
+                                      class="event-section__cta event-section__cta--secondary"
+                                      data-timing-dialog-close>
+                                Cancel
+                              </button>
+                              <button type="button"
+                                      class="event-section__cta"
+                                      data-timing-dialog-save>
+                                Save timing
+                              </button>
+                            </div>
+                          </div>
+                        </dialog>
+                      </td>
+                      <td class="calendar-grid__cell" data-grid-column="start" hidden>
                         <% if item.absolute? %>
                           <%= text_field_tag "calendar_item[starts_at]", start_value, form: form_id, class: "calendar-grid__input", type: "datetime-local" %>
                         <% else %>
@@ -118,8 +270,7 @@
                           <p class="calendar-grid__hint">Projected from anchor.</p>
                         <% end %>
                       </td>
-                      <td class="calendar-grid__cell" data-grid-column="duration">
-                        <% duration_amount = item.duration_time_amount %>
+                      <td class="calendar-grid__cell" data-grid-column="duration" hidden>
                         <div class="calendar-grid__time-amount calendar-grid__time-amount--duration">
                           <%= number_field_tag "calendar_item[duration_display_value]",
                                                duration_amount.value,
@@ -154,7 +305,7 @@
                           </label>
                         </div>
                       </td>
-                      <td class="calendar-grid__cell calendar-grid__cell--anchor" data-anchor-cell data-grid-column="anchor">
+                      <td class="calendar-grid__cell calendar-grid__cell--anchor" data-anchor-cell data-grid-column="anchor" hidden>
                         <%= select_tag "calendar_item[relative_anchor_id]",
                                        options_for_select(anchor_options_for(item), item.relative_anchor_id),
                                        form: form_id,
@@ -164,8 +315,7 @@
                                          relative_summary_input: "anchor"
                                        } %>
                       </td>
-                      <td class="calendar-grid__cell calendar-grid__cell--relative" data-anchor-relation data-grid-column="relation">
-                        <% offset_amount = item.relative_offset_time_amount %>
+                      <td class="calendar-grid__cell calendar-grid__cell--relative" data-anchor-relation data-grid-column="relation" hidden>
                         <div class="calendar-grid__relative" data-anchor-controls style="<%= item.relative_anchor_id.present? ? '' : 'display:none;' %>">
                           <%= number_field_tag "calendar_item[relative_offset_display_value]",
                                                offset_amount.value,
@@ -543,6 +693,11 @@
     }
 
     const fieldFor = (row, name) => row.querySelector('[data-relative-summary-input="' + name + '"]');
+    const dialogField = (dialog, name) => dialog.querySelector('[data-timing-dialog-field="' + name + '"]');
+    const rowFormField = (row, name) => {
+      const expectedName = "calendar_item[" + name + "]";
+      return Array.from(row.querySelectorAll("input, select, textarea")).find((field) => field.name === expectedName);
+    };
 
     const selectedText = (row, name) => {
       const field = fieldFor(row, name);
@@ -576,33 +731,57 @@
 
     const pluralizedUnit = (value, unit) => value === 1 ? unit.replace(/s$/, "") : unit;
 
-    const normalizedOffsetAmount = (row) => {
-      const valueField = fieldFor(row, "offsetValue");
-      const unitField = fieldFor(row, "offsetUnit");
-      const hoursField = fieldFor(row, "offsetHours");
-      const minutesField = fieldFor(row, "offsetMinutes");
-      const unit = unitField ? unitField.value : "days";
+    const normalizedTimeAmount = (value, unit, hours, minutes) => {
+      unit = unit || "days";
       const multiplier = majorUnitMultiplier(unit);
       const totalMinutes = Math.floor(
-        (numericValue(valueField?.value) * multiplier) +
-        (numericValue(hoursField?.value) * 60) +
-        numericValue(minutesField?.value)
+        (numericValue(value) * multiplier) +
+        (numericValue(hours) * 60) +
+        numericValue(minutes)
       );
       const majorValue = Math.floor(totalMinutes / multiplier);
       const remainder = totalMinutes % multiplier;
-      const hours = Math.floor(remainder / 60);
-      const minutes = remainder % 60;
+      const normalizedHours = Math.floor(remainder / 60);
+      const normalizedMinutes = remainder % 60;
       const parts = [];
 
       if (majorValue > 0) parts.push(majorValue + " " + pluralizedUnit(majorValue, unit));
-      if (hours > 0) parts.push(hours + " hr");
-      if (minutes > 0) parts.push(minutes + " min");
+      if (normalizedHours > 0) parts.push(normalizedHours + " hr");
+      if (normalizedMinutes > 0) parts.push(normalizedMinutes + " min");
 
       return {
         totalMinutes: totalMinutes,
         label: parts.length ? parts.join(" ") : "0 " + unit
       };
     };
+
+    const normalizedOffsetAmount = (row) => {
+      const valueField = fieldFor(row, "offsetValue");
+      const unitField = fieldFor(row, "offsetUnit");
+      const hoursField = fieldFor(row, "offsetHours");
+      const minutesField = fieldFor(row, "offsetMinutes");
+
+      return normalizedTimeAmount(
+        valueField?.value,
+        unitField ? unitField.value : "days",
+        hoursField?.value,
+        minutesField?.value
+      );
+    };
+
+    const normalizedDialogOffsetAmount = (dialog) => normalizedTimeAmount(
+      dialogField(dialog, "offsetValue")?.value,
+      dialogField(dialog, "offsetUnit")?.value || "days",
+      dialogField(dialog, "offsetHours")?.value,
+      dialogField(dialog, "offsetMinutes")?.value
+    );
+
+    const normalizedDialogDurationAmount = (dialog) => normalizedTimeAmount(
+      dialogField(dialog, "durationValue")?.value,
+      dialogField(dialog, "durationUnit")?.value || "days",
+      dialogField(dialog, "durationHours")?.value,
+      dialogField(dialog, "durationMinutes")?.value
+    );
 
     const formatProjectedTime = (date) => {
       const formatter = new Intl.DateTimeFormat("en-US", {
@@ -623,8 +802,25 @@
       return month + " " + parts.day + " " + parts.hour + ":" + parts.minute + parts.dayPeriod;
     };
 
-    const projectedTimeSuffix = (row, offsetMinutes, direction, anchorPoint) => {
-      const option = selectedAnchor(row);
+    const formatInputDateTime = (value) => {
+      if (!value) return "";
+
+      const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+      if (!match) return "";
+
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"];
+      const month = monthNames[Number(match[2]) - 1] || "";
+      const day = String(Number(match[3]));
+      let hour = Number(match[4]);
+      const minute = match[5];
+      const dayPeriod = hour >= 12 ? "PM" : "AM";
+      hour = hour % 12;
+      if (hour === 0) hour = 12;
+
+      return month + " " + day + " " + hour + ":" + minute + dayPeriod;
+    };
+
+    const projectedTimeSuffixForOption = (option, offsetMinutes, direction, anchorPoint) => {
       if (!option) return "";
 
       const baseIso = anchorPoint === "ends"
@@ -640,9 +836,38 @@
       return " → " + formatProjectedTime(new Date(baseTime.getTime() + (offsetMinutes * 60 * 1000)));
     };
 
+    const projectedTimeSuffix = (row, offsetMinutes, direction, anchorPoint) => {
+      return projectedTimeSuffixForOption(selectedAnchor(row), offsetMinutes, direction, anchorPoint);
+    };
+
+    const absoluteTimingSummary = (row) => {
+      const label = formatInputDateTime(rowFormField(row, "starts_at")?.value);
+      return label ? "Starts " + label : "Start time TBD";
+    };
+
+    const durationSummary = (row) => {
+      const valueField = rowFormField(row, "duration_display_value");
+      const unitField = rowFormField(row, "duration_display_unit");
+      const hoursField = rowFormField(row, "duration_display_hours");
+      const minutesField = rowFormField(row, "duration_display_minutes");
+      const durationValues = [valueField?.value, hoursField?.value, minutesField?.value];
+      const durationBlank = durationValues.every((value) => String(value || "").trim() === "");
+
+      if (durationBlank) return "";
+
+      return "Duration " + normalizedTimeAmount(
+        valueField?.value,
+        unitField?.value || "days",
+        hoursField?.value,
+        minutesField?.value
+      ).label;
+    };
+
     const syncRelativeRow = (row) => {
       const controls = row.querySelector("[data-anchor-controls]");
-      const summary = row.querySelector("[data-relative-summary]");
+      const relationSummary = row.querySelector("[data-relative-summary]");
+      const timingSummary = row.querySelector("[data-timing-summary]");
+      const durationSummaryElement = row.querySelector("[data-duration-summary]");
       const anchorField = fieldFor(row, "anchor");
       const hasAnchor = !!(anchorField && anchorField.value);
 
@@ -653,11 +878,12 @@
         });
       }
 
-      if (!summary) return;
+      if (durationSummaryElement) durationSummaryElement.textContent = durationSummary(row);
 
       const anchorTitle = selectedAnchorTitle(row);
       if (!anchorTitle) {
-        summary.textContent = "Absolute start";
+        if (relationSummary) relationSummary.textContent = "Absolute start";
+        if (timingSummary) timingSummary.textContent = absoluteTimingSummary(row);
         return;
       }
 
@@ -667,11 +893,137 @@
       const projection = projectedTimeSuffix(row, amount.totalMinutes, direction, anchorPoint);
 
       if (amount.totalMinutes === 0) {
-        summary.textContent = "Starts when " + anchorTitle + " " + anchorPoint + projection;
+        const summary = "Starts when " + anchorTitle + " " + anchorPoint + projection;
+        if (relationSummary) relationSummary.textContent = summary;
+        if (timingSummary) timingSummary.textContent = summary;
         return;
       }
 
-      summary.textContent = "Starts " + amount.label + " " + direction + " " + anchorTitle + " " + anchorPoint + projection;
+      const summary = "Starts " + amount.label + " " + direction + " " + anchorTitle + " " + anchorPoint + projection;
+      if (relationSummary) relationSummary.textContent = summary;
+      if (timingSummary) timingSummary.textContent = summary;
+    };
+
+    const selectedDialogText = (dialog, name) => {
+      const field = dialogField(dialog, name);
+      if (!field || !field.selectedOptions || !field.selectedOptions.length) return "";
+      return field.selectedOptions[0].textContent.trim();
+    };
+
+    const selectedDialogAnchor = (dialog) => {
+      const field = dialogField(dialog, "anchor");
+      if (!field || !field.selectedOptions || !field.selectedOptions.length || !field.value) return null;
+      return field.selectedOptions[0];
+    };
+
+    const selectedDialogAnchorTitle = (dialog) => {
+      const option = selectedDialogAnchor(dialog);
+      if (!option) return "";
+      return option.dataset.anchorTitle || option.textContent.replace(/\s+\([^)]*\)\s*$/, "").trim();
+    };
+
+    const timingDialogSummary = (dialog) => {
+      const anchorTitle = selectedDialogAnchorTitle(dialog);
+
+      if (!anchorTitle) {
+        const startLabel = formatInputDateTime(dialogField(dialog, "startsAt")?.value);
+        return startLabel ? "Starts " + startLabel : "Start time TBD";
+      }
+
+      const amount = normalizedDialogOffsetAmount(dialog);
+      const direction = selectedDialogText(dialog, "direction") || "after";
+      const anchorPoint = selectedDialogText(dialog, "anchorPoint") || "starts";
+      const projection = projectedTimeSuffixForOption(selectedDialogAnchor(dialog), amount.totalMinutes, direction, anchorPoint);
+
+      if (amount.totalMinutes === 0) {
+        return "Starts when " + anchorTitle + " " + anchorPoint + projection;
+      }
+
+      return "Starts " + amount.label + " " + direction + " " + anchorTitle + " " + anchorPoint + projection;
+    };
+
+    const timingDialogDurationSummary = (dialog) => {
+      const durationValues = [
+        dialogField(dialog, "durationValue")?.value,
+        dialogField(dialog, "durationHours")?.value,
+        dialogField(dialog, "durationMinutes")?.value
+      ];
+      const durationBlank = durationValues.every((value) => String(value || "").trim() === "");
+
+      return durationBlank ? "" : "Duration " + normalizedDialogDurationAmount(dialog).label;
+    };
+
+    const syncTimingDialog = (dialog) => {
+      const anchorSelected = !!dialogField(dialog, "anchor")?.value;
+      const startsAtField = dialogField(dialog, "startsAt");
+      const summary = dialog.querySelector("[data-timing-dialog-summary]");
+
+      if (startsAtField) startsAtField.disabled = anchorSelected;
+      ["offsetValue", "offsetUnit", "offsetHours", "offsetMinutes", "direction", "anchorPoint"].forEach((name) => {
+        const field = dialogField(dialog, name);
+        if (field) field.disabled = !anchorSelected;
+      });
+
+      if (summary) {
+        const duration = timingDialogDurationSummary(dialog);
+        summary.textContent = [timingDialogSummary(dialog), duration].filter(Boolean).join(" · ");
+      }
+    };
+
+    const copyRowToTimingDialog = (row, dialog) => {
+      const pairs = [
+        ["starts_at", "startsAt"],
+        ["duration_display_value", "durationValue"],
+        ["duration_display_unit", "durationUnit"],
+        ["duration_display_hours", "durationHours"],
+        ["duration_display_minutes", "durationMinutes"],
+        ["relative_anchor_id", "anchor"],
+        ["relative_offset_display_value", "offsetValue"],
+        ["relative_offset_display_unit", "offsetUnit"],
+        ["relative_offset_display_hours", "offsetHours"],
+        ["relative_offset_display_minutes", "offsetMinutes"],
+        ["relative_before", "direction"],
+        ["relative_to_anchor_end", "anchorPoint"]
+      ];
+
+      pairs.forEach(([rowName, dialogName]) => {
+        const source = rowFormField(row, rowName);
+        const target = dialogField(dialog, dialogName);
+        if (source && target) target.value = source.value;
+      });
+
+      syncTimingDialog(dialog);
+    };
+
+    const copyTimingDialogToRow = (row, dialog) => {
+      const pairs = [
+        ["duration_display_value", "durationValue"],
+        ["duration_display_unit", "durationUnit"],
+        ["duration_display_hours", "durationHours"],
+        ["duration_display_minutes", "durationMinutes"],
+        ["relative_anchor_id", "anchor"],
+        ["relative_offset_display_value", "offsetValue"],
+        ["relative_offset_display_unit", "offsetUnit"],
+        ["relative_offset_display_hours", "offsetHours"],
+        ["relative_offset_display_minutes", "offsetMinutes"],
+        ["relative_before", "direction"],
+        ["relative_to_anchor_end", "anchorPoint"]
+      ];
+      const anchorSelected = !!dialogField(dialog, "anchor")?.value;
+      const startsAtField = rowFormField(row, "starts_at");
+
+      if (startsAtField) {
+        startsAtField.value = dialogField(dialog, "startsAt")?.value || "";
+        startsAtField.disabled = anchorSelected;
+      }
+
+      pairs.forEach(([rowName, dialogName]) => {
+        const target = rowFormField(row, rowName);
+        const source = dialogField(dialog, dialogName);
+        if (source && target) target.value = source.value;
+      });
+
+      syncRelativeRow(row);
     };
 
     document.querySelectorAll("[data-grid-row]").forEach((row) => {
@@ -681,6 +1033,65 @@
       });
 
       syncRelativeRow(row);
+    });
+
+    document.querySelectorAll("[data-grid-timing-dialog]").forEach((dialog) => {
+      const row = dialog.closest("[data-grid-row]");
+      const openButton = row?.querySelector("[data-timing-dialog-open]");
+      const closeButton = dialog.querySelector("[data-timing-dialog-close]");
+      const saveButton = dialog.querySelector("[data-timing-dialog-save]");
+
+      if (!row) return;
+
+      openButton?.addEventListener("click", () => {
+        copyRowToTimingDialog(row, dialog);
+        if (typeof dialog.showModal === "function") {
+          dialog.showModal();
+        } else {
+          dialog.setAttribute("open", "open");
+        }
+      });
+
+      closeButton?.addEventListener("click", () => {
+        if (typeof dialog.close === "function") {
+          dialog.close();
+        } else {
+          dialog.removeAttribute("open");
+        }
+      });
+
+      dialog.addEventListener("click", (event) => {
+        if (event.target !== dialog) return;
+        if (typeof dialog.close === "function") {
+          dialog.close();
+        } else {
+          dialog.removeAttribute("open");
+        }
+      });
+
+      dialog.querySelectorAll("[data-timing-dialog-field]").forEach((field) => {
+        field.addEventListener("change", () => syncTimingDialog(dialog));
+        field.addEventListener("input", () => syncTimingDialog(dialog));
+      });
+
+      saveButton?.addEventListener("click", () => {
+        copyTimingDialogToRow(row, dialog);
+
+        if (typeof dialog.close === "function") {
+          dialog.close();
+        } else {
+          dialog.removeAttribute("open");
+        }
+
+        const form = document.getElementById(row.dataset.gridFormId);
+        if (!form) return;
+
+        if (typeof form.requestSubmit === "function") {
+          form.requestSubmit();
+        } else {
+          form.submit();
+        }
+      });
     });
 
     document.querySelectorAll("[data-tags-container]").forEach((container) => {

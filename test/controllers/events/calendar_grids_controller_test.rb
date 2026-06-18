@@ -19,17 +19,28 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{event_calendar_path(@event)}']", text: "View mode", count: 1
     assert_select ".calendar-grid__column-controls", count: 1
     assert_select "input[data-grid-column-toggle][value='title'][checked='checked']", count: 1
-    assert_select "input[data-grid-column-toggle][value='start'][checked='checked']", count: 1
-    assert_select "input[data-grid-column-toggle][value='duration'][checked='checked']", count: 1
-    assert_select "input[data-grid-column-toggle][value='anchor'][checked='checked']", count: 1
-    assert_select "input[data-grid-column-toggle][value='relation'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='timing'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='start'][checked='checked']", count: 0
+    assert_select "input[data-grid-column-toggle][value='duration'][checked='checked']", count: 0
+    assert_select "input[data-grid-column-toggle][value='anchor'][checked='checked']", count: 0
+    assert_select "input[data-grid-column-toggle][value='relation'][checked='checked']", count: 0
     assert_select "input[data-grid-column-toggle][value='location'][checked='checked']", count: 1
     assert_select "input[data-grid-column-toggle][value='vendor'][checked='checked']", count: 1
     assert_select "input[data-grid-column-toggle][value='notes'][checked='checked']", count: 1
     assert_select "input[data-grid-column-toggle][value='status'][checked='checked']", count: 0
     assert_select "input[data-grid-column-toggle][value='tags'][checked='checked']", count: 0
+    assert_match(/data-grid-column="title"[^>]*>Title<\/th>\s*<th[^>]+data-grid-column="timing"[^>]*>Timing<\/th>/m, response.body)
+    assert_select "th[data-grid-column='timing']", text: "Timing", count: 1
+    assert_select "th[data-grid-column='start'][hidden]", text: "Start", count: 1
+    assert_select "th[data-grid-column='duration'][hidden]", text: "Duration", count: 1
+    assert_select "th[data-grid-column='anchor'][hidden]", text: "Anchor", count: 1
+    assert_select "th[data-grid-column='relation'][hidden]", text: "Relation", count: 1
     assert_select "th[data-grid-column='status'][hidden]", text: "Status", count: 1
     assert_select "th[data-grid-column='tags'][hidden]", text: "Tags", count: 1
+    assert_select "td[data-grid-column='start'][hidden] input[name='calendar_item[starts_at]']", minimum: 1
+    assert_select "td[data-grid-column='duration'][hidden] input[name='calendar_item[duration_display_hours]']", minimum: 1
+    assert_select "td[data-grid-column='anchor'][hidden] select[name='calendar_item[relative_anchor_id]']", minimum: 1
+    assert_select "td[data-grid-column='relation'][hidden] select[name='calendar_item[relative_before]']", minimum: 1
     assert_select ".calendar-grid__bulk", count: 0
     assert_select ".calendar-grid__table-wrapper", count: 1
     assert_select ".event-calendars__bulk-toolbar[hidden]", count: 1
@@ -40,6 +51,30 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_select "option[value='set_locked']", count: 0
     assert_select "th", text: "Locked", count: 0
     assert_select "input[name='calendar_item[locked]']", count: 0
+  end
+
+  test "grid timing column renders full timing editor sheet" do
+    get grid_event_calendar_url(@event)
+
+    assert_response :success
+    assert_select ".calendar-grid__cell--timing", minimum: 1
+    assert_select "[data-timing-summary]", text: /Starts/
+    assert_no_match "Duration TBD", response.body
+    assert_select "button[data-timing-dialog-open]", text: "Edit timing", minimum: 1
+    assert_select "dialog.calendar-grid__timing-dialog[data-grid-timing-dialog]", minimum: 1
+    assert_select "[data-timing-dialog-field='startsAt']", minimum: 1
+    assert_select "[data-timing-dialog-field='durationValue']", minimum: 1
+    assert_select "[data-timing-dialog-field='durationUnit']", minimum: 1
+    assert_select "[data-timing-dialog-field='durationHours']", minimum: 1
+    assert_select "[data-timing-dialog-field='durationMinutes']", minimum: 1
+    assert_select "[data-timing-dialog-field='anchor']", minimum: 1
+    assert_select "[data-timing-dialog-field='offsetValue']", minimum: 1
+    assert_select "[data-timing-dialog-field='offsetUnit']", minimum: 1
+    assert_select "[data-timing-dialog-field='offsetHours']", minimum: 1
+    assert_select "[data-timing-dialog-field='offsetMinutes']", minimum: 1
+    assert_select "[data-timing-dialog-field='direction']", minimum: 1
+    assert_select "[data-timing-dialog-field='anchorPoint']", minimum: 1
+    assert_select "button[data-timing-dialog-save]", text: "Save timing", minimum: 1
   end
 
   test "run of show links to grid edit mode" do
