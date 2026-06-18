@@ -77,6 +77,17 @@ module Events
       assert_select "a.event-calendars__title-link[href='#{expected_href}']", text: item.title, count: 1
     end
 
+    test "edit renders derived view controls as selectable cards and tag pills" do
+      get edit_event_calendar_view_url(@event, @non_decision_view)
+
+      assert_response :success
+      assert_select "form.calendar-view-form", count: 1
+      assert_select ".calendar-view-form__choice-card input[type='radio'][value='day'][checked='checked']", count: 1
+      assert_select ".calendar-item-form__pill.calendar-item-form__pill--tag", text: "Vendor", count: 1
+      assert_select ".calendar-item-form__pill.calendar-item-form__pill--tag input[type='checkbox'][checked='checked']", minimum: 1
+      assert_select ".event-form__group--checkbox", count: 0
+    end
+
     test "decision view uses monthly segments and shows item day in schedule column" do
       get event_calendar_view_url(@event, @decision_view)
 

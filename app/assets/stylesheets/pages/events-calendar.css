@@ -1558,6 +1558,159 @@
   color: var(--tag-text-color, var(--color-dark-brown));
 }
 
+.calendar-view-form {
+  display: grid;
+  gap: 1.25rem;
+  width: min(58rem, 100%);
+}
+
+.calendar-view-form__panel {
+  display: grid;
+  gap: 0.9rem;
+  border-top: 1px solid var(--color-neutral-300);
+  padding-top: 1.1rem;
+}
+
+.calendar-view-form__panel:first-of-type {
+  margin-top: 0.5rem;
+}
+
+.calendar-view-form__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.calendar-view-form__eyebrow {
+  margin: 0;
+  color: var(--color-brown);
+  font-size: 0.78rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.calendar-view-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+}
+
+.calendar-view-form .event-form__group {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.calendar-view-form .event-form__group > label {
+  margin: 0;
+  color: var(--color-brown);
+  font-size: 0.78rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.calendar-view-form input[type="text"],
+.calendar-view-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--color-neutral-300);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--color-dark-brown);
+  font-size: 0.98rem;
+  line-height: 1.35;
+  padding: 0.62rem 0.72rem;
+}
+
+.calendar-view-form textarea {
+  min-height: 6.5rem;
+  resize: vertical;
+}
+
+.calendar-view-form input[type="text"]:focus,
+.calendar-view-form textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  outline-offset: 2px;
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-neutral-300));
+}
+
+.calendar-view-form__choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.75rem;
+}
+
+.calendar-view-form__choice-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  min-height: 4.5rem;
+  box-sizing: border-box;
+  border: 1px solid var(--color-neutral-300);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--color-dark-brown);
+  cursor: pointer;
+  padding: 0.8rem 0.85rem;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.calendar-view-form__choice-card input {
+  flex: 0 0 auto;
+  margin-top: 0.2rem;
+  accent-color: var(--color-accent);
+}
+
+.calendar-view-form__choice-card:has(input:checked) {
+  border-color: color-mix(in srgb, var(--color-accent) 78%, var(--color-dark-brown));
+  background: color-mix(in srgb, var(--color-accent) 13%, var(--color-white));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 65%, transparent);
+}
+
+.calendar-view-form__choice-card:has(input:focus-visible) {
+  outline: 2px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.calendar-view-form__choice-title {
+  display: block;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.25;
+}
+
+.calendar-view-form__choice-detail {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--color-neutral-600);
+  font-size: 0.86rem;
+  line-height: 1.3;
+}
+
+.calendar-view-form__actions {
+  border-top: 1px solid var(--color-neutral-300);
+  padding-top: 1rem;
+}
+
+.calendar-view-form__danger-zone {
+  width: min(58rem, 100%);
+  margin-top: 1.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-brown) 22%, transparent);
+  padding-top: 1rem;
+}
+
+@media (max-width: 760px) {
+  .calendar-view-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-view-form__choice-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .calendar-item-form__toggle {
   display: inline-flex;
   gap: 0.75rem;
