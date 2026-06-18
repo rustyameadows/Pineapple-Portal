@@ -20,6 +20,8 @@ module Events
       )
       assert_select "a[href='#{expected_add_item_path}']", text: "Add Item"
       assert_select "a[href='#{client_event_calendar_path(@event.portal_slug.presence || @event.id, 'decision-calendar')}']", text: "View in Portal"
+      assert_select "a[href='#{edit_event_calendar_view_path(@event, @decision_view)}']", text: "Calendar Settings"
+      assert_select "a", text: "Edit View", count: 0
       assert_select "table.event-calendars__table thead tr th:first-child", text: "Status"
     end
 
@@ -96,6 +98,7 @@ module Events
       assert_select ".calendar-view-form__actions .calendar-item-form__actions-right input[type='submit']", count: 1
       assert_select ".calendar-view-form__danger-zone", count: 0
       assert_select ".event-form__group--checkbox", count: 0
+      assert_operator response.body.index("Included Tags"), :<, response.body.index("Timeline Segments")
     end
 
     test "new derived view form starts with name field after page title" do

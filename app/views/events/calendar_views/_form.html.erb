@@ -22,6 +22,27 @@
 
   <div class="calendar-view-form__panel">
     <div class="calendar-view-form__section-header">
+      <p class="calendar-view-form__eyebrow">Included Tags</p>
+    </div>
+
+    <% if @tags.any? %>
+      <div class="calendar-item-form__pill-list">
+        <% @tags.each do |tag| %>
+          <% field_id = "calendar_view_tag_#{tag.id}" %>
+          <label class="calendar-item-form__pill calendar-item-form__pill--tag" for="<%= field_id %>" style="<%= calendar_tag_style(tag) %>">
+            <%= check_box_tag "event_calendar_view[tag_filter][]", tag.id, selected_tag_ids.include?(tag.id), id: field_id %>
+            <span><%= tag.name %></span>
+          </label>
+        <% end %>
+      </div>
+      <%= hidden_field_tag "event_calendar_view[tag_filter][]", "" %>
+    <% else %>
+      <p class="event-section__note">No tags yet. Create tags on the run of show page.</p>
+    <% end %>
+  </div>
+
+  <div class="calendar-view-form__panel">
+    <div class="calendar-view-form__section-header">
       <p class="calendar-view-form__eyebrow">Timeline Segments</p>
     </div>
 
@@ -42,27 +63,6 @@
         </span>
       </label>
     </div>
-  </div>
-
-  <div class="calendar-view-form__panel">
-    <div class="calendar-view-form__section-header">
-      <p class="calendar-view-form__eyebrow">Included Tags</p>
-    </div>
-
-    <% if @tags.any? %>
-      <div class="calendar-item-form__pill-list">
-        <% @tags.each do |tag| %>
-          <% field_id = "calendar_view_tag_#{tag.id}" %>
-          <label class="calendar-item-form__pill calendar-item-form__pill--tag" for="<%= field_id %>" style="<%= calendar_tag_style(tag) %>">
-            <%= check_box_tag "event_calendar_view[tag_filter][]", tag.id, selected_tag_ids.include?(tag.id), id: field_id %>
-            <span><%= tag.name %></span>
-          </label>
-        <% end %>
-      </div>
-      <%= hidden_field_tag "event_calendar_view[tag_filter][]", "" %>
-    <% else %>
-      <p class="event-section__note">No tags yet. Create tags on the run of show page.</p>
-    <% end %>
   </div>
 
   <div class="calendar-view-form__panel">
