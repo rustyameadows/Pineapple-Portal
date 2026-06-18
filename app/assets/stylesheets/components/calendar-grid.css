@@ -206,6 +206,7 @@
 .calendar-grid__cell--timing {
   min-width: 320px;
   max-width: 380px;
+  position: relative;
 }
 
 .calendar-grid__timing-card {
@@ -228,6 +229,9 @@
 }
 
 .calendar-grid__timing-edit {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.55rem;
   justify-self: start;
   border: 1px solid var(--color-sea-foam);
   border-radius: var(--radius-pill);
@@ -237,7 +241,15 @@
   font: inherit;
   font-size: 0.82rem;
   padding: 0.3rem 0.65rem;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.calendar-grid__cell--timing:hover .calendar-grid__timing-edit,
+.calendar-grid__cell--timing:focus-within .calendar-grid__timing-edit {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .calendar-grid__timing-edit:hover,
