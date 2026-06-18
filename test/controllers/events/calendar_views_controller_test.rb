@@ -22,6 +22,7 @@ module Events
       assert_select "a[href='#{client_event_calendar_path(@event.portal_slug.presence || @event.id, 'decision-calendar')}']", text: "View in Portal"
       assert_select "a[href='#{edit_event_calendar_view_path(@event, @decision_view)}']", text: "Calendar Settings"
       assert_select "a", text: "Edit View", count: 0
+      assert_no_match(/Showing\s+items tagged with/, response.body)
       assert_select "table.event-calendars__table thead tr th:first-child", text: "Status"
     end
 

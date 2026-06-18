@@ -31,18 +31,6 @@
         </header>
 
         <div class="event-section__body event-calendars__timeline-body">
-          <p class="event-section__note">
-            Showing
-            <% if @view.tag_filter.present? %>
-              items tagged with
-              <strong><%= @view.tag_filter.map { |tag_id| @tags_by_id[tag_id]&.name }.compact.join(', ') %></strong>.
-            <% else %>
-              all items from the run of show.
-            <% end %>
-            <% if @view.hide_locked? %>
-              Locked items are hidden in this view.
-            <% end %>
-          </p>
           <% if decision_view && !@view.client_visible? %>
             <p class="event-section__note">Set this timeline to visible in client portal to enable the portal decision calendar link.</p>
           <% end %>
