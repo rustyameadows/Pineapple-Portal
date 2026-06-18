@@ -17,20 +17,9 @@
       <p class="calendar-view-form__eyebrow">View Details</p>
     </div>
 
-    <div class="calendar-view-form__grid">
-      <div class="event-form__group">
-        <%= form.label :name %>
-        <%= form.text_field :name, required: true %>
-      </div>
-      <div class="event-form__group">
-        <%= form.label :slug, "URL Slug" %>
-        <%= form.text_field :slug %>
-      </div>
-    </div>
-
     <div class="event-form__group">
-      <%= form.label :description %>
-      <%= form.text_area :description, rows: 3 %>
+      <%= form.label :name %>
+      <%= form.text_field :name, required: true %>
     </div>
   </div>
 
@@ -90,14 +79,6 @@
         <span class="calendar-view-form__choice-copy">
           <span class="calendar-view-form__choice-title">Visible on client portal</span>
           <span class="calendar-view-form__choice-detail">Clients can open this view</span>
-        </span>
-      </label>
-
-      <label class="calendar-view-form__choice-card">
-        <%= form.check_box :hide_locked %>
-        <span class="calendar-view-form__choice-copy">
-          <span class="calendar-view-form__choice-title">Hide locked items</span>
-          <span class="calendar-view-form__choice-detail">Exclude locked rows from this view</span>
         </span>
       </label>
     </div>

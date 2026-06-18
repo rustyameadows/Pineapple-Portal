@@ -82,6 +82,10 @@ module Events
 
       assert_response :success
       assert_select "form.calendar-view-form", count: 1
+      assert_select "input[name='event_calendar_view[name]']", count: 1
+      assert_select "input[name='event_calendar_view[slug]']", count: 0
+      assert_select "input[name='event_calendar_view[hide_locked]']", count: 0
+      assert_select "textarea[name='event_calendar_view[description]']", count: 0
       assert_select ".calendar-view-form__choice-card input[type='radio'][value='day'][checked='checked']", count: 1
       assert_select ".calendar-item-form__pill.calendar-item-form__pill--tag", text: "Vendor", count: 1
       assert_select ".calendar-item-form__pill.calendar-item-form__pill--tag input[type='checkbox'][checked='checked']", minimum: 1
