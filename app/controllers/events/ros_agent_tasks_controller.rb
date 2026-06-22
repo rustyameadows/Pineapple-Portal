@@ -2,7 +2,6 @@ module Events
   class RosAgentTasksController < ApplicationController
     before_action :set_event
     before_action :set_task, only: %i[show answer_questions refine_draft request_final_plan approve apply]
-    before_action :load_documents, only: %i[new create]
 
     def index
       @tasks = @event.agent_tasks.includes(:created_by).order(created_at: :desc, id: :desc)
@@ -15,9 +14,17 @@ module Events
     def create
       @task = @event.agent_tasks.new(task_params)
       @task.created_by = current_user
+      source_files = task_source_files
+
+      if source_files.empty?
+        @task.errors.add(:base, "Upload at least one source file.")
+        flash.now[:alert] = @task.errors.full_messages.to_sentence
+        render :new, status: :unprocessable_content
+        return
+      end
 
       if @task.save
-        attach_selected_documents
+        attach_source_files!(source_files)
         @task.append_event!(event_type: "task_created", message: "Agent task created.", created_by: current_user)
         if enqueue_runner(:initial_run)
           redirect_to event_ros_agent_task_path(@event, @task), notice: "Agent task started."
@@ -28,11 +35,19 @@ module Events
         flash.now[:alert] = @task.errors.full_messages.to_sentence
         render :new, status: :unprocessable_content
       end
+    rescue StandardError => e
+      @task.destroy if @task&.persisted?
+      @task = @event.agent_tasks.new(task_params)
+      @task.created_by = current_user
+      @task.errors.add(:base, "Could not upload source files: #{e.message}")
+      flash.now[:alert] = @task.errors.full_messages.to_sentence
+      render :new, status: :unprocessable_content
     end
 
     def show
       @open_question_batch = @task.question_batches.open.order(:position).last
       @task_events = @task.events.includes(:created_by).order(created_at: :asc, id: :asc)
+      @artifacts = @task.artifacts.order(:position)
     end
 
     def answer_questions
@@ -139,10 +154,6 @@ module Events
       @task = @event.agent_tasks.find(params[:id])
     end
 
-    def load_documents
-      @documents = @event.documents.where(doc_kind: Document::DOC_KINDS[:uploaded]).latest.order(updated_at: :desc, title: :asc)
-    end
-
     def task_params
       params.require(:agent_task).permit(:prompt, :mode)
     end
@@ -151,28 +162,16 @@ module Events
       params.fetch(:answers, {}).permit!.to_h
     end
 
-    def document_ids
-      Array(params.dig(:agent_task, :document_ids)).map(&:to_i).reject(&:zero?)
+    def task_source_files
+      Array(params.dig(:agent_task, :source_files)).reject(&:blank?)
     end
 
-    def attach_selected_documents
-      documents = @event.documents.where(id: document_ids).order(:title, :id)
-      documents.each_with_index do |document, index|
-        @task.artifacts.create!(
-          document: document,
-          document_logical_id: document.logical_id,
-          filename: document.title.presence || File.basename(document.storage_uri.to_s),
-          content_type: document.content_type,
-          size_bytes: document.size_bytes,
-          checksum: document.checksum,
-          source_kind: AgentTaskArtifact::SOURCE_KINDS[:source_document],
-          source_metadata_json: {
-            document_id: document.id,
-            storage_uri: document.storage_uri
-          },
-          position: index + 1
-        )
-      end
+    def attach_source_files!(source_files)
+      RosAgent::SourceArtifactUploader.new(
+        task: @task,
+        files: source_files,
+        created_by: current_user
+      ).call
     end
 
     def enqueue_runner(mode)

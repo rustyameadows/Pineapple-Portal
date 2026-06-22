@@ -7,7 +7,7 @@ Branch: `codex/agentic-features`
 
 - Overall: in progress
 - Migration status: completed locally by maintainer; test DB prepared
-- Test status: full Rails suite passed (606 tests, 2,943 assertions)
+- Test status: full Rails suite passed (607 tests, 2,963 assertions)
 - Live OpenAI smoke status: not run; budget is one tiny smoke call after stubbed tests pass
 - OpenAI key decision: reuse existing `OPENAI_API_KEY`
 - Production/live database: do not run migrations from Codex
@@ -48,6 +48,7 @@ Branch: `codex/agentic-features`
 
 - The feature works inside an existing event only.
 - Source documents are model evidence, not locally parsed ROS rows.
+- Agent Assist source files are task-only artifacts, not event Documents.
 - Q&A and draft refinement never authorize writes.
 - Planner approval is required before every create/update/delete apply.
 - Local trace snapshots are required for every OpenAI call.

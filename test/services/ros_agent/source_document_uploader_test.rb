@@ -32,27 +32,27 @@ module RosAgent
       end
     end
 
-    test "uploads source documents from R2 to OpenAI and stores file ids with local tracing" do
+    test "uploads task-only source artifacts from R2 to OpenAI and stores file ids with local tracing" do
       task = agent_tasks(:draft_task)
       artifact = task.artifacts.create!(
-        document: documents(:contract_v1),
-        document_logical_id: documents(:contract_v1).logical_id,
         filename: "prior-run-of-show.csv",
         content_type: "text/csv",
         size_bytes: 128,
         checksum: "source-checksum",
         source_kind: AgentTaskArtifact::SOURCE_KINDS[:source_document],
-        source_metadata_json: {},
+        source_metadata_json: {
+          "storage_uri" => "agent-tasks/#{task.id}/source-inputs/input-1/prior-run-of-show.csv"
+        },
         position: 2
       )
-      storage = FakeStorage.new("documents/contract-v1.pdf" => "source file bytes")
+      storage = FakeStorage.new("agent-tasks/#{task.id}/source-inputs/input-1/prior-run-of-show.csv" => "source file bytes")
       client = FakeClient.new
 
       assert_difference -> { task.llm_calls.count }, 1 do
         SourceDocumentUploader.new(task: task, client: client, storage: storage).call
       end
 
-      assert_equal ["documents/contract-v1.pdf"], storage.downloaded_keys
+      assert_equal ["agent-tasks/#{task.id}/source-inputs/input-1/prior-run-of-show.csv"], storage.downloaded_keys
       assert_equal "file_uploaded_1", artifact.reload.openai_file_id
       assert_equal 1, client.file_payloads.length
       assert_equal "user_data", client.file_payloads.first[:purpose]

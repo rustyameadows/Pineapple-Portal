@@ -23,33 +23,43 @@ module Events
       assert_operator response.body.index(newer_task.prompt), :<, response.body.index(@task.prompt)
     end
 
-    test "new shows prompt form and existing event documents" do
-      get new_event_ros_agent_task_path(@event)
+    test "new shows prompt form and task-only source file upload for events with no documents" do
+      event = events(:two)
+
+      get new_event_ros_agent_task_path(event)
 
       assert_response :success
-      assert_select "form[action='#{event_ros_agent_tasks_path(@event)}']" do
+      assert_select "form[action='#{event_ros_agent_tasks_path(event)}'][enctype='multipart/form-data']" do
         assert_select "textarea[name='agent_task[prompt]']"
         assert_select "input[name='agent_task[mode]'][value='build_ros_from_source']", count: 1
-        assert_select "input[name='agent_task[document_ids][]'][type='checkbox']", minimum: 1
+        assert_select "input[name='agent_task[source_files][]'][type='file'][multiple]", count: 1
+        assert_select "input[name='agent_task[document_ids][]']", count: 0
       end
-      assert_select "label", text: /Production Contract/
+      assert_no_match "No uploaded documents are available for this event.", response.body
     end
 
-    test "create persists the task, selected document artifacts, and enqueues the runner when available" do
+    test "create uploads task-only source files, persists artifacts, and enqueues the runner" do
       fake_job_class = fake_run_task_job_class
+      storage = FakeStorage.new
       enqueued = []
 
       fake_job_class.stub :perform_later, ->(task_id, mode:) { enqueued << { task_id:, mode: } } do
         with_temporary_run_task_job(fake_job_class) do
-          assert_difference("AgentTask.count", 1) do
-            assert_difference("AgentTaskArtifact.count", 2) do
-              post event_ros_agent_tasks_path(@event), params: {
-                agent_task: {
-                  prompt: "Adapt the uploaded schedule for this wedding.",
-                  mode: "build_ros_from_source",
-                  document_ids: [documents(:contract_v1).id, documents(:packet_brief).id]
-                }
-              }
+          R2::Storage.stub :new, storage do
+            assert_difference("AgentTask.count", 1) do
+              assert_difference("AgentTaskArtifact.count", 1) do
+                assert_no_difference("Document.count") do
+                  post event_ros_agent_tasks_path(@event), params: {
+                    agent_task: {
+                      prompt: "Adapt the uploaded schedule for this wedding.",
+                      mode: "build_ros_from_source",
+                      source_files: [
+                        fixture_file_upload("millar_sample.csv", "text/csv")
+                      ]
+                    }
+                  }
+                end
+              end
             end
           end
         end
@@ -60,20 +70,49 @@ module Events
       assert_redirected_to event_ros_agent_task_path(@event, created_task)
       assert_equal @user, created_task.created_by
       assert_equal "build_ros_from_source", created_task.mode
-      assert_equal [documents(:contract_v1).id, documents(:packet_brief).id].sort, created_task.artifacts.order(:position).pluck(:document_id).sort
+      artifact = created_task.artifacts.order(:position).sole
+      assert_nil artifact.document_id
+      assert_equal "millar_sample.csv", artifact.filename
+      assert_equal "text/csv", artifact.content_type
+      assert_equal Digest::SHA256.hexdigest(file_fixture("millar_sample.csv").binread), artifact.checksum
+      assert_match %r{\Aagent-tasks/#{created_task.id}/source-inputs/[0-9a-f-]+/millar_sample\.csv\z}, artifact.source_metadata_json["storage_uri"]
+      assert_equal artifact.source_metadata_json["storage_uri"], storage.uploads.sole[:key]
+      assert_equal "text/csv", storage.uploads.sole[:content_type]
+      assert_includes storage.uploads.sole[:data], "Friday, June 13"
       assert_equal [{ task_id: created_task.id, mode: :initial_run }], enqueued
-      assert_equal "task_created", created_task.events.order(:created_at).last.event_type
+      assert_equal %w[source_file_uploaded task_created], created_task.events.order(:created_at).pluck(:event_type)
+    end
+
+    test "create requires at least one task source file" do
+      assert_no_difference("AgentTask.count") do
+        post event_ros_agent_tasks_path(@event), params: {
+          agent_task: {
+            prompt: "Just save this for later.",
+            mode: "build_ros_from_source"
+          }
+        }
+      end
+
+      assert_response :unprocessable_content
+      assert_includes response.body, "Upload at least one source file"
     end
 
     test "create succeeds without enqueueing when the runner job is unavailable" do
+      storage = FakeStorage.new
+
       without_run_task_job do
-        assert_difference("AgentTask.count", 1) do
-          post event_ros_agent_tasks_path(@event), params: {
-            agent_task: {
-              prompt: "Just save this for later.",
-              mode: "build_ros_from_source"
+        R2::Storage.stub :new, storage do
+          assert_difference("AgentTask.count", 1) do
+            post event_ros_agent_tasks_path(@event), params: {
+              agent_task: {
+                prompt: "Just save this for later.",
+                mode: "build_ros_from_source",
+                source_files: [
+                  fixture_file_upload("millar_sample.csv", "text/csv")
+                ]
+              }
             }
-          }
+          end
         end
       end
 
@@ -123,6 +162,8 @@ module Events
 
       assert_response :success
       assert_select "h1", text: /Agent Assist/
+      assert_select "section", text: /millar-run-of-show.pdf/
+      assert_select "section", text: /file_source_123/
       assert_select "section", text: /A few planning decisions will materially change/
       assert_select "table", text: /Ceremony/
       assert_select "section", text: /Drafted plan/
@@ -316,6 +357,22 @@ module Events
     end
 
     private
+
+    class FakeStorage
+      attr_reader :uploads
+
+      def initialize
+        @uploads = []
+      end
+
+      def upload_io(key, io, content_type:)
+        uploads << {
+          key: key,
+          data: io.read,
+          content_type: content_type
+        }
+      end
+    end
 
     def fake_run_task_job_class
       Class.new do

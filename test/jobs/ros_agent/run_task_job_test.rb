@@ -1,4 +1,5 @@
 require "test_helper"
+require Rails.root.join("app/jobs/ros_agent/run_task_job")
 
 module RosAgent
   class RunTaskJobTest < ActiveJob::TestCase

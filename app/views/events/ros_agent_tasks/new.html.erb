@@ -18,7 +18,7 @@
         </header>
 
         <div class="event-section__body">
-          <%= form_with model: @task, url: event_ros_agent_tasks_path(@event), class: "event-form", local: true do |form| %>
+          <%= form_with model: @task, url: event_ros_agent_tasks_path(@event), class: "event-form", local: true, html: { enctype: "multipart/form-data" } do |form| %>
             <%= form.hidden_field :mode, value: AgentTask::MODES[:build_ros_from_source] %>
 
             <div class="event-form__group">
@@ -27,20 +27,8 @@
             </div>
 
             <div class="event-form__group">
-              <p class="event-section__note">Source documents</p>
-              <% if @documents.any? %>
-                <div class="calendar-item-form__pill-list calendar-item-form__pill-list--stack">
-                  <% @documents.each do |document| %>
-                    <% field_id = "agent_task_document_#{document.id}" %>
-                    <label class="calendar-item-form__pill" for="<%= field_id %>">
-                      <%= check_box_tag "agent_task[document_ids][]", document.id, false, id: field_id %>
-                      <span><%= document.title %></span>
-                    </label>
-                  <% end %>
-                </div>
-              <% else %>
-                <p class="event-section__empty">No uploaded documents are available for this event.</p>
-              <% end %>
+              <%= label_tag "agent_task_source_files", "Source files" %>
+              <%= file_field_tag "agent_task[source_files][]", multiple: true, id: "agent_task_source_files", class: "event-form__input" %>
             </div>
 
             <div class="event-form__actions">

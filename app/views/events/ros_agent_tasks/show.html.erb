@@ -22,6 +22,30 @@
           <p><strong>Request:</strong> <%= @task.prompt %></p>
         </section>
 
+        <% if @artifacts.any? %>
+          <section class="event-section__body">
+            <h2>Source Files</h2>
+            <table class="event-table">
+              <thead>
+                <tr>
+                  <th>File</th>
+                  <th>Size</th>
+                  <th>OpenAI File</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @artifacts.each do |artifact| %>
+                  <tr>
+                    <td><%= artifact.filename %></td>
+                    <td><%= number_to_human_size(artifact.size_bytes) if artifact.size_bytes.present? %></td>
+                    <td><%= artifact.openai_file_id.presence || "Pending" %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </section>
+        <% end %>
+
         <%= render "question_batch", task: @task, question_batch: @open_question_batch %>
         <%= render "draft_table", task: @task %>
         <%= render "preview", task: @task %>
