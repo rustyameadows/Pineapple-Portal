@@ -67,27 +67,19 @@ module RosAgent
     end
 
     def usage_from(response)
-      value_from(response, "usage") || {}
+      OpenaiResponse.json_safe(OpenaiResponse.value(response, "usage") || {})
     end
 
     def response_id(response)
-      value_from(response, "id")
+      OpenaiResponse.value(response, "id")
     end
 
     def request_id(response)
-      value_from(response, "request_id")
+      OpenaiResponse.value(response, "request_id")
     end
 
     def trace_id(response)
-      value_from(response, "trace_id")
-    end
-
-    def value_from(object, key)
-      if object.respond_to?(:[])
-        object[key] || object[key.to_sym]
-      elsif object.respond_to?(key)
-        object.public_send(key)
-      end
+      OpenaiResponse.value(response, "trace_id")
     end
 
     def duration_ms(completed_at)
@@ -99,6 +91,8 @@ module RosAgent
     end
 
     def redact(value)
+      value = OpenaiResponse.json_safe(value)
+
       case value
       when Hash
         value.transform_values.with_index do |entry, index|

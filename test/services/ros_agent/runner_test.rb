@@ -89,6 +89,22 @@ module RosAgent
       end
     end
 
+    class SymbolOnlyResponse
+      def initialize(attributes)
+        @attributes = attributes
+      end
+
+      def [](key)
+        raise ArgumentError, %(Expected symbol key for lookup, got "#{key}") unless key.is_a?(Symbol)
+
+        @attributes[key]
+      end
+
+      def to_h
+        @attributes
+      end
+    end
+
     class FakeTraceRecorder
       attr_reader :started, :completed_response, :failed_error, :request_payload
 
@@ -248,6 +264,35 @@ module RosAgent
       assert_equal 2, client.payloads.length
     end
 
+    test "handles OpenAI SDK responses that require symbol lookups" do
+      task = FakeTask.new(event: events(:one), artifacts: [{ type: "input_file", file_id: "file_123" }])
+      response = response_sdk(
+        payload: {
+          "state" => "draft_ready",
+          "summary" => "Draft ROS is ready for review.",
+          "draft_ros" => valid_draft_ros,
+          "assumptions" => [],
+          "review_notes" => [],
+          "suggested_next_questions" => []
+        }
+      )
+
+      Runner.new(
+        task: task,
+        client: FakeClient.new(response),
+        prompt_builder_class: FakePromptBuilder,
+        source_document_uploader_class: FakeSourceDocumentUploader,
+        source_file_input_builder_class: FakeSourceFileInputBuilder,
+        event_context_class: FakeEventContext,
+        trace_recorder_class: ->(**) { FakeTraceRecorder.new }
+      ).call(mode: :initial_run)
+
+      assert_equal "drafting", task.status
+      assert_equal valid_draft_ros, task.draft_ros_json
+      assert_equal "resp_sdk_123", task.openai_response_id
+      assert_equal({ "input_tokens" => 100, "output_tokens" => 50 }, task.usage_json)
+    end
+
     test "creates a question batch when the model needs planner input" do
       task = FakeTask.new(event: events(:one))
       response = response_hash(
@@ -397,6 +442,26 @@ module RosAgent
           }
         ]
       }
+    end
+
+    def response_sdk(payload:)
+      payload = agent_turn_payload(payload) if %w[source_understood needs_input draft_ready].include?(payload["state"])
+
+      SymbolOnlyResponse.new(
+        id: "resp_sdk_123",
+        request_id: "req_sdk_123",
+        usage: { input_tokens: 100, output_tokens: 50 },
+        output: [
+          SymbolOnlyResponse.new(
+            content: [
+              SymbolOnlyResponse.new(
+                type: "output_text",
+                parsed: payload
+              )
+            ]
+          )
+        ]
+      )
     end
 
     def agent_turn_payload(payload)

@@ -22,18 +22,28 @@ module RosAgent
 
     def call(options = nil, mode: :initial_run)
       mode = options[:mode] if options.is_a?(Hash) && options.key?(:mode)
+      recorder = nil
+      model_call_started = false
+      model_call_completed = false
+      model_call_purpose = nil
+
       mark_status!(status_for_mode(mode))
       upload_source_documents!
 
       payload = nil
-      recorder = nil
       MAX_STEPS.times do
         request_payload = build_request_payload(mode)
+        model_call_purpose = purpose_for_request(mode)
         recorder = trace_recorder_for(request_payload, mode)
         recorder.start!
+        model_call_started = true
+        model_call_completed = false
+        append_event!("model_call_started", "Started #{model_call_purpose.tr("_", " ")} OpenAI call.")
 
         response = client.responses_create(**request_payload)
         recorder.complete!(response: response)
+        model_call_completed = true
+        append_event!("model_call_completed", "Completed #{model_call_purpose.tr("_", " ")} OpenAI call.")
         payload = handle_response(response)
         return payload unless continue_after?(payload)
       end
@@ -42,6 +52,9 @@ module RosAgent
       raise ArgumentError, "Agent stopped after source understanding without producing questions or a draft."
     rescue StandardError => e
       recorder&.fail!(error: e, response: {})
+      if model_call_started && !model_call_completed
+        append_event!("model_call_failed", "#{model_call_purpose.to_s.tr("_", " ")} OpenAI call failed: #{e.message}")
+      end
       mark_failure!(e)
       raise
     end
@@ -150,7 +163,7 @@ module RosAgent
     end
 
     def persist_usage(response)
-      usage = response_value(response, "usage") || {}
+      usage = OpenaiResponse.json_safe(response_value(response, "usage") || {})
       if task.respond_to?(:usage_json=)
         task.usage_json = usage
       elsif task.respond_to?(:usage_summary_json=)
@@ -221,11 +234,7 @@ module RosAgent
     end
 
     def response_value(object, key)
-      if object.respond_to?(:[])
-        object[key] || object[key.to_sym]
-      elsif object.respond_to?(key)
-        object.public_send(key)
-      end
+      OpenaiResponse.value(object, key)
     end
 
     def model

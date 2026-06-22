@@ -22,13 +22,30 @@ module RosAgent
     class FakeClient
       attr_reader :file_payloads
 
-      def initialize
+      def initialize(response = nil)
         @file_payloads = []
+        @response = response
       end
 
       def files_create(**payload)
         @file_payloads << payload
-        { "id" => "file_uploaded_#{file_payloads.length}", "request_id" => "req_file_#{file_payloads.length}" }
+        @response || { "id" => "file_uploaded_#{file_payloads.length}", "request_id" => "req_file_#{file_payloads.length}" }
+      end
+    end
+
+    class SymbolOnlyResponse
+      def initialize(attributes)
+        @attributes = attributes
+      end
+
+      def [](key)
+        raise ArgumentError, %(Expected symbol key for lookup, got "#{key}") unless key.is_a?(Symbol)
+
+        @attributes[key]
+      end
+
+      def to_h
+        @attributes
       end
     end
 
@@ -106,6 +123,31 @@ module RosAgent
       assert_equal "failed", call.status
       assert_nil artifact.reload.openai_file_id
       assert_match "missing.pdf", call.error_json["message"]
+    end
+
+    test "uploads and traces OpenAI SDK responses that require symbol lookups" do
+      task = agent_tasks(:draft_task)
+      artifact = task.artifacts.create!(
+        filename: "sdk-response-source.csv",
+        content_type: "text/csv",
+        size_bytes: 128,
+        checksum: "sdk-response-checksum",
+        source_kind: AgentTaskArtifact::SOURCE_KINDS[:source_document],
+        source_metadata_json: {
+          "storage_uri" => "agent-tasks/#{task.id}/source-inputs/input-2/sdk-response-source.csv"
+        },
+        position: 3
+      )
+      storage = FakeStorage.new("agent-tasks/#{task.id}/source-inputs/input-2/sdk-response-source.csv" => "source file bytes")
+      client = FakeClient.new(SymbolOnlyResponse.new(id: "file_sdk_123", request_id: "req_sdk_123"))
+
+      SourceDocumentUploader.new(task: task, client: client, storage: storage).call
+
+      assert_equal "file_sdk_123", artifact.reload.openai_file_id
+      call = task.llm_calls.order(:created_at).last
+      assert_equal "completed", call.status
+      assert_equal "file_sdk_123", call.openai_response_id
+      assert_equal "req_sdk_123", call.openai_request_id
     end
   end
 end

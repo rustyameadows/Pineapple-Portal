@@ -37,23 +37,27 @@ module RosAgent
       request_snapshot = request_snapshot_for(artifact)
       recorder = trace_recorder_for(request_snapshot)
       recorder.start!
+      append_event!("file_upload_started", "Uploading #{artifact.filename} to OpenAI.")
 
       file_io = download_source!(artifact)
       response = client.files_create(
         file: OpenAI::FilePart.new(file_io, filename: artifact.filename, content_type: artifact.content_type),
         purpose: PURPOSE
       )
-      recorder.complete!(response: response)
+      file_id = response_value(response, "id")
 
       artifact.update!(
-        openai_file_id: response_value(response, "id"),
+        openai_file_id: file_id,
         source_metadata_json: artifact.source_metadata_json.to_h.merge(
           "openai_uploaded_at" => Time.current.iso8601,
           "openai_purpose" => PURPOSE
         )
       )
+      recorder.complete!(response: response)
+      append_event!("file_upload_completed", "Uploaded #{artifact.filename} to OpenAI.")
     rescue StandardError => e
       recorder&.fail!(error: e, response: {})
+      append_event!("file_upload_failed", "OpenAI upload failed for #{artifact.filename}: #{e.message}")
       raise
     end
 
@@ -93,11 +97,17 @@ module RosAgent
     end
 
     def response_value(object, key)
-      if object.respond_to?(:[])
-        object[key] || object[key.to_sym]
-      elsif object.respond_to?(key)
-        object.public_send(key)
-      end
+      OpenaiResponse.value(object, key)
+    end
+
+    def append_event!(event_type, message)
+      return unless task.respond_to?(:append_event!)
+
+      task.append_event!(
+        event_type: event_type,
+        message: message,
+        payload: {}
+      )
     end
   end
 end
