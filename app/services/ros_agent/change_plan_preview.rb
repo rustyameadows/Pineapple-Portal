@@ -94,7 +94,8 @@ module RosAgent
     end
 
     def attributes_for(operation)
-      (operation["attributes"] || operation[:attributes] || {}).with_indifferent_access
+      (operation["attributes"] || operation[:attributes] ||
+        operation["item_attributes"] || operation[:item_attributes] || {}).with_indifferent_access
     end
   end
 end

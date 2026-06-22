@@ -25,11 +25,11 @@ class AgentTaskLlmCall < ApplicationRecord
   validates :model, presence: true
   validates :attempt, numericality: { greater_than: 0 }
 
-  def complete!(response_json:, usage_json: {}, openai_response_id: nil, openai_request_id: nil, openai_trace_id: nil, completed_at: Time.current)
+  def complete!(response_json:, usage_json: {}, openai_response_id: nil, openai_request_id: nil, openai_trace_id: nil, duration_ms: nil, completed_at: Time.current)
     update!(
       status: STATUSES[:completed],
       completed_at: completed_at,
-      duration_ms: duration_between(started_at, completed_at),
+      duration_ms: duration_ms || duration_between(started_at, completed_at),
       response_json: response_json || {},
       usage_json: usage_json || {},
       openai_response_id: openai_response_id,
@@ -38,11 +38,11 @@ class AgentTaskLlmCall < ApplicationRecord
     )
   end
 
-  def fail!(error_json:, response_json: {}, completed_at: Time.current)
+  def fail!(error_json:, response_json: {}, duration_ms: nil, completed_at: Time.current)
     update!(
       status: STATUSES[:failed],
       completed_at: completed_at,
-      duration_ms: duration_between(started_at, completed_at),
+      duration_ms: duration_ms || duration_between(started_at, completed_at),
       error_json: error_json || {},
       response_json: response_json || {}
     )

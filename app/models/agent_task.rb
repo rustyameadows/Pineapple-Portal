@@ -41,7 +41,42 @@ class AgentTask < ApplicationRecord
     approved? &&
       approved_plan_version.present? &&
       approved_plan_version == current_plan_version &&
-      blocking_validation_errors.empty?
+      validation_blocking_errors.empty? &&
+      (!high_risk_plan? || high_risk_acknowledged?)
+  end
+
+  def approvable?
+    ready_for_review? && plan_json.present? && validation_blocking_errors.empty?
+  end
+
+  def validation_blocking_errors
+    json_value(validation_json, "blocking_errors") || []
+  end
+
+  def high_risk_plan?
+    high_risk_operation_ids.any?
+  end
+
+  def high_risk_operation_ids
+    Array(json_value(preview_json, "high_risk_operation_ids") || json_value(validation_json, "high_risk_operation_ids")).map(&:to_s)
+  end
+
+  def high_risk_acknowledged?
+    approval = json_value(validation_json, "approval").to_h
+    approval["high_risk_acknowledged"] == true || approval[:high_risk_acknowledged] == true
+  end
+
+  def acknowledge_high_risk!(user:)
+    update!(
+      validation_json: validation_json.to_h.deep_merge(
+        "approval" => {
+          "high_risk_acknowledged" => true,
+          "high_risk_acknowledged_at" => Time.current.iso8601,
+          "high_risk_acknowledged_by_id" => user&.id,
+          "high_risk_operation_ids" => high_risk_operation_ids
+        }
+      )
+    )
   end
 
   def append_event!(event_type:, message: nil, payload: {}, created_by: nil)
@@ -55,7 +90,8 @@ class AgentTask < ApplicationRecord
 
   private
 
-  def blocking_validation_errors
-    validation_json.fetch("blocking_errors", [])
+  def json_value(source, key)
+    hash = source.to_h
+    hash[key] || hash[key.to_sym]
   end
 end

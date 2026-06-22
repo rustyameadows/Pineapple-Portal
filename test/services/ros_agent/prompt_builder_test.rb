@@ -32,6 +32,8 @@ module RosAgent
 
       assert_includes payload[:instructions], "Existing-event scope only"
       assert_includes payload[:instructions], "Return one of: source_understood, needs_input, draft_ready, ready_for_review"
+      assert_equal "json_schema", payload.dig(:text, :format, :type)
+      assert_equal true, payload.dig(:text, :format, :strict)
 
       content = payload.dig(:input, 0, :content).filter_map { |entry| entry[:text] }.join("\n")
 
@@ -65,6 +67,7 @@ module RosAgent
       content = payload.dig(:input, 0, :content).filter_map { |entry| entry[:text] }.join("\n")
 
       assert_includes payload[:instructions], "Turn the latest draft ROS scratchpad into a final ROS change plan"
+      assert_equal "ros_agent_request_final_plan_response", payload.dig(:text, :format, :name)
       assert_includes content, "Two-day entertainment-heavy event."
       assert_includes content, "map_saturday_to_wedding_date"
       assert_includes content, "Wedding Day"

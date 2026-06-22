@@ -97,10 +97,21 @@ module Events
           ]
         },
         preview_json: {
-          "summary" => { "create_count" => 1 },
-          "operations" => [
-            { "action" => "create", "title" => "Ceremony", "when" => "2:00 PM" }
-          ]
+          "create_count" => 1,
+          "update_count" => 0,
+          "delete_count" => 0,
+          "tag_change_count" => 0,
+          "time_change_count" => 1,
+          "grouped_preview_rows" => {
+            "creates" => [
+              {
+                "summary" => "Create ceremony.",
+                "after" => { "title" => "Ceremony", "starts_at" => "2:00 PM" }
+              }
+            ],
+            "updates" => [],
+            "deletes" => []
+          }
         },
         trace_summary_json: {
           "latest_run_label" => "Drafted plan",
@@ -183,7 +194,12 @@ module Events
     end
 
     test "approve records planner approval on the current plan version" do
-      @task.update!(status: "ready_for_review", current_plan_version: 4)
+      @task.update!(
+        status: "ready_for_review",
+        current_plan_version: 4,
+        plan_json: { "operations" => [] },
+        validation_json: { "blocking_errors" => [] }
+      )
 
       post approve_event_ros_agent_task_path(@event, @task)
 
@@ -193,6 +209,76 @@ module Events
       assert_equal @user, @task.approved_by
       assert_equal 4, @task.approved_plan_version
       assert_not_nil @task.approved_at
+    end
+
+    test "approve refuses plans with blocking validation errors" do
+      @task.update!(
+        status: "ready_for_review",
+        current_plan_version: 4,
+        plan_json: { "operations" => [] },
+        validation_json: { "blocking_errors" => ["Operation op_1 targets another calendar."] }
+      )
+
+      post approve_event_ros_agent_task_path(@event, @task)
+
+      assert_redirected_to event_ros_agent_task_path(@event, @task)
+      assert_equal "ready_for_review", @task.reload.status
+      assert_nil @task.approved_at
+      assert_equal "Resolve blocking validation errors before approval.", flash[:alert]
+    end
+
+    test "approve requires server-side acknowledgement for high-risk operations" do
+      @task.update!(
+        status: "ready_for_review",
+        current_plan_version: 4,
+        plan_json: { "operations" => [] },
+        validation_json: { "blocking_errors" => [] },
+        preview_json: { "high_risk_operation_ids" => ["delete_1"] }
+      )
+
+      post approve_event_ros_agent_task_path(@event, @task)
+
+      assert_redirected_to event_ros_agent_task_path(@event, @task)
+      assert_equal "ready_for_review", @task.reload.status
+      assert_equal "Acknowledge high-risk operations before continuing.", flash[:alert]
+    end
+
+    test "approve records high-risk acknowledgement when checked" do
+      @task.update!(
+        status: "ready_for_review",
+        current_plan_version: 4,
+        plan_json: { "operations" => [] },
+        validation_json: { "blocking_errors" => [] },
+        preview_json: { "high_risk_operation_ids" => ["delete_1"] }
+      )
+
+      post approve_event_ros_agent_task_path(@event, @task), params: { high_risk_acknowledgement: "1" }
+
+      assert_redirected_to event_ros_agent_task_path(@event, @task)
+      @task.reload
+      assert_equal "approved", @task.status
+      assert_equal true, @task.validation_json.dig("approval", "high_risk_acknowledged")
+      assert_equal ["delete_1"], @task.validation_json.dig("approval", "high_risk_operation_ids")
+    end
+
+    test "apply requires approval state and high-risk acknowledgement before delegating" do
+      @task.update!(
+        status: "approved",
+        current_plan_version: 2,
+        approved_plan_version: 2,
+        plan_json: {
+          "operations" => [
+            { "operation_id" => "delete_1", "operation_type" => "delete_item", "risk_level" => "high" }
+          ]
+        },
+        validation_json: { "blocking_errors" => [] },
+        preview_json: { "high_risk_operation_ids" => ["delete_1"] }
+      )
+
+      post apply_event_ros_agent_task_path(@event, @task)
+
+      assert_redirected_to event_ros_agent_task_path(@event, @task)
+      assert_equal "Acknowledge high-risk operations before continuing.", flash[:alert]
     end
 
     test "apply delegates to the change plan applier when available" do
@@ -238,13 +324,12 @@ module Events
     end
 
     def with_temporary_run_task_job(fake_job_class)
-      if defined?(RosAgent::RunTaskJob)
-        RosAgent.send(:remove_const, :RunTaskJob)
-      end
+      original_job = RosAgent.send(:remove_const, :RunTaskJob) if defined?(RosAgent::RunTaskJob)
       RosAgent.const_set(:RunTaskJob, fake_job_class)
       yield
     ensure
       RosAgent.send(:remove_const, :RunTaskJob) if defined?(RosAgent::RunTaskJob)
+      RosAgent.const_set(:RunTaskJob, original_job) if original_job
     end
 
     def without_run_task_job

@@ -17,6 +17,9 @@ module RosAgent
     def build
       {
         instructions: instructions,
+        text: {
+          format: Schemas::ResponseFormat.for_mode(mode)
+        },
         input: [
           {
             role: "user",

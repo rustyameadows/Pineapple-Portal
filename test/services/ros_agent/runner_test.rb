@@ -35,6 +35,8 @@ module RosAgent
                     :source_understanding_json,
                     :draft_ros_json,
                     :plan_json,
+                    :preview_json,
+                    :validation_json,
                     :usage_json,
                     :openai_response_id,
                     :error_message,
@@ -53,6 +55,8 @@ module RosAgent
         @source_understanding_json = {}
         @draft_ros_json = {}
         @plan_json = {}
+        @preview_json = {}
+        @validation_json = {}
         @usage_json = {}
         @current_plan_version = 1
         @question_batches = FakeQuestionBatchAssociation.new
@@ -75,13 +79,13 @@ module RosAgent
       attr_reader :payloads
 
       def initialize(response)
-        @response = response
+        @responses = response.is_a?(Array) ? response.dup : [response]
         @payloads = []
       end
 
       def responses_create(**payload)
         @payloads << payload
-        @response
+        @responses.shift || raise("No response left")
       end
     end
 
@@ -139,6 +143,27 @@ module RosAgent
       end
     end
 
+    class FakeSourceDocumentUploader
+      class << self
+        attr_accessor :calls
+      end
+      self.calls = []
+
+      def initialize(task:, client:, trace_recorder_class:)
+        @task = task
+        @client = client
+        @trace_recorder_class = trace_recorder_class
+      end
+
+      def call
+        self.class.calls << {
+          task: @task,
+          client: @client,
+          trace_recorder_class: @trace_recorder_class
+        }
+      end
+    end
+
     class FakeEventContext
       def initialize(event)
         @event = event
@@ -149,9 +174,13 @@ module RosAgent
       end
     end
 
+    setup do
+      FakeSourceDocumentUploader.calls = []
+    end
+
     test "stores source understanding and moves into needs_input when recommended" do
       task = FakeTask.new(event: events(:one), artifacts: [{ type: "input_file", file_id: "file_123" }])
-      response = response_hash(
+      source_response = response_hash(
         payload: {
           "state" => "source_understood",
           "summary" => "Understood the source.",
@@ -160,13 +189,42 @@ module RosAgent
           "risk_notes" => []
         }
       )
-      client = FakeClient.new(response)
+      question_response = response_hash(
+        payload: {
+          "state" => "needs_input",
+          "summary" => "Need a date mapping decision.",
+          "questions" => [
+            {
+              "key" => "date_mapping",
+              "label" => "Date Mapping",
+              "question" => "Map Saturday to the wedding date?",
+              "why_it_matters" => "This shifts every schedule row.",
+              "required" => true,
+              "answer_type" => "single_choice",
+              "options" => [
+                {
+                  "value" => "map_saturday_to_wedding_date",
+                  "label" => "Map Saturday",
+                  "recommended" => true,
+                  "description" => "Use the wedding date as the Saturday anchor."
+                }
+              ],
+              "freeform_allowed" => true
+            }
+          ],
+          "assumptions" => [],
+          "source_observations" => [],
+          "risk_notes" => []
+        }
+      )
+      client = FakeClient.new([source_response, question_response])
       trace_recorder = FakeTraceRecorder.new
 
       Runner.new(
         task: task,
         client: client,
         prompt_builder_class: FakePromptBuilder,
+        source_document_uploader_class: FakeSourceDocumentUploader,
         source_file_input_builder_class: FakeSourceFileInputBuilder,
         event_context_class: FakeEventContext,
         trace_recorder_class: ->(**attributes) {
@@ -176,13 +234,18 @@ module RosAgent
       ).call(mode: :initial_run)
 
       assert_equal "needs_input", task.status
+      assert_equal 1, FakeSourceDocumentUploader.calls.length
+      assert_equal task, FakeSourceDocumentUploader.calls.first[:task]
+      assert_equal client, FakeSourceDocumentUploader.calls.first[:client]
       assert_equal valid_source_understanding, task.source_understanding_json
       assert_equal "resp_123", task.openai_response_id
       assert_equal({ "input_tokens" => 100, "output_tokens" => 50 }, task.usage_json)
-      assert_equal "source_understood", task.appended_events.last[:event_type]
+      assert_equal 1, task.question_batches.created_batches.length
+      assert_equal "needs_input", task.appended_events.last[:event_type]
       assert trace_recorder.started
-      assert_equal response, trace_recorder.completed_response
+      assert_equal question_response, trace_recorder.completed_response
       assert_equal "gpt-5.5", client.payloads.first[:model]
+      assert_equal 2, client.payloads.length
     end
 
     test "creates a question batch when the model needs planner input" do
@@ -220,6 +283,7 @@ module RosAgent
         task: task,
         client: FakeClient.new(response),
         prompt_builder_class: FakePromptBuilder,
+        source_document_uploader_class: FakeSourceDocumentUploader,
         source_file_input_builder_class: FakeSourceFileInputBuilder,
         event_context_class: FakeEventContext,
         trace_recorder_class: ->(**) { FakeTraceRecorder.new }
@@ -248,6 +312,7 @@ module RosAgent
         task: task,
         client: FakeClient.new(response),
         prompt_builder_class: FakePromptBuilder,
+        source_document_uploader_class: FakeSourceDocumentUploader,
         source_file_input_builder_class: FakeSourceFileInputBuilder,
         event_context_class: FakeEventContext,
         trace_recorder_class: ->(**) { FakeTraceRecorder.new }
@@ -266,6 +331,7 @@ module RosAgent
         task: task,
         client: FakeClient.new(response),
         prompt_builder_class: FakePromptBuilder,
+        source_document_uploader_class: FakeSourceDocumentUploader,
         source_file_input_builder_class: FakeSourceFileInputBuilder,
         event_context_class: FakeEventContext,
         trace_recorder_class: ->(**) { FakeTraceRecorder.new }
@@ -273,6 +339,8 @@ module RosAgent
 
       assert_equal "ready_for_review", task.status
       assert_equal valid_change_plan, task.plan_json
+      assert_equal [], task.validation_json[:blocking_errors]
+      assert_equal 1, task.preview_json[:create_count]
       assert_equal 2, task.current_plan_version
       assert_equal "ready_for_review", task.appended_events.last[:event_type]
     end
@@ -292,6 +360,7 @@ module RosAgent
           task: task,
           client: client,
           prompt_builder_class: FakePromptBuilder,
+          source_document_uploader_class: FakeSourceDocumentUploader,
           source_file_input_builder_class: FakeSourceFileInputBuilder,
           event_context_class: FakeEventContext,
           trace_recorder_class: ->(**attributes) {
@@ -311,6 +380,8 @@ module RosAgent
     private
 
     def response_hash(payload:)
+      payload = agent_turn_payload(payload) if %w[source_understood needs_input draft_ready].include?(payload["state"])
+
       {
         "id" => "resp_123",
         "request_id" => "req_123",
@@ -326,6 +397,20 @@ module RosAgent
           }
         ]
       }
+    end
+
+    def agent_turn_payload(payload)
+      {
+        "source_understanding" => nil,
+        "recommended_next_state" => nil,
+        "questions" => [],
+        "draft_ros" => nil,
+        "assumptions" => [],
+        "source_observations" => [],
+        "risk_notes" => [],
+        "review_notes" => [],
+        "suggested_next_questions" => []
+      }.merge(payload)
     end
 
     def valid_source_understanding

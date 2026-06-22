@@ -5,10 +5,12 @@ module RosAgent
     test "loads the task and delegates to the runner" do
       task = Struct.new(:id).new(123)
       runner = Minitest::Mock.new
+      created_agent_task_constant = false
 
       agent_task_class = if defined?(AgentTask)
         AgentTask
       else
+        created_agent_task_constant = true
         Object.const_set("AgentTask", Class.new)
       end
 
@@ -19,13 +21,13 @@ module RosAgent
         } do
           runner.expect(:call, true, [{ mode: :request_final_plan }])
 
-          RunTaskJob.perform_now(123, mode: :request_final_plan)
+          RosAgent::RunTaskJob.perform_now(123, mode: :request_final_plan)
         end
       end
 
       runner.verify
     ensure
-      Object.send(:remove_const, :AgentTask) unless defined?(::AgentTask) && ::AgentTask != agent_task_class
+      Object.send(:remove_const, :AgentTask) if created_agent_task_constant && defined?(::AgentTask)
     end
   end
 end

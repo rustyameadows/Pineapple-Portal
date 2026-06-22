@@ -61,6 +61,13 @@ module RosAgent
          task.approved_plan_version != task.current_plan_version
         errors << "Approved plan version must match the current plan version."
       end
+      if task.respond_to?(:validation_blocking_errors) && task.validation_blocking_errors.any?
+        errors << "Blocking validation errors must be resolved before applying a ROS change plan."
+      end
+      if task.respond_to?(:high_risk_plan?) && task.high_risk_plan? &&
+         task.respond_to?(:high_risk_acknowledged?) && !task.high_risk_acknowledged?
+        errors << "High-risk operations must be acknowledged before applying a ROS change plan."
+      end
       errors
     end
 
@@ -149,7 +156,8 @@ module RosAgent
     end
 
     def attributes_for(operation)
-      (operation["attributes"] || operation[:attributes] || {}).with_indifferent_access
+      (operation["attributes"] || operation[:attributes] ||
+        operation["item_attributes"] || operation[:item_attributes] || {}).with_indifferent_access
     end
 
     def next_position

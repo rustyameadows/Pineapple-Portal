@@ -159,5 +159,35 @@ module RosAgent
       assert_includes result.errors, "Name has already been taken"
       assert_not CalendarItem.exists?(title: "Guest Arrival")
     end
+
+    test "refuses high-risk plans that were not acknowledged" do
+      task = agent_tasks(:draft_task)
+      task.update!(
+        status: "approved",
+        current_plan_version: 5,
+        approved_plan_version: 5,
+        validation_json: { "blocking_errors" => [] },
+        preview_json: { "high_risk_operation_ids" => ["delete-1"] }
+      )
+
+      result = ChangePlanApplier.new(
+        task: task,
+        calendar: @calendar,
+        plan_hash: {
+          "operations" => [
+            {
+              "operation_id" => "delete-1",
+              "operation_type" => "delete_item",
+              "summary" => "Delete ceremony.",
+              "risk_level" => "high",
+              "target_item_id" => calendar_items(:ceremony).id
+            }
+          ]
+        }
+      ).call
+
+      assert_not result.applied?
+      assert_includes result.errors, "High-risk operations must be acknowledged before applying a ROS change plan."
+    end
   end
 end

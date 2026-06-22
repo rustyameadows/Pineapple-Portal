@@ -2,16 +2,19 @@ module RosAgent
   class Runner
     MODEL = "gpt-5.5".freeze
     REASONING_EFFORT = "high".freeze
+    MAX_STEPS = 3
 
     def initialize(task:,
                    client: OpenaiClient.new,
                    prompt_builder_class: PromptBuilder,
+                   source_document_uploader_class: SourceDocumentUploader,
                    source_file_input_builder_class: SourceFileInputBuilder,
                    event_context_class: EventContext,
                    trace_recorder_class: TraceRecorder)
       @task = task
       @client = client
       @prompt_builder_class = prompt_builder_class
+      @source_document_uploader_class = source_document_uploader_class
       @source_file_input_builder_class = source_file_input_builder_class
       @event_context_class = event_context_class
       @trace_recorder_class = trace_recorder_class
@@ -19,14 +22,24 @@ module RosAgent
 
     def call(options = nil, mode: :initial_run)
       mode = options[:mode] if options.is_a?(Hash) && options.key?(:mode)
-      mark_status!("analyzing")
-      request_payload = build_request_payload(mode)
-      recorder = trace_recorder_for(request_payload)
-      recorder.start!
+      mark_status!(status_for_mode(mode))
+      upload_source_documents!
 
-      response = client.responses_create(**request_payload)
-      recorder.complete!(response: response)
-      handle_response(response)
+      payload = nil
+      recorder = nil
+      MAX_STEPS.times do
+        request_payload = build_request_payload(mode)
+        recorder = trace_recorder_for(request_payload, mode)
+        recorder.start!
+
+        response = client.responses_create(**request_payload)
+        recorder.complete!(response: response)
+        payload = handle_response(response)
+        return payload unless continue_after?(payload)
+      end
+
+      recorder = nil
+      raise ArgumentError, "Agent stopped after source understanding without producing questions or a draft."
     rescue StandardError => e
       recorder&.fail!(error: e, response: {})
       mark_failure!(e)
@@ -35,7 +48,15 @@ module RosAgent
 
     private
 
-    attr_reader :task, :client, :prompt_builder_class, :source_file_input_builder_class, :event_context_class, :trace_recorder_class
+    attr_reader :task, :client, :prompt_builder_class, :source_document_uploader_class, :source_file_input_builder_class, :event_context_class, :trace_recorder_class
+
+    def upload_source_documents!
+      source_document_uploader_class.new(
+        task: task,
+        client: client,
+        trace_recorder_class: trace_recorder_class
+      ).call
+    end
 
     def build_request_payload(mode)
       prompt_payload = prompt_builder_class.new(
@@ -52,11 +73,11 @@ module RosAgent
       }
     end
 
-    def trace_recorder_for(request_payload)
+    def trace_recorder_for(request_payload, mode)
       if trace_recorder_class.respond_to?(:call)
         trace_recorder_class.call(
           task: task,
-          purpose: purpose_for_request,
+          purpose: purpose_for_request(mode),
           model: model,
           reasoning_effort: reasoning_effort,
           request_payload: request_payload
@@ -64,7 +85,7 @@ module RosAgent
       else
         trace_recorder_class.new(
           task: task,
-          purpose: purpose_for_request,
+          purpose: purpose_for_request(mode),
           model: model,
           reasoning_effort: reasoning_effort,
           request_payload: request_payload
@@ -75,6 +96,7 @@ module RosAgent
     def handle_response(response)
       payload = parsed_payload(response)
       state = payload.fetch("state")
+      validate_payload!(state, payload)
       persist_usage(response)
       task.openai_response_id = response_value(response, "id") if task.respond_to?(:openai_response_id=)
 
@@ -88,8 +110,12 @@ module RosAgent
       when "draft_ready"
         task.update!(draft_ros_json: payload.fetch("draft_ros"), status: "drafting")
       when "ready_for_review"
+        validation_result = validate_change_plan!(payload)
+        preview = build_change_plan_preview(payload)
         task.update!(
           plan_json: payload,
+          validation_json: validation_result.as_json,
+          preview_json: preview,
           current_plan_version: task.current_plan_version.to_i + 1,
           status: "ready_for_review"
         )
@@ -99,6 +125,10 @@ module RosAgent
 
       append_event!(state, payload["summary"])
       payload
+    end
+
+    def continue_after?(payload)
+      payload["state"] == "source_understood"
     end
 
     def create_question_batch!(payload)
@@ -126,6 +156,40 @@ module RosAgent
       elsif task.respond_to?(:usage_summary_json=)
         task.usage_summary_json = usage
       end
+    end
+
+    def validate_payload!(state, payload)
+      case state
+      when "source_understood"
+        Schemas::AgentTurnSchema.validate!(payload)
+        Schemas::SourceUnderstandingSchema.validate!(payload.fetch("source_understanding"))
+      when "needs_input"
+        Schemas::AgentTurnSchema.validate!(payload)
+        Schemas::QuestionBatchSchema.validate!(payload)
+      when "draft_ready"
+        Schemas::AgentTurnSchema.validate!(payload)
+        Schemas::DraftRosSchema.validate!(payload.fetch("draft_ros"))
+      when "ready_for_review"
+        Schemas::ChangePlanSchema.validate!(payload)
+      else
+        raise ArgumentError, "Unsupported agent state #{state.inspect}"
+      end
+    end
+
+    def validate_change_plan!(payload)
+      RosAgent::ChangePlanValidator.new(
+        task: task,
+        calendar: run_of_show_calendar,
+        plan_hash: payload
+      ).call
+    end
+
+    def build_change_plan_preview(payload)
+      RosAgent::ChangePlanPreview.new(
+        task: task,
+        calendar: run_of_show_calendar,
+        plan_hash: payload
+      ).call
     end
 
     def parsed_payload(response)
@@ -172,8 +236,34 @@ module RosAgent
       task.respond_to?(:reasoning_effort) && task.reasoning_effort.present? ? task.reasoning_effort : REASONING_EFFORT
     end
 
-    def purpose_for_request
-      "source_understanding"
+    def purpose_for_request(mode)
+      case mode.to_sym
+      when :refine_draft
+        "refinement"
+      when :request_final_plan
+        "final_plan"
+      else
+        "source_understanding"
+      end
+    end
+
+    def status_for_mode(mode)
+      case mode.to_sym
+      when :request_final_plan
+        "planning"
+      when :refine_draft
+        "drafting"
+      else
+        "analyzing"
+      end
+    end
+
+    def run_of_show_calendar
+      task.event.run_of_show_calendar || task.event.event_calendars.build(
+        name: "Run of Show",
+        timezone: EventCalendar::DEFAULT_TIMEZONE,
+        kind: EventCalendar::KINDS[:master]
+      )
     end
   end
 end

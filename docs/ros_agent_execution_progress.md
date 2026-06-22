@@ -7,7 +7,7 @@ Branch: `codex/agentic-features`
 
 - Overall: in progress
 - Migration status: completed locally by maintainer; test DB prepared
-- Test status: model, apply service, stubbed OpenAI/runner, and UI controller tests passed
+- Test status: targeted ROS agent suite passed (79 tests, 424 assertions)
 - Live OpenAI smoke status: not run; budget is one tiny smoke call after stubbed tests pass
 - OpenAI key decision: reuse existing `OPENAI_API_KEY`
 - Production/live database: do not run migrations from Codex
@@ -18,10 +18,11 @@ Branch: `codex/agentic-features`
 - OpenAI/Runner worker: blocked on sandboxed Postgres after red tests; main agent completed implementation
 - ROS Apply worker: blocked on sandboxed Postgres after red tests; main agent completed services
 - UI worker: blocked on sandboxed Postgres after red tests; main agent completed controller/view implementation
+- Integration reviewer: completed; main agent resolved calendar-write, high-risk acknowledgement, and schema-contract findings
 
 ## Checklist
 
-- [ ] Create progress tracker and commit it
+- [x] Create progress tracker and commit it
 - [x] Add agent task migrations
 - [x] Add agent task models and fixtures
 - [x] Add model tests
@@ -38,7 +39,7 @@ Branch: `codex/agentic-features`
 - [x] Add task form, Q&A, draft, preview, approval, and apply views
 - [x] Add minimal Stimulus behavior
 - [x] Add controller tests
-- [ ] Add end-to-end stubbed test
+- [x] Add end-to-end stubbed test
 - [x] Ask maintainer to run migrations
 - [x] Verify schema and tests after migration output
 - [ ] Run one tiny live OpenAI smoke call

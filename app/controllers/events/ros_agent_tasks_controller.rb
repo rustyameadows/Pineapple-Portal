@@ -81,19 +81,38 @@ module Events
     end
 
     def approve
+      unless @task.approvable?
+        redirect_to event_ros_agent_task_path(@event, @task), alert: "Resolve blocking validation errors before approval."
+        return
+      end
+      return unless require_high_risk_acknowledgement!
+
       @task.update!(
         status: AgentTask::STATUSES[:approved],
         approved_by: current_user,
         approved_at: Time.current,
         approved_plan_version: @task.current_plan_version
       )
-      @task.append_event!(event_type: "approved", message: "Planner approved plan.", created_by: current_user)
+      @task.append_event!(
+        event_type: "approved",
+        message: "Planner approved plan.",
+        payload: {
+          high_risk_acknowledged: @task.high_risk_acknowledged?,
+          high_risk_operation_ids: @task.high_risk_operation_ids
+        },
+        created_by: current_user
+      )
       redirect_to event_ros_agent_task_path(@event, @task), notice: "Agent plan approved."
     end
 
     def apply
       unless defined?(RosAgent::ChangePlanApplier)
         redirect_to event_ros_agent_task_path(@event, @task), alert: "ROS plan applier is not available yet."
+        return
+      end
+      return unless require_high_risk_acknowledgement!
+      unless @task.ready_to_apply?
+        redirect_to event_ros_agent_task_path(@event, @task), alert: "Approve the current validated plan before applying."
         return
       end
 
@@ -176,6 +195,19 @@ module Events
         timezone: EventCalendar::DEFAULT_TIMEZONE,
         kind: EventCalendar::KINDS[:master]
       )
+    end
+
+    def require_high_risk_acknowledgement!
+      return true unless @task.high_risk_plan?
+      return true if @task.high_risk_acknowledged?
+
+      unless ActiveModel::Type::Boolean.new.cast(params[:high_risk_acknowledgement])
+        redirect_to event_ros_agent_task_path(@event, @task), alert: "Acknowledge high-risk operations before continuing."
+        return false
+      end
+
+      @task.acknowledge_high_risk!(user: current_user)
+      true
     end
   end
 end
