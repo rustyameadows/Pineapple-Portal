@@ -8,18 +8,22 @@
 <% show_tags = true if local_assigns[:show_tags].nil? %>
 <% show_relative = !!local_assigns[:show_relative] %>
 <% show_status_first = !!local_assigns[:show_status_first] %>
+<% show_event_column = !!local_assigns[:show_event_column] %>
 <% show_edit_button = !!local_assigns[:show_edit_button] %>
 <% bulk_edit = !!local_assigns[:bulk_edit] %>
 <% show_timing_actions = !!local_assigns[:show_timing_actions] %>
 <% render_actions = local_assigns[:render_actions] %>
 <% actions_header = local_assigns[:actions_header] || "" %>
 <% item_link_proc = local_assigns[:item_link_proc] || ->(item) { [item.title, edit_event_calendar_item_path(calendar.event, item, return_to: request.fullpath)] } %>
+<% event_column_proc = local_assigns[:event_column_proc] || ->(item) { item.event_calendar.event.name } %>
+<% item_calendar_proc = local_assigns[:item_calendar_proc] || ->(_item) { calendar } %>
 <% bulk_form_id = local_assigns[:bulk_form_id] || "calendar-bulk-edit-form" %>
 <% bulk_form_url = local_assigns[:bulk_form_url] || bulk_update_event_calendar_items_path(calendar.event) %>
 <% bulk_return_to = local_assigns[:bulk_return_to] || request.fullpath %>
 <% filter_source_items = Array(local_assigns[:filter_source_items] || items) %>
 <% bulk_team_members = calendar.event.team_members.where.not(role: User::ROLES[:client]).order(:name) %>
 <% base_column_count = show_relative ? 3 : 5 %>
+<% base_column_count += 1 if show_event_column %>
 <% base_column_count += 1 if show_status_first %>
 <% initial_select_all_label = "Select all #{items.count} item#{'s' unless items.count == 1}" %>
 <% bulk_action_options = [
@@ -405,6 +409,9 @@
   <table class="event-table event-calendars__table">
     <thead>
       <tr>
+        <% if show_event_column %>
+          <th class="event-calendars__event-column">Event</th>
+        <% end %>
         <% if show_status_first %>
           <th class="event-calendars__status-column">Status</th>
         <% end %>
@@ -434,8 +441,10 @@
     <tbody>
       <% current_bucket = nil %>
       <% items.each do |item| %>
-        <% bucket_key = calendar_item_segment_key(item, calendar.timezone, segment_granularity) %>
-        <% bucket_label = group_label_proc ? group_label_proc.call(item) : calendar_item_segment_label(item, calendar.timezone, segment_granularity) %>
+        <% item_calendar = item_calendar_proc.call(item) || calendar %>
+        <% item_timezone = item_calendar.timezone %>
+        <% bucket_key = calendar_item_segment_key(item, item_timezone, segment_granularity) %>
+        <% bucket_label = group_label_proc ? group_label_proc.call(item) : calendar_item_segment_label(item, item_timezone, segment_granularity) %>
         <% if group_by_date && bucket_key != current_bucket %>
           <% current_bucket = bucket_key %>
           <tr class="event-calendars__date-row"
@@ -488,15 +497,20 @@
             data-calendar-tag-values="<%= calendar_item_filter_values_json(item, :tag) %>"
             data-calendar-group-key="<%= group_by_date ? bucket_key : '' %>">
           <% tooltip = calendar_item_relative_tooltip(item) %>
+          <% if show_event_column %>
+            <td class="event-calendars__event-column" data-calendar-bulk-edit-target="searchableText">
+              <%= event_column_proc.call(item) %>
+            </td>
+          <% end %>
           <% if show_status_first %>
             <td class="event-calendars__status-value"><%= calendar_item_status_label(item) %></td>
           <% end %>
           <% schedule_label = if schedule_label_proc
                                 schedule_label_proc.call(item)
                               elsif monthly_segments
-                                calendar_item_day_label_with_marker(item, calendar.timezone)
+                                calendar_item_day_label_with_marker(item, item_timezone)
                               else
-                                calendar_item_time_only_label_with_marker(item, calendar.timezone)
+                                calendar_item_time_only_label_with_marker(item, item_timezone)
                               end %>
           <td class="event-calendars__schedule-column" title="<%= tooltip.to_s %>"><%= schedule_label %></td>
           <td class="event-calendars__title-column">

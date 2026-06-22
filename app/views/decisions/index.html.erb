@@ -1,0 +1,43 @@
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--index">
+    <%= render "events/sidebar_index" %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section event-calendars__timeline-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Decisions</p>
+            <h1 class="event-section__title">Decisions</h1>
+            <p class="event-section__lead">Decision items across active events.</p>
+          </div>
+        </header>
+
+        <% if @items.any? %>
+          <%= render "events/calendars/schedule_table",
+                     items: @items,
+                     filter_source_items: @items,
+                     calendar: @items.first.event_calendar,
+                     group_by_date: true,
+                     segment_granularity: EventCalendarView::SEGMENT_GRANULARITIES[:month],
+                     show_event_column: true,
+                     show_status_first: true,
+                     show_tags: false,
+                     event_column_proc: ->(item) { item.event_calendar.event.name },
+                     item_calendar_proc: ->(item) { item.event_calendar },
+                     item_link_proc: ->(item) {
+                       event = item.event_calendar.event
+                       view = @decision_views_by_event_id.fetch(event.id)
+                       row_id = dom_id(item, :timeline_row)
+                       [item.title, "#{event_calendar_view_path(event, view)}##{row_id}"]
+                     } %>
+        <% else %>
+          <div class="event-section__empty">
+            <p>No decision items yet.</p>
+          </div>
+        <% end %>
+      </section>
+    </div>
+  </div>
+<% end %>

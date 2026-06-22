@@ -14,6 +14,8 @@ resources :users, only: [] do
   resources :avatar_assets, only: :create, module: :users
 end
 
+get "decisions", to: "decisions#index", as: :decisions
+
 namespace :settings do
   get "run_of_show_defaults", to: "run_of_show_defaults#show", as: :run_of_show_defaults
   resources :global_vendors, only: %i[index new edit create update destroy]
