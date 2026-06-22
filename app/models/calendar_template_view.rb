@@ -3,12 +3,18 @@ class CalendarTemplateView < ApplicationRecord
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: { scope: :calendar_template_id }
+  validates :segment_granularity, inclusion: { in: EventCalendarView::SEGMENT_GRANULARITIES.values }
   validate :tag_filter_must_match_template
 
   before_validation :generate_slug, if: -> { slug.blank? && name.present? }
   before_validation :normalize_tag_filter
+  before_validation :default_segment_granularity
 
   scope :client_visible_by_default, -> { where(client_visible_by_default: true) }
+
+  def monthly_segments?
+    segment_granularity == EventCalendarView::SEGMENT_GRANULARITIES[:month]
+  end
 
   private
 
@@ -34,6 +40,10 @@ class CalendarTemplateView < ApplicationRecord
                        .reject(&:blank?)
                        .map(&:to_i)
                        .uniq
+  end
+
+  def default_segment_granularity
+    self.segment_granularity = EventCalendarView::SEGMENT_GRANULARITIES[:day] if segment_granularity.blank?
   end
 
   def tag_filter_must_match_template

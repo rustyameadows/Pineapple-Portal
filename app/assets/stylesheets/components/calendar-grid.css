@@ -7,70 +7,82 @@
   gap: 0.75rem;
 }
 
-.calendar-grid__bulk {
-  border: 1px solid var(--color-sea-foam);
-  border-radius: var(--radius-lg);
-  background: var(--color-light-cream);
-  padding: 1.1rem 1.4rem;
-  display: block;
-  gap: 0.75rem;
-  margin-bottom: 1.1rem;
+.calendar-grid__table-wrapper {
+  overflow-x: auto;
 }
 
-.calendar-grid__bulk-title {
-  margin: 0 0 0.6rem;
-  font-size: 1rem;
+.calendar-grid__column-controls {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 65%, white);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-light-cream) 78%, white);
+}
+
+.calendar-grid__column-controls-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.calendar-grid__column-controls-label {
+  color: var(--color-brown);
+  font-size: 0.76rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.calendar-grid__column-reset {
+  border: none;
+  background: transparent;
+  color: var(--color-brown);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.calendar-grid__column-reset:hover,
+.calendar-grid__column-reset:focus {
   color: var(--color-dark-brown);
 }
 
-.calendar-grid__bulk-form {
+.calendar-grid__column-toggle-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 1rem;
-  align-items: flex-end;
+  gap: 0.4rem;
 }
 
-.calendar-grid__bulk-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  flex: 1 1 200px;
-  min-width: 180px;
+.calendar-grid__column-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 999px;
+  background: var(--color-white);
+  color: var(--color-dark-brown);
+  cursor: pointer;
+  font-size: 0.84rem;
+  white-space: nowrap;
 }
 
-.calendar-grid__bulk-label {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--color-brown);
+.calendar-grid__column-toggle:has(input:checked) {
+  border-color: color-mix(in srgb, var(--color-accent) 70%, var(--color-neutral-300));
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-white));
 }
 
-.calendar-grid__bulk-select {
-  padding: 0.5rem 0.6rem;
-  border-radius: 6px;
-  border: 1px solid var(--color-sea-foam);
-  font-family: inherit;
+.calendar-grid [data-grid-column][hidden] {
+  display: none !important;
 }
 
-.calendar-grid__bulk-select--tags {
-  min-height: 6.5rem;
-}
-
-.calendar-grid__bulk-actions {
-  display: flex;
-  justify-content: flex-start;
-  flex: 1 1 100%;
-}
-
-.calendar-grid__bulk-hint {
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--color-brown);
-  flex: 1 1 100%;
-}
-
-.calendar-grid__table-wrapper {
-  overflow-x: auto;
+.calendar-grid__bulk-toolbar {
+  left: 1rem;
 }
 
 .calendar-grid__table {
@@ -191,6 +203,91 @@
   color: var(--color-brown);
 }
 
+.calendar-grid__cell--timing {
+  min-width: 320px;
+  max-width: 380px;
+  position: relative;
+}
+
+.calendar-grid__timing-card {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.calendar-grid__timing-summary {
+  margin: 0;
+  color: var(--color-dark-brown);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.35;
+}
+
+.calendar-grid__timing-meta {
+  margin: 0;
+  color: var(--color-brown);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.calendar-grid__timing-edit {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  justify-self: start;
+  border: 1px solid var(--color-sea-foam);
+  border-radius: var(--radius-pill);
+  background: var(--color-white);
+  color: var(--color-dark-brown);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.65rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.calendar-grid__cell--timing:hover .calendar-grid__timing-edit,
+.calendar-grid__cell--timing:focus-within .calendar-grid__timing-edit {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.calendar-grid__timing-edit:hover,
+.calendar-grid__timing-edit:focus {
+  border-color: var(--color-brown);
+  background: var(--color-light-cream);
+}
+
+.calendar-grid__timing-dialog {
+  max-width: min(1040px, 94vw);
+}
+
+.calendar-grid__timing-dialog-content {
+  gap: 1rem;
+}
+
+.calendar-grid__timing-dialog-header .event-calendars__bulk-dialog-copy {
+  color: var(--color-dark-brown);
+  font-weight: var(--font-weight-semibold);
+}
+
+.calendar-grid__timing-sheet--form {
+  display: grid;
+  gap: 1rem;
+}
+
+.calendar-grid__timing-mode-toggle {
+  margin: 0;
+}
+
+.calendar-grid__timing-sheet--form .calendar-item-form__timing-group {
+  margin: 0;
+}
+
+.calendar-grid__timing-duration-row {
+  display: block;
+}
+
 .calendar-grid__select--tags {
   min-height: 5.5rem;
 }
@@ -215,7 +312,7 @@
 }
 
 .calendar-grid__cell--anchor {
-  min-width: 180px;
+  min-width: 240px;
 }
 
 .calendar-grid__anchor {
@@ -248,13 +345,55 @@
 }
 
 .calendar-grid__cell--relative {
-  min-width: 180px;
+  min-width: 460px;
 }
 
 .calendar-grid__relative {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(54px, 0.55fr) minmax(82px, 0.85fr) minmax(68px, 0.7fr) minmax(76px, 0.75fr) minmax(82px, 0.8fr) minmax(82px, 0.8fr);
   align-items: center;
   gap: 0.35rem;
+}
+
+.calendar-grid__time-amount {
+  display: grid;
+  grid-template-columns: minmax(54px, 0.55fr) minmax(82px, 0.85fr) minmax(68px, 0.7fr) minmax(76px, 0.75fr);
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.calendar-grid__time-amount--duration {
+  min-width: 320px;
+}
+
+.calendar-grid__time-piece {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  color: var(--color-neutral-600);
+  font-size: 0.78rem;
+  font-weight: var(--font-weight-semibold);
+}
+
+.calendar-grid__select--anchor {
+  min-width: 220px;
+}
+
+.calendar-grid__input--offset {
+  min-width: 68px;
+}
+
+.calendar-grid__select--unit,
+.calendar-grid__select--direction,
+.calendar-grid__select--point {
+  min-width: 82px;
+  padding-right: 1.4rem;
+}
+
+.calendar-grid__hint--summary {
+  line-height: 1.35;
+  max-width: 320px;
 }
 
 .calendar-grid__checkbox--inline {
@@ -263,7 +402,8 @@
 }
 
 .calendar-grid__cell--tags {
-  min-width: 220px;
+  min-width: 260px;
+  width: max-content;
 }
 
 .calendar-grid__cell--location,
@@ -275,11 +415,82 @@
   min-width: 220px;
 }
 
-.calendar-grid__tags {
+.calendar-grid__tag-editor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: max-content;
+  max-width: none;
+}
+
+.calendar-grid__active-tags {
   display: flex;
-  gap: 0.4rem;
-  overflow-x: auto;
-  padding-bottom: 0.2rem;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+  max-width: none;
+  overflow: visible;
+  padding-bottom: 0.1rem;
+}
+
+.calendar-grid__active-tag {
+  border-style: solid;
+}
+
+.calendar-grid__active-tag[hidden] {
+  display: none;
+}
+
+.calendar-grid__tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: var(--radius-pill);
+  color: var(--color-dark-brown);
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.calendar-grid__active-tag:hover .calendar-grid__tag-remove,
+.calendar-grid__active-tag:focus .calendar-grid__tag-remove {
+  background: color-mix(in srgb, var(--tag-border-color, var(--tag-color, #3b82f6)) 18%, white);
+}
+
+.calendar-grid__tag-add {
+  align-self: center;
+  border: 1px solid var(--color-sea-foam);
+  border-radius: var(--radius-pill);
+  background: var(--color-white);
+  color: var(--color-dark-brown);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.28rem 0.65rem;
+  white-space: nowrap;
+}
+
+.calendar-grid__tag-add:hover,
+.calendar-grid__tag-add:focus {
+  border-color: var(--color-brown);
+  background: var(--color-light-cream);
+}
+
+.calendar-grid__tag-dialog {
+  max-width: min(640px, 92vw);
+}
+
+.calendar-grid__tag-dialog-content {
+  gap: 1rem;
+}
+
+.calendar-grid__tag-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  max-height: min(52vh, 28rem);
+  overflow: auto;
 }
 
 .calendar-grid__tag-pill {

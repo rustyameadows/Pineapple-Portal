@@ -75,103 +75,177 @@
       </label>
     </div>
 
-    <div class="calendar-item-form__grid calendar-item-form__timing-group" data-timing-mode="absolute" style="<%= timing_mode == 'relative' ? 'display:none;' : '' %>">
-      <div class="event-form__group">
-        <%= form.label :starts_at, "Start Time" %>
-        <div class="calendar-item__datetime" data-timezone="<%= @calendar.timezone %>">
+    <div class="calendar-item-form__timing-group" data-timing-mode="absolute" style="<%= timing_mode == 'relative' ? 'display:none;' : '' %>">
+      <div class="event-form__group calendar-item-form__absolute-field">
+        <%= form.label :starts_at, "Date and time" %>
+        <div class="calendar-item__datetime calendar-item__datetime--absolute" data-timezone="<%= @calendar.timezone %>">
           <% start_value = item.starts_at&.in_time_zone(@calendar.timezone) || @default_start_time %>
-          <div class="calendar-item__time-wrapper">
+          <% absolute_summary = start_value ? "Exact start: #{start_value.strftime('%b %-d, %Y at %-l:%M %p').strip}" : "Exact start not set." %>
+          <div class="calendar-item__time-wrapper calendar-item__time-wrapper--absolute">
             <%= form.datetime_local_field :starts_at,
                   value: start_value&.strftime('%Y-%m-%dT%H:%M'),
-                  class: "calendar-item__time-field" %>
+                  class: "calendar-item__time-field",
+                  data: { absolute_time_input: true } %>
           </div>
+          <p class="calendar-item-form__timing-summary" data-absolute-timing-summary><%= absolute_summary %></p>
         </div>
       </div>
     </div>
 
-    <div class="calendar-item-form__grid calendar-item-form__timing-group" data-timing-mode="relative" style="<%= timing_mode == 'relative' ? '' : 'display:none;' %>">
-      <div class="event-form__group calendar-item-form__full">
-        <%= form.label :relative_anchor_id, "Anchor" %>
-        <%= form.select :relative_anchor_id, options_for_select(@anchor_options, item.relative_anchor_id), { include_blank: "Absolute" }, class: "event-form__select" %>
-      </div>
-      <div class="event-form__group">
-        <%= form.label :relative_to_anchor_end, "Reference" %>
-        <%= form.select :relative_to_anchor_end,
-                        [["Anchor start", false], ["Anchor end", true]],
-                        { selected: item.relative_to_anchor_end? },
-                        class: "event-form__select" %>
-      </div>
-      <div class="event-form__group">
-        <%= form.label :relative_offset_minutes, "Offset" %>
-        <div class="calendar-item-form__duration">
-          <% offset_value = item.relative_offset_minutes.to_i %>
-          <% offset_unit = "minutes" %>
-          <%= number_field_tag "calendar_item[relative_offset_value]",
-                               offset_value,
+    <div class="calendar-item-form__timing-group" data-timing-mode="relative" style="<%= timing_mode == 'relative' ? '' : 'display:none;' %>">
+      <% offset_amount = item.relative_offset_time_amount %>
+      <% relative_direction_label = item.relative_before? ? "before" : "after" %>
+      <% relative_anchor_point_label = item.relative_to_anchor_end? ? "ends" : "starts" %>
+      <% relative_projected_start = nil %>
+      <% if item.relative_anchor.present? %>
+        <% anchor_base_time = item.relative_to_anchor_end? ? (item.relative_anchor.effective_ends_at || item.relative_anchor.effective_starts_at) : item.relative_anchor.effective_starts_at %>
+        <% if anchor_base_time %>
+          <% projected_offset_minutes = item.relative_offset_minutes.to_i %>
+          <% projected_offset_minutes *= -1 if item.relative_before? %>
+          <% relative_projected_start = anchor_base_time + projected_offset_minutes.minutes %>
+        <% end %>
+      <% end %>
+      <% relative_projected_label = relative_projected_start&.in_time_zone(@calendar.timezone)&.strftime("%b %-d %-l:%M%p")&.sub(/^Sep /, "Sept ") %>
+      <% relative_projected_suffix = relative_projected_label.present? ? " → #{relative_projected_label}" : "" %>
+      <% relative_summary = if item.relative_anchor.present?
+                              if offset_amount.total_minutes.to_i.zero?
+                                "Starts when #{item.relative_anchor.title} #{relative_anchor_point_label}#{relative_projected_suffix}"
+                              else
+                                "Starts #{offset_amount.label} #{relative_direction_label} #{item.relative_anchor.title} #{relative_anchor_point_label}#{relative_projected_suffix}"
+                              end
+                            else
+                              "Choose an anchor to preview relative timing."
+                            end %>
+
+      <div class="calendar-item-form__relative-sentence" data-calendar-timezone="<%= @calendar.timezone %>">
+        <span class="calendar-item-form__sentence-text">Start this item</span>
+
+        <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--offset">
+          <%= label_tag "calendar_item_relative_offset_display_value", "Offset days weeks or months", class: "visually-hidden" %>
+          <%= number_field_tag "calendar_item[relative_offset_display_value]",
+                               offset_amount.value,
+                               min: 0,
+                               step: 1,
+                               class: "calendar-item-form__sentence-control calendar-item-form__sentence-control--number",
+                               data: { relative_summary_input: "offsetValue" } %>
+        </div>
+
+        <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--unit">
+          <%= label_tag "calendar_item_relative_offset_display_unit", "Offset unit", class: "visually-hidden" %>
+          <%= select_tag "calendar_item[relative_offset_display_unit]",
+                         options_for_select(Calendars::TimeAmount::UNIT_OPTIONS, offset_amount.unit),
+                         class: "calendar-item-form__sentence-control",
+                         data: { relative_summary_input: "offsetUnit" } %>
+        </div>
+
+        <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--hours">
+          <%= label_tag "calendar_item_relative_offset_display_hours", "Offset hours", class: "visually-hidden" %>
+          <%= number_field_tag "calendar_item[relative_offset_display_hours]",
+                               offset_amount.hours,
+                               min: 0,
                                step: 0.25,
-                               class: "calendar-item-form__duration-value" %>
-          <%= select_tag "calendar_item[relative_offset_unit]",
-                         options_for_select(
-                           [
-                             ["Minutes", "minutes"],
-                             ["Hours", "hours"],
-                             ["Days", "days"],
-                             ["Weeks", "weeks"],
-                             ["Months", "months"]
-                           ],
-                           offset_unit
-                         ),
-                         class: "calendar-item-form__duration-unit" %>
+                               class: "calendar-item-form__sentence-control calendar-item-form__sentence-control--number",
+                               data: { relative_summary_input: "offsetHours" } %>
+          <span class="calendar-item-form__sentence-unit-label">hr</span>
+        </div>
+
+        <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--minutes">
+          <%= label_tag "calendar_item_relative_offset_display_minutes", "Offset minutes", class: "visually-hidden" %>
+          <%= number_field_tag "calendar_item[relative_offset_display_minutes]",
+                               offset_amount.minutes,
+                               min: 0,
+                               step: 1,
+                               class: "calendar-item-form__sentence-control calendar-item-form__sentence-control--number",
+                               data: { relative_summary_input: "offsetMinutes" } %>
+          <span class="calendar-item-form__sentence-unit-label">min</span>
+        </div>
+
+        <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--direction">
+          <%= form.label :relative_before, "Direction", class: "visually-hidden" %>
+          <%= form.select :relative_before,
+                          [["after", false], ["before", true]],
+                          { selected: item.relative_before? },
+                          class: "calendar-item-form__sentence-control",
+                          data: { relative_summary_input: "direction" } %>
+        </div>
+
+        <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--anchor"
+             data-controller="local-select"
+             data-local-select-empty-label-value="Choose an anchor..."
+             data-local-select-limit-value="24">
+          <% selected_anchor_option = @anchor_options.find { |(_label, id, _attributes)| id.to_s == item.relative_anchor_id.to_s } %>
+          <%= form.label :relative_anchor_id, "Anchor", class: "visually-hidden" %>
+          <%= text_field_tag nil,
+                             selected_anchor_option&.first,
+                             placeholder: "Choose an anchor...",
+                             autocomplete: "off",
+                             role: "combobox",
+                             aria: { expanded: "false" },
+                             class: "calendar-item-form__sentence-control calendar-item-form__sentence-control--anchor",
+                             data: {
+                               local_select_target: "input",
+                               action: "input->local-select#search focus->local-select#search keydown->local-select#handleInputKeydown"
+                             } %>
+          <%= form.select :relative_anchor_id,
+                          options_for_select(@anchor_options, item.relative_anchor_id),
+                          { include_blank: "Choose an anchor..." },
+                          class: "calendar-item-form__native-select",
+                          data: {
+                            local_select_target: "select",
+                            relative_summary_input: "anchor",
+                            action: "change->local-select#syncFromSelect"
+                          } %>
+          <div class="calendar-item-form__autocomplete-menu calendar-item-form__autocomplete-menu--anchor"
+               data-local-select-target="menu"
+               role="listbox"
+               hidden></div>
+        </div>
+
+        <div class="calendar-item-form__sentence-field calendar-item-form__sentence-field--reference">
+          <%= form.label :relative_to_anchor_end, "Anchor point", class: "visually-hidden" %>
+          <%= form.select :relative_to_anchor_end,
+                          [["starts", false], ["ends", true]],
+                          { selected: item.relative_to_anchor_end? },
+                          class: "calendar-item-form__sentence-control",
+                          data: { relative_summary_input: "anchorPoint" } %>
         </div>
       </div>
-      <div class="event-form__group">
-        <%= form.label :relative_before, "Position" %>
-        <%= form.select :relative_before,
-                        [["After anchor", false], ["Before anchor", true]],
-                        { selected: item.relative_before? },
-                        class: "event-form__select" %>
-      </div>
+
+      <p class="calendar-item-form__timing-summary" data-relative-timing-summary><%= relative_summary %></p>
     </div>
 
     <div class="calendar-item-form__grid">
       <div class="event-form__group">
         <%= form.label :duration_minutes, "Duration" %>
         <div class="calendar-item-form__duration">
-          <% duration_value = item.duration_minutes.present? ? item.duration_minutes : nil %>
-          <% duration_unit = "minutes" %>
-          <% if item.duration_minutes.present? %>
-            <% minutes = item.duration_minutes.to_i %>
-            <% if (minutes % (60 * 24 * 30)).zero? %>
-              <% duration_value = minutes / (60 * 24 * 30) %>
-              <% duration_unit = "months" %>
-            <% elsif (minutes % (60 * 24 * 7)).zero? %>
-              <% duration_value = minutes / (60 * 24 * 7) %>
-              <% duration_unit = "weeks" %>
-            <% elsif (minutes % (60 * 24)).zero? %>
-              <% duration_value = minutes / (60 * 24) %>
-              <% duration_unit = "days" %>
-            <% elsif (minutes % 60).zero? %>
-              <% duration_value = minutes / 60 %>
-              <% duration_unit = "hours" %>
-            <% end %>
-          <% end %>
-          <%= number_field_tag "calendar_item[duration_value]",
-                               duration_value,
+          <% duration_amount = item.duration_time_amount %>
+          <%= number_field_tag "calendar_item[duration_display_value]",
+                               duration_amount.value,
                                min: 0,
-                               step: 0.25,
+                               step: 1,
+                               placeholder: "0",
                                class: "calendar-item-form__duration-value" %>
-          <%= select_tag "calendar_item[duration_unit]",
-                         options_for_select(
-                           [
-                             ["Minutes", "minutes"],
-                             ["Hours", "hours"],
-                             ["Days", "days"],
-                             ["Weeks", "weeks"],
-                             ["Months", "months"]
-                           ],
-                           duration_unit
-                         ),
+          <%= select_tag "calendar_item[duration_display_unit]",
+                         options_for_select(Calendars::TimeAmount::UNIT_OPTIONS, duration_amount.unit || "days"),
                          class: "calendar-item-form__duration-unit" %>
+          <div class="calendar-item-form__duration-piece">
+            <%= number_field_tag "calendar_item[duration_display_hours]",
+                                 duration_amount.hours,
+                                 min: 0,
+                                 step: 0.25,
+                                 placeholder: "0",
+                                 class: "calendar-item-form__duration-value" %>
+            <span class="calendar-item-form__sentence-unit-label">hr</span>
+          </div>
+          <div class="calendar-item-form__duration-piece">
+            <%= number_field_tag "calendar_item[duration_display_minutes]",
+                                 duration_amount.minutes,
+                                 min: 0,
+                                 step: 1,
+                                 placeholder: "0",
+                                 class: "calendar-item-form__duration-value" %>
+            <span class="calendar-item-form__sentence-unit-label">min</span>
+          </div>
         </div>
       </div>
       <div class="event-form__group calendar-item-form__full">
@@ -349,6 +423,11 @@
       var radios = form.querySelectorAll('input[name="calendar_item[timing_mode]"]');
       var absoluteGroup = form.querySelector('[data-timing-mode="absolute"]');
       var relativeGroup = form.querySelector('[data-timing-mode="relative"]');
+      var absoluteInput = form.querySelector("[data-absolute-time-input]");
+      var absoluteSummary = form.querySelector("[data-absolute-timing-summary]");
+      var relativeSummary = form.querySelector("[data-relative-timing-summary]");
+      var relativeInputs = form.querySelectorAll("[data-relative-summary-input]");
+      var relativeSentence = form.querySelector(".calendar-item-form__relative-sentence");
 
       function syncTiming() {
         var mode = Array.from(radios).find(function(r) { return r.checked; });
@@ -357,11 +436,149 @@
         if (relativeGroup) relativeGroup.style.display = mode === "relative" ? "" : "none";
       }
 
+      function selectedText(name) {
+        var field = form.querySelector('[data-relative-summary-input="' + name + '"]');
+        if (!field || !field.selectedOptions || !field.selectedOptions.length) return "";
+        return field.selectedOptions[0].textContent.trim();
+      }
+
+      function selectedAnchorTitle() {
+        var field = form.querySelector('[data-relative-summary-input="anchor"]');
+        if (!field || !field.selectedOptions || !field.selectedOptions.length || !field.value) return "";
+        return field.selectedOptions[0].dataset.anchorTitle || field.selectedOptions[0].textContent.replace(/\s+\([^)]*\)\s*$/, "").trim();
+      }
+
+      function numericValue(value) {
+        var parsed = Number(value || 0);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function majorUnitMultiplier(unit) {
+        var multiplier = 60 * 24;
+        if (unit === "weeks") multiplier = 60 * 24 * 7;
+        if (unit === "months") multiplier = 60 * 24 * 30;
+        return multiplier;
+      }
+
+      function pluralizedUnit(value, unit) {
+        return value === 1 ? unit.replace(/s$/, "") : unit;
+      }
+
+      function normalizedOffsetAmount() {
+        var valueField = form.querySelector('[data-relative-summary-input="offsetValue"]');
+        var unitField = form.querySelector('[data-relative-summary-input="offsetUnit"]');
+        var hoursField = form.querySelector('[data-relative-summary-input="offsetHours"]');
+        var minutesField = form.querySelector('[data-relative-summary-input="offsetMinutes"]');
+        var unit = unitField ? unitField.value : "days";
+        var multiplier = majorUnitMultiplier(unit);
+        var totalMinutes = Math.floor(
+          (numericValue(valueField?.value) * multiplier) +
+          (numericValue(hoursField?.value) * 60) +
+          numericValue(minutesField?.value)
+        );
+        var majorValue = Math.floor(totalMinutes / multiplier);
+        var remainder = totalMinutes % multiplier;
+        var hours = Math.floor(remainder / 60);
+        var minutes = remainder % 60;
+        var parts = [];
+
+        if (majorValue > 0) parts.push(majorValue + " " + pluralizedUnit(majorValue, unit));
+        if (hours > 0) parts.push(hours + " hr");
+        if (minutes > 0) parts.push(minutes + " min");
+
+        return {
+          totalMinutes: totalMinutes,
+          label: parts.length ? parts.join(" ") : "0 " + unit
+        };
+      }
+
+      function formatProjectedTime(date) {
+        var timezone = relativeSentence?.dataset.calendarTimezone || undefined;
+        var formatter = new Intl.DateTimeFormat("en-US", {
+          timeZone: timezone,
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true
+        });
+        var parts = {};
+
+        formatter.formatToParts(date).forEach(function(part) {
+          if (part.type !== "literal") parts[part.type] = part.value;
+        });
+
+        var month = parts.month === "Sep" ? "Sept" : parts.month;
+        return month + " " + parts.day + " " + parts.hour + ":" + parts.minute + parts.dayPeriod;
+      }
+
+      function projectedTimeSuffix(offsetMinutes, direction, anchorPoint) {
+        var anchorField = form.querySelector('[data-relative-summary-input="anchor"]');
+        if (!anchorField || !anchorField.selectedOptions || !anchorField.selectedOptions.length || !anchorField.value) return "";
+
+        var selectedAnchor = anchorField.selectedOptions[0];
+        var baseIso = anchorPoint === "ends"
+          ? (selectedAnchor.dataset.anchorEndAt || selectedAnchor.dataset.anchorStartAt)
+          : selectedAnchor.dataset.anchorStartAt;
+        if (!baseIso) return "";
+
+        var baseTime = new Date(baseIso);
+        if (Number.isNaN(baseTime.getTime())) return "";
+
+        if (direction === "before") offsetMinutes *= -1;
+
+        return " → " + formatProjectedTime(new Date(baseTime.getTime() + (offsetMinutes * 60 * 1000)));
+      }
+
+      function syncRelativeSummary() {
+        if (!relativeSummary) return;
+
+        var amount = normalizedOffsetAmount();
+        var anchorTitle = selectedAnchorTitle();
+        var direction = selectedText("direction") || "after";
+        var anchorPoint = selectedText("anchorPoint") || "starts";
+        var projection = projectedTimeSuffix(amount.totalMinutes, direction, anchorPoint);
+
+        if (!anchorTitle) {
+          relativeSummary.textContent = "Choose an anchor to preview relative timing.";
+          return;
+        }
+
+        if (amount.totalMinutes === 0) {
+          relativeSummary.textContent = "Starts when " + anchorTitle + " " + anchorPoint + projection;
+          return;
+        }
+
+        relativeSummary.textContent = "Starts " + amount.label + " " + direction + " " + anchorTitle + " " + anchorPoint + projection;
+      }
+
+      function syncAbsoluteSummary() {
+        if (!absoluteSummary || !absoluteInput) return;
+
+        if (!absoluteInput.value) {
+          absoluteSummary.textContent = "Exact start not set.";
+          return;
+        }
+
+        absoluteSummary.textContent = "Exact start selected.";
+      }
+
       radios.forEach(function(radio) {
         radio.addEventListener("change", syncTiming);
       });
 
+      relativeInputs.forEach(function(input) {
+        input.addEventListener("change", syncRelativeSummary);
+        input.addEventListener("input", syncRelativeSummary);
+      });
+
+      if (absoluteInput) {
+        absoluteInput.addEventListener("change", syncAbsoluteSummary);
+        absoluteInput.addEventListener("input", syncAbsoluteSummary);
+      }
+
       syncTiming();
+      syncRelativeSummary();
     });
   })();
 </script>

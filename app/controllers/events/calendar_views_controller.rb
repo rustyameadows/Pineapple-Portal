@@ -91,6 +91,7 @@ module Events
           description: default_view[:description],
           hide_locked: default_view.fetch(:hide_locked, false),
           client_visible: default_view.fetch(:client_visible, false),
+          segment_granularity: default_view.fetch(:segment_granularity, EventCalendarView::SEGMENT_GRANULARITIES[:day]),
           tag_filter: tag_ids
         )
 
@@ -159,6 +160,7 @@ module Events
         :description,
         :hide_locked,
         :client_visible,
+        :segment_granularity,
         tag_filter: []
       )
     end

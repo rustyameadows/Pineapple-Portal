@@ -19,6 +19,7 @@ import FlashToastController from "controllers/flash_toast_controller"
 import RemoteOptionsController from "controllers/remote_options_controller"
 import CustomSelectController from "controllers/custom_select_controller"
 import DocumentBrowserController from "controllers/document_browser_controller"
+import LocalSelectController from "controllers/local_select_controller"
 
 application.register("decision-modal", DecisionModalController)
 application.register("questionnaire", QuestionnaireController)
@@ -39,3 +40,4 @@ application.register("flash-toast", FlashToastController)
 application.register("remote-options", RemoteOptionsController)
 application.register("custom-select", CustomSelectController)
 application.register("document-browser", DocumentBrowserController)
+application.register("local-select", LocalSelectController)

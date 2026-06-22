@@ -59,6 +59,59 @@ module Events
       assert_select ".calendar-item-form__markdown-editor button[data-markdown-format='headline']", count: 0
     end
 
+    test "edit renders relative timing controls as day hour minute intent fields" do
+      item = calendar_items(:reception)
+
+      get edit_event_calendar_item_url(@event, item)
+
+      assert_response :success
+      assert_select ".calendar-item-form__relative-sentence", count: 1
+      assert_select "input[name='calendar_item[relative_offset_display_value]'][value='0']", count: 1
+      assert_select "select[name='calendar_item[relative_offset_display_unit]'] option[selected][value='days']", text: "Days", count: 1
+      assert_select "input[name='calendar_item[relative_offset_display_hours]'][value='2']", count: 1
+      assert_select "input[name='calendar_item[relative_offset_display_minutes]'][value='0']", count: 1
+      assert_select "[data-controller='local-select']", count: 1
+      assert_select "input[data-local-select-target='input'][role='combobox'][placeholder='Choose an anchor...']", count: 1
+      assert_select "select[name='calendar_item[relative_anchor_id]'][data-local-select-target='select']", count: 1
+      assert_select "[data-local-select-target='menu'][role='listbox'][hidden]", count: 1
+      assert_select "select[name='calendar_item[relative_anchor_id]'] option[value='']", text: "Choose an anchor...", count: 1
+      assert_select "[data-relative-timing-summary]", text: /Starts 2 hr after Ceremony starts → Oct 1 5:00PM/
+    end
+
+    test "edit derives display intent from canonical minutes when stored intent is missing" do
+      anchor = calendar_items(:ceremony)
+      item = @calendar.calendar_items.create!(
+        title: "Hair and Makeup",
+        relative_anchor: anchor,
+        relative_offset_minutes: 390,
+        duration_minutes: 45
+      )
+
+      get edit_event_calendar_item_url(@event, item)
+
+      assert_response :success
+      assert_select "input[name='calendar_item[relative_offset_display_value]'][value='0']", count: 1
+      assert_select "select[name='calendar_item[relative_offset_display_unit]'] option[selected][value='days']", text: "Days", count: 1
+      assert_select "input[name='calendar_item[relative_offset_display_hours]'][value='6']", count: 1
+      assert_select "input[name='calendar_item[relative_offset_display_minutes]'][value='30']", count: 1
+      assert_select "[data-relative-timing-summary]", text: /Starts 6 hr 30 min after Ceremony starts/
+    end
+
+    test "edit renders anchor search labels without doubled time spacing" do
+      anchor = @calendar.calendar_items.create!(
+        title: "Wedding Ceremony",
+        starts_at: Time.zone.local(2025, 10, 1, 14, 15),
+        duration_minutes: 45
+      )
+      item = calendar_items(:reception)
+
+      get edit_event_calendar_item_url(@event, item)
+
+      assert_response :success
+      assert_select "select[name='calendar_item[relative_anchor_id]'] option[value='#{anchor.id}']", text: /Wedding Ceremony \(Oct 1 2:15 PM/
+      assert_no_match "Oct 1  2:15 PM", response.body
+    end
+
     test "update respects anchored return_to" do
       item = calendar_items(:ceremony)
       row_anchor = ActionView::RecordIdentifier.dom_id(item, :timeline_row)
@@ -71,8 +124,10 @@ module Events
           guest_count: "Approx. 175",
           transportation_note: "**Guests** leave from the [front drive](https://example.com/map) at 2:15 PM.",
           starts_at: "2025-10-01T15:00",
-          duration_value: 45,
-          duration_unit: "minutes"
+          duration_display_value: "0",
+          duration_display_unit: "days",
+          duration_display_hours: "0",
+          duration_display_minutes: "45"
         }
       }
 
@@ -80,6 +135,97 @@ module Events
       assert_equal "Ceremony Updated", item.reload.title
       assert_equal "Approx. 175", item.reload.guest_count
       assert_equal "**Guests** leave from the [front drive](https://example.com/map) at 2:15 PM.", item.reload.transportation_note
+    end
+
+    test "update converts relative timing intent fields to canonical and display values" do
+      item = calendar_items(:reception)
+      anchor = calendar_items(:ceremony)
+
+      patch event_calendar_item_url(@event, item), params: {
+        calendar_item: {
+          title: item.title,
+          timing_mode: "relative",
+          relative_anchor_id: anchor.id,
+          relative_offset_display_value: "0",
+          relative_offset_display_unit: "days",
+          relative_offset_display_hours: "6.5",
+          relative_offset_display_minutes: "0",
+          relative_before: "false",
+          relative_to_anchor_end: "true",
+          duration_display_value: "0",
+          duration_display_unit: "days",
+          duration_display_hours: "1",
+          duration_display_minutes: "90"
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      item.reload
+      assert_equal anchor.id, item.relative_anchor_id
+      assert_equal 390, item.relative_offset_minutes
+      assert_equal 0, item.relative_offset_display_value
+      assert_equal "days", item.relative_offset_display_unit
+      assert_equal 6, item.relative_offset_display_hours
+      assert_equal 30, item.relative_offset_display_minutes
+      assert_equal 150, item.duration_minutes
+      assert_equal 0, item.duration_display_value
+      assert_equal "days", item.duration_display_unit
+      assert_equal 2, item.duration_display_hours
+      assert_equal 30, item.duration_display_minutes
+      assert_equal false, item.relative_before?
+      assert_equal true, item.relative_to_anchor_end?
+    end
+
+    test "update maps before start selections without changing backend fields" do
+      item = calendar_items(:reception)
+      anchor = calendar_items(:ceremony)
+
+      patch event_calendar_item_url(@event, item), params: {
+        calendar_item: {
+          title: item.title,
+          timing_mode: "relative",
+          relative_anchor_id: anchor.id,
+          relative_offset_display_value: "0",
+          relative_offset_display_unit: "days",
+          relative_offset_display_hours: "0",
+          relative_offset_display_minutes: "30",
+          relative_before: "true",
+          relative_to_anchor_end: "false",
+          duration_display_value: "0",
+          duration_display_unit: "days",
+          duration_display_hours: "3",
+          duration_display_minutes: "0"
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      item.reload
+      assert_equal anchor.id, item.relative_anchor_id
+      assert_equal 30, item.relative_offset_minutes
+      assert_equal true, item.relative_before?
+      assert_equal false, item.relative_to_anchor_end?
+    end
+
+    test "update preserves absolute starts_at semantics" do
+      item = calendar_items(:ceremony)
+
+      patch event_calendar_item_url(@event, item), params: {
+        calendar_item: {
+          title: item.title,
+          timing_mode: "absolute",
+          starts_at: "2025-10-01T16:30",
+          duration_display_value: "0",
+          duration_display_unit: "days",
+          duration_display_hours: "0",
+          duration_display_minutes: "45"
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      item.reload
+      assert_nil item.relative_anchor_id
+      assert_equal 0, item.relative_offset_minutes
+      assert_equal Time.utc(2025, 10, 1, 16, 30), item.starts_at
     end
 
     test "create persists item guest count and transportation note" do
@@ -90,8 +236,10 @@ module Events
             starts_at: "2025-10-01T13:00",
             guest_count: "120 guests",
             transportation_note: "Board the **shuttle** at the hotel porte cochere.",
-            duration_value: 30,
-            duration_unit: "minutes"
+            duration_display_value: "0",
+            duration_display_unit: "days",
+            duration_display_hours: "0",
+            duration_display_minutes: "30"
           }
         }
       end
@@ -100,6 +248,34 @@ module Events
       created_item = CalendarItem.order(:id).last
       assert_equal "120 guests", created_item.guest_count
       assert_equal "Board the **shuttle** at the hotel porte cochere.", created_item.transportation_note
+      assert_equal 30, created_item.duration_minutes
+      assert_equal 0, created_item.duration_display_value
+      assert_equal "days", created_item.duration_display_unit
+      assert_equal 0, created_item.duration_display_hours
+      assert_equal 30, created_item.duration_display_minutes
+    end
+
+    test "create keeps duration nil when duration intent fields are blank" do
+      assert_difference("CalendarItem.count", 1) do
+        post event_calendar_items_url(@event), params: {
+          calendar_item: {
+            title: "Open-ended Prep",
+            starts_at: "2025-10-01T13:00",
+            duration_display_value: "",
+            duration_display_unit: "days",
+            duration_display_hours: "",
+            duration_display_minutes: ""
+          }
+        }
+      end
+
+      assert_redirected_to event_calendar_path(@event)
+      created_item = CalendarItem.order(:id).last
+      assert_nil created_item.duration_minutes
+      assert_nil created_item.duration_display_value
+      assert_nil created_item.duration_display_unit
+      assert_nil created_item.duration_display_hours
+      assert_nil created_item.duration_display_minutes
     end
 
     test "destroy removes item and respects safe return path" do

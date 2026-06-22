@@ -1,21 +1,29 @@
 <% items ||= [] %>
 <% calendar ||= nil %>
 <% group_by_date = !!group_by_date %>
+<% segment_granularity = local_assigns[:segment_granularity].presence || EventCalendarView::SEGMENT_GRANULARITIES[:day] %>
+<% monthly_segments = segment_granularity.to_s == EventCalendarView::SEGMENT_GRANULARITIES[:month] %>
 <% group_label_proc = local_assigns[:group_label_proc] %>
+<% schedule_label_proc = local_assigns[:schedule_label_proc] %>
 <% show_tags = true if local_assigns[:show_tags].nil? %>
 <% show_relative = !!local_assigns[:show_relative] %>
 <% show_status_first = !!local_assigns[:show_status_first] %>
+<% show_event_column = !!local_assigns[:show_event_column] %>
 <% show_edit_button = !!local_assigns[:show_edit_button] %>
 <% bulk_edit = !!local_assigns[:bulk_edit] %>
+<% show_timing_actions = !!local_assigns[:show_timing_actions] %>
 <% render_actions = local_assigns[:render_actions] %>
 <% actions_header = local_assigns[:actions_header] || "" %>
 <% item_link_proc = local_assigns[:item_link_proc] || ->(item) { [item.title, edit_event_calendar_item_path(calendar.event, item, return_to: request.fullpath)] } %>
+<% event_column_proc = local_assigns[:event_column_proc] || ->(item) { item.event_calendar.event.name } %>
+<% item_calendar_proc = local_assigns[:item_calendar_proc] || ->(_item) { calendar } %>
 <% bulk_form_id = local_assigns[:bulk_form_id] || "calendar-bulk-edit-form" %>
 <% bulk_form_url = local_assigns[:bulk_form_url] || bulk_update_event_calendar_items_path(calendar.event) %>
 <% bulk_return_to = local_assigns[:bulk_return_to] || request.fullpath %>
 <% filter_source_items = Array(local_assigns[:filter_source_items] || items) %>
 <% bulk_team_members = calendar.event.team_members.where.not(role: User::ROLES[:client]).order(:name) %>
 <% base_column_count = show_relative ? 3 : 5 %>
+<% base_column_count += 1 if show_event_column %>
 <% base_column_count += 1 if show_status_first %>
 <% initial_select_all_label = "Select all #{items.count} item#{'s' unless items.count == 1}" %>
 <% bulk_action_options = [
@@ -153,6 +161,22 @@
                   data-action="calendar-bulk-edit#clearSelection">
             Deselect all
           </button>
+          <% if show_timing_actions %>
+            <button type="button"
+                    class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
+                    data-action="calendar-bulk-edit#openRelativeTimingDialog"
+                    data-calendar-bulk-edit-target="relativeTimingButton"
+                    hidden>
+              Change relative timing
+            </button>
+            <button type="button"
+                    class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
+                    data-action="calendar-bulk-edit#openAbsoluteTimingDialog"
+                    data-calendar-bulk-edit-target="absoluteTimingButton"
+                    hidden>
+              Make absolute
+            </button>
+          <% end %>
         </div>
 
         <div class="event-calendars__bulk-control">
@@ -297,11 +321,97 @@
         </div>
       </div>
     </dialog>
+
+    <% if show_timing_actions %>
+      <dialog class="event-calendars__bulk-dialog event-calendars__bulk-dialog--wide"
+              data-calendar-bulk-edit-target="relativeTimingDialog"
+              data-action="click->calendar-bulk-edit#timingBackdropClose">
+        <%= form_with url: event_calendar_timing_conversion_path(calendar.event),
+                      method: :post,
+                      scope: :timing_conversion,
+                      local: true,
+                      html: {
+                        class: "event-calendars__timing-form",
+                        data: {
+                          action: "submit->calendar-bulk-edit#prepareTimingSubmit",
+                          calendar_bulk_edit_target: "relativeTimingForm",
+                          turbo: false
+                        }
+                      } do |form| %>
+          <%= hidden_field_tag :return_to,
+                               bulk_return_to,
+                               data: { calendar_bulk_edit_target: "timingReturnToInput" } %>
+          <%= form.hidden_field :mode, value: "relative", data: { calendar_bulk_edit_target: "timingModeInput" } %>
+          <%= form.hidden_field :target_item_id, data: { calendar_bulk_edit_target: "timingTargetInput" } %>
+          <%= form.hidden_field :anchor_item_id, data: { calendar_bulk_edit_target: "timingAnchorInput" } %>
+          <%= form.hidden_field :anchor_point, value: "", data: { calendar_bulk_edit_target: "timingAnchorPointInput" } %>
+
+          <div class="event-calendars__bulk-dialog-content">
+            <header class="event-calendars__bulk-dialog-header">
+              <p class="event-calendars__bulk-eyebrow">Timing</p>
+              <h2 class="event-calendars__bulk-dialog-title" data-calendar-bulk-edit-target="timingDialogTitle">Change relative timing</h2>
+              <p class="event-calendars__bulk-dialog-copy" data-calendar-bulk-edit-target="timingDialogCopy">
+                Choose which relationship to save.
+              </p>
+            </header>
+
+            <div class="event-calendars__timing-fields" data-calendar-bulk-edit-target="relativeTimingFields">
+              <div class="event-calendars__timing-options" data-calendar-bulk-edit-target="relativeTimingOptions">
+                <button type="button"
+                        class="event-calendars__timing-option"
+                        data-calendar-bulk-edit-target="relativeTimingOption"
+                        data-action="calendar-bulk-edit#selectRelativeTimingOption"
+                        data-timing-option-index="0"></button>
+                <button type="button"
+                        class="event-calendars__timing-option"
+                        data-calendar-bulk-edit-target="relativeTimingOption"
+                        data-action="calendar-bulk-edit#selectRelativeTimingOption"
+                        data-timing-option-index="1"></button>
+              </div>
+              <div class="event-calendars__timing-anchor-options" data-calendar-bulk-edit-target="relativeAnchorPointOptions">
+                <button type="button"
+                        class="event-calendars__timing-anchor-option"
+                        data-calendar-bulk-edit-target="relativeAnchorPointOption"
+                        data-action="calendar-bulk-edit#selectRelativeAnchorPoint"
+                        data-timing-anchor-point="start"></button>
+                <button type="button"
+                        class="event-calendars__timing-anchor-option"
+                        data-calendar-bulk-edit-target="relativeAnchorPointOption"
+                        data-action="calendar-bulk-edit#selectRelativeAnchorPoint"
+                        data-timing-anchor-point="end"></button>
+              </div>
+            </div>
+
+            <div class="event-calendars__timing-fields event-calendars__timing-fields--absolute"
+                 data-calendar-bulk-edit-target="absoluteTimingFields"
+                 hidden>
+              <p class="event-calendars__timing-summary" data-calendar-bulk-edit-target="absoluteTimingSummary"></p>
+            </div>
+
+            <div class="event-calendars__bulk-dialog-actions">
+              <button type="button"
+                      class="event-section__cta event-section__cta--secondary"
+                      data-action="calendar-bulk-edit#closeTimingDialog">
+                Cancel
+              </button>
+              <button type="submit"
+                      class="event-section__cta"
+                      data-calendar-bulk-edit-target="timingSubmitButton">
+                Save timing
+              </button>
+            </div>
+          </div>
+        <% end %>
+      </dialog>
+    <% end %>
   <% end %>
 
   <table class="event-table event-calendars__table">
     <thead>
       <tr>
+        <% if show_event_column %>
+          <th class="event-calendars__event-column">Event</th>
+        <% end %>
         <% if show_status_first %>
           <th class="event-calendars__status-column">Status</th>
         <% end %>
@@ -331,8 +441,10 @@
     <tbody>
       <% current_bucket = nil %>
       <% items.each do |item| %>
-        <% bucket_key = calendar_item_date_bucket(item, calendar.timezone) %>
-        <% bucket_label = group_label_proc ? group_label_proc.call(item) : bucket_key %>
+        <% item_calendar = item_calendar_proc.call(item) || calendar %>
+        <% item_timezone = item_calendar.timezone %>
+        <% bucket_key = calendar_item_segment_key(item, item_timezone, segment_granularity) %>
+        <% bucket_label = group_label_proc ? group_label_proc.call(item) : calendar_item_segment_label(item, item_timezone, segment_granularity) %>
         <% if group_by_date && bucket_key != current_bucket %>
           <% current_bucket = bucket_key %>
           <tr class="event-calendars__date-row"
@@ -373,6 +485,11 @@
         <tr id="<%= timeline_row_id %>"
             class="event-calendars__row <%= calendar_item_row_classes(item) %>"
             data-calendar-bulk-edit-target="row"
+            data-calendar-item-id="<%= item.id %>"
+            data-calendar-item-title="<%= item.title %>"
+            data-calendar-item-start-at="<%= item.effective_starts_at&.iso8601 %>"
+            data-calendar-item-end-at="<%= item.effective_ends_at&.iso8601 %>"
+            data-calendar-item-relative="<%= item.relative? %>"
             data-calendar-search-text="<%= calendar_item_search_text(item) %>"
             data-calendar-vendor-values="<%= calendar_item_filter_values_json(item, :vendor) %>"
             data-calendar-location-values="<%= calendar_item_filter_values_json(item, :location) %>"
@@ -380,10 +497,22 @@
             data-calendar-tag-values="<%= calendar_item_filter_values_json(item, :tag) %>"
             data-calendar-group-key="<%= group_by_date ? bucket_key : '' %>">
           <% tooltip = calendar_item_relative_tooltip(item) %>
+          <% if show_event_column %>
+            <td class="event-calendars__event-column" data-calendar-bulk-edit-target="searchableText">
+              <%= event_column_proc.call(item) %>
+            </td>
+          <% end %>
           <% if show_status_first %>
             <td class="event-calendars__status-value"><%= calendar_item_status_label(item) %></td>
           <% end %>
-          <td class="event-calendars__schedule-column" title="<%= tooltip.to_s %>"><%= calendar_item_time_only_label_with_marker(item, calendar.timezone) %></td>
+          <% schedule_label = if schedule_label_proc
+                                schedule_label_proc.call(item)
+                              elsif monthly_segments
+                                calendar_item_day_label_with_marker(item, item_timezone)
+                              else
+                                calendar_item_time_only_label_with_marker(item, item_timezone)
+                              end %>
+          <td class="event-calendars__schedule-column" title="<%= tooltip.to_s %>"><%= schedule_label %></td>
           <td class="event-calendars__title-column">
             <%= link_to title_text,
                         title_path,

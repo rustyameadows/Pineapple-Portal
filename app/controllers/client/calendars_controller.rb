@@ -113,14 +113,14 @@ module Client
 
     def decision_calendar_segments
       raw_items = ::Calendars::ViewFilter.new(calendar: @calendar, view: @active_view).items
-      grouped = raw_items.group_by { |item| helpers.calendar_item_date_bucket(item, @calendar.timezone) }
+      segment_granularity = @active_view.segment_granularity
+      grouped = raw_items.group_by { |item| helpers.calendar_item_segment_key(item, @calendar.timezone, segment_granularity) }
 
       grouped.map do |_segment, items|
-        label = items.find { |item| item.time_caption.present? }&.time_caption ||
-                helpers.calendar_item_month_year_label(items.first, @calendar.timezone)
+        label = helpers.calendar_item_segment_label(items.first, @calendar.timezone, segment_granularity)
         {
           label: label,
-          items: items.sort_by { |it| it.title.to_s.downcase },
+          items: items.sort_by { |it| [it.effective_starts_at || Time.zone.local(9999, 12, 31), it.title.to_s.downcase] },
           sort_key: items.map { |it| it.effective_starts_at || it.created_at }.compact.min
         }
       end

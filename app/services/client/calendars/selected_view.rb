@@ -39,6 +39,14 @@ module Client
       view&.slug || "run-of-show"
     end
 
+    def segment_granularity
+      view&.segment_granularity || EventCalendarView::SEGMENT_GRANULARITIES[:day]
+    end
+
+    def monthly_segments?
+      segment_granularity == EventCalendarView::SEGMENT_GRANULARITIES[:month]
+    end
+
     def run_of_show?
       view.nil?
     end

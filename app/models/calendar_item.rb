@@ -101,6 +101,27 @@ class CalendarItem < ApplicationRecord
     start_time + duration_minutes.to_i.minutes
   end
 
+  def relative_offset_time_amount
+    Calendars::TimeAmount.from_stored(
+      total_minutes: relative_offset_minutes,
+      value: relative_offset_display_value,
+      unit: relative_offset_display_unit,
+      hours: relative_offset_display_hours,
+      minutes: relative_offset_display_minutes
+    )
+  end
+
+  def duration_time_amount
+    Calendars::TimeAmount.from_stored(
+      total_minutes: duration_minutes,
+      value: duration_display_value,
+      unit: duration_display_unit,
+      hours: duration_display_hours,
+      minutes: duration_display_minutes,
+      nullable: true
+    )
+  end
+
   def refresh_tag_summary!
     return if destroyed? || !persisted?
 

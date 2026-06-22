@@ -433,6 +433,7 @@ module Documents
         calendar = segment.event.run_of_show_calendar
         return { error: "run_of_show_missing" } unless calendar
 
+        view = nil
         items = if run_of_show
                   calendar.calendar_items.includes(:team_members).ordered.reject { |item| item.tagged_with?("decisions") }
                 else
@@ -448,6 +449,7 @@ module Documents
 
         {
           run_of_show: run_of_show,
+          segment_granularity: view&.segment_granularity || EventCalendarView::SEGMENT_GRANULARITIES[:day],
           items: Array(items).map do |item|
             {
               id: item.id,

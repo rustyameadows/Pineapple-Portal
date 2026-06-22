@@ -11,8 +11,12 @@ module Events
                   :return_path,
                   :calendar_timezone_label,
                   :anchor_options_for,
-                  :anchor_alignment_options,
-                  :anchor_alignment_value
+                  :time_amount_unit_options,
+                  :relative_timing_summary,
+                  :grid_timing_summary,
+                  :grid_duration_summary
+
+    TIME_AMOUNT_UNIT_OPTIONS = Calendars::TimeAmount::UNIT_OPTIONS
 
     def show
       load_grid
@@ -40,7 +44,7 @@ module Events
       ).call
 
       flash[result.success? ? :notice : :alert] = result.message
-      redirect_to grid_path
+      redirect_to safe_return_to(fallback: grid_path)
     end
 
     private
@@ -69,9 +73,9 @@ module Events
                end
       @tags = @calendar.event_calendar_tags.order(:position, :name)
       @statuses = CalendarItem.statuses.keys
+      @bulk_team_members = @event.team_members.where.not(role: User::ROLES[:client]).order(:name)
       @timezone = ActiveSupport::TimeZone[@calendar.timezone] || ActiveSupport::TimeZone[EventCalendar::DEFAULT_TIMEZONE]
       @anchor_options = build_anchor_options
-      @anchor_label_map = @anchor_options.to_h { |label, id| [id, label] }
     end
 
     def replace_item_in_collection(updated_item)
@@ -85,22 +89,34 @@ module Events
         :title,
         :starts_at,
         :duration_minutes,
+        :duration_display_value,
+        :duration_display_unit,
+        :duration_display_hours,
+        :duration_display_minutes,
         :status,
-        :locked,
         :vendor_name,
         :location_name,
         :notes,
         :relative_anchor_id,
         :relative_offset_minutes,
+        :relative_offset_value,
+        :relative_offset_unit,
+        :relative_offset_display_value,
+        :relative_offset_display_unit,
+        :relative_offset_display_hours,
+        :relative_offset_display_minutes,
         :relative_alignment,
+        :relative_before,
+        :relative_to_anchor_end,
         event_calendar_tag_ids: []
       )
 
-      permitted[:duration_minutes] = permitted[:duration_minutes].presence
-      permitted[:starts_at] = permitted[:starts_at].presence
-      permitted[:locked] = ActiveModel::Type::Boolean.new.cast(permitted[:locked])
-      tag_ids = Array(permitted.delete(:event_calendar_tag_ids)).reject(&:blank?).map(&:to_i)
-      permitted[:event_calendar_tag_ids] = tag_ids
+      assign_duration_params(permitted)
+      permitted[:starts_at] = permitted[:starts_at].presence if permitted.key?(:starts_at)
+      if permitted.key?(:event_calendar_tag_ids)
+        tag_ids = Array(permitted.delete(:event_calendar_tag_ids)).reject(&:blank?).map(&:to_i)
+        permitted[:event_calendar_tag_ids] = tag_ids
+      end
 
       anchor_id = permitted[:relative_anchor_id].presence
       permitted[:relative_anchor_id] = anchor_id
@@ -108,25 +124,16 @@ module Events
       alignment = permitted.delete(:relative_alignment)
 
       if anchor_id.present?
-        permitted[:relative_offset_minutes] = permitted[:relative_offset_minutes].presence || 0
-        permitted[:relative_offset_minutes] = permitted[:relative_offset_minutes].to_i
-
-        case alignment
-        when "before_start"
-          permitted[:relative_before] = true
-          permitted[:relative_to_anchor_end] = false
-        when "after_end"
-          permitted[:relative_before] = false
-          permitted[:relative_to_anchor_end] = true
-        when "before_end"
-          permitted[:relative_before] = true
-          permitted[:relative_to_anchor_end] = true
-        else # default to after_start
-          permitted[:relative_before] = false
-          permitted[:relative_to_anchor_end] = false
-        end
+        assign_relative_offset_params(permitted)
+        apply_relative_reference_params(permitted, alignment)
       else
+        permitted.delete(:relative_offset_value)
+        permitted.delete(:relative_offset_unit)
         permitted[:relative_offset_minutes] = 0
+        permitted[:relative_offset_display_value] = 0
+        permitted[:relative_offset_display_unit] = "days"
+        permitted[:relative_offset_display_hours] = 0
+        permitted[:relative_offset_display_minutes] = 0
         permitted[:relative_before] = false
         permitted[:relative_to_anchor_end] = false
       end
@@ -135,7 +142,16 @@ module Events
     end
 
     def bulk_params
-      params.fetch(:bulk, {}).permit(:bulk_action, :status, :locked, tag_ids: [])
+      params.fetch(:bulk, {}).permit(
+        :bulk_action,
+        :status,
+        :vendor_name,
+        :location_name,
+        :time_caption,
+        :additional_team_members,
+        tag_ids: [],
+        team_member_ids: []
+      )
     end
 
     def grid_path
@@ -180,41 +196,176 @@ module Events
 
     def build_anchor_options
       @calendar.calendar_items.order(:starts_at, :position, :id).map do |item|
-        [anchor_option_label(item), item.id]
+        [anchor_option_label(item), item.id, anchor_option_attributes(item)]
       end
     end
 
     def anchor_option_label(item)
-      time = item.starts_at&.in_time_zone(@timezone)
-      time_label = time ? time.strftime("%b %-d %H:%M") : "TBD"
+      start_time = item.effective_starts_at&.in_time_zone(@timezone)
+      end_time = item.effective_ends_at&.in_time_zone(@timezone)
+      time_label = if start_time && end_time
+                     "#{format_anchor_time(start_time)} – #{end_time.strftime('%-l:%M %p')}"
+                   elsif start_time
+                     format_anchor_time(start_time)
+                   else
+                     "TBD"
+                   end
       "#{item.title} (#{time_label})"
     end
 
+    def anchor_option_attributes(item)
+      {
+        data: {
+          anchor_title: item.title,
+          anchor_start_at: item.effective_starts_at&.iso8601,
+          anchor_end_at: item.effective_ends_at&.iso8601
+        }.compact
+      }
+    end
+
     def anchor_options_for(item)
-      [["None (absolute)", ""]] + @anchor_options.reject { |(_, id)| id == item.id }
+      [["None (absolute)", ""]] + @anchor_options.reject { |(_label, id, _attributes)| id == item.id }
     end
 
-    def anchor_alignment_options(_item = nil)
-      [
-        ["After anchor start", "after_start"],
-        ["Before anchor start", "before_start"],
-        ["After anchor end", "after_end"],
-        ["Before anchor end", "before_end"]
-      ]
+    def time_amount_unit_options
+      TIME_AMOUNT_UNIT_OPTIONS
     end
 
-    def anchor_alignment_value(item)
-      return "after_start" unless item.relative_anchor_id.present?
+    def relative_timing_summary(item)
+      return "Absolute start" unless item.relative_anchor
 
-      if item.relative_before? && item.relative_to_anchor_end?
-        "before_end"
-      elsif item.relative_before?
-        "before_start"
-      elsif item.relative_to_anchor_end?
-        "after_end"
+      amount = item.relative_offset_time_amount
+      direction = item.relative_before? ? "before" : "after"
+      anchor_point = item.relative_to_anchor_end? ? "ends" : "starts"
+      projected_label = item.effective_starts_at&.in_time_zone(@timezone)&.then { |time| format_projected_time(time) }
+      projected_suffix = projected_label.present? ? " → #{projected_label}" : ""
+
+      if amount.total_minutes.to_i.zero?
+        "Starts when #{item.relative_anchor.title} #{anchor_point}#{projected_suffix}"
       else
-        "after_start"
+        "Starts #{amount.label} #{direction} #{item.relative_anchor.title} #{anchor_point}#{projected_suffix}"
       end
+    end
+
+    def grid_timing_summary(item)
+      return relative_timing_summary(item) if item.relative_anchor
+
+      start_label = item.effective_starts_at&.in_time_zone(@timezone)&.then { |time| format_projected_time(time) }
+      start_label.present? ? "Starts #{start_label}" : "Start time TBD"
+    end
+
+    def grid_duration_summary(item)
+      amount = item.duration_time_amount
+      amount.null? ? "" : "Duration #{amount.label}"
+    end
+
+    def apply_relative_reference_params(permitted, alignment)
+      if permitted.key?(:relative_before) || permitted.key?(:relative_to_anchor_end)
+        permitted[:relative_before] = ActiveModel::Type::Boolean.new.cast(permitted[:relative_before])
+        permitted[:relative_to_anchor_end] = ActiveModel::Type::Boolean.new.cast(permitted[:relative_to_anchor_end])
+        return
+      end
+
+      case alignment
+      when "before_start"
+        permitted[:relative_before] = true
+        permitted[:relative_to_anchor_end] = false
+      when "after_end"
+        permitted[:relative_before] = false
+        permitted[:relative_to_anchor_end] = true
+      when "before_end"
+        permitted[:relative_before] = true
+        permitted[:relative_to_anchor_end] = true
+      else # default to after_start
+        permitted[:relative_before] = false
+        permitted[:relative_to_anchor_end] = false
+      end
+    end
+
+    def assign_duration_params(permitted)
+      return unless duration_time_amount_params_present?(permitted)
+
+      amount = if display_time_amount_params_present?(permitted, :duration)
+                 time_amount_from_display_params(permitted, :duration, nullable: true)
+               else
+                 Calendars::TimeAmount.from_minutes(permitted.delete(:duration_minutes).presence, nullable: true)
+               end
+
+      permitted[:duration_minutes] = amount.total_minutes
+      permitted[:duration_display_value] = amount.value
+      permitted[:duration_display_unit] = amount.unit
+      permitted[:duration_display_hours] = amount.hours
+      permitted[:duration_display_minutes] = amount.minutes
+    end
+
+    def assign_relative_offset_params(permitted)
+      amount = if display_time_amount_params_present?(permitted, :relative_offset)
+                 time_amount_from_display_params(permitted, :relative_offset)
+               elsif legacy_relative_offset_params_present?(permitted)
+                 legacy_relative_offset_amount(permitted)
+               elsif permitted.key?(:relative_offset_minutes)
+                 Calendars::TimeAmount.from_minutes(permitted.delete(:relative_offset_minutes), preferred_unit: "days")
+               else
+                 @item.relative_offset_time_amount
+               end
+
+      permitted[:relative_offset_minutes] = amount.total_minutes
+      permitted[:relative_offset_display_value] = amount.value
+      permitted[:relative_offset_display_unit] = amount.unit
+      permitted[:relative_offset_display_hours] = amount.hours
+      permitted[:relative_offset_display_minutes] = amount.minutes
+      permitted.delete(:relative_offset_value)
+      permitted.delete(:relative_offset_unit)
+    end
+
+    def duration_time_amount_params_present?(permitted)
+      permitted.key?(:duration_minutes) || display_time_amount_params_present?(permitted, :duration)
+    end
+
+    def display_time_amount_params_present?(permitted, prefix)
+      permitted.key?(:"#{prefix}_display_value") ||
+        permitted.key?(:"#{prefix}_display_unit") ||
+        permitted.key?(:"#{prefix}_display_hours") ||
+        permitted.key?(:"#{prefix}_display_minutes")
+    end
+
+    def time_amount_from_display_params(permitted, prefix, nullable: false)
+      Calendars::TimeAmount.from_display(
+        value: permitted.delete(:"#{prefix}_display_value"),
+        unit: permitted.delete(:"#{prefix}_display_unit"),
+        hours: permitted.delete(:"#{prefix}_display_hours"),
+        minutes: permitted.delete(:"#{prefix}_display_minutes"),
+        nullable:
+      )
+    end
+
+    def legacy_relative_offset_params_present?(permitted)
+      permitted.key?(:relative_offset_value) || permitted.key?(:relative_offset_unit)
+    end
+
+    def legacy_relative_offset_amount(permitted)
+      raw_value = permitted.delete(:relative_offset_value).to_s.strip
+      unit = permitted.delete(:relative_offset_unit).to_s.strip
+      return Calendars::TimeAmount.from_minutes(0, preferred_unit: "days") if raw_value.blank?
+
+      multiplier = case unit
+                   when "hours" then 60
+                   when "days" then 60 * 24
+                   when "weeks" then 60 * 24 * 7
+                   when "months" then 60 * 24 * 30
+                   else 1
+                   end
+      preferred_unit = unit.in?(Calendars::TimeAmount::MAJOR_UNITS.keys) ? unit : "days"
+
+      Calendars::TimeAmount.from_minutes((raw_value.to_f * multiplier).to_i, preferred_unit:)
+    end
+
+    def format_anchor_time(time)
+      time.strftime("%b %-d %-l:%M %p")
+    end
+
+    def format_projected_time(time)
+      time.strftime("%b %-d %-l:%M%p").sub(/^Sep /, "Sept ")
     end
   end
 end

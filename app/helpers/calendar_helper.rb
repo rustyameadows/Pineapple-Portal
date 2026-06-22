@@ -199,6 +199,18 @@ module CalendarHelper
     item.relative? ? "#{label}*" : label
   end
 
+  def calendar_item_day_label(item, timezone)
+    start_time = item.effective_starts_at&.in_time_zone(timezone)
+    return "Date TBD" unless start_time
+
+    start_time.strftime("%b %-d")
+  end
+
+  def calendar_item_day_label_with_marker(item, timezone)
+    label = calendar_item_day_label(item, timezone)
+    item.relative? ? "#{label}*" : label
+  end
+
   def calendar_item_relative_label(item)
     return unless item.relative? && item.relative_anchor
 
@@ -352,6 +364,25 @@ module CalendarHelper
     return "Date TBD" unless start_time
 
     start_time.strftime("%A, %B %-d")
+  end
+
+  def calendar_item_segment_key(item, timezone, segment_granularity = EventCalendarView::SEGMENT_GRANULARITIES[:day])
+    start_time = item.effective_starts_at&.in_time_zone(timezone)
+    return "Date TBD" unless start_time
+
+    if segment_granularity.to_s == EventCalendarView::SEGMENT_GRANULARITIES[:month]
+      start_time.strftime("%Y-%m")
+    else
+      calendar_item_date_bucket(item, timezone)
+    end
+  end
+
+  def calendar_item_segment_label(item, timezone, segment_granularity = EventCalendarView::SEGMENT_GRANULARITIES[:day])
+    if segment_granularity.to_s == EventCalendarView::SEGMENT_GRANULARITIES[:month]
+      calendar_item_month_year_label(item, timezone)
+    else
+      calendar_item_date_bucket(item, timezone)
+    end
   end
 
   def calendar_item_month_year_label(item, timezone)

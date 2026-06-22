@@ -106,6 +106,7 @@
   <% total_count = 0 %>
   <% error_message = nil %>
   <% far_future = Time.zone.parse("9999-12-31") rescue Time.zone.now + 100.years %>
+  <% timeline_segment_granularity = EventCalendarView::SEGMENT_GRANULARITIES[:day] %>
 
   <% case @segment.html_view_key %>
   <% when DocumentSegment::RUN_OF_SHOW_VIEW_KEY %>
@@ -124,6 +125,7 @@
     <% if calendar.present? && view_ref.present? %>
       <% view = calendar.event_calendar_views.find_by(id: view_ref) %>
       <% if view.present? %>
+        <% timeline_segment_granularity = view.segment_granularity %>
         <% filter = Calendars::ViewFilter.new(calendar:, view:) %>
         <% filtered_items = filter.items %>
         <% filtered_items = filtered_items.reject { |item| item.tagged_with?("decisions") } unless view.slug == "decision-calendar" %>
@@ -140,14 +142,14 @@
   <% end %>
 
   <% if items.any? %>
+    <% monthly_segments = timeline_segment_granularity == EventCalendarView::SEGMENT_GRANULARITIES[:month] %>
+    <% columns[0] = { key: :starts, label: "Day" } if monthly_segments %>
     <% sorted_items = items.sort_by { |item|
       start_time = item.effective_starts_at&.in_time_zone(timezone)
       [start_time || far_future, item.position.to_i, item.title.to_s.downcase, item.id.to_i]
     } %>
-    <% decision_calendar = defined?(view) && view&.slug == "decision-calendar" %>
     <% grouped_items = sorted_items.group_by { |item|
-      start_time = item.effective_starts_at&.in_time_zone(timezone)
-      start_time ? start_time.strftime("%A, %B %-d, %Y") : "Date TBD"
+      calendar_item_segment_key(item, timezone, timeline_segment_granularity)
     } %>
 
     <table class="generated-template--timeline__table">
@@ -160,12 +162,7 @@
       </thead>
       <tbody>
         <% grouped_items.each do |date_label, date_items| %>
-        <% display_label = if decision_calendar
-                             first_caption = date_items.find { |item| item.time_caption.present? }&.time_caption
-                             first_caption.presence || date_label
-                           else
-                             date_label
-                           end %>
+        <% display_label = calendar_item_segment_label(date_items.first, timezone, timeline_segment_granularity) %>
         <tr class="generated-template--timeline__date-row">
           <td colspan="<%= columns.length %>"><%= display_label %></td>
         </tr>
@@ -179,7 +176,11 @@
                 <td>
                  <% case column[:key]
                      when :starts
-                       time_label = calendar_item_time_only_label_with_marker(item, timezone)
+                       time_label = if monthly_segments
+                                      calendar_item_day_label_with_marker(item, timezone)
+                                    else
+                                      calendar_item_time_only_label_with_marker(item, timezone)
+                                    end
                        time_label = time_label.to_s.gsub("–", "&ndash;")
                        concat(time_label.html_safe)
                      when :title

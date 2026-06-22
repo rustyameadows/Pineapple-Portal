@@ -13,6 +13,105 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     get grid_event_calendar_url(@event)
     assert_response :success
     assert_select "h1", text: @calendar.name
+    assert_select ".event-layout.event-layout--grid", count: 1
+    assert_select ".event-sidebar", count: 0
+    assert_select ".event-section__subtitle", count: 0
+    assert_select "a[href='#{event_calendar_path(@event)}']", text: "View mode", count: 1
+    assert_select ".calendar-grid__column-controls", count: 1
+    assert_select "input[data-grid-column-toggle][value='title'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='timing'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='start']", count: 0
+    assert_select "input[data-grid-column-toggle][value='duration']", count: 0
+    assert_select "input[data-grid-column-toggle][value='anchor']", count: 0
+    assert_select "input[data-grid-column-toggle][value='relation']", count: 0
+    assert_select "input[data-grid-column-toggle][value='location'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='vendor'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='notes'][checked='checked']", count: 1
+    assert_select "input[data-grid-column-toggle][value='status'][checked='checked']", count: 0
+    assert_select "input[data-grid-column-toggle][value='tags'][checked='checked']", count: 0
+    assert_match(/data-grid-column="title"[^>]*>Title<\/th>\s*<th[^>]+data-grid-column="timing"[^>]*>Timing<\/th>/m, response.body)
+    assert_select "th[data-grid-column='timing']", text: "Timing", count: 1
+    assert_select "th[data-grid-column='start'][hidden]", text: "Start", count: 1
+    assert_select "th[data-grid-column='duration'][hidden]", text: "Duration", count: 1
+    assert_select "th[data-grid-column='anchor'][hidden]", text: "Anchor", count: 1
+    assert_select "th[data-grid-column='relation'][hidden]", text: "Relation", count: 1
+    assert_select "th[data-grid-column='status'][hidden]", text: "Status", count: 1
+    assert_select "th[data-grid-column='tags'][hidden]", text: "Tags", count: 1
+    assert_select "td[data-grid-column='start'][hidden] input[name='calendar_item[starts_at]']", minimum: 1
+    assert_select "td[data-grid-column='duration'][hidden] input[name='calendar_item[duration_display_hours]']", minimum: 1
+    assert_select "td[data-grid-column='anchor'][hidden] select[name='calendar_item[relative_anchor_id]']", minimum: 1
+    assert_select "td[data-grid-column='relation'][hidden] select[name='calendar_item[relative_before]']", minimum: 1
+    assert_select ".calendar-grid__bulk", count: 0
+    assert_select ".calendar-grid__table-wrapper", count: 1
+    assert_select ".event-calendars__bulk-toolbar[hidden]", count: 1
+    assert_select "form#calendar-grid-bulk-form select[name='bulk[bulk_action]']"
+    assert_select "form#calendar-grid-bulk-form option[value='set_vendor']", text: "Set vendor", count: 1
+    assert_select "[data-calendar-bulk-edit-target='statusRow'][hidden]", count: 1
+    assert_select "input.event-calendars__bulk-checkbox[data-calendar-bulk-edit-target='checkbox']", minimum: 1
+    assert_select "option[value='set_locked']", count: 0
+    assert_select "th", text: "Locked", count: 0
+    assert_select "input[name='calendar_item[locked]']", count: 0
+  end
+
+  test "grid timing column renders full timing editor sheet" do
+    get grid_event_calendar_url(@event)
+
+    assert_response :success
+    assert_select ".calendar-grid__cell--timing", minimum: 1
+    assert_select "[data-timing-summary]", text: /Starts/
+    assert_no_match "Duration TBD", response.body
+    assert_select "button[data-timing-dialog-open]", text: "Edit timing", minimum: 1
+    assert_select "dialog.calendar-grid__timing-dialog[data-grid-timing-dialog]", minimum: 1
+    assert_select ".calendar-grid__timing-mode-toggle .calendar-item-form__toggle-option", minimum: 2
+    assert_select "input[data-timing-dialog-field='mode'][value='absolute']", minimum: 1
+    assert_select "input[data-timing-dialog-field='mode'][value='relative']", minimum: 1
+    assert_select ".calendar-item-form__relative-sentence", minimum: 1
+    assert_select ".calendar-item-form__sentence-text", text: "Start this item", minimum: 1
+    assert_select "[data-timing-dialog-field='startsAt']", minimum: 1
+    assert_select "[data-timing-dialog-field='durationValue']", minimum: 1
+    assert_select "[data-timing-dialog-field='durationUnit']", minimum: 1
+    assert_select "[data-timing-dialog-field='durationHours']", minimum: 1
+    assert_select "[data-timing-dialog-field='durationMinutes']", minimum: 1
+    assert_select "[data-timing-dialog-field='anchor']", minimum: 1
+    assert_select "[data-timing-dialog-field='offsetValue']", minimum: 1
+    assert_select "[data-timing-dialog-field='offsetUnit']", minimum: 1
+    assert_select "[data-timing-dialog-field='offsetHours']", minimum: 1
+    assert_select "[data-timing-dialog-field='offsetMinutes']", minimum: 1
+    assert_select "[data-timing-dialog-field='direction']", minimum: 1
+    assert_select "[data-timing-dialog-field='anchorPoint']", minimum: 1
+    assert_select "button[data-timing-dialog-save]", text: "Save timing", minimum: 1
+  end
+
+  test "grid tags column renders compact active tags with add dialog" do
+    tag = event_calendar_tags(:day_of)
+    inactive_tag = event_calendar_tags(:vendor)
+    @item.event_calendar_tags << tag unless @item.event_calendar_tag_ids.include?(tag.id)
+    @item.event_calendar_tags.delete(inactive_tag)
+
+    get grid_event_calendar_url(@event)
+
+    assert_response :success
+    assert_select "td.calendar-grid__cell--tags", minimum: 1
+    assert_select ".calendar-grid__tag-editor[data-tags-container]", minimum: 1
+    assert_select ".calendar-grid__active-tags", minimum: 1
+    assert_select "button[data-active-tag-id='#{tag.id}']", text: /#{tag.name}/, minimum: 1
+    assert_select "button.calendar-grid__active-tag[data-active-tag-id='#{inactive_tag.id}'][hidden]", minimum: 1
+    assert_select "button[data-tag-dialog-open]", text: "Add tag", minimum: 1
+    assert_select "dialog.calendar-grid__tag-dialog[data-tag-dialog]", minimum: 1
+    assert_select "button[data-tag-dialog-save]", text: "Save", minimum: 1
+    assert_select "button[data-tag-dialog-close]", count: 0
+    assert_select ".calendar-grid__tag-options .calendar-grid__tag-pill", minimum: 1
+    assert_select "input.calendar-grid__tag-checkbox[name='calendar_item[event_calendar_tag_ids][]']", minimum: 1
+    assert_select ".calendar-grid__tags-empty", count: 0
+    assert_no_match "No tags", response.body
+    assert_select ".calendar-grid__tags", count: 0
+  end
+
+  test "run of show links to grid edit mode" do
+    get event_calendar_url(@event)
+
+    assert_response :success
+    assert_select "a[href='#{grid_event_calendar_path(@event)}']", text: "Edit mode"
   end
 
   test "shows grid for derived view" do
@@ -21,14 +120,42 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: @view.name
   end
 
+  test "grid renders relative timing and duration as display intent controls" do
+    get grid_event_calendar_url(@event)
+
+    assert_response :success
+    assert_select "input[name='calendar_item[relative_offset_display_value]'][value='0']"
+    assert_select "select[name='calendar_item[relative_offset_display_unit]'] option[selected][value='days']", text: "Days"
+    assert_select "input[name='calendar_item[relative_offset_display_hours]'][value='2']"
+    assert_select "input[name='calendar_item[relative_offset_display_minutes]'][value='0']"
+    assert_select "input[name='calendar_item[duration_display_value]']"
+    assert_select "select[name='calendar_item[duration_display_unit]'] option[value='days']", text: "Days"
+    assert_select "input[name='calendar_item[duration_display_hours]']"
+    assert_select "input[name='calendar_item[duration_display_minutes]']"
+    assert_select "[data-relative-summary]", text: /Starts 2 hr after Ceremony starts → Oct 1 5:00PM/
+    assert_select "[data-relative-summary]", text: "Absolute start"
+    assert_no_match "120 min", response.body
+  end
+
+  test "grid anchor options use effective relative times" do
+    get grid_event_calendar_url(@event)
+
+    assert_response :success
+    assert_includes response.body, "Reception (Oct 1 5:00 PM"
+  end
+
   test "updates a calendar item" do
+    @item.update!(locked: true)
+
     patch grid_item_event_calendar_url(@event, item_id: @item), params: {
       calendar_item: {
         title: "Updated Ceremony",
         starts_at: "2025-10-01T16:00",
-        duration_minutes: 60,
+        duration_display_value: "0",
+        duration_display_unit: "days",
+        duration_display_hours: "1",
+        duration_display_minutes: "0",
         status: "in_progress",
-        locked: "1",
         event_calendar_tag_ids: [event_calendar_tags(:vendor).id]
       }
     }
@@ -36,9 +163,110 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to grid_event_calendar_url(@event)
     @item.reload
     assert_equal "Updated Ceremony", @item.title
+    assert_equal 60, @item.duration_minutes
+    assert_equal 0, @item.duration_display_value
+    assert_equal "days", @item.duration_display_unit
+    assert_equal 1, @item.duration_display_hours
+    assert_equal 0, @item.duration_display_minutes
     assert_equal "in_progress", @item.status
     assert @item.locked?
     assert_equal [event_calendar_tags(:vendor).id], @item.event_calendar_tag_ids.sort
+  end
+
+  test "updates relative timing from display intent controls" do
+    item = calendar_items(:reception)
+    anchor = calendar_items(:ceremony)
+
+    patch grid_item_event_calendar_url(@event, item_id: item), params: {
+      calendar_item: {
+        title: item.title,
+        duration_display_value: "0",
+        duration_display_unit: "days",
+        duration_display_hours: "3",
+        duration_display_minutes: "0",
+        status: item.status,
+        relative_anchor_id: anchor.id,
+        relative_offset_display_value: "0",
+        relative_offset_display_unit: "days",
+        relative_offset_display_hours: "6.5",
+        relative_offset_display_minutes: "0",
+        relative_before: "false",
+        relative_to_anchor_end: "false",
+        event_calendar_tag_ids: []
+      }
+    }
+
+    assert_redirected_to grid_event_calendar_url(@event)
+    item.reload
+    assert_equal 390, item.relative_offset_minutes
+    assert_equal 0, item.relative_offset_display_value
+    assert_equal "days", item.relative_offset_display_unit
+    assert_equal 6, item.relative_offset_display_hours
+    assert_equal 30, item.relative_offset_display_minutes
+    assert_not item.relative_before?
+    assert_not item.relative_to_anchor_end?
+  end
+
+  test "updates relative timing for decision calendar week offsets" do
+    item = calendar_items(:reception)
+    anchor = calendar_items(:ceremony)
+
+    patch grid_item_event_calendar_url(@event, item_id: item), params: {
+      calendar_item: {
+        title: item.title,
+        duration_display_value: "0",
+        duration_display_unit: "days",
+        duration_display_hours: "3",
+        duration_display_minutes: "0",
+        status: item.status,
+        relative_anchor_id: anchor.id,
+        relative_offset_display_value: "2",
+        relative_offset_display_unit: "weeks",
+        relative_offset_display_hours: "0",
+        relative_offset_display_minutes: "0",
+        relative_before: "false",
+        relative_to_anchor_end: "false",
+        event_calendar_tag_ids: []
+      }
+    }
+
+    assert_redirected_to grid_event_calendar_url(@event)
+    item.reload
+    assert_equal 20_160, item.relative_offset_minutes
+    assert_equal 2, item.relative_offset_display_value
+    assert_equal "weeks", item.relative_offset_display_unit
+    assert_equal 0, item.relative_offset_display_hours
+    assert_equal 0, item.relative_offset_display_minutes
+  end
+
+  test "updates relative direction and anchor point selections" do
+    item = calendar_items(:reception)
+    anchor = calendar_items(:ceremony)
+
+    patch grid_item_event_calendar_url(@event, item_id: item), params: {
+      calendar_item: {
+        title: item.title,
+        duration_display_value: "0",
+        duration_display_unit: "days",
+        duration_display_hours: "3",
+        duration_display_minutes: "0",
+        status: item.status,
+        relative_anchor_id: anchor.id,
+        relative_offset_display_value: "0",
+        relative_offset_display_unit: "days",
+        relative_offset_display_hours: "0",
+        relative_offset_display_minutes: "30",
+        relative_before: "true",
+        relative_to_anchor_end: "true",
+        event_calendar_tag_ids: []
+      }
+    }
+
+    assert_redirected_to grid_event_calendar_url(@event)
+    item.reload
+    assert_equal 30, item.relative_offset_minutes
+    assert item.relative_before?
+    assert item.relative_to_anchor_end?
   end
 
   test "applies bulk status update" do
@@ -67,16 +295,28 @@ class Events::CalendarGridsControllerTest < ActionDispatch::IntegrationTest
     assert_includes @item.reload.event_calendar_tag_ids, event_calendar_tags(:day_of).id
   end
 
-  test "applies bulk lock update" do
+  test "applies shared bulk toolbar vendor update and respects return_to" do
+    return_to = "#{grid_event_calendar_path(@event)}?grid=1"
+
     patch grid_bulk_event_calendar_url(@event), params: {
+      return_to:,
       item_ids: [@item.id],
       bulk: {
-        bulk_action: "set_locked",
-        locked: "1"
+        bulk_action: "set_vendor",
+        vendor_name: "Shared Toolbar Vendor"
       }
     }
 
-    assert_redirected_to grid_event_calendar_url(@event)
-    assert_predicate @item.reload, :locked?
+    assert_redirected_to return_to
+    assert_equal "Shared Toolbar Vendor", @item.reload.vendor_name
+  end
+
+  test "does not expose bulk lock updates in grid mode" do
+    get grid_event_calendar_url(@event)
+
+    assert_response :success
+    assert_select "select[name='bulk[bulk_action]'] option", text: "Update lock state", count: 0
+    assert_no_match "Lock selected", response.body
+    assert_no_match "Unlock selected", response.body
   end
 end

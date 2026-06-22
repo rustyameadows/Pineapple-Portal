@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_23_140000) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_17_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -91,12 +91,28 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_23_140000) do
     t.string "time_caption"
     t.text "transportation_note"
     t.string "guest_count"
+    t.integer "relative_offset_display_value", default: 0, null: false
+    t.string "relative_offset_display_unit", default: "days", null: false
+    t.integer "relative_offset_display_hours", default: 0, null: false
+    t.integer "relative_offset_display_minutes", default: 0, null: false
+    t.integer "duration_display_value"
+    t.string "duration_display_unit"
+    t.integer "duration_display_hours"
+    t.integer "duration_display_minutes"
     t.index ["event_calendar_id", "position"], name: "index_calendar_items_on_calendar_and_position"
     t.index ["event_calendar_id"], name: "index_calendar_items_on_event_calendar_id"
     t.index ["relative_anchor_id"], name: "index_calendar_items_on_relative_anchor_id"
     t.index ["starts_at"], name: "index_calendar_items_on_starts_at"
     t.index ["status"], name: "index_calendar_items_on_status"
+    t.check_constraint "duration_display_hours IS NULL OR duration_display_hours >= 0", name: "calendar_items_duration_display_hours_non_negative"
+    t.check_constraint "duration_display_minutes IS NULL OR duration_display_minutes >= 0", name: "calendar_items_duration_display_minutes_non_negative"
+    t.check_constraint "duration_display_unit IS NULL OR (duration_display_unit::text = ANY (ARRAY['days'::character varying, 'weeks'::character varying, 'months'::character varying]::text[]))", name: "calendar_items_duration_display_unit_valid"
+    t.check_constraint "duration_display_value IS NULL OR duration_display_value >= 0", name: "calendar_items_duration_display_value_non_negative"
     t.check_constraint "duration_minutes IS NULL OR duration_minutes >= 0", name: "calendar_items_duration_non_negative"
+    t.check_constraint "relative_offset_display_hours >= 0", name: "calendar_items_relative_offset_display_hours_non_negative"
+    t.check_constraint "relative_offset_display_minutes >= 0", name: "calendar_items_relative_offset_display_minutes_non_negative"
+    t.check_constraint "relative_offset_display_unit::text = ANY (ARRAY['days'::character varying, 'weeks'::character varying, 'months'::character varying]::text[])", name: "calendar_items_relative_offset_display_unit_valid"
+    t.check_constraint "relative_offset_display_value >= 0", name: "calendar_items_relative_offset_display_value_non_negative"
     t.check_constraint "relative_offset_minutes IS NOT NULL", name: "calendar_items_relative_offset_present"
   end
 
@@ -149,9 +165,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_23_140000) do
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "segment_granularity", default: "day", null: false
     t.index ["calendar_template_id", "slug"], name: "index_calendar_template_views_on_template_and_slug", unique: true
     t.index ["calendar_template_id"], name: "index_calendar_template_views_on_calendar_template_id"
     t.check_constraint "jsonb_typeof(tag_filter) = 'array'::text", name: "calendar_template_views_tag_filter_array"
+    t.check_constraint "segment_granularity::text = ANY (ARRAY['day'::character varying, 'month'::character varying]::text[])", name: "calendar_template_views_segment_granularity_valid"
   end
 
   create_table "calendar_templates", force: :cascade do |t|
@@ -305,9 +323,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_23_140000) do
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "segment_granularity", default: "day", null: false
     t.index ["event_calendar_id", "slug"], name: "index_event_calendar_views_on_calendar_and_slug", unique: true
     t.index ["event_calendar_id"], name: "index_event_calendar_views_on_event_calendar_id"
     t.check_constraint "jsonb_typeof(tag_filter) = 'array'::text", name: "event_calendar_views_tag_filter_array"
+    t.check_constraint "segment_granularity::text = ANY (ARRAY['day'::character varying, 'month'::character varying]::text[])", name: "event_calendar_views_segment_granularity_valid"
   end
 
   create_table "event_calendars", force: :cascade do |t|
