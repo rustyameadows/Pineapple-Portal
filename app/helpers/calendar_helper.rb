@@ -211,6 +211,31 @@ module CalendarHelper
     item.relative? ? "#{label}*" : label
   end
 
+  def ros_agent_draft_timezone(task)
+    task.event.run_of_show_calendar&.timezone.presence || EventCalendar::DEFAULT_TIMEZONE
+  end
+
+  def ros_agent_draft_day_label(day, entries, timezone)
+    explicit_date = parse_ros_agent_draft_date(day["date"])
+    inferred_date = Array(entries).filter_map { |entry| ros_agent_draft_entry_start_time(entry, timezone) }.first&.to_date
+    date = explicit_date || inferred_date
+
+    return date.strftime("%A, %B %-d") if date
+
+    day["label"].presence || "Date TBD"
+  end
+
+  def ros_agent_draft_schedule_label(entry, timezone)
+    explicit_label = entry["time_label"].presence || entry["time_caption"].presence
+    return explicit_label unless explicit_label.blank? || parseable_ros_agent_draft_datetime?(explicit_label)
+
+    start_time = ros_agent_draft_entry_start_time(entry, timezone) || parse_ros_agent_draft_time(explicit_label, timezone)
+    finish_time = ros_agent_draft_entry_finish_time(entry, start_time, timezone)
+    return effective_time_only_label(start_time, finish_time, timezone) if start_time
+
+    "TBD"
+  end
+
   def calendar_item_relative_label(item)
     return unless item.relative? && item.relative_anchor
 
@@ -557,5 +582,48 @@ module CalendarHelper
     else
       format_clock_time(start_time)
     end
+  end
+
+  def parse_ros_agent_draft_date(value)
+    return if value.blank?
+
+    Date.iso8601(value.to_s)
+  rescue ArgumentError
+    nil
+  end
+
+  def ros_agent_draft_entry_start_time(entry, timezone)
+    return unless entry
+
+    parse_ros_agent_draft_time(entry.dig("timing", "starts_at").presence || entry["starts_at"].presence, timezone)
+  end
+
+  def ros_agent_draft_entry_finish_time(entry, start_time, timezone)
+    return unless entry
+
+    explicit_finish = parse_ros_agent_draft_time(
+      entry.dig("timing", "ends_at").presence || entry["ends_at"].presence,
+      timezone
+    )
+    return explicit_finish if explicit_finish
+    return unless start_time && entry["duration_minutes"].present?
+
+    duration_minutes = Integer(entry["duration_minutes"], exception: false)
+    return unless duration_minutes&.positive?
+
+    start_time + duration_minutes.minutes
+  end
+
+  def parse_ros_agent_draft_time(value, timezone)
+    return if value.blank?
+
+    zone = Time.find_zone(timezone) || Time.zone
+    zone.parse(value.to_s)
+  rescue ArgumentError, TypeError
+    nil
+  end
+
+  def parseable_ros_agent_draft_datetime?(value)
+    value.to_s.match?(/\A\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/)
   end
 end

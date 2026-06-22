@@ -1,5 +1,6 @@
 <% draft = task.draft_ros_json || {} %>
 <% draft_days = Array(draft["draft_days"]) %>
+<% draft_timezone = ros_agent_draft_timezone(task) %>
 
 <% if draft_days.any? %>
   <section class="event-section__body" id="draft-ros" tabindex="-1">
@@ -17,13 +18,13 @@
       </thead>
       <tbody>
         <% draft_days.each do |day| %>
-          <tr class="event-calendars__date-row">
-            <td colspan="4"><span class="event-calendars__date-label"><%= day["label"] || day["date"] %></span></td>
-          </tr>
           <% entries = Array(day["entries"].presence || draft["draft_items"]).select { |entry| entry["day_label"].blank? || entry["day_label"] == day["label"] } %>
+          <tr class="event-calendars__date-row">
+            <td colspan="4"><span class="event-calendars__date-label"><%= ros_agent_draft_day_label(day, entries, draft_timezone) %></span></td>
+          </tr>
           <% entries.each do |entry| %>
             <tr class="event-calendars__row">
-              <td class="event-calendars__schedule-column"><%= entry["time_label"] || entry.dig("timing", "starts_at") || "TBD" %></td>
+              <td class="event-calendars__schedule-column"><%= ros_agent_draft_schedule_label(entry, draft_timezone) %></td>
               <td class="event-calendars__title-column"><%= entry["title"] %></td>
               <td><%= entry["location"] || entry["location_name"] || "—" %></td>
               <td><%= simple_format(entry["notes"].to_s) %></td>

@@ -216,6 +216,37 @@ module Events
       assert_select "form[action='#{refine_draft_event_ros_agent_task_path(@event, @task)}']", count: 1
     end
 
+    test "show formats draft ROS day groups and schedule times" do
+      @event.run_of_show_calendar.update!(timezone: "America/New_York")
+      @task.update!(
+        status: "drafting",
+        draft_ros_json: {
+          "draft_days" => [
+            {
+              "label" => "Friday Pre-Event Production",
+              "entries" => [
+                {
+                  "title" => "Production / Entertainment Crew Line Check",
+                  "timing" => { "kind" => "absolute", "starts_at" => "2027-10-15T18:00:00-04:00" },
+                  "duration_minutes" => nil,
+                  "notes" => "Adapted from source.",
+                  "location" => "TBD"
+                }
+              ]
+            }
+          ]
+        }
+      )
+
+      get event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      assert_select "#draft-ros .event-calendars__date-label", text: "Friday, October 15"
+      assert_select "#draft-ros td.event-calendars__schedule-column", text: "6:00 PM"
+      assert_no_match "Friday Pre-Event Production", response.body
+      assert_no_match "2027-10-15T18:00:00-04:00", response.body
+    end
+
     test "show anchors review plan so polling can reveal it" do
       @task.update!(
         status: "ready_for_review",
