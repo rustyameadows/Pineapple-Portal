@@ -103,6 +103,8 @@ Add an "Agent Assist" entry point from the existing event ROS area. The page sho
 
 The first version can default to "Build ROS from source document" when files are attached.
 
+Place the primary Agent Assist CTA in the ROS top bar with the existing planner actions, near controls such as edit mode and add item. It should feel like an event-scoped ROS workflow action, not a global assistant or support chat.
+
 ### Task States
 
 The task moves through these states:
@@ -275,6 +277,8 @@ The first model pass should produce a DB-backed source understanding artifact. T
 
 After source understanding and Q&A, the agent should create a draft ROS scratchpad. This is a model-generated staging area, not live calendar data. The planner can refine it in turns before the final change plan is produced.
 
+The draft should reuse the familiar ROS table pattern wherever possible: grouped by day, ordered by time, and shaped like the real run-of-show table. It must be visually marked as draft agent output so planners understand that the rows are not live calendar records yet.
+
 The scratchpad should include:
 
 - Draft days and their target date mapping.
@@ -428,7 +432,7 @@ Validation output should include blocking errors and non-blocking warnings.
 The preview should show:
 
 - Count of creates, updates, deletes, tag changes, time changes, relative timing changes, and view changes.
-- Timeline preview grouped by day.
+- Timeline preview grouped by day, using the same ROS table language as the main calendar where practical.
 - Before/after rows for changed existing items.
 - Rows to be created.
 - Rows to be deleted.

@@ -635,7 +635,7 @@ Render each question with label, why-it-matters text, suggested answer controls,
 
 - [ ] **Step 3: Render draft scratchpad**
 
-Show draft days, draft items, source-specific removals, assumptions, review-needed flags, and refinement history. Provide a refinement text box for planner turns such as "make ceremony earlier" or "keep vendor names as placeholders".
+Show draft days and draft items in a familiar ROS table-style layout grouped by day and ordered by time. Clearly label the table as draft agent output, not live calendar data. Include source-specific removals, assumptions, review-needed flags, and refinement history. Provide a refinement text box for planner turns such as "make ceremony earlier" or "keep vendor names as placeholders".
 
 - [ ] **Step 4: Add Stimulus behavior**
 
@@ -728,7 +728,7 @@ Create a plan where the second operation is invalid. Assert no first-operation c
 
 - [ ] **Step 1: Add Agent Assist CTA**
 
-Add a secondary action near existing calendar actions linking to `new_event_ros_agent_task_path(@event)`.
+Add a secondary "Agent Assist" action in the ROS top bar near existing planner controls such as edit mode and add item. Link it to `new_event_ros_agent_task_path(@event)`.
 
 - [ ] **Step 2: Add task history link**
 
