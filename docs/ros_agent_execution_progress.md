@@ -7,7 +7,7 @@ Branch: `codex/agentic-features`
 
 - Overall: in progress
 - Migration status: completed locally by maintainer; test DB prepared
-- Test status: targeted ROS agent suite passed (79 tests, 424 assertions)
+- Test status: full Rails suite passed (606 tests, 2,943 assertions)
 - Live OpenAI smoke status: not run; budget is one tiny smoke call after stubbed tests pass
 - OpenAI key decision: reuse existing `OPENAI_API_KEY`
 - Production/live database: do not run migrations from Codex

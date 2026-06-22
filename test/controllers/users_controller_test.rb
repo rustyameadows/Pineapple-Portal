@@ -32,6 +32,11 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "first user can sign up without prior login" do
+    AgentTaskEvent.delete_all
+    AgentTaskLlmCall.delete_all
+    AgentTaskQuestionBatch.delete_all
+    AgentTaskArtifact.delete_all
+    AgentTask.delete_all
     CalendarItemTeamMember.delete_all
     EventTeamMember.delete_all
     PasswordResetToken.delete_all
