@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build an existing-event ROS agent workflow that analyzes prompts and source documents, asks structured planning questions, generates a validated ROS change plan, previews changes, and applies only after planner approval.
+**Goal:** Build an existing-event ROS agent workflow that sends raw source documents to `gpt-5.5`, stores the model's source understanding and draft ROS scratchpad, asks structured planning questions, generates a validated ROS change plan, previews changes, and applies only after planner approval.
 
-**Architecture:** Rails owns workflow state, validation, preview, approval, and database writes. OpenAI Responses API produces structured question batches and ROS change plans. Existing calendar services remain the write path for ROS records.
+**Architecture:** Rails owns workflow state, file packaging, local API trace snapshots, validation, preview, approval, and database writes. OpenAI Responses API produces model-led source understanding, draft scratchpads, question batches, refinement updates, and final ROS change plans. Existing calendar services remain the write path for ROS records.
 
 **Tech Stack:** Rails 8, ActiveJob/Solid Queue, PostgreSQL JSONB, ERB/Hotwire/Stimulus, official OpenAI Ruby SDK, existing `Event`, `EventCalendar`, `CalendarItem`, `Document`, `Attachment`, and calendar command services.
 
@@ -16,7 +16,11 @@
 - New event creation remains a separate future workflow.
 - All ROS writes require explicit planner approval.
 - The model never receives a direct low-level write tool.
-- CSV parsing is local first; non-CSV artifacts can be normalized through OpenAI file/image inputs.
+- Raw source documents go to `gpt-5.5` for understanding; Rails does not implement business parsers for arbitrary source ROS formats.
+- Rails may collect lightweight file metadata and package OpenAI file/image inputs, but model output is the source understanding.
+- The workflow stores both a model-generated source understanding and a model-generated draft ROS scratchpad before final plan approval.
+- Local API call tracing is part of the foundation, not later polish.
+- OpenAI-hosted Traces dashboard support is optional and should be revisited only if adopting Agents SDK or a supported tracing integration becomes worthwhile.
 - The first planning model is `gpt-5.5`.
 - Migrations must be newly generated. Do not edit an existing migration file.
 - After migrations are ready, ask the maintainer to run them.
@@ -26,13 +30,15 @@
 ### New Files
 
 - `app/models/agent_task.rb`: workflow root record scoped to an event and user.
-- `app/models/agent_task_artifact.rb`: source document and extracted artifact record.
+- `app/models/agent_task_artifact.rb`: source document, OpenAI file reference, and source evidence metadata record.
 - `app/models/agent_task_question_batch.rb`: structured planning questions and answers.
 - `app/models/agent_task_event.rb`: append-only task history.
+- `app/models/agent_task_llm_call.rb`: durable API call trace snapshot for every OpenAI call.
 - `app/services/ros_agent/event_context.rb`: serializes safe event, ROS, tag, view, and team context for the agent.
-- `app/services/ros_agent/source_document_parser.rb`: dispatches source parsing by document type.
-- `app/services/ros_agent/csv_source_parser.rb`: parses CSV into normalized source sections and rows.
-- `app/services/ros_agent/openai_source_normalizer.rb`: normalizes PDFs/images/spreadsheets when local parsing is not available.
+- `app/services/ros_agent/source_file_input_builder.rb`: packages uploaded documents for OpenAI file/image inputs.
+- `app/services/ros_agent/trace_recorder.rb`: records request/response snapshots, usage, timings, and errors.
+- `app/services/ros_agent/schemas/source_understanding_schema.rb`: schema and validator for model-generated source understanding.
+- `app/services/ros_agent/schemas/draft_ros_schema.rb`: schema and validator for model-generated draft scratchpads.
 - `app/services/ros_agent/schemas/question_batch_schema.rb`: schema and validator for Q&A batch output.
 - `app/services/ros_agent/schemas/change_plan_schema.rb`: schema and validator for ROS change plan output.
 - `app/services/ros_agent/prompt_builder.rb`: builds OpenAI instructions and input payloads.
@@ -40,7 +46,7 @@
 - `app/services/ros_agent/change_plan_validator.rb`: validates plan semantics against the event calendar.
 - `app/services/ros_agent/change_plan_preview.rb`: converts a valid plan into planner-facing before/after preview JSON.
 - `app/services/ros_agent/change_plan_applier.rb`: applies an approved plan transactionally.
-- `app/jobs/ros_agent/run_task_job.rb`: background job for extraction and planning.
+- `app/jobs/ros_agent/run_task_job.rb`: background job for source understanding, drafting, refinement, and planning.
 - `app/controllers/events/ros_agent_tasks_controller.rb`: planner-facing task CRUD and workflow actions.
 - `app/views/events/ros_agent_tasks/index.html.erb`: task list for an event.
 - `app/views/events/ros_agent_tasks/new.html.erb`: prompt and source upload/selection form.
@@ -50,7 +56,11 @@
 - `app/javascript/controllers/ros_agent_task_controller.js`: small UI behavior for recommended answers and high-risk acknowledgement.
 - `test/models/agent_task_test.rb`
 - `test/models/agent_task_question_batch_test.rb`
-- `test/services/ros_agent/csv_source_parser_test.rb`
+- `test/models/agent_task_llm_call_test.rb`
+- `test/services/ros_agent/source_file_input_builder_test.rb`
+- `test/services/ros_agent/trace_recorder_test.rb`
+- `test/services/ros_agent/source_understanding_schema_test.rb`
+- `test/services/ros_agent/draft_ros_schema_test.rb`
 - `test/services/ros_agent/change_plan_validator_test.rb`
 - `test/services/ros_agent/change_plan_preview_test.rb`
 - `test/services/ros_agent/change_plan_applier_test.rb`
@@ -80,10 +90,12 @@
 - Create: `app/models/agent_task_artifact.rb`
 - Create: `app/models/agent_task_question_batch.rb`
 - Create: `app/models/agent_task_event.rb`
+- Create: `app/models/agent_task_llm_call.rb`
 - Modify: `app/models/event.rb`
 - Modify: `app/models/user.rb`
 - Test: `test/models/agent_task_test.rb`
 - Test: `test/models/agent_task_question_batch_test.rb`
+- Test: `test/models/agent_task_llm_call_test.rb`
 
 - [ ] **Step 1: Generate a new migration**
 
@@ -110,11 +122,14 @@ create_table :agent_tasks do |t|
   t.string :model, null: false, default: "gpt-5.5"
   t.string :reasoning_effort, null: false, default: "high"
   t.string :openai_response_id
-  t.jsonb :source_summary, null: false, default: {}
+  t.string :latest_openai_trace_id
+  t.jsonb :source_understanding_json, null: false, default: {}
+  t.jsonb :draft_ros_json, null: false, default: {}
   t.jsonb :plan_json, null: false, default: {}
   t.jsonb :validation_json, null: false, default: {}
   t.jsonb :preview_json, null: false, default: {}
   t.jsonb :usage_json, null: false, default: {}
+  t.jsonb :trace_summary_json, null: false, default: {}
   t.integer :approved_plan_version
   t.integer :current_plan_version, null: false, default: 0
   t.datetime :approved_at
@@ -133,9 +148,13 @@ create_table :agent_task_artifacts do |t|
   t.string :document_logical_id
   t.string :filename, null: false
   t.string :content_type
+  t.bigint :size_bytes
+  t.string :checksum
+  t.string :openai_file_id
+  t.string :source_kind, null: false, default: "uploaded_source"
   t.integer :position, null: false, default: 1
-  t.jsonb :extracted_json, null: false, default: {}
-  t.jsonb :extraction_warnings, null: false, default: []
+  t.jsonb :source_metadata_json, null: false, default: {}
+  t.jsonb :source_warnings_json, null: false, default: []
   t.timestamps
 end
 
@@ -163,6 +182,33 @@ end
 
 add_index :agent_task_events, [:agent_task_id, :created_at]
 add_index :agent_task_events, :event_type
+
+create_table :agent_task_llm_calls do |t|
+  t.references :agent_task, null: false, foreign_key: true
+  t.string :purpose, null: false
+  t.string :provider, null: false, default: "openai"
+  t.string :model, null: false
+  t.string :reasoning_effort
+  t.string :status, null: false, default: "started"
+  t.string :openai_response_id
+  t.string :openai_request_id
+  t.string :openai_trace_id
+  t.string :schema_name
+  t.string :schema_version
+  t.integer :attempt, null: false, default: 1
+  t.datetime :started_at, null: false
+  t.datetime :completed_at
+  t.integer :duration_ms
+  t.jsonb :request_json, null: false, default: {}
+  t.jsonb :response_json, null: false, default: {}
+  t.jsonb :usage_json, null: false, default: {}
+  t.jsonb :error_json, null: false, default: {}
+  t.timestamps
+end
+
+add_index :agent_task_llm_calls, [:agent_task_id, :created_at]
+add_index :agent_task_llm_calls, :openai_response_id
+add_index :agent_task_llm_calls, :openai_trace_id
 ```
 
 - [ ] **Step 3: Ask the maintainer to run migrations**
@@ -189,6 +235,7 @@ class AgentTask < ApplicationRecord
     draft: "draft",
     analyzing: "analyzing",
     needs_input: "needs_input",
+    drafting: "drafting",
     planning: "planning",
     ready_for_review: "ready_for_review",
     approved: "approved",
@@ -204,6 +251,7 @@ class AgentTask < ApplicationRecord
   has_many :artifacts, class_name: "AgentTaskArtifact", dependent: :destroy
   has_many :question_batches, class_name: "AgentTaskQuestionBatch", dependent: :destroy
   has_many :task_events, class_name: "AgentTaskEvent", dependent: :destroy
+  has_many :llm_calls, class_name: "AgentTaskLlmCall", dependent: :destroy
 
   enum :workflow, WORKFLOWS, validate: true
   enum :status, STATUSES, validate: true
@@ -214,16 +262,16 @@ class AgentTask < ApplicationRecord
 end
 ```
 
-Add corresponding simple models for artifacts, batches, and events. Add `has_many :agent_tasks, dependent: :destroy` to `Event`. Add created/approved associations to `User`.
+Add corresponding simple models for artifacts, batches, events, and LLM calls. Add `has_many :agent_tasks, dependent: :destroy` to `Event`. Add created/approved associations to `User`.
 
 - [ ] **Step 5: Add model tests**
 
-Test status validity, required prompt, event scoping, question batch answer persistence, and dependent destroys.
+Test status validity, required prompt, event scoping, question batch answer persistence, LLM call trace persistence, and dependent destroys.
 
 Run:
 
 ```bash
-bin/rails test test/models/agent_task_test.rb test/models/agent_task_question_batch_test.rb
+bin/rails test test/models/agent_task_test.rb test/models/agent_task_question_batch_test.rb test/models/agent_task_llm_call_test.rb
 ```
 
 Expected: tests pass after the models and migration are complete.
@@ -268,6 +316,10 @@ module RosAgent
       client.responses.create(**payload)
     end
 
+    def files_create(**payload)
+      client.files.create(**payload)
+    end
+
     private
 
     attr_reader :client
@@ -279,7 +331,29 @@ end
 
 Test that initialization raises `KeyError` when `OPENAI_API_KEY` is missing. Do not print secrets in test output.
 
-### Task 3: Build Event Context Serializer
+### Task 3: Add Trace Recorder
+
+**Files:**
+- Create: `app/services/ros_agent/trace_recorder.rb`
+- Test: `test/services/ros_agent/trace_recorder_test.rb`
+
+- [ ] **Step 1: Create started call records**
+
+`TraceRecorder#start!` should create an `AgentTaskLlmCall` with task, purpose, model, reasoning effort, schema name/version, attempt, started_at, status `started`, and a redacted request snapshot.
+
+- [ ] **Step 2: Complete successful call records**
+
+`TraceRecorder#complete!` should store status `succeeded`, completed_at, duration_ms, OpenAI response ID, request ID if available, trace ID if available, response JSON, and usage JSON.
+
+- [ ] **Step 3: Complete failed call records**
+
+`TraceRecorder#fail!` should store status `failed`, completed_at, duration_ms, and an error JSON payload with class, message, and retryable flag. It must not store API keys or Authorization headers.
+
+- [ ] **Step 4: Test redaction**
+
+Assert request snapshots remove `api_key`, `Authorization`, `OPENAI_API_KEY`, and raw secret-looking bearer tokens while preserving model, schema, prompt version, file IDs, and non-secret metadata.
+
+### Task 4: Build Event Context Serializer
 
 **Files:**
 - Create: `app/services/ros_agent/event_context.rb`
@@ -301,78 +375,73 @@ Include `RunOfShowDefaults::TAGS` and `RunOfShowDefaultViews::VIEWS` so the mode
 
 Create fixtures with one event calendar, two anchored items, tags, and a view. Assert the output includes relative timing and tag names without leaking unrelated records.
 
-## Source Document Extraction
+## Source Document Understanding
 
-### Task 4: Add CSV Source Parser
+### Task 5: Add Source File Input Builder
 
 **Files:**
-- Create: `app/services/ros_agent/csv_source_parser.rb`
-- Test: `test/services/ros_agent/csv_source_parser_test.rb`
+- Create: `app/services/ros_agent/source_file_input_builder.rb`
+- Test: `test/services/ros_agent/source_file_input_builder_test.rb`
 - Create: `test/fixtures/files/millar_run_of_show.csv`
 
 - [ ] **Step 1: Add the Millar CSV fixture**
 
-Copy the provided CSV into `test/fixtures/files/millar_run_of_show.csv`.
+Copy the provided CSV into `test/fixtures/files/millar_run_of_show.csv`. This fixture is source evidence for model tests, not a target for Rails business parsing.
 
-- [ ] **Step 2: Implement CSV parsing**
+- [ ] **Step 2: Build file input payloads**
 
-Use Ruby CSV to preserve quoted multiline cells:
+`SourceFileInputBuilder` should return OpenAI input content for task artifacts:
 
 ```ruby
-require "csv"
-
-module RosAgent
-  class CsvSourceParser
-    def initialize(io:, filename:)
-      @io = io
-      @filename = filename
-    end
-
-    def call
-      rows = CSV.parse(io.read)
-      {
-        source_type: "csv",
-        title: filename,
-        sections: build_sections(rows),
-        warnings: []
-      }
-    end
-
-    private
-
-    attr_reader :io, :filename
-  end
-end
+{
+  type: "input_file",
+  file_id: artifact.openai_file_id,
+  filename: artifact.filename
+}
 ```
 
-Implement `build_sections` so date/header rows become sections and time rows become normalized rows with `source_row`, `start_time`, `end_time`, `description`, `vendor`, `location`, `staff`, and `raw_cells`.
+For small text-like files without an OpenAI file ID in tests, it may return:
 
-- [ ] **Step 3: Test source sections**
+```ruby
+{
+  type: "input_text",
+  text: "Source file: #{artifact.filename}\n\n#{text_preview}"
+}
+```
 
-Assert the Millar fixture produces Friday and Saturday sections, keeps multiline food/bar descriptions inside one row, and parses `11:30 PM to 12:15 AM` as a single row.
+The text preview is supporting context only. Do not infer ROS rows locally.
 
-### Task 5: Add Source Document Parser Dispatcher
+- [ ] **Step 3: Store lightweight metadata**
+
+When attaching artifacts, store filename, content type, size bytes, checksum, OpenAI file ID if uploaded, and simple source metadata. Do not store parsed ROS items from Rails code.
+
+- [ ] **Step 4: Test file input packaging**
+
+Assert CSV, PDF, image, and XLSX artifacts produce file input references when `openai_file_id` is present. Assert the Millar CSV fixture can be attached and referenced without locally converting it to ROS rows.
+
+### Task 6: Define Source Understanding And Draft Scratchpad Schemas
 
 **Files:**
-- Create: `app/services/ros_agent/source_document_parser.rb`
-- Create: `app/services/ros_agent/openai_source_normalizer.rb`
-- Test: `test/services/ros_agent/source_document_parser_test.rb`
+- Create: `app/services/ros_agent/schemas/source_understanding_schema.rb`
+- Create: `app/services/ros_agent/schemas/draft_ros_schema.rb`
+- Test: `test/services/ros_agent/source_understanding_schema_test.rb`
+- Test: `test/services/ros_agent/draft_ros_schema_test.rb`
 
-- [ ] **Step 1: Dispatch CSV locally**
+- [ ] **Step 1: Define source understanding schema**
 
-If `content_type` is `text/csv` or filename ends with `.csv`, use `CsvSourceParser`.
+Require structured fields for source title, source kind, overall read, inferred days, reusable patterns, source-specific details, uncertainties, confidence notes, and source evidence references.
 
-- [ ] **Step 2: Dispatch non-CSV to OpenAI normalizer**
+- [ ] **Step 2: Define draft ROS schema**
 
-For PDFs, images, and spreadsheet formats that are not locally parsed, call `OpenaiSourceNormalizer`. The normalizer returns the same `source_type`, `sections`, and `warnings` shape.
+Require structured fields for target event summary, date mapping, draft days, draft items, assumptions, review flags, refinement notes, and source references. Draft items should include title, timing, duration, notes, location, vendor/staff handling, tags, confidence, and whether planner review is needed.
 
-- [ ] **Step 3: Test dispatcher**
+- [ ] **Step 3: Test schemas**
 
-Stub the OpenAI normalizer and assert it is used for image/PDF content types. Assert CSV never calls OpenAI.
+Assert valid sample source understanding and draft scratchpad payloads pass. Assert missing title, missing draft days, invalid confidence values, and item timing with no title fail.
 
 ## Structured Agent Outputs
 
-### Task 6: Define Question Batch Schema
+### Task 7: Define Question Batch Schema
 
 **Files:**
 - Create: `app/services/ros_agent/schemas/question_batch_schema.rb`
@@ -403,7 +472,7 @@ Require `state: "needs_input"`, `summary`, and an array of questions. Each quest
 
 Assert missing keys, duplicate question keys, invalid answer types, and missing recommended labels produce validation errors.
 
-### Task 7: Define ROS Change Plan Schema
+### Task 8: Define ROS Change Plan Schema
 
 **Files:**
 - Create: `app/services/ros_agent/schemas/change_plan_schema.rb`
@@ -442,7 +511,7 @@ Assert unknown operation types, duplicate operation IDs, invalid risk levels, an
 
 ## Agent Runner
 
-### Task 8: Build Prompt Builder
+### Task 9: Build Prompt Builder
 
 **Files:**
 - Create: `app/services/ros_agent/prompt_builder.rb`
@@ -453,22 +522,25 @@ Assert unknown operation types, duplicate operation IDs, invalid risk levels, an
 Instructions must include:
 
 - Existing-event scope only.
+- Raw source documents are primary evidence; do not assume Rails has parsed them.
+- Produce source understanding before final app operations.
+- Maintain and revise a draft ROS scratchpad over multiple turns.
 - Ask questions before planning when answers materially change the ROS.
 - Prefer 1 to 3 questions, up to 5 for risky ambiguity.
 - Do not ask for facts already present in context.
 - Do not output writes directly.
-- Return either `needs_input` question batch or `ready_for_review` change plan.
+- Return one of: `source_understood`, `needs_input`, `draft_ready`, or `ready_for_review`.
 - Mark destructive and large edits as high risk.
 
 - [ ] **Step 2: Build input payload**
 
-Include event context, current ROS context, normalized source artifacts, previous question/answer batches, and the planner prompt.
+Include event context, current ROS context, source file inputs, latest source understanding, latest draft ROS scratchpad, previous question/answer batches, refinement instructions, and the planner prompt.
 
 - [ ] **Step 3: Test prompt contents**
 
-Assert the prompt contains the event ID, event date, default ROS tags, source artifact title, and previous answers.
+Assert the prompt contains the event ID, event date, default ROS tags, source artifact title, previous answers, source understanding when present, and draft scratchpad when present.
 
-### Task 9: Build Runner And Background Job
+### Task 10: Build Runner And Background Job
 
 **Files:**
 - Create: `app/services/ros_agent/runner.rb`
@@ -478,15 +550,19 @@ Assert the prompt contains the event ID, event date, default ROS tags, source ar
 
 - [ ] **Step 1: Runner loads and records context**
 
-Runner should set task status to `analyzing`, parse artifacts, store `source_summary`, and append an `agent_task_event`.
+Runner should set task status to `analyzing`, collect event context, build source file inputs, include existing source understanding/draft scratchpad when present, and append an `agent_task_event`.
 
 - [ ] **Step 2: Runner calls Responses API**
 
-Call the client with model, reasoning effort, instructions, input payload, and structured output format. Stub this in tests.
+Call the client with model, reasoning effort, instructions, source file inputs, input payload, and structured output format. Wrap the call with `TraceRecorder` so request/response snapshots, response IDs, usage, timings, and errors are stored. Stub this in tests.
 
 - [ ] **Step 3: Runner persists result**
 
+If result state is `source_understood`, store `source_understanding_json`, set status to `drafting` or `needs_input` based on the result's recommended next state, and log an event.
+
 If result state is `needs_input`, create an `AgentTaskQuestionBatch`, set status `needs_input`, and log an event.
+
+If result state is `draft_ready`, increment the current draft version if implemented, store `draft_ros_json`, set status `drafting`, and log an event.
 
 If result state is `ready_for_review`, increment `current_plan_version`, store `plan_json`, run validation and preview, set status `ready_for_review`, and log an event.
 
@@ -494,11 +570,11 @@ If the API call fails, set status `failed`, store `error_message`, and log an ev
 
 - [ ] **Step 4: Job delegates to runner**
 
-`RosAgent::RunTaskJob` should find the task and call the runner. It should be safe to retry API/network failures without applying writes.
+`RosAgent::RunTaskJob` should find the task and call the runner. It should be safe to retry API/network failures without applying writes. Retries should create additional `agent_task_llm_calls` with incremented attempt values.
 
 ## Planner Q&A UI
 
-### Task 10: Add Routes And Controller
+### Task 11: Add Routes And Controller
 
 **Files:**
 - Modify: `config/routes.rb`
@@ -511,6 +587,8 @@ If the API call fails, set status `failed`, store `error_message`, and log an ev
 resources :ros_agent_tasks, module: :events, path: "ros-agent", only: %i[index new create show] do
   member do
     patch :answer_questions
+    patch :refine_draft
+    patch :request_final_plan
     patch :approve
     post :apply
     patch :cancel
@@ -527,15 +605,17 @@ Actions:
 - `create`: create draft task and enqueue `RosAgent::RunTaskJob`.
 - `show`: render status, question batch, preview, and task history.
 - `answer_questions`: save answers to the open question batch and enqueue another run.
+- `refine_draft`: save planner refinement instructions against the current scratchpad and enqueue another run.
+- `request_final_plan`: ask the runner to turn the latest draft scratchpad into a final change plan.
 - `approve`: mark the current plan version approved.
 - `apply`: call `ChangePlanApplier` only if approved.
 - `cancel`: mark non-applied task canceled.
 
 - [ ] **Step 3: Test controller boundaries**
 
-Assert users cannot answer/apply tasks for another event. Assert apply fails unless status is approved and approved plan version matches current plan version.
+Assert users cannot answer/refine/apply tasks for another event. Assert final plan request requires a draft scratchpad. Assert apply fails unless status is approved and approved plan version matches current plan version.
 
-### Task 11: Build Q&A Views
+### Task 12: Build Q&A Views
 
 **Files:**
 - Create: `app/views/events/ros_agent_tasks/index.html.erb`
@@ -553,17 +633,25 @@ The form should include prompt text area, source document selection/upload path,
 
 Render each question with label, why-it-matters text, suggested answer controls, recommended marker, and freeform text input. Include "Use recommended answers" and "Submit answers" controls.
 
-- [ ] **Step 3: Add Stimulus behavior**
+- [ ] **Step 3: Render draft scratchpad**
 
-The controller should fill recommended answers, show/hide freeform fields where appropriate, and require high-risk acknowledgement before approval.
+Show draft days, draft items, source-specific removals, assumptions, review-needed flags, and refinement history. Provide a refinement text box for planner turns such as "make ceremony earlier" or "keep vendor names as placeholders".
 
-- [ ] **Step 4: Test answer submission**
+- [ ] **Step 4: Add Stimulus behavior**
+
+The controller should fill recommended answers, show/hide freeform fields where appropriate, help submit draft refinement turns, and require high-risk acknowledgement before approval.
+
+- [ ] **Step 5: Test answer submission**
 
 Controller test should submit one suggested answer and one freeform answer, assert the batch is marked answered, and assert the planning job is enqueued.
 
+- [ ] **Step 6: Test draft refinement submission**
+
+Controller test should submit a refinement instruction, assert an event is recorded, and assert the planning job is enqueued without applying calendar changes.
+
 ## Plan Validation, Preview, And Apply
 
-### Task 12: Implement Change Plan Validator
+### Task 13: Implement Change Plan Validator
 
 **Files:**
 - Create: `app/services/ros_agent/change_plan_validator.rb`
@@ -579,13 +667,13 @@ Reject invalid durations, invalid date/times, unknown planned references, circul
 
 - [ ] **Step 3: Mark warnings**
 
-Warn for large destructive batches, deleted items with dependent items, missing source evidence, low-confidence extraction rows, and source-specific removals.
+Warn for large destructive batches, deleted items with dependent items, missing source evidence, low-confidence model interpretations, and source-specific removals.
 
 - [ ] **Step 4: Test validator**
 
 Create valid and invalid plans. Assert invalid plans return blocking errors and valid plans return no blocking errors.
 
-### Task 13: Implement Change Plan Preview
+### Task 14: Implement Change Plan Preview
 
 **Files:**
 - Create: `app/services/ros_agent/change_plan_preview.rb`
@@ -604,7 +692,7 @@ Group proposed created/changed items by day in event timezone. Show source row r
 
 Assert a plan with create, update, and delete operations produces correct counts and before/after rows.
 
-### Task 14: Implement Change Plan Applier
+### Task 15: Implement Change Plan Applier
 
 **Files:**
 - Create: `app/services/ros_agent/change_plan_applier.rb`
@@ -632,7 +720,7 @@ Create a plan where the second operation is invalid. Assert no first-operation c
 
 ## Navigation And Entry Points
 
-### Task 15: Add Planner Entry Points
+### Task 16: Add Planner Entry Points
 
 **Files:**
 - Modify: `app/views/events/calendars/show.html.erb`
@@ -652,7 +740,7 @@ Add controller or view tests that render the calendar page and assert the Agent 
 
 ## Verification
 
-### Task 16: End-To-End Tests
+### Task 17: End-To-End Tests
 
 **Files:**
 - Test: `test/controllers/events/ros_agent_tasks_controller_test.rb`
@@ -661,15 +749,15 @@ Add controller or view tests that render the calendar page and assert the Agent 
 
 - [ ] **Step 1: Test happy path without live OpenAI**
 
-Stub the OpenAI client to return a `needs_input` batch, submit answers, then stub a `ready_for_review` plan. Approve and apply. Assert calendar items are created.
+Stub the OpenAI client to return `source_understood`, then `needs_input`, then `draft_ready`, then `ready_for_review`. Submit answers, refine the draft once, request final plan, approve, and apply. Assert calendar items are created.
 
 - [ ] **Step 2: Test no writes before approval**
 
-Run the same flow until `ready_for_review`. Assert `CalendarItem.count` is unchanged.
+Run the same flow until `ready_for_review`. Assert `CalendarItem.count` is unchanged before approval/apply.
 
 - [ ] **Step 3: Test provided CSV behavior**
 
-Use the Millar fixture and a stubbed plan that maps Saturday to event date and Friday to day before. Assert preview contains both days and preserves multiline item notes.
+Use the Millar fixture as a raw source artifact with a stubbed `gpt-5.5` source understanding and draft scratchpad. Assert the model-authored output maps Saturday to event date, Friday to day before, preserves important multiline source details in notes where appropriate, and flags source-specific details for scrubbing.
 
 - [ ] **Step 4: Run focused tests**
 
@@ -678,7 +766,11 @@ Run:
 ```bash
 bin/rails test test/models/agent_task_test.rb \
   test/models/agent_task_question_batch_test.rb \
-  test/services/ros_agent/csv_source_parser_test.rb \
+  test/models/agent_task_llm_call_test.rb \
+  test/services/ros_agent/source_file_input_builder_test.rb \
+  test/services/ros_agent/trace_recorder_test.rb \
+  test/services/ros_agent/source_understanding_schema_test.rb \
+  test/services/ros_agent/draft_ros_schema_test.rb \
   test/services/ros_agent/change_plan_validator_test.rb \
   test/services/ros_agent/change_plan_preview_test.rb \
   test/services/ros_agent/change_plan_applier_test.rb \
@@ -706,7 +798,7 @@ Expected: full test suite passes. If the sandbox cannot connect to Postgres, sto
 - [ ] Feature is limited to planner/admin users.
 - [ ] All writes require explicit approval.
 - [ ] Task history is visible to internal planners.
+- [ ] API call trace snapshots are visible to internal planners/developers.
 - [ ] Failed tasks preserve error messages and do not apply partial changes.
-- [ ] The provided Millar CSV can be parsed into a normalized source artifact.
-- [ ] A stubbed `gpt-5.5` plan can produce a preview and apply to the calendar.
-
+- [ ] The provided Millar CSV can be sent as raw source evidence to a stubbed `gpt-5.5` source-understanding run.
+- [ ] A stubbed `gpt-5.5` source understanding, draft scratchpad, and final plan can produce a preview and apply to the calendar.

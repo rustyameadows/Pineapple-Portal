@@ -1,26 +1,31 @@
 # ROS Agent Planning Mode Product Spec
 
 Date: 2026-06-17
+Last updated: 2026-06-22
 
 ## Summary
 
-Build an agent-assisted planning mode for Run of Show (ROS) work inside an existing event. The feature helps planners transform source material, such as a prior event spreadsheet, photo of a schedule, PDF, or notes, into a detailed ROS change plan. The agent does not directly mutate event data while reasoning. It analyzes the current event, source documents, and prompt; asks a structured batch of implementation questions when needed; generates a validated change plan; shows a planner-facing preview; and applies changes only after explicit approval.
+Build an agent-assisted planning mode for Run of Show (ROS) work inside an existing event. The feature helps planners transform source material, such as a prior event spreadsheet, photo of a schedule, PDF, or notes, into a detailed ROS draft and final change plan. The model, not Rails parsing code, is responsible for understanding weird source event schemas and translating them into Pineapple's ROS style. Rails stores the raw documents, model-generated source understanding, draft scratchpad, questions, plan, trace snapshots, validation, preview, and final apply result.
+
+The agent does not directly mutate event data while reasoning. It analyzes the current event, source documents, and prompt; asks a structured batch of implementation questions when needed; creates and refines a draft ROS scratchpad; generates a validated change plan; shows a planner-facing preview; and applies changes only after explicit approval.
 
 New event creation is intentionally out of scope for this feature. A future new-event bootstrapper can create or prepare the event first, then hand off to this ROS agent workflow.
 
 ## Product Goals
 
 - Help planners adapt real prior-event schedules into a high-quality ROS for an existing event.
+- Use high-reasoning `gpt-5.5` for the highest-value work: source document understanding, event-specific scrubbing, Pineapple-style translation, planning questions, first drafts, and major refinements.
 - Support conversational planning with structured Q&A batches, recommended answers, and freeform overrides.
 - Let the agent reason deeply with `gpt-5.5`, while Rails owns validation, previews, permissions, and database writes.
 - Preserve user trust by making every major edit reviewable before it is applied.
-- Capture a durable task history so planners can understand what happened and developers can debug agent behavior.
+- Capture a durable task history and API trace snapshots so planners can understand what happened and developers can debug agent behavior.
 - Reuse the existing Rails calendar model, calendar item services, default ROS tags, document storage, and background job patterns.
 
 ## Non-Goals
 
 - Do not create new events in this flow.
 - Do not let the model directly create, update, or delete records through low-level write tools.
+- Do not build deterministic Rails business parsers that try to infer arbitrary source event schemas, date logic, vendor meaning, or scrubbed wedding structure.
 - Do not require embeddings, vector search, or long-term semantic memory for the first version.
 - Do not replace the existing manual ROS editor, import flow, or bulk edit UI.
 - Do not expose this flow to clients in the client portal for the first version.
@@ -29,7 +34,7 @@ New event creation is intentionally out of scope for this feature. A future new-
 ## Primary Users
 
 - Planner or admin user working inside an existing event.
-- Secondary user: developer/support person reviewing task history, prompts, extracted artifacts, plans, and failures.
+- Secondary user: developer/support person reviewing task history, prompts, source understanding, draft scratchpads, API call snapshots, plans, and failures.
 
 ## Primary Use Case
 
@@ -37,7 +42,7 @@ The planner opens an existing wedding event with basic details already present, 
 
 > Attached is a spreadsheet for a previous event. I need to adapt this for this wedding. Use it as the template for the ROS. Shift the dates to align with this event. Make items event-relative as appropriate. Remove info/details specific to the old event.
 
-The agent reads the event and source document. If the event date is missing or the source has ambiguous day mapping, duplicate entries, event-specific vendor details, or missing ceremony anchors, the agent asks structured questions first. Once questions are answered, the agent proposes a ROS change plan and preview. The planner approves, and Rails applies the plan.
+The agent reads the event and raw source document directly. If the event date is missing or the source has ambiguous day mapping, duplicate entries, event-specific vendor details, or missing ceremony anchors, the agent asks structured questions first. Once questions are answered, the agent creates a draft ROS scratchpad that the planner can refine in turns. When the planner is ready, the agent produces a final ROS change plan and preview. The planner approves, and Rails applies the plan.
 
 ## Scope
 
@@ -45,13 +50,15 @@ The agent reads the event and source document. If the event date is missing or t
 
 - Existing-event ROS workflows only.
 - Prompt plus one or more uploaded source artifacts.
-- CSV source extraction.
-- Image/PDF/document/spreadsheet source normalization through OpenAI file and vision inputs.
+- Raw CSV/PDF/image/document/spreadsheet inputs sent to OpenAI for model-led source understanding.
+- Lightweight file packaging and metadata extraction only; no Rails business parser for source ROS meaning.
+- Model-generated source understanding stored in the task.
+- Model-generated draft ROS scratchpad that can be refined over multiple turns before final apply.
 - Agent Q&A batches with suggested answers and freeform answers.
 - Proposed create, update, delete, reorder, tag, and timing changes for ROS items.
 - Validation and preview before apply.
 - Explicit approval before writes.
-- Task history and task events.
+- Task history, task events, and first-class API call trace snapshots.
 - Background processing for slow agent runs.
 - `gpt-5.5` as the default planning model.
 
@@ -101,14 +108,15 @@ The first version can default to "Build ROS from source document" when files are
 The task moves through these states:
 
 - `draft`: planner is composing prompt and selecting files.
-- `analyzing`: app is extracting source docs and running the agent.
+- `analyzing`: agent is reading raw source documents, event context, and current ROS context.
 - `needs_input`: agent returned a Q&A batch.
-- `planning`: agent is incorporating answers and producing a plan.
+- `drafting`: agent is creating or revising the draft ROS scratchpad.
+- `planning`: agent is turning the latest scratchpad into a final change plan.
 - `ready_for_review`: plan passed validation and preview is ready.
 - `approved`: planner approved the plan.
 - `applying`: Rails is applying the approved plan.
 - `applied`: changes were applied.
-- `failed`: extraction, planning, validation, or apply failed.
+- `failed`: file handling, source understanding, drafting, planning, validation, or apply failed.
 - `canceled`: planner canceled before apply.
 
 ### Q&A Planning Mode
@@ -195,48 +203,88 @@ Each question must include:
 - Duplicates and overlaps: keep separate, merge obvious duplicates, or flag for manual review.
 - Relative timing: anchor items to ceremony, guest arrival, cocktail hour, dinner, or performance start when appropriate.
 
-## Source Document Handling
+## Source Document Understanding
 
-### CSV And Spreadsheet-Like Inputs
+### Principle
 
-For CSV files, Rails should parse the file with Ruby CSV first to preserve rows, columns, quoted cells, and embedded newlines. The parsed rows become a structured source artifact for the agent. The agent should not receive only raw text when a structured table is available.
+Do not build a Rails parser that tries to understand arbitrary prior-event schedules. The value of the feature is that `gpt-5.5` can read odd spreadsheet layouts, photos, PDFs, and inconsistent planner formats, infer the event logic, scrub one-off details, and translate the result into Pineapple's ROS style. Rails should package and persist files, but the model should perform the business understanding.
 
-For XLSX and similar spreadsheet formats, the first version can use OpenAI file inputs to normalize the document. If local XLSX parsing is later added, it should follow the same normalized source artifact shape as CSV.
+### Raw Document Inputs
 
-### Image And PDF Inputs
+The first implementation should send the source document itself to OpenAI using file and image inputs. CSV, XLS, XLSX, PDFs, rich documents, and images should all be treated as source evidence for the high-reasoning model. Rails may store lightweight metadata such as filename, content type, size, page count, checksum, and uploaded document ID, but it should not convert the file into final ROS rows through local business logic.
 
-Images and PDFs can be sent through OpenAI multimodal/file inputs to produce normalized source rows. The output should preserve confidence levels and extraction notes. Low-confidence OCR rows should be flagged in the Q&A or preview.
+Rails may include a plain-text preview for small text/CSV files when it is cheap and helpful, but that preview is supporting context only. The raw source file remains the evidence the model reasons over.
 
-### Normalized Source Artifact
+### Source Understanding Artifact
 
-All source document types should produce a common shape:
+The first model pass should produce a DB-backed source understanding artifact. This is the agent's interpretation of the uploaded event, not a deterministic parser output. It should be stored so later turns can reuse, inspect, and debug it.
 
 ```json
 {
-  "source_type": "csv",
-  "title": "Shared MOS_Millar Event - Run of Show.csv",
-  "columns": ["start_time", "range_marker", "end_time", "notes_marker", "description", "vendor", "location", "pp_staff"],
-  "sections": [
+  "source_title": "Shared MOS_Millar Event - Run of Show.csv",
+  "source_kind": "prior_event_ros",
+  "overall_read": "Entertainment-heavy multi-day private event with Friday production setup and Saturday guest-facing program.",
+  "inferred_days": [
     {
-      "label": "Friday, June 13",
-      "source_row": 3,
-      "rows": [
-        {
-          "source_row": 4,
-          "start_time": "6:00 PM",
-          "end_time": "8:00 PM",
-          "description": "PTM Crew Line Check",
-          "vendor": "PTM",
-          "location": "Tent",
-          "staff": ["Andy", "Elizabeth"],
-          "raw_cells": ["6:00 PM", "to", "8:00 PM", "", "PTM Crew Line Check", "PTM", "Tent", "Andy, Elizabeth"]
-        }
-      ]
+      "source_label": "Friday, June 13",
+      "role": "day_before_event",
+      "confidence": "high",
+      "notes": "Contains one production line-check item."
+    },
+    {
+      "source_label": "Saturday, June 14",
+      "role": "main_event_day",
+      "confidence": "high",
+      "notes": "Contains crew calls, sound checks, HMU, guest arrivals, food and beverage service, performances, and departures."
     }
   ],
-  "warnings": []
+  "reusable_patterns": [
+    "crew call",
+    "sound check blocks",
+    "hair and makeup appointments",
+    "family ready and photos",
+    "guest arrivals",
+    "cocktail hour",
+    "guest transitions",
+    "food and beverage service",
+    "late-night service",
+    "guest departures"
+  ],
+  "source_specific_details": [
+    {
+      "detail": "Millar",
+      "recommended_action": "remove_or_replace",
+      "reason": "Source client name."
+    },
+    {
+      "detail": "Portugal. The Man",
+      "recommended_action": "convert_to_placeholder",
+      "reason": "Source-specific headliner."
+    }
+  ],
+  "uncertainties": [
+    {
+      "key": "ceremony_missing",
+      "question_candidate": "The source lacks a ceremony anchor. Should I add ceremony/reception placeholders or only adapt the source rows?"
+    }
+  ]
 }
 ```
+
+### Draft ROS Scratchpad
+
+After source understanding and Q&A, the agent should create a draft ROS scratchpad. This is a model-generated staging area, not live calendar data. The planner can refine it in turns before the final change plan is produced.
+
+The scratchpad should include:
+
+- Draft days and their target date mapping.
+- Draft items with title, timing, duration, notes, location, vendor/staff placeholders, tags, confidence, and source references where available.
+- Scrubbed source-specific details.
+- Open assumptions.
+- Items that need planner review.
+- Change notes from each refinement turn.
+
+The scratchpad can be overwritten or versioned per turn. The final apply step should use a structured change plan generated from the latest approved scratchpad, not the scratchpad directly.
 
 ## Real Source Sample Notes
 
@@ -261,6 +309,20 @@ For this source, the likely recommended transformation is:
 
 ## Agent Output Modes
 
+### Source Understanding Output
+
+Returned after the initial high-reasoning document read. This output can be followed by questions or a draft.
+
+```json
+{
+  "state": "source_understood",
+  "summary": "Short explanation of the source event.",
+  "source_understanding": {},
+  "recommended_next_state": "needs_input",
+  "risk_notes": []
+}
+```
+
 ### Needs Input Output
 
 Returned when the agent cannot safely produce a good plan without planner guidance.
@@ -278,7 +340,7 @@ Returned when the agent cannot safely produce a good plan without planner guidan
 
 ### Ready For Review Output
 
-Returned when the agent has enough information to propose changes.
+Returned when the agent has enough information to propose final app changes.
 
 ```json
 {
@@ -288,6 +350,21 @@ Returned when the agent has enough information to propose changes.
   "operations": [],
   "warnings": [],
   "review_highlights": []
+}
+```
+
+### Draft Scratchpad Output
+
+Returned when the agent is creating or refining the staged ROS before final approval.
+
+```json
+{
+  "state": "draft_ready",
+  "summary": "Short explanation of the draft ROS.",
+  "draft_ros": {},
+  "assumptions": [],
+  "review_notes": [],
+  "suggested_next_questions": []
 }
 ```
 
@@ -370,27 +447,35 @@ Applying should be transactional. If any operation fails, the task should fail w
 
 ## Data Model Concept
 
-The feature should introduce task history tables. Exact column names can be refined during implementation, but the conceptual records are:
+The feature should introduce task history and trace tables. Exact column names can be refined during implementation, but the conceptual records are:
 
 - `agent_tasks`: one workflow instance scoped to an event.
-- `agent_task_artifacts`: source files and extracted normalized artifacts.
+- `agent_task_artifacts`: raw source files and model-generated source understanding references.
 - `agent_task_question_batches`: questions and answers for planning mode.
 - `agent_task_events`: append-only task history for status transitions, agent responses, validation, previews, approval, apply results, and errors.
+- `agent_task_llm_calls`: API request/response snapshots, response IDs, model, purpose, timings, usage, error details, and optional OpenAI trace metadata.
+
+The task itself should also store the latest source understanding JSON, latest draft ROS scratchpad JSON, latest final plan JSON, validation JSON, preview JSON, and usage summary JSON. Source understanding and scratchpad records are allowed to be imperfect and model-authored. Final change plans must pass Rails validation before they can be approved.
 
 This should stay separate from the existing `Approval` model. Existing approvals are business/client artifacts. Agent approvals are operational safety gates.
 
 ## OpenAI Integration
 
-Use the Responses API from Rails for the first implementation. The Rails app should own workflow state, schemas, validation, and write application. The OpenAI Agents SDK can be revisited later if a Python or TypeScript sidecar becomes worthwhile.
+Use the Responses API from Rails for the first implementation. The Rails app should own workflow state, schemas, trace snapshots, validation, and write application. The OpenAI Agents SDK can be revisited later if a Python or TypeScript sidecar becomes worthwhile.
 
 Recommended first-version approach:
 
 - Use the official OpenAI Ruby SDK.
-- Use `gpt-5.5` for planning.
-- Use structured outputs for question batches and change plans.
+- Use `gpt-5.5` for source understanding, question generation, first drafts, major refinement turns, and final plan generation.
+- Use cheaper models only for later, non-critical summaries or mechanical helper tasks.
+- Use structured outputs for source understanding, draft ROS scratchpads, question batches, and final change plans.
 - Use background jobs for slow work.
-- Store OpenAI response IDs and usage metadata.
-- Use file and image inputs for document understanding when local parsing is not enough.
+- Store OpenAI response IDs, request/response snapshots, usage metadata, and timings for every API call.
+- Use file and image inputs for document understanding by default, including CSV/spreadsheet-like inputs.
+
+### OpenAI Traces Dashboard
+
+OpenAI's Traces dashboard is built into the Agents SDK tracing path. The first Rails implementation should not adopt a Python or TypeScript Agents SDK sidecar solely for dashboard traces. Instead, it should implement durable local tracing immediately through `agent_task_llm_calls` and task events. If later the team wants OpenAI-hosted traces, revisit either a small Agents SDK service or a supported tracing integration. That should be an explicit architecture decision, not a prerequisite for version 1.
 
 ## Tool Boundary
 
@@ -401,7 +486,9 @@ Read/planning tools:
 - `read_event_context`
 - `read_current_ros`
 - `read_ros_defaults`
-- `parse_source_document`
+- `attach_source_documents`
+- `create_source_understanding`
+- `update_draft_ros_scratchpad`
 - `validate_question_batch`
 - `validate_ros_change_plan`
 - `preview_ros_change_plan`
@@ -422,47 +509,57 @@ The apply tool should be callable only by Rails after planner approval, not by t
 - Failures record a task event and leave existing ROS unchanged.
 - Source-specific removals should be visible in the preview, not silently discarded.
 
-## Observability
+## Tracing And Observability
 
 Track:
 
 - Model and reasoning setting.
 - Response IDs.
-- Prompt version.
+- Provider request ID if available.
+- Prompt version and schema version.
+- LLM call purpose: source understanding, Q&A, draft, refinement, final plan, summary, or retry.
 - Source artifact IDs.
+- Input document IDs and OpenAI file IDs where available.
+- Request payload snapshot with secrets redacted.
+- Response payload snapshot, including structured output.
 - Token usage and approximate cost.
-- Time spent extracting, planning, validating, previewing, and applying.
+- Time spent uploading files, understanding source docs, asking questions, drafting, refining, planning, validating, previewing, and applying.
 - Number of questions asked.
 - Number of operations proposed and applied.
 - Validation failures.
 - Planner answer overrides.
 - Apply failures.
+- Retry count and retry reasons.
+
+Local trace snapshots are required in version 1. OpenAI-hosted trace dashboard support is optional and should not block the Rails-first implementation.
 
 ## Success Metrics
 
-- Planner can convert the provided sample CSV into a reviewable ROS plan for an existing event.
+- Planner can give the provided sample CSV directly to the model and receive a reviewable ROS draft and final plan for an existing event.
 - Planner can answer a Q&A batch and receive a revised plan.
+- Planner can refine the draft scratchpad over multiple turns.
 - Planner can preview changes before approval.
 - No ROS writes occur before approval.
 - The final applied ROS uses existing `CalendarItem`, tags, views, and scheduler behavior.
-- Task history explains how the agent moved from prompt to questions to plan to applied changes.
+- Task history and LLM call snapshots explain how the agent moved from prompt to source understanding to questions to draft to plan to applied changes.
 
 ## Rollout Phases
 
 ### Phase 1: Internal Planner Prototype
 
 - Existing-event flow only.
-- CSV source extraction.
+- Raw source document input to `gpt-5.5`.
+- Model-generated source understanding.
+- Draft ROS scratchpad.
 - Q&A batch.
 - Plan preview.
 - Apply approved creates and updates.
-- Task history.
+- Task history and local API trace snapshots.
 
 ### Phase 2: Broader Source Support
 
-- PDF/image source normalization.
-- XLSX source normalization.
-- Stronger source confidence warnings.
+- Stronger PDF/image/XLSX prompting and source evidence display.
+- Stronger source confidence warnings from the model.
 - More plan operations.
 
 ### Phase 3: Advanced Editing
