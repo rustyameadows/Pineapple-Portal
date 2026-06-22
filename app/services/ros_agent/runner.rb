@@ -17,7 +17,8 @@ module RosAgent
       @trace_recorder_class = trace_recorder_class
     end
 
-    def call(mode: :initial_run)
+    def call(options = nil, mode: :initial_run)
+      mode = options[:mode] if options.is_a?(Hash) && options.key?(:mode)
       mark_status!("analyzing")
       request_payload = build_request_payload(mode)
       recorder = trace_recorder_for(request_payload)

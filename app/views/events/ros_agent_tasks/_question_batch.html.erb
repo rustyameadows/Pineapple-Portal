@@ -1,0 +1,27 @@
+<% if question_batch %>
+  <section class="event-section__body">
+    <h2>Planning Questions</h2>
+    <p><%= question_batch.summary %></p>
+
+    <%= form_with url: answer_questions_event_ros_agent_task_path(@event, task), method: :post, local: true do %>
+      <% question_batch.questions_json.each do |question| %>
+        <div class="event-form__group">
+          <label><%= question["label"] %></label>
+          <p><%= question["question"] %></p>
+          <% Array(question["options"]).each do |option| %>
+            <label class="calendar-item-form__pill">
+              <%= radio_button_tag "answers[#{question["key"]}]", option["value"], option["recommended"], data: { ros_agent_task_target: ("recommendedAnswer" if option["recommended"]) } %>
+              <span><%= option["label"] || option["value"] %></span>
+            </label>
+          <% end %>
+          <% if question["freeform_allowed"] || Array(question["options"]).empty? %>
+            <%= text_field_tag "answers[#{question["key"]}]", nil, class: "event-form__input", placeholder: "Custom answer" %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <button type="button" class="event-section__cta event-section__cta--secondary" data-action="ros-agent-task#useRecommendedAnswers">Use recommended answers</button>
+      <%= submit_tag "Submit answers", class: "event-section__cta" %>
+    <% end %>
+  </section>
+<% end %>

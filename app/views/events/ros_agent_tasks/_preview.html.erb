@@ -1,0 +1,39 @@
+<% preview = task.preview_json || {} %>
+<% operations = Array(preview["operations"]) %>
+
+<% if preview.present? %>
+  <section class="event-section__body">
+    <h2>Review Plan</h2>
+
+    <% if preview["summary"].present? %>
+      <p><%= preview["summary"].is_a?(Hash) ? preview["summary"].map { |key, value| "#{key.to_s.humanize}: #{value}" }.join(", ") : preview["summary"] %></p>
+    <% end %>
+
+    <% if operations.any? %>
+      <table class="event-table event-calendars__table">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Title</th>
+            <th>When</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% operations.each do |operation| %>
+            <tr>
+              <td><%= operation["action"] || operation["operation_type"] %></td>
+              <td><%= operation["title"] || operation.dig("attributes", "title") || operation["summary"] %></td>
+              <td><%= operation["when"] || operation.dig("attributes", "starts_at") || "—" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+
+    <% if task.ready_to_apply? %>
+      <%= button_to "Apply Approved Plan", apply_event_ros_agent_task_path(@event, task), method: :post, class: "event-section__cta", data: { action: "ros-agent-task#confirmHighRisk" } %>
+    <% elsif task.ready_for_review? %>
+      <%= button_to "Approve Plan", approve_event_ros_agent_task_path(@event, task), method: :post, class: "event-section__cta" %>
+    <% end %>
+  </section>
+<% end %>

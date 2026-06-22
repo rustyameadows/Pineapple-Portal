@@ -1,0 +1,67 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section" data-controller="ros-agent-task">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Run of Show</p>
+            <h1 class="event-section__title">Agent Assist</h1>
+            <p class="event-section__subtitle"><%= @task.status.humanize %></p>
+          </div>
+          <div class="event-calendars__schedule-actions">
+            <%= link_to "Back to ROS", event_calendar_path(@event), class: "event-section__cta event-section__cta--secondary" %>
+            <%= link_to "Task History", event_ros_agent_tasks_path(@event), class: "event-section__cta event-section__cta--secondary" %>
+          </div>
+        </header>
+
+        <section class="event-section__body">
+          <p><strong>Request:</strong> <%= @task.prompt %></p>
+        </section>
+
+        <%= render "question_batch", task: @task, question_batch: @open_question_batch %>
+        <%= render "draft_table", task: @task %>
+        <%= render "preview", task: @task %>
+
+        <% if @task.trace_summary_json.present? %>
+          <section class="event-section__body">
+            <h2>Trace Summary</h2>
+            <p><%= @task.trace_summary_json["latest_run_label"] %></p>
+            <% if @task.trace_summary_json["tokens"].present? %>
+              <p>Tokens: <%= @task.trace_summary_json["tokens"] %></p>
+            <% end %>
+          </section>
+        <% end %>
+
+        <section class="event-section__body">
+          <h2>Task History</h2>
+          <% if @task_events.any? %>
+            <table class="event-table">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Message</th>
+                  <th>When</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @task_events.each do |event| %>
+                  <tr>
+                    <td><%= event.event_type.humanize %></td>
+                    <td><%= event.message.presence || "—" %></td>
+                    <td><%= l(event.created_at, format: :short) %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <p class="event-section__empty">No task history yet.</p>
+          <% end %>
+        </section>
+      </section>
+    </div>
+  </div>
+<% end %>

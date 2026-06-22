@@ -1,0 +1,55 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Run of Show</p>
+            <h1 class="event-section__title">Agent Assist</h1>
+            <p class="event-section__subtitle"><%= @event.name %></p>
+          </div>
+          <div class="event-calendars__schedule-actions">
+            <%= link_to "Task History", event_ros_agent_tasks_path(@event), class: "event-section__cta event-section__cta--secondary" %>
+          </div>
+        </header>
+
+        <div class="event-section__body">
+          <%= form_with model: @task, url: event_ros_agent_tasks_path(@event), class: "event-form", local: true do |form| %>
+            <%= form.hidden_field :mode, value: AgentTask::MODES[:build_ros_from_source] %>
+
+            <div class="event-form__group">
+              <%= form.label :prompt, "Request" %>
+              <%= form.text_area :prompt, rows: 7, class: "event-form__textarea" %>
+            </div>
+
+            <div class="event-form__group">
+              <p class="event-section__note">Source documents</p>
+              <% if @documents.any? %>
+                <div class="calendar-item-form__pill-list calendar-item-form__pill-list--stack">
+                  <% @documents.each do |document| %>
+                    <% field_id = "agent_task_document_#{document.id}" %>
+                    <label class="calendar-item-form__pill" for="<%= field_id %>">
+                      <%= check_box_tag "agent_task[document_ids][]", document.id, false, id: field_id %>
+                      <span><%= document.title %></span>
+                    </label>
+                  <% end %>
+                </div>
+              <% else %>
+                <p class="event-section__empty">No uploaded documents are available for this event.</p>
+              <% end %>
+            </div>
+
+            <div class="event-form__actions">
+              <%= form.submit "Start Agent Assist", class: "event-form__submit" %>
+              <%= link_to "Cancel", event_calendar_path(@event), class: "event-form__cancel" %>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+<% end %>

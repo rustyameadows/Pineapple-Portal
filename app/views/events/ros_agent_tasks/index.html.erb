@@ -1,0 +1,47 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <div class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <section class="event-section">
+        <header class="event-section__header">
+          <div>
+            <p class="event-section__eyebrow">Run of Show</p>
+            <h1 class="event-section__title">Agent Assist</h1>
+            <p class="event-section__subtitle"><%= @event.name %></p>
+          </div>
+          <div class="event-calendars__schedule-actions">
+            <%= link_to "New Agent Task", new_event_ros_agent_task_path(@event), class: "event-section__cta" %>
+          </div>
+        </header>
+
+        <% if @tasks.any? %>
+          <table class="event-table">
+            <thead>
+              <tr>
+                <th>Prompt</th>
+                <th>Status</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @tasks.each do |task| %>
+                <tr>
+                  <td><%= link_to task.prompt, event_ros_agent_task_path(@event, task), class: "event-calendars__title-link" %></td>
+                  <td><%= task.status.humanize %></td>
+                  <td><%= l(task.created_at, format: :short) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        <% else %>
+          <div class="event-section__empty">
+            <p>No agent tasks yet.</p>
+          </div>
+        <% end %>
+      </section>
+    </div>
+  </div>
+<% end %>

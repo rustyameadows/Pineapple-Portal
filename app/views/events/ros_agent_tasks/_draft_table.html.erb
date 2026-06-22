@@ -1,0 +1,46 @@
+<% draft = task.draft_ros_json || {} %>
+<% draft_days = Array(draft["draft_days"]) %>
+
+<% if draft_days.any? %>
+  <section class="event-section__body">
+    <h2>Draft ROS</h2>
+    <p class="event-section__note">Draft agent output. These rows are not live calendar records.</p>
+
+    <table class="event-table event-calendars__table">
+      <thead>
+        <tr>
+          <th class="event-calendars__schedule-column">Schedule</th>
+          <th class="event-calendars__title-column">Title</th>
+          <th>Location</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% draft_days.each do |day| %>
+          <tr class="event-calendars__date-row">
+            <td colspan="4"><span class="event-calendars__date-label"><%= day["label"] || day["date"] %></span></td>
+          </tr>
+          <% entries = Array(day["entries"].presence || draft["draft_items"]).select { |entry| entry["day_label"].blank? || entry["day_label"] == day["label"] } %>
+          <% entries.each do |entry| %>
+            <tr class="event-calendars__row">
+              <td class="event-calendars__schedule-column"><%= entry["time_label"] || entry.dig("timing", "starts_at") || "TBD" %></td>
+              <td class="event-calendars__title-column"><%= entry["title"] %></td>
+              <td><%= entry["location"] || entry["location_name"] || "—" %></td>
+              <td><%= simple_format(entry["notes"].to_s) %></td>
+            </tr>
+          <% end %>
+        <% end %>
+      </tbody>
+    </table>
+
+    <%= form_with url: refine_draft_event_ros_agent_task_path(@event, task), method: :post, local: true do %>
+      <div class="event-form__group">
+        <%= label_tag :refinement_prompt, "Refine draft" %>
+        <%= text_area_tag :refinement_prompt, nil, rows: 3, class: "event-form__textarea" %>
+      </div>
+      <%= submit_tag "Refine Draft", class: "event-section__cta" %>
+    <% end %>
+
+    <%= button_to "Request Final Plan", request_final_plan_event_ros_agent_task_path(@event, task), method: :post, class: "event-section__cta event-section__cta--secondary" %>
+  </section>
+<% end %>

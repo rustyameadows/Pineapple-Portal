@@ -56,6 +56,16 @@ post "upload_failures", to: "upload_failures#create"
 
     resources :calendars, only: :index, module: :events, controller: :calendars
 
+    resources :ros_agent_tasks, module: :events, path: "ros-agent", only: %i[index new create show] do
+      member do
+        post :answer_questions
+        post :refine_draft
+        post :request_final_plan
+        post :approve
+        post :apply
+      end
+    end
+
     resource :calendar, only: %i[show update], module: :events do
       get :grid, to: "calendar_grids#show"
       patch "grid/items/:item_id", to: "calendar_grids#update", as: :grid_item
