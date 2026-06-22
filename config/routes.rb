@@ -58,6 +58,7 @@ post "upload_failures", to: "upload_failures#create"
 
     resources :ros_agent_tasks, module: :events, path: "ros-agent", only: %i[index new create show] do
       member do
+        get :status
         post :answer_questions
         post :refine_draft
         post :request_final_plan

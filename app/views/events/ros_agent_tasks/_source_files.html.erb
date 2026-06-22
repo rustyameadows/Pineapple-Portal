@@ -1,0 +1,28 @@
+<section class="event-section__body">
+  <h2>Source Files</h2>
+
+  <div data-ros-agent-status-target="sourceFiles">
+    <% if source_files.any? %>
+      <table class="event-table">
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Size</th>
+            <th>OpenAI File</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% source_files.each do |source_file| %>
+            <tr>
+              <td><%= source_file[:filename] || source_file["filename"] %></td>
+              <td><%= source_file[:size_label] || source_file["size_label"] || (number_to_human_size(source_file[:size_bytes] || source_file["size_bytes"]) if (source_file[:size_bytes] || source_file["size_bytes"]).present?) %></td>
+              <td><%= source_file[:openai_file_id] || source_file["openai_file_id"] || (source_file[:openai_state] || source_file["openai_state"]).to_s.humanize %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="event-section__empty">No source files yet.</p>
+    <% end %>
+  </div>
+</section>

@@ -5,12 +5,12 @@
     <div class="event-layout__main">
       <%= render "shared/flash" %>
 
-      <section class="event-section" data-controller="ros-agent-task">
+      <section class="event-section">
         <header class="event-section__header">
           <div>
             <p class="event-section__eyebrow">Run of Show</p>
             <h1 class="event-section__title">Agent Assist</h1>
-            <p class="event-section__subtitle"><%= @task.status.humanize %></p>
+            <p class="event-section__subtitle"><%= @task.prompt %></p>
           </div>
           <div class="event-calendars__schedule-actions">
             <%= link_to "Back to ROS", event_calendar_path(@event), class: "event-section__cta event-section__cta--secondary" %>
@@ -18,33 +18,15 @@
           </div>
         </header>
 
+        <%= render "status_module",
+                   event: @event,
+                   task: @task,
+                   status_snapshot: @status_snapshot,
+                   status_url: status_event_ros_agent_task_path(@event, @task) %>
+
         <section class="event-section__body">
           <p><strong>Request:</strong> <%= @task.prompt %></p>
         </section>
-
-        <% if @artifacts.any? %>
-          <section class="event-section__body">
-            <h2>Source Files</h2>
-            <table class="event-table">
-              <thead>
-                <tr>
-                  <th>File</th>
-                  <th>Size</th>
-                  <th>OpenAI File</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% @artifacts.each do |artifact| %>
-                  <tr>
-                    <td><%= artifact.filename %></td>
-                    <td><%= number_to_human_size(artifact.size_bytes) if artifact.size_bytes.present? %></td>
-                    <td><%= artifact.openai_file_id.presence || "Pending" %></td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
-          </section>
-        <% end %>
 
         <%= render "question_batch", task: @task, question_batch: @open_question_batch %>
         <%= render "draft_table", task: @task %>
@@ -59,32 +41,6 @@
             <% end %>
           </section>
         <% end %>
-
-        <section class="event-section__body">
-          <h2>Task History</h2>
-          <% if @task_events.any? %>
-            <table class="event-table">
-              <thead>
-                <tr>
-                  <th>Event</th>
-                  <th>Message</th>
-                  <th>When</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% @task_events.each do |event| %>
-                  <tr>
-                    <td><%= event.event_type.humanize %></td>
-                    <td><%= event.message.presence || "—" %></td>
-                    <td><%= l(event.created_at, format: :short) %></td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
-          <% else %>
-            <p class="event-section__empty">No task history yet.</p>
-          <% end %>
-        </section>
       </section>
     </div>
   </div>

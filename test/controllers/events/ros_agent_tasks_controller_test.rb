@@ -4,6 +4,7 @@ module Events
   class RosAgentTasksControllerTest < ActionDispatch::IntegrationTest
     setup do
       @event = events(:one)
+      @other_event = events(:two)
       @user = users(:one)
       @task = agent_tasks(:draft_task)
       log_in_as(@user)
@@ -167,6 +168,99 @@ module Events
       assert_select "section", text: /A few planning decisions will materially change/
       assert_select "table", text: /Ceremony/
       assert_select "section", text: /Drafted plan/
+    end
+
+    test "show renders live status controller for active tasks" do
+      @task.update!(status: "drafting")
+
+      get event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      assert_select "[data-controller='ros-agent-status']", count: 1
+      assert_select "[data-ros-agent-status-status-url-value='#{status_event_ros_agent_task_path(@event, @task)}']", count: 1
+      assert_select "[data-ros-agent-status-initial-status-value='drafting']", count: 1
+      assert_select "[data-ros-agent-status-target='statusLabel']", text: "Drafting"
+    end
+
+    test "status returns no-cache json with source files llm calls events and last error" do
+      @task.update!(
+        status: "planning",
+        last_error_json: {
+          "class" => "RuntimeError",
+          "message" => "Planner failed to load the source outline."
+        }
+      )
+
+      @task.llm_calls.create!(
+        purpose: "final_plan",
+        provider: "openai",
+        model: "gpt-5.5",
+        reasoning_effort: "high",
+        status: "completed",
+        attempt: 2,
+        started_at: Time.zone.parse("2026-06-22 10:20:00"),
+        completed_at: Time.zone.parse("2026-06-22 10:20:04"),
+        duration_ms: 4000,
+        usage_json: { "input_tokens" => 123, "output_tokens" => 45 },
+        response_json: { "status" => "ok" }
+      )
+
+      @task.llm_calls.create!(
+        purpose: "summary",
+        provider: "openai",
+        model: "gpt-5.5",
+        reasoning_effort: "high",
+        status: "failed",
+        attempt: 3,
+        started_at: Time.zone.parse("2026-06-22 10:25:00"),
+        completed_at: Time.zone.parse("2026-06-22 10:25:02"),
+        duration_ms: 2000,
+        error_json: {
+          "class" => "OpenAI::Error",
+          "message" => "The model call timed out."
+        }
+      )
+
+      @task.append_event!(
+        event_type: "status_changed",
+        message: "Task is now planning.",
+        payload: { from: "drafting", to: "planning" },
+        created_by: @user
+      )
+
+      get status_event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      assert_includes response.headers["Cache-Control"], "no-store"
+      assert_equal "no-cache", response.headers["Pragma"]
+
+      payload = JSON.parse(response.body)
+      assert_equal "planning", payload["status"]
+      assert_equal true, payload["active"]
+      assert_equal "Planning", payload["status_label"]
+      assert_equal "Planner failed to load the source outline.", payload["last_error"]["message"]
+
+      source_file = payload["source_files"].first
+      assert_equal "millar-run-of-show.pdf", source_file["filename"]
+      assert_equal 2048, source_file["size_bytes"]
+      assert_equal "ready", source_file["openai_state"]
+
+      llm_call_purposes = payload["llm_calls"].map { |call| call["purpose"] }
+      assert_includes llm_call_purposes, "final_plan"
+      assert_includes llm_call_purposes, "summary"
+      assert_equal 4000, payload["llm_calls"].find { |call| call["purpose"] == "final_plan" }["duration_ms"]
+      assert_equal({ "input_tokens" => 123, "output_tokens" => 45 }, payload["llm_calls"].find { |call| call["purpose"] == "final_plan" }["usage"])
+      assert_equal "The model call timed out.", payload["llm_calls"].find { |call| call["purpose"] == "summary" }["error"]["message"]
+
+      assert_includes payload["task_events"].map { |event| event["event_type"] }, "drafted"
+      assert_includes payload["task_events"].map { |event| event["event_type"] }, "status_changed"
+      assert_equal "status_changed", payload["task_events"].last["event_type"]
+    end
+
+    test "status refuses tasks from another event" do
+      get status_event_ros_agent_task_path(@other_event, @task)
+
+      assert_response :not_found
     end
 
     test "answer_questions updates the open batch, appends an event, and enqueues follow-up work" do

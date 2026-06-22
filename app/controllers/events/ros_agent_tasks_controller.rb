@@ -1,7 +1,7 @@
 module Events
   class RosAgentTasksController < ApplicationController
     before_action :set_event
-    before_action :set_task, only: %i[show answer_questions refine_draft request_final_plan approve apply]
+    before_action :set_task, only: %i[show status answer_questions refine_draft request_final_plan approve apply]
 
     def index
       @tasks = @event.agent_tasks.includes(:created_by).order(created_at: :desc, id: :desc)
@@ -48,6 +48,12 @@ module Events
       @open_question_batch = @task.question_batches.open.order(:position).last
       @task_events = @task.events.includes(:created_by).order(created_at: :asc, id: :asc)
       @artifacts = @task.artifacts.order(:position)
+      @status_snapshot = task_status_snapshot
+    end
+
+    def status
+      disable_response_cache!
+      render json: task_status_snapshot
     end
 
     def answer_questions
@@ -207,6 +213,71 @@ module Events
 
       @task.acknowledge_high_risk!(user: current_user)
       true
+    end
+
+    def disable_response_cache!
+      response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+      response.headers["Pragma"] = "no-cache"
+      response.headers["Expires"] = "0"
+    end
+
+    def task_status_snapshot
+      {
+        status: @task.status,
+        active: active_status?(@task.status),
+        status_label: @task.status.to_s.humanize,
+        source_files: source_file_artifacts.map { |artifact| serialize_source_file(artifact) },
+        llm_calls: @task.llm_calls.order(:started_at, :created_at, :id).map { |call| serialize_llm_call(call) },
+        task_events: @task.events.includes(:created_by).order(created_at: :asc, id: :asc).map { |event| serialize_task_event(event) },
+        last_error: @task.respond_to?(:last_error_json) ? @task.last_error_json.presence : nil
+      }
+    end
+
+    def source_file_artifacts
+      @task.artifacts
+           .where(source_kind: AgentTaskArtifact::SOURCE_KINDS[:source_document])
+           .order(:position)
+    end
+
+    def active_status?(status)
+      %w[draft analyzing drafting planning applying].include?(status.to_s)
+    end
+
+    def serialize_source_file(artifact)
+      {
+        filename: artifact.filename,
+        size_bytes: artifact.size_bytes,
+        size_label: artifact.size_bytes.present? ? helpers.number_to_human_size(artifact.size_bytes) : nil,
+        openai_state: artifact.openai_file_id.present? ? "ready" : "pending",
+        openai_file_id: artifact.openai_file_id,
+        source_kind: artifact.source_kind,
+        position: artifact.position
+      }
+    end
+
+    def serialize_llm_call(call)
+      {
+        purpose: call.purpose,
+        status: call.status,
+        model: call.model,
+        duration_ms: call.duration_ms,
+        duration_label: call.duration_ms.present? ? "#{call.duration_ms} ms" : nil,
+        error: call.error_json,
+        usage: call.usage_json,
+        started_at: call.started_at&.iso8601,
+        completed_at: call.completed_at&.iso8601,
+        attempt: call.attempt
+      }
+    end
+
+    def serialize_task_event(event)
+      {
+        event_type: event.event_type,
+        message: event.message,
+        created_at: event.created_at&.iso8601,
+        created_at_label: event.created_at ? helpers.l(event.created_at, format: :short) : nil,
+        created_by: event.created_by&.name.presence || event.created_by&.email
+      }
     end
   end
 end

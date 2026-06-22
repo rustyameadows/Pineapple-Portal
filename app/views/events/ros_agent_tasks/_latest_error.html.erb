@@ -1,0 +1,13 @@
+<section class="event-section__body">
+  <h2>Latest Error</h2>
+
+  <div data-ros-agent-status-target="latestError">
+    <% if last_error.present? %>
+      <% error_message = last_error[:message] || last_error["message"] %>
+      <% error_class = last_error[:class] || last_error["class"] %>
+      <p><strong><%= error_class.presence || "Error" %>:</strong> <%= error_message.presence || "Unknown error" %></p>
+    <% else %>
+      <p class="event-section__empty">No task error recorded yet.</p>
+    <% end %>
+  </div>
+</section>

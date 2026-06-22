@@ -21,6 +21,7 @@ import CustomSelectController from "controllers/custom_select_controller"
 import DocumentBrowserController from "controllers/document_browser_controller"
 import LocalSelectController from "controllers/local_select_controller"
 import RosAgentTaskController from "controllers/ros_agent_task_controller"
+import RosAgentStatusController from "controllers/ros_agent_status_controller"
 
 application.register("decision-modal", DecisionModalController)
 application.register("questionnaire", QuestionnaireController)
@@ -43,3 +44,4 @@ application.register("custom-select", CustomSelectController)
 application.register("document-browser", DocumentBrowserController)
 application.register("local-select", LocalSelectController)
 application.register("ros-agent-task", RosAgentTaskController)
+application.register("ros-agent-status", RosAgentStatusController)
