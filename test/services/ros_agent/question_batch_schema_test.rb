@@ -34,6 +34,24 @@ module RosAgent
         assert_equal payload, QuestionBatchSchema.validate!(payload)
       end
 
+      test "accepts optional questions with false boolean fields" do
+        payload = {
+          "state" => "needs_input",
+          "summary" => "One optional follow-up can improve the draft but should not block it.",
+          "questions" => [
+            question_hash("optional_detail").merge(
+              "required" => false,
+              "freeform_allowed" => false
+            )
+          ],
+          "assumptions" => [],
+          "source_observations" => [],
+          "risk_notes" => []
+        }
+
+        assert_equal payload, QuestionBatchSchema.validate!(payload)
+      end
+
       test "rejects duplicate question keys" do
         payload = {
           "state" => "needs_input",

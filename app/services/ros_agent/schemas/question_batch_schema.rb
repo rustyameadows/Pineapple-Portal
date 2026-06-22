@@ -2,6 +2,8 @@ module RosAgent
   module Schemas
     class QuestionBatchSchema
       ANSWER_TYPES = %w[single_choice multi_choice boolean freeform date time].freeze
+      REQUIRED_QUESTION_KEYS = %w[key label question why_it_matters required answer_type options freeform_allowed].freeze
+      BOOLEAN_QUESTION_KEYS = %w[required freeform_allowed].freeze
 
       def self.json_schema
         {
@@ -26,8 +28,14 @@ module RosAgent
 
       def self.validate_question!(question, index)
         errors = []
-        %w[key label question why_it_matters required answer_type].each do |key|
-          errors << "questions[#{index}].#{key} is required" if question[key].blank?
+        REQUIRED_QUESTION_KEYS.each do |key|
+          errors << "questions[#{index}].#{key} is required" if missing_required_key?(question, key)
+        end
+
+        BOOLEAN_QUESTION_KEYS.each do |key|
+          next unless question.key?(key)
+
+          errors << "questions[#{index}].#{key} must be true or false" unless [true, false].include?(question[key])
         end
 
         unless ANSWER_TYPES.include?(question["answer_type"])
@@ -40,6 +48,14 @@ module RosAgent
         end
 
         raise ArgumentError, errors.join("; ") if errors.any?
+      end
+
+      def self.missing_required_key?(question, key)
+        return true unless question.key?(key)
+        return false if BOOLEAN_QUESTION_KEYS.include?(key)
+        return false if key == "options" && question[key].is_a?(Array)
+
+        question[key].blank?
       end
     end
   end
