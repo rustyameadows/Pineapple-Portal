@@ -21,6 +21,7 @@ gem "grover", "~> 1.2.3"
 gem "pdf-reader", "~> 2.12"
 gem "combine_pdf", "~> 1.0"
 gem "commonmarker", "~> 2.3"
+gem "openai", "~> 0.68.0"
 
 group :development, :test do
   gem "dotenv-rails"

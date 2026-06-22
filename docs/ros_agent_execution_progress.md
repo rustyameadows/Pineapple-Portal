@@ -7,7 +7,7 @@ Branch: `codex/agentic-features`
 
 - Overall: in progress
 - Migration status: completed locally by maintainer; test DB prepared
-- Test status: model tests and apply service tests passed
+- Test status: model, apply service, and stubbed OpenAI/runner tests passed
 - Live OpenAI smoke status: not run; budget is one tiny smoke call after stubbed tests pass
 - OpenAI key decision: reuse existing `OPENAI_API_KEY`
 - Production/live database: do not run migrations from Codex
@@ -15,9 +15,9 @@ Branch: `codex/agentic-features`
 ## Subagent Assignments
 
 - DB/Models worker: blocked on sandboxed Postgres after red tests; main agent completed migration/model implementation
-- OpenAI/Runner worker: in progress (`gpt-5.4`, high reasoning)
+- OpenAI/Runner worker: blocked on sandboxed Postgres after red tests; main agent completed implementation
 - ROS Apply worker: blocked on sandboxed Postgres after red tests; main agent completed services
-- UI worker: pending
+- UI worker: in progress (`gpt-5.4`, medium reasoning)
 
 ## Checklist
 
@@ -25,11 +25,11 @@ Branch: `codex/agentic-features`
 - [x] Add agent task migrations
 - [x] Add agent task models and fixtures
 - [x] Add model tests
-- [ ] Add OpenAI SDK wrapper
-- [ ] Add source document upload/input handling
-- [ ] Add structured output schemas
-- [ ] Add local trace recorder
-- [ ] Add runner and background job
+- [x] Add OpenAI SDK wrapper
+- [x] Add source document upload/input handling
+- [x] Add structured output schemas
+- [x] Add local trace recorder
+- [x] Add runner and background job
 - [x] Add ROS change plan validator
 - [x] Add ROS preview builder
 - [x] Add transactional ROS applier
