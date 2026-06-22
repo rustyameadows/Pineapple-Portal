@@ -1,6 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 
 const ACTIVE_STATUSES = new Set(["draft", "analyzing", "drafting", "planning", "applying"])
+const ACTION_ANCHORS = {
+  needs_input: "planning-questions"
+}
 
 export default class extends Controller {
   static targets = ["statusLabel", "statusSummary", "sourceFiles", "llmCalls", "latestError", "taskHistory"]
@@ -11,6 +14,7 @@ export default class extends Controller {
 
   connect() {
     this.currentStatus = this.initialStatusValue || ""
+    this.revealActionForStatus(this.currentStatus, { reloadIfMissing: false })
     if (!this.shouldPoll(this.currentStatus)) return
 
     this.pollTimer = window.setInterval(() => this.pollStatus(), 2000)
@@ -40,6 +44,7 @@ export default class extends Controller {
   }
 
   applyStatus(data) {
+    const previousStatus = this.currentStatus
     const nextStatus = data.status || this.currentStatus
     this.currentStatus = nextStatus
 
@@ -52,6 +57,10 @@ export default class extends Controller {
 
     if (!this.shouldPoll(nextStatus)) {
       window.clearInterval(this.pollTimer)
+    }
+
+    if (nextStatus !== previousStatus) {
+      this.revealActionForStatus(nextStatus, { reloadIfMissing: true })
     }
   }
 
@@ -78,6 +87,34 @@ export default class extends Controller {
     const target = this[`has${targetName.charAt(0).toUpperCase()}${targetName.slice(1)}Target`] ? this[`${targetName}Target`] : null
     if (!target) return
     target.innerHTML = html
+  }
+
+  revealActionForStatus(status, { reloadIfMissing }) {
+    const anchorId = ACTION_ANCHORS[status]
+    if (!anchorId) return
+
+    const target = document.getElementById(anchorId)
+    if (target) {
+      this.scrollToTarget(target, anchorId)
+      return
+    }
+
+    if (reloadIfMissing) {
+      window.location.assign(this.urlWithHash(anchorId))
+    }
+  }
+
+  scrollToTarget(target, anchorId) {
+    if (window.location.hash !== `#${anchorId}`) {
+      window.history.replaceState(null, "", this.urlWithHash(anchorId))
+    }
+
+    target.scrollIntoView({ block: "start", behavior: "smooth" })
+    target.focus({ preventScroll: true })
+  }
+
+  urlWithHash(anchorId) {
+    return `${window.location.pathname}${window.location.search}#${anchorId}`
   }
 
   renderSourceFiles(sourceFiles = []) {

@@ -182,6 +182,17 @@ module Events
       assert_select "[data-ros-agent-status-target='statusLabel']", text: "Drafting"
     end
 
+    test "show anchors open planning questions so polling can reveal them" do
+      @task.update!(status: "needs_input")
+
+      get event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      assert_select "section#planning-questions[tabindex='-1']", count: 1
+      assert_select "section#planning-questions h2", text: "Planning Questions"
+      assert_select "form[action='#{answer_questions_event_ros_agent_task_path(@event, @task)}']", count: 1
+    end
+
     test "status returns no-cache json with source files llm calls events and last error" do
       @task.update!(
         status: "planning",
