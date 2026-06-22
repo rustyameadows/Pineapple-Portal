@@ -17,6 +17,16 @@ class User < ApplicationRecord
 
   has_many :event_team_members, dependent: :destroy
   has_many :events_as_team_member, through: :event_team_members, source: :event
+  has_many :created_agent_tasks,
+           class_name: "AgentTask",
+           foreign_key: :created_by_id,
+           dependent: :nullify,
+           inverse_of: :created_by
+  has_many :approved_agent_tasks,
+           class_name: "AgentTask",
+           foreign_key: :approved_by_id,
+           dependent: :nullify,
+           inverse_of: :approved_by
   has_many :calendar_item_team_members, dependent: :destroy
   has_many :calendar_items_as_team_member, through: :calendar_item_team_members, source: :calendar_item
   has_many :password_reset_tokens, dependent: :delete_all

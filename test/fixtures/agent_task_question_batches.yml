@@ -1,0 +1,13 @@
+open_questions:
+  agent_task: draft_task
+  position: 1
+  summary: A few planning decisions will materially change the imported timeline.
+  questions_json:
+    - key: date_mapping
+      label: Date Mapping
+      question: Should the source Saturday timeline map to the event wedding date?
+    - key: scrub_names
+      label: Scrub Names
+      question: Should source couple names be removed or replaced?
+  answers_json: {}
+  status: open

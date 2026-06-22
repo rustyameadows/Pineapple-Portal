@@ -35,6 +35,7 @@ class Event < ApplicationRecord
   has_many :event_calendars, dependent: :destroy
   has_many :calendar_items, through: :event_calendars
   has_many :event_calendar_views, through: :event_calendars
+  has_many :agent_tasks, dependent: :destroy
 
   has_one :run_of_show_calendar,
           -> { where(kind: EventCalendar::KINDS[:master]) },

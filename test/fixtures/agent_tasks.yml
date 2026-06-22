@@ -1,0 +1,16 @@
+draft_task:
+  event: one
+  created_by: one
+  prompt: Adapt this prior event run of show for the current wedding.
+  status: draft
+  current_plan_version: 1
+
+approved_task:
+  event: one
+  created_by: one
+  approved_by: two
+  prompt: Finalize and apply the reviewed ROS plan.
+  status: approved
+  current_plan_version: 2
+  approved_plan_version: 2
+  approved_at: <%= Time.zone.parse("2026-06-22 10:15:00") %>

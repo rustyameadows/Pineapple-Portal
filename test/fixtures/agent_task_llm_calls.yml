@@ -1,0 +1,13 @@
+pending_source_understanding:
+  agent_task: draft_task
+  purpose: source_understanding
+  provider: openai
+  model: gpt-5.5
+  reasoning_effort: high
+  status: pending
+  schema_name: source_understanding
+  schema_version: "1"
+  attempt: 1
+  started_at: <%= Time.zone.parse("2026-06-22 10:00:00") %>
+  request_json:
+    prompt: Understand the uploaded source event artifacts.

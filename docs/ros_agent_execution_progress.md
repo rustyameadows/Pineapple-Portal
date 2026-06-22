@@ -6,25 +6,25 @@ Branch: `codex/agentic-features`
 ## Current Status
 
 - Overall: in progress
-- Migration status: not created yet
-- Test status: not run yet
+- Migration status: prepared; pending maintainer-run `bin/rails db:migrate`
+- Test status: targeted model tests blocked by pending migration
 - Live OpenAI smoke status: not run; budget is one tiny smoke call after stubbed tests pass
 - OpenAI key decision: reuse existing `OPENAI_API_KEY`
 - Production/live database: do not run migrations from Codex
 
 ## Subagent Assignments
 
-- DB/Models worker: in progress (`gpt-5.4`, high reasoning)
+- DB/Models worker: blocked on sandboxed Postgres after red tests; main agent completed migration/model implementation
 - OpenAI/Runner worker: in progress (`gpt-5.4`, high reasoning)
-- ROS Apply worker: pending
+- ROS Apply worker: in progress (`gpt-5.4`, high reasoning)
 - UI worker: pending
 
 ## Checklist
 
 - [ ] Create progress tracker and commit it
-- [ ] Add agent task migrations
-- [ ] Add agent task models and fixtures
-- [ ] Add model tests
+- [x] Add agent task migrations
+- [x] Add agent task models and fixtures
+- [x] Add model tests
 - [ ] Add OpenAI SDK wrapper
 - [ ] Add source document upload/input handling
 - [ ] Add structured output schemas
