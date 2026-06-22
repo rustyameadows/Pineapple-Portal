@@ -6,8 +6,8 @@ Branch: `codex/agentic-features`
 ## Current Status
 
 - Overall: in progress
-- Migration status: prepared; pending maintainer-run `bin/rails db:migrate`
-- Test status: targeted model tests blocked by pending migration
+- Migration status: completed locally by maintainer; test DB prepared
+- Test status: model tests and apply service tests passed
 - Live OpenAI smoke status: not run; budget is one tiny smoke call after stubbed tests pass
 - OpenAI key decision: reuse existing `OPENAI_API_KEY`
 - Production/live database: do not run migrations from Codex
@@ -16,7 +16,7 @@ Branch: `codex/agentic-features`
 
 - DB/Models worker: blocked on sandboxed Postgres after red tests; main agent completed migration/model implementation
 - OpenAI/Runner worker: in progress (`gpt-5.4`, high reasoning)
-- ROS Apply worker: in progress (`gpt-5.4`, high reasoning)
+- ROS Apply worker: blocked on sandboxed Postgres after red tests; main agent completed services
 - UI worker: pending
 
 ## Checklist
@@ -30,16 +30,16 @@ Branch: `codex/agentic-features`
 - [ ] Add structured output schemas
 - [ ] Add local trace recorder
 - [ ] Add runner and background job
-- [ ] Add ROS change plan validator
-- [ ] Add ROS preview builder
-- [ ] Add transactional ROS applier
+- [x] Add ROS change plan validator
+- [x] Add ROS preview builder
+- [x] Add transactional ROS applier
 - [ ] Add event-scoped routes and controller
 - [ ] Add Agent Assist CTA to ROS top bar
 - [ ] Add task form, Q&A, draft, preview, approval, and apply views
 - [ ] Add minimal Stimulus behavior
 - [ ] Add controller and end-to-end stubbed tests
-- [ ] Ask maintainer to run migrations
-- [ ] Verify schema and tests after migration output
+- [x] Ask maintainer to run migrations
+- [x] Verify schema and tests after migration output
 - [ ] Run one tiny live OpenAI smoke call
 
 ## Notes
