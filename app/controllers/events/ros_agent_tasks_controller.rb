@@ -224,8 +224,9 @@ module Events
     def task_status_snapshot
       {
         status: @task.status,
-        active: active_status?(@task.status),
-        status_label: @task.status.to_s.humanize,
+        active: active_status?(@task),
+        status_label: status_label_for(@task),
+        action_anchor: action_anchor_for(@task),
         source_files: source_file_artifacts.map { |artifact| serialize_source_file(artifact) },
         llm_calls: @task.llm_calls.order(:started_at, :created_at, :id).map { |call| serialize_llm_call(call) },
         task_events: @task.events.includes(:created_by).order(created_at: :asc, id: :asc).map { |event| serialize_task_event(event) },
@@ -239,8 +240,24 @@ module Events
            .order(:position)
     end
 
-    def active_status?(status)
-      %w[draft analyzing drafting planning applying].include?(status.to_s)
+    def active_status?(task)
+      return false if task.drafting? && task.draft_ros_json.present?
+
+      %w[draft analyzing drafting planning applying].include?(task.status.to_s)
+    end
+
+    def status_label_for(task)
+      return "Draft Ready" if task.drafting? && task.draft_ros_json.present?
+
+      task.status.to_s.titleize
+    end
+
+    def action_anchor_for(task)
+      return "planning-questions" if task.needs_input? && task.question_batches.open.exists?
+      return "review-plan" if task.ready_for_review? && task.preview_json.present?
+      return "draft-ros" if task.drafting? && task.draft_ros_json.present?
+
+      nil
     end
 
     def serialize_source_file(artifact)

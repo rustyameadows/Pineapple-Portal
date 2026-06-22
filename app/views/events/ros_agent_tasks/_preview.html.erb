@@ -8,7 +8,7 @@
 ].flat_map { |action, rows| rows.map { |row| row.merge("action" => action) } } %>
 
 <% if preview.present? %>
-  <section class="event-section__body">
+  <section class="event-section__body" id="review-plan" tabindex="-1">
     <h2>Review Plan</h2>
 
     <% summary_parts = %w[create_count update_count delete_count tag_change_count time_change_count].filter_map { |key| value = preview[key]; "#{key.humanize}: #{value}" if value.present? } %>

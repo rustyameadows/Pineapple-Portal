@@ -2,19 +2,22 @@ import { Controller } from "@hotwired/stimulus"
 
 const ACTIVE_STATUSES = new Set(["draft", "analyzing", "drafting", "planning", "applying"])
 const ACTION_ANCHORS = {
-  needs_input: "planning-questions"
+  needs_input: "planning-questions",
+  ready_for_review: "review-plan"
 }
 
 export default class extends Controller {
   static targets = ["statusLabel", "statusSummary", "sourceFiles", "llmCalls", "latestError", "taskHistory"]
   static values = {
     statusUrl: String,
-    initialStatus: String
+    initialStatus: String,
+    initialActionAnchor: String
   }
 
   connect() {
     this.currentStatus = this.initialStatusValue || ""
-    this.revealActionForStatus(this.currentStatus, { reloadIfMissing: false })
+    this.currentActionAnchor = this.initialActionAnchorValue || this.actionAnchorForStatus(this.currentStatus)
+    this.revealActionForAnchor(this.currentActionAnchor, { reloadIfMissing: false })
     if (!this.shouldPoll(this.currentStatus)) return
 
     this.pollTimer = window.setInterval(() => this.pollStatus(), 2000)
@@ -45,22 +48,26 @@ export default class extends Controller {
 
   applyStatus(data) {
     const previousStatus = this.currentStatus
+    const previousActionAnchor = this.currentActionAnchor
     const nextStatus = data.status || this.currentStatus
+    const nextActionAnchor = data.action_anchor || this.actionAnchorForStatus(nextStatus)
+    const active = data.active == null ? this.shouldPoll(nextStatus) : Boolean(data.active)
     this.currentStatus = nextStatus
+    this.currentActionAnchor = nextActionAnchor
 
     this.updateStatusLabel(nextStatus, data.status_label)
-    this.updateStatusSummary(nextStatus, data.active)
+    this.updateStatusSummary(nextStatus, active, data.status_label)
     this.updateTarget("sourceFiles", this.renderSourceFiles(data.source_files))
     this.updateTarget("llmCalls", this.renderLlmCalls(data.llm_calls))
     this.updateTarget("latestError", this.renderLatestError(data.last_error))
     this.updateTarget("taskHistory", this.renderTaskHistory(data.task_events))
 
-    if (!this.shouldPoll(nextStatus)) {
+    if (!active) {
       window.clearInterval(this.pollTimer)
     }
 
-    if (nextStatus !== previousStatus) {
-      this.revealActionForStatus(nextStatus, { reloadIfMissing: true })
+    if (nextActionAnchor && (nextStatus !== previousStatus || nextActionAnchor !== previousActionAnchor)) {
+      this.revealActionForAnchor(nextActionAnchor, { reloadIfMissing: true })
     }
   }
 
@@ -75,12 +82,13 @@ export default class extends Controller {
     this.statusLabelTarget.className = `event-approvals__status-pill event-approvals__status-pill--${status || "draft"}`
   }
 
-  updateStatusSummary(status, active) {
+  updateStatusSummary(status, active, label) {
     if (!this.hasStatusSummaryTarget) return
 
+    const inactiveLabel = (label || this.humanizeStatus(status)).toLowerCase()
     this.statusSummaryTarget.textContent = active
       ? "Polling every 2 seconds while the task is active."
-      : `Polling stopped for ${this.humanizeStatus(status).toLowerCase() || "this task"}.`
+      : `Polling stopped for ${inactiveLabel || "this task"}.`
   }
 
   updateTarget(targetName, html) {
@@ -89,8 +97,11 @@ export default class extends Controller {
     target.innerHTML = html
   }
 
-  revealActionForStatus(status, { reloadIfMissing }) {
-    const anchorId = ACTION_ANCHORS[status]
+  actionAnchorForStatus(status) {
+    return ACTION_ANCHORS[status] || null
+  }
+
+  revealActionForAnchor(anchorId, { reloadIfMissing }) {
     if (!anchorId) return
 
     const target = document.getElementById(anchorId)

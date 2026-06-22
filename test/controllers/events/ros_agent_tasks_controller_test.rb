@@ -193,6 +193,100 @@ module Events
       assert_select "form[action='#{answer_questions_event_ros_agent_task_path(@event, @task)}']", count: 1
     end
 
+    test "show anchors draft ROS so polling can reveal it" do
+      @task.update!(
+        status: "drafting",
+        draft_ros_json: {
+          "draft_days" => [
+            {
+              "label" => "Wedding Day",
+              "entries" => [
+                { "time_label" => "4:00 PM", "title" => "Ceremony" }
+              ]
+            }
+          ]
+        }
+      )
+
+      get event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      assert_select "section#draft-ros[tabindex='-1']", count: 1
+      assert_select "section#draft-ros h2", text: "Draft ROS"
+      assert_select "form[action='#{refine_draft_event_ros_agent_task_path(@event, @task)}']", count: 1
+    end
+
+    test "show anchors review plan so polling can reveal it" do
+      @task.update!(
+        status: "ready_for_review",
+        preview_json: {
+          "summary" => "Create the wedding day ROS.",
+          "operations" => [
+            {
+              "action" => "create",
+              "title" => "Ceremony",
+              "when" => "4:00 PM"
+            }
+          ]
+        }
+      )
+
+      get event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      assert_select "section#review-plan[tabindex='-1']", count: 1
+      assert_select "section#review-plan h2", text: "Review Plan"
+      assert_select "table", text: /Ceremony/
+    end
+
+    test "status marks completed draft as actionable for live polling" do
+      @task.update!(
+        status: "drafting",
+        draft_ros_json: {
+          "draft_days" => [
+            {
+              "label" => "Wedding Day",
+              "entries" => [
+                { "time_label" => "4:00 PM", "title" => "Ceremony" }
+              ]
+            }
+          ]
+        }
+      )
+
+      get status_event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      body = JSON.parse(response.body)
+      assert_equal false, body["active"]
+      assert_equal "Draft Ready", body["status_label"]
+      assert_equal "draft-ros", body["action_anchor"]
+    end
+
+    test "status marks review plan as actionable for live polling" do
+      @task.update!(
+        status: "ready_for_review",
+        preview_json: {
+          "summary" => "Create the wedding day ROS.",
+          "operations" => [
+            {
+              "action" => "create",
+              "title" => "Ceremony",
+              "when" => "4:00 PM"
+            }
+          ]
+        }
+      )
+
+      get status_event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      body = JSON.parse(response.body)
+      assert_equal false, body["active"]
+      assert_equal "Ready For Review", body["status_label"]
+      assert_equal "review-plan", body["action_anchor"]
+    end
+
     test "status returns no-cache json with source files llm calls events and last error" do
       @task.update!(
         status: "planning",

@@ -6,16 +6,18 @@
 <% llm_calls = Array(status_snapshot[:llm_calls] || status_snapshot["llm_calls"]) %>
 <% task_events = Array(status_snapshot[:task_events] || status_snapshot["task_events"]) %>
 <% last_error = status_snapshot[:last_error] || status_snapshot["last_error"] %>
+<% action_anchor = status_snapshot[:action_anchor] || status_snapshot["action_anchor"] %>
 
 <div data-controller="ros-agent-status"
      data-ros-agent-status-status-url-value="<%= status_url %>"
-     data-ros-agent-status-initial-status-value="<%= status %>">
+     data-ros-agent-status-initial-status-value="<%= status %>"
+     data-ros-agent-status-initial-action-anchor-value="<%= action_anchor %>">
   <section class="event-section__body">
     <div class="event-section__status">
       <span class="event-approvals__status-pill event-approvals__status-pill--<%= status %>"
             data-ros-agent-status-target="statusLabel"><%= status_label %></span>
       <p class="event-section__lead" data-ros-agent-status-target="statusSummary">
-        <%= active ? "Polling every 2 seconds while the task is active." : "Polling has stopped for this task." %>
+        <%= active ? "Polling every 2 seconds while the task is active." : "Polling stopped for #{status_label.to_s.downcase}." %>
       </p>
     </div>
   </section>
