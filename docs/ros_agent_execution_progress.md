@@ -14,8 +14,8 @@ Branch: `codex/agentic-features`
 
 ## Subagent Assignments
 
-- DB/Models worker: pending
-- OpenAI/Runner worker: pending
+- DB/Models worker: in progress (`gpt-5.4`, high reasoning)
+- OpenAI/Runner worker: in progress (`gpt-5.4`, high reasoning)
 - ROS Apply worker: pending
 - UI worker: pending
 
