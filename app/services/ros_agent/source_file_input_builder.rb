@@ -12,8 +12,7 @@ module RosAgent
         if artifact.openai_file_id.present?
           {
             type: "input_file",
-            file_id: artifact.openai_file_id,
-            filename: artifact.filename
+            file_id: artifact.openai_file_id
           }
         elsif text_like?(artifact)
           text_preview_input(artifact)

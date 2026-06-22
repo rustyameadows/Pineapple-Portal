@@ -43,9 +43,9 @@ module RosAgent
       inputs = SourceFileInputBuilder.new(task).build
 
       assert_equal [
-        { type: "input_file", file_id: "file_img_123", filename: "photo.png" },
-        { type: "input_file", file_id: "file_pdf_123", filename: "millar.pdf" },
-        { type: "input_file", file_id: "file_xlsx_123", filename: "schedule.xlsx" }
+        { type: "input_file", file_id: "file_img_123" },
+        { type: "input_file", file_id: "file_pdf_123" },
+        { type: "input_file", file_id: "file_xlsx_123" }
       ], inputs
     end
 
