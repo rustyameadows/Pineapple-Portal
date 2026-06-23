@@ -5,7 +5,12 @@
     <div class="event-layout__main">
       <%= render "shared/flash" %>
 
-      <section class="event-section event-calendars__timeline-section">
+      <% decision_filter_definitions = {
+           event: { label: "Event", param: "events[]", options: calendar_filter_options(@items, :event, include_none: false) },
+           status: { label: "Status", param: "statuses[]", options: calendar_filter_options(@items, :status, include_none: false) }
+         } %>
+
+      <section class="event-section event-calendars__timeline-section" data-controller="calendar-bulk-edit">
         <header class="event-section__header">
           <div>
             <p class="event-section__eyebrow">Decisions</p>
@@ -21,11 +26,37 @@
                      calendar: @items.first.event_calendar,
                      group_by_date: true,
                      segment_granularity: EventCalendarView::SEGMENT_GRANULARITIES[:month],
+                     bulk_edit: true,
+                     bulk_status_actions: true,
+                     bulk_form_id: "master-decisions-bulk-form",
+                     bulk_form_url: decisions_bulk_update_path,
+                     bulk_return_to: request.fullpath,
+                     filter_definitions: decision_filter_definitions,
+                     column_order: %i[schedule status event title vendor],
+                     table_modifier_class: "event-calendars__table--master-decisions",
                      show_event_column: true,
                      show_status_first: true,
+                     show_location: false,
+                     show_team: false,
                      show_tags: false,
-                     event_column_proc: ->(item) { item.event_calendar.event.name },
+                     show_edit_button: true,
+                     link_return_to: false,
+                     event_column_proc: ->(item) {
+                       event = item.event_calendar.event
+                       link_to event.name, event_path(event), class: "event-calendars__event-link"
+                     },
                      item_calendar_proc: ->(item) { item.event_calendar },
+                     search_text_proc: ->(item) {
+                       [
+                         item.event_calendar.event.name,
+                         item.title,
+                         calendar_item_status_label(item),
+                         item.vendor_name,
+                         item.location_name,
+                         item.notes,
+                         calendar_item_team_label(item)
+                       ].map { |value| value.to_s.downcase.squish }.reject(&:blank?).join(" ")
+                     },
                      item_link_proc: ->(item) {
                        event = item.event_calendar.event
                        view = @decision_views_by_event_id.fetch(event.id)
