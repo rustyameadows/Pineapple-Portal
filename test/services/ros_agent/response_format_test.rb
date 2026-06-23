@@ -14,15 +14,15 @@ module RosAgent
         assert_includes format.dig(:schema, :required), "draft_ros"
       end
 
-      test "draft item schema keeps only approval essentials required" do
+      test "draft item schema allows sparse approval fields within strict schema" do
         format = ResponseFormat.for_mode(:initial_run)
         draft_item_schema = format.dig(:schema, :properties, "draft_ros", :anyOf, 0, :properties, "draft_items", :items)
 
-        assert_equal %w[title timing duration_minutes confidence planner_review_needed source_refs], draft_item_schema[:required]
+        assert_equal draft_item_schema[:properties].keys, draft_item_schema[:required]
         refute_includes draft_item_schema[:properties].keys, "day_label"
         %w[notes location vendor_handling staff_handling tags].each do |key|
           assert_includes draft_item_schema[:properties].keys, key
-          refute_includes draft_item_schema[:required], key
+          assert_equal "null", draft_item_schema.dig(:properties, key, :anyOf, 1, :type)
         end
       end
 
