@@ -223,17 +223,22 @@ class RosAgentAssistFlowTest < ActionDispatch::IntegrationTest
         "draft_items" => [
           {
             "title" => "Crew Call",
-            "day_label" => "Wedding Day",
             "timing" => { "kind" => "absolute", "starts_at" => "2026-08-15T14:00:00Z" },
             "duration_minutes" => 60,
-            "notes" => "Production setup.",
-            "location" => "Main Venue",
-            "vendor_handling" => "placeholder",
-            "staff_handling" => "map_to_event_team",
-            "tags" => ["Production"],
             "confidence" => "high",
-            "planner_review_needed" => false,
-            "source_refs" => [{ "artifact" => "prior-wedding-ros.csv", "locator" => "row 2" }]
+            "source_refs" => [{ "artifact" => "prior-wedding-ros.csv", "locator" => "row 2" }],
+            "details" => [
+              {
+                "field" => "notes",
+                "value" => "Production setup.",
+                "source_refs" => [{ "artifact" => "prior-wedding-ros.csv", "locator" => "row 2" }]
+              },
+              {
+                "field" => "location",
+                "value" => "Main Venue",
+                "source_refs" => [{ "artifact" => "prior-wedding-ros.csv", "locator" => "location column" }]
+              }
+            ]
           }
         ],
         "assumptions" => [],

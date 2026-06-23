@@ -261,13 +261,24 @@ module Events
                 "relative_offset_minutes" => -120
               },
               "duration_minutes" => 120,
-              "notes" => "Adapted from source.",
-              "location" => "TBD",
-              "vendor_handling" => "placeholder",
-              "staff_handling" => "map_to_event_team",
-              "tags" => ["Production", "Music"],
               "confidence" => "medium",
-              "planner_review_needed" => true,
+              "details" => [
+                {
+                  "field" => "notes",
+                  "value" => "Confirm source-specific entertainment handoff.",
+                  "source_refs" => [{ "artifact" => "millar_sample.csv", "locator" => "notes column" }]
+                },
+                {
+                  "field" => "vendor_handling",
+                  "value" => "Coordinate production vendor arrival.",
+                  "source_refs" => [{ "artifact" => "millar_sample.csv", "locator" => "vendor column" }]
+                },
+                {
+                  "field" => "tags",
+                  "value" => "Production, Music",
+                  "source_refs" => [{ "artifact" => "millar_sample.csv", "locator" => "tags inferred from section" }]
+                }
+              ],
               "custom_agent_field" => "do not hide me",
               "source_refs" => [
                 { "artifact" => "millar_sample.csv", "locator" => "row 2" }
@@ -309,14 +320,16 @@ module Events
       assert_select "#draft-ros", text: /Guest Arrival/
       assert_select "#draft-ros", text: /-120/
       assert_select "#draft-ros", text: /120/
-      assert_select "#draft-ros", text: /Adapted from source/
-      assert_select "#draft-ros", text: /TBD/
-      assert_select "#draft-ros", text: /placeholder/
-      assert_select "#draft-ros", text: /map_to_event_team/
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "notes"
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "vendor_handling"
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "tags"
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "details", count: 0
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "location", count: 0
+      assert_select "#draft-ros", text: /Confirm source-specific entertainment handoff/
+      assert_select "#draft-ros", text: /Coordinate production vendor arrival/
       assert_select "#draft-ros", text: /Production/
       assert_select "#draft-ros", text: /Music/
       assert_select "#draft-ros", text: /medium/
-      assert_select "#draft-ros", text: /true/
       assert_select "#draft-ros", text: /do not hide me/
     end
 

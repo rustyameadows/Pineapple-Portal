@@ -546,17 +546,22 @@ module RosAgent
         "draft_items" => [
           {
             "title" => "Crew Call",
-            "day_label" => "Wedding Day",
             "timing" => { "kind" => "absolute", "starts_at" => "2025-10-01T08:00:00Z" },
             "duration_minutes" => 60,
-            "notes" => "Production setup.",
-            "location" => "Grand Ballroom",
-            "vendor_handling" => "placeholder",
-            "staff_handling" => "map_to_event_team",
-            "tags" => ["Production"],
             "confidence" => "high",
-            "planner_review_needed" => false,
-            "source_refs" => []
+            "source_refs" => [],
+            "details" => [
+              {
+                "field" => "notes",
+                "value" => "Production setup.",
+                "source_refs" => []
+              },
+              {
+                "field" => "location",
+                "value" => "Grand Ballroom",
+                "source_refs" => []
+              }
+            ]
           }
         ],
         "assumptions" => [],

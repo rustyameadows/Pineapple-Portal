@@ -167,8 +167,7 @@ module RosAgent
       def self.draft_item_schema
         object_schema(
           required: %w[
-            title timing duration_minutes notes location vendor_handling
-            staff_handling tags confidence planner_review_needed source_refs
+            title timing duration_minutes confidence source_refs details
           ],
           properties: {
             title: string_schema,
@@ -182,13 +181,19 @@ module RosAgent
               }
             ),
             duration_minutes: nullable(integer_schema),
-            notes: nullable(string_schema),
-            location: nullable(string_schema),
-            vendor_handling: nullable(string_schema),
-            staff_handling: nullable(string_schema),
-            tags: nullable(string_array_schema),
             confidence: { type: "string", enum: DraftRosSchema::CONFIDENCE_VALUES },
-            planner_review_needed: { type: "boolean" },
+            source_refs: { type: "array", items: source_ref_schema },
+            details: { type: "array", items: draft_item_detail_schema }
+          }
+        )
+      end
+
+      def self.draft_item_detail_schema
+        object_schema(
+          required: %w[field value source_refs],
+          properties: {
+            field: { type: "string", enum: DraftRosSchema::DETAIL_FIELDS },
+            value: string_schema,
             source_refs: { type: "array", items: source_ref_schema }
           }
         )

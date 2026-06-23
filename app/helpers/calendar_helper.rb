@@ -251,6 +251,29 @@ module CalendarHelper
     end
   end
 
+  def ros_agent_draft_display_entry(entry)
+    return entry unless entry.is_a?(Hash)
+
+    display_entry = entry.except("details", "day_label")
+
+    Array(entry["details"]).each do |detail|
+      next unless detail.is_a?(Hash)
+
+      field = detail["field"].to_s
+      value = detail["value"].presence
+      next if field.blank? || value.blank?
+
+      existing_value = display_entry[field]
+      display_entry[field] = if existing_value.blank?
+                               value
+                             else
+                               Array(existing_value) + [value]
+                             end
+    end
+
+    display_entry
+  end
+
   def ros_agent_draft_array_label(values)
     ros_agent_draft_list_label(Array(values).map(&:presence).compact)
   end
@@ -294,9 +317,11 @@ module CalendarHelper
     value = entry[key]
     return "—" if value.nil? || value == ""
 
+    return ros_agent_draft_source_refs_label(value) if key == "source_refs"
+
     case value
     when Array
-      value.to_json
+      value.all? { |item| item.is_a?(String) } ? ros_agent_draft_array_label(value) : value.to_json
     when Hash
       value.to_json
     else

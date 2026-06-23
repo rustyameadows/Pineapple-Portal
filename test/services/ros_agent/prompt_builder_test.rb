@@ -44,6 +44,20 @@ module RosAgent
       assert_includes content, task.prompt
     end
 
+    test "instructs sparse draft details without generic cleanup commentary" do
+      payload = PromptBuilder.new(
+        task: build_task,
+        mode: :initial_run,
+        event_context: { event: { id: events(:one).id } },
+        source_inputs: []
+      ).build
+
+      assert_includes payload[:instructions], "Use draft item details sparingly"
+      assert_includes payload[:instructions], "Do not write TBD"
+      assert_includes payload[:instructions], "source name removed"
+      assert_includes payload[:instructions], "Notes are event-facing item subcopy"
+    end
+
     test "includes source understanding, question answers, and draft scratchpad for refinement modes" do
       task = build_task(
         source_understanding_json: { "overall_read" => "Two-day entertainment-heavy event." },

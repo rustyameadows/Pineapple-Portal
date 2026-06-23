@@ -7,6 +7,15 @@ module RosAgent
       request_final_plan: "Turn the latest draft ROS scratchpad into a final ROS change plan."
     }.freeze
 
+    DRAFT_DETAIL_INSTRUCTIONS = [
+      "Use draft item details sparingly; most draft_items should have details: [].",
+      "Details may only use field values notes, location, vendor_handling, staff_handling, or tags.",
+      "Do not write TBD, placeholders, or generic cleanup commentary into details.",
+      "Do not use details for reasoning such as source name removed, source vendor removed, or adapted from source.",
+      "Notes are event-facing item subcopy only, not commentary on your work.",
+      "Only include location, vendor handling, staff handling, or tags when the source or current event gives a genuinely useful value for that item."
+    ].freeze
+
     def initialize(task:, mode:, event_context:, source_inputs:)
       @task = task
       @mode = mode.to_sym
@@ -41,6 +50,7 @@ module RosAgent
         "Ask questions only when answers materially change the ROS.",
         "Maintain a draft ROS scratchpad before final approval.",
         "Return one of: source_understood, needs_input, draft_ready, ready_for_review.",
+        *DRAFT_DETAIL_INSTRUCTIONS,
         MODE_INSTRUCTIONS.fetch(mode, MODE_INSTRUCTIONS[:initial_run])
       ].join("\n")
     end

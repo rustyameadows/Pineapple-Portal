@@ -19,17 +19,22 @@ module RosAgent
           "draft_items" => [
             {
               "title" => "Crew Call",
-              "day_label" => "Wedding Day",
               "timing" => { "kind" => "absolute", "starts_at" => "2025-10-01T08:00:00Z" },
               "duration_minutes" => 60,
-              "notes" => "General production setup.",
-              "location" => "Grand Ballroom",
-              "vendor_handling" => "placeholder",
-              "staff_handling" => "map_to_event_team",
-              "tags" => ["Production"],
               "confidence" => "high",
-              "planner_review_needed" => false,
-              "source_refs" => [{ "artifact" => "millar_sample.csv", "locator" => "Saturday row 4" }]
+              "source_refs" => [{ "artifact" => "millar_sample.csv", "locator" => "Saturday row 4" }],
+              "details" => [
+                {
+                  "field" => "notes",
+                  "value" => "General production setup.",
+                  "source_refs" => [{ "artifact" => "millar_sample.csv", "locator" => "Saturday row 4" }]
+                },
+                {
+                  "field" => "location",
+                  "value" => "Grand Ballroom",
+                  "source_refs" => [{ "artifact" => "millar_sample.csv", "locator" => "Saturday room column" }]
+                }
+              ]
             }
           ],
           "assumptions" => ["Use the event date as the Saturday anchor."],
@@ -39,6 +44,50 @@ module RosAgent
         }
 
         assert_equal payload, DraftRosSchema.validate!(payload)
+      end
+
+      test "accepts draft items with empty sparse details" do
+        payload = base_payload(
+          "draft_items" => [
+            {
+              "title" => "Crew Call",
+              "timing" => { "kind" => "absolute", "starts_at" => "2025-10-01T08:00:00Z" },
+              "duration_minutes" => 60,
+              "confidence" => "high",
+              "source_refs" => [],
+              "details" => []
+            }
+          ]
+        )
+
+        assert_equal payload, DraftRosSchema.validate!(payload)
+      end
+
+      test "rejects draft item details with unknown fields" do
+        error = assert_raises(ArgumentError) do
+          DraftRosSchema.validate!(
+            base_payload(
+              "draft_items" => [
+                {
+                  "title" => "Crew Call",
+                  "timing" => { "kind" => "absolute", "starts_at" => "2025-10-01T08:00:00Z" },
+                  "duration_minutes" => 60,
+                  "confidence" => "high",
+                  "source_refs" => [],
+                  "details" => [
+                    {
+                      "field" => "planner_review_needed",
+                      "value" => "true",
+                      "source_refs" => []
+                    }
+                  ]
+                }
+              ]
+            )
+          )
+        end
+
+        assert_includes error.message, "draft_items[0].details[0].field"
       end
 
       test "rejects a payload without draft days" do
@@ -67,11 +116,10 @@ module RosAgent
             "draft_items" => [
               {
                 "title" => " ",
-                "day_label" => "Wedding Day",
                 "timing" => { "kind" => "absolute", "starts_at" => "2025-10-01T08:00:00Z" },
                 "confidence" => "high",
-                "planner_review_needed" => false,
-                "source_refs" => []
+                "source_refs" => [],
+                "details" => []
               }
             ],
             "assumptions" => [],
@@ -82,6 +130,21 @@ module RosAgent
         end
 
         assert_includes error.message, "draft_items[0].title"
+      end
+
+      private
+
+      def base_payload(overrides = {})
+        {
+          "target_event_summary" => "Wedding summary",
+          "date_mapping" => { "source_days" => [] },
+          "draft_days" => [{ "label" => "Wedding Day", "date" => "2025-10-01" }],
+          "draft_items" => [],
+          "assumptions" => [],
+          "review_flags" => [],
+          "refinement_notes" => [],
+          "source_references" => []
+        }.merge(overrides)
       end
     end
   end
