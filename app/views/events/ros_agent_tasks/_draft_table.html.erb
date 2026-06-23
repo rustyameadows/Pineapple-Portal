@@ -1,9 +1,9 @@
 <% draft = task.draft_ros_json || {} %>
 <% draft_days = Array(draft["draft_days"]) %>
 <% draft_timezone = ros_agent_draft_timezone(task) %>
-<% entries_by_day = draft_days.map { |day| [day, Array(day["entries"].presence || draft["draft_items"]).select { |entry| entry["day_label"].blank? || entry["day_label"] == day["label"] }] } %>
+<% entries_by_day = draft_days.map { |day| [day, ros_agent_draft_entries_for_day(draft, day, draft_timezone)] } %>
 <% all_draft_entries = entries_by_day.flat_map(&:last) %>
-<% preferred_item_keys = %w[day_label title timing duration_minutes notes location vendor_handling staff_handling tags confidence planner_review_needed source_refs] %>
+<% preferred_item_keys = %w[title timing duration_minutes notes location vendor_handling staff_handling tags confidence planner_review_needed source_refs] %>
 <% all_item_keys = all_draft_entries.flat_map(&:keys).uniq %>
 <% draft_item_keys = preferred_item_keys.select { |key| all_item_keys.include?(key) } + (all_item_keys - preferred_item_keys).sort %>
 <% draft_table_colspan = draft_item_keys.size + 1 %>

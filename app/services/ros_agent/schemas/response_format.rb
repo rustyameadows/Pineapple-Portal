@@ -167,12 +167,10 @@ module RosAgent
       def self.draft_item_schema
         object_schema(
           required: %w[
-            title day_label timing duration_minutes notes location vendor_handling
-            staff_handling tags confidence planner_review_needed source_refs
+            title timing duration_minutes confidence planner_review_needed source_refs
           ],
           properties: {
             title: string_schema,
-            day_label: string_schema,
             timing: object_schema(
               required: %w[kind starts_at relative_anchor_title relative_offset_minutes],
               properties: {

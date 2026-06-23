@@ -230,30 +230,33 @@ module Events
           "draft_days" => [
             {
               "label" => "Friday Pre-Event Production",
-              "date" => "2027-10-15",
-              "entries" => [
-                {
-                  "title" => "Production / Entertainment Crew Line Check",
-                  "day_label" => "Friday Pre-Event Production",
-                  "timing" => {
-                    "kind" => "relative",
-                    "starts_at" => "2027-10-15T18:00:00-04:00",
-                    "relative_anchor_title" => "Guest Arrival",
-                    "relative_offset_minutes" => -120
-                  },
-                  "duration_minutes" => 120,
-                  "notes" => "Adapted from source.",
-                  "location" => "TBD",
-                  "vendor_handling" => "placeholder",
-                  "staff_handling" => "map_to_event_team",
-                  "tags" => ["Production", "Music"],
-                  "confidence" => "medium",
-                  "planner_review_needed" => true,
-                  "custom_agent_field" => "do not hide me",
-                  "source_refs" => [
-                    { "artifact" => "millar_sample.csv", "locator" => "row 2" }
-                  ]
-                }
+              "date" => "2027-10-15"
+            },
+            {
+              "label" => "Saturday Main Event",
+              "date" => "2027-10-16"
+            }
+          ],
+          "draft_items" => [
+            {
+              "title" => "Production / Entertainment Crew Line Check",
+              "timing" => {
+                "kind" => "relative",
+                "starts_at" => "2027-10-15T18:00:00-04:00",
+                "relative_anchor_title" => "Guest Arrival",
+                "relative_offset_minutes" => -120
+              },
+              "duration_minutes" => 120,
+              "notes" => "Adapted from source.",
+              "location" => "TBD",
+              "vendor_handling" => "placeholder",
+              "staff_handling" => "map_to_event_team",
+              "tags" => ["Production", "Music"],
+              "confidence" => "medium",
+              "planner_review_needed" => true,
+              "custom_agent_field" => "do not hide me",
+              "source_refs" => [
+                { "artifact" => "millar_sample.csv", "locator" => "row 2" }
               ]
             }
           ],
@@ -274,6 +277,8 @@ module Events
       assert_select "#draft-ros button", text: "Previous fields"
       assert_select "#draft-ros button", text: "Next fields"
       assert_select "#draft-ros .event-calendars__date-label", text: "Friday, October 15"
+      assert_select "#draft-ros .event-calendars__date-label", text: "Saturday, October 16"
+      assert_select "#draft-ros .ros-agent-draft__table tbody tr.event-calendars__row", count: 1
       assert_select "#draft-ros", text: /Friday Pre-Event Production/
       assert_select "#draft-ros td.event-calendars__schedule-column", text: "6:00 PM – 8:00 PM"
       assert_select "#draft-ros", text: /A two-day adapted wedding ROS/

@@ -236,6 +236,21 @@ module CalendarHelper
     "TBD"
   end
 
+  def ros_agent_draft_entries_for_day(draft, day, timezone)
+    nested_entries = Array(day["entries"])
+    return nested_entries if nested_entries.present?
+
+    entries = Array(draft["draft_items"])
+    draft_days = Array(draft["draft_days"])
+    target_date = parse_ros_agent_draft_date(day["date"])
+    return entries if target_date.blank? && draft_days.one?
+
+    entries.select do |entry|
+      entry_date = ros_agent_draft_entry_start_time(entry, timezone)&.to_date
+      entry_date.present? && target_date.present? && entry_date == target_date
+    end
+  end
+
   def ros_agent_draft_array_label(values)
     Array(values).map(&:presence).compact.join(", ").presence || "—"
   end
