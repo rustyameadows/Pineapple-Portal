@@ -9,22 +9,39 @@
 <% show_relative = !!local_assigns[:show_relative] %>
 <% show_status_first = !!local_assigns[:show_status_first] %>
 <% show_event_column = !!local_assigns[:show_event_column] %>
+<% show_vendor = local_assigns.key?(:show_vendor) ? !!local_assigns[:show_vendor] : !show_relative %>
+<% show_location = local_assigns.key?(:show_location) ? !!local_assigns[:show_location] : !show_relative %>
+<% show_team = local_assigns.key?(:show_team) ? !!local_assigns[:show_team] : !show_relative %>
 <% show_edit_button = !!local_assigns[:show_edit_button] %>
 <% bulk_edit = !!local_assigns[:bulk_edit] %>
+<% bulk_status_actions = !!local_assigns[:bulk_status_actions] %>
 <% show_timing_actions = !!local_assigns[:show_timing_actions] %>
 <% render_actions = local_assigns[:render_actions] %>
 <% actions_header = local_assigns[:actions_header] || "" %>
 <% item_link_proc = local_assigns[:item_link_proc] || ->(item) { [item.title, edit_event_calendar_item_path(calendar.event, item, return_to: request.fullpath)] } %>
 <% event_column_proc = local_assigns[:event_column_proc] || ->(item) { item.event_calendar.event.name } %>
 <% item_calendar_proc = local_assigns[:item_calendar_proc] || ->(_item) { calendar } %>
+<% search_text_proc = local_assigns[:search_text_proc] || ->(item) { calendar_item_search_text(item) } %>
+<% link_return_to = local_assigns.key?(:link_return_to) ? !!local_assigns[:link_return_to] : bulk_edit %>
 <% bulk_form_id = local_assigns[:bulk_form_id] || "calendar-bulk-edit-form" %>
 <% bulk_form_url = local_assigns[:bulk_form_url] || bulk_update_event_calendar_items_path(calendar.event) %>
 <% bulk_return_to = local_assigns[:bulk_return_to] || request.fullpath %>
 <% filter_source_items = Array(local_assigns[:filter_source_items] || items) %>
 <% bulk_team_members = calendar.event.team_members.where.not(role: User::ROLES[:client]).order(:name) %>
-<% base_column_count = show_relative ? 3 : 5 %>
-<% base_column_count += 1 if show_event_column %>
-<% base_column_count += 1 if show_status_first %>
+<% default_column_order = [] %>
+<% default_column_order << :event if show_event_column %>
+<% default_column_order << :status if show_status_first %>
+<% default_column_order += [:schedule, :title] %>
+<% if show_relative %>
+  <% default_column_order << :relation %>
+<% else %>
+  <% default_column_order << :vendor if show_vendor %>
+  <% default_column_order << :location if show_location %>
+  <% default_column_order << :team if show_team %>
+<% end %>
+<% column_order = Array(local_assigns[:column_order] || default_column_order).map(&:to_sym) %>
+<% table_modifier_class = local_assigns[:table_modifier_class].to_s %>
+<% base_column_count = column_order.length %>
 <% initial_select_all_label = "Select all #{items.count} item#{'s' unless items.count == 1}" %>
 <% bulk_action_options = [
      ["Choose action", ""],
@@ -42,12 +59,13 @@
      ["Clear other people", "clear_additional_team_members"],
      ["Delete items", "delete_items"]
    ] %>
-<% filter_definitions = {
+<% filter_definitions = local_assigns[:filter_definitions] || {
      vendor: { label: "Vendor", param: "vendors[]", options: calendar_filter_options(filter_source_items, :vendor) },
      location: { label: "Location", param: "locations[]", options: calendar_filter_options(filter_source_items, :location) },
      team: { label: "Team", param: "teams[]", options: calendar_filter_options(filter_source_items, :team) },
      tag: { label: "Tags", param: "tags[]", options: calendar_tag_filter_options(calendar) }
    } %>
+<% filter_facets = filter_definitions.keys.map(&:to_s) %>
 
 <div class="event-calendars__table-shell <%= 'event-calendars__table-shell--bulk' if bulk_edit %>"<%= ' data-calendar-bulk-edit-target="tableShell" id="calendar-bulk-edit-table"'.html_safe if bulk_edit %>>
   <% if bulk_edit %>
@@ -143,6 +161,14 @@
         <%= hidden_field_tag :return_to,
                              bulk_return_to,
                              data: { calendar_bulk_edit_target: "returnToInput" } %>
+        <% if bulk_status_actions %>
+          <%= hidden_field_tag "bulk[bulk_action]",
+                               "",
+                               data: { calendar_bulk_edit_target: "actionSelect" } %>
+          <%= hidden_field_tag "bulk[status]",
+                               "",
+                               data: { calendar_bulk_edit_target: "statusInput" } %>
+        <% end %>
 
         <div class="event-calendars__bulk-count">
           <strong><span data-calendar-bulk-edit-target="selectionCount">0</span></strong>
@@ -179,17 +205,35 @@
           <% end %>
         </div>
 
-        <div class="event-calendars__bulk-control">
-          <%= form.select :bulk_action,
-                          options_for_select(bulk_action_options),
-                          {},
-                          class: "event-form__select event-calendars__bulk-select",
-                          aria: { label: "Bulk action" },
-                          data: {
-                            action: "change->calendar-bulk-edit#actionChanged",
-                            calendar_bulk_edit_target: "actionSelect"
-                          } %>
-        </div>
+        <% if bulk_status_actions %>
+          <div class="event-calendars__bulk-status-actions" aria-label="Bulk status actions">
+            <% [
+                 ["Mark as Planned", CalendarItem::STATUSES[:planned]],
+                 ["Mark as In Progress", CalendarItem::STATUSES[:in_progress]],
+                 ["Mark as Completed", CalendarItem::STATUSES[:completed]]
+               ].each do |label, status| %>
+              <button type="button"
+                      class="event-calendars__bulk-button"
+                      data-action="calendar-bulk-edit#submitStatusAction"
+                      data-bulk-status="<%= status %>"
+                      data-bulk-action-label="<%= label %>">
+                <%= label %>
+              </button>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="event-calendars__bulk-control">
+            <%= form.select :bulk_action,
+                            options_for_select(bulk_action_options),
+                            {},
+                            class: "event-form__select event-calendars__bulk-select",
+                            aria: { label: "Bulk action" },
+                            data: {
+                              action: "change->calendar-bulk-edit#actionChanged",
+                              calendar_bulk_edit_target: "actionSelect"
+                            } %>
+          </div>
+        <% end %>
 
         <div class="event-calendars__bulk-field event-calendars__bulk-field--tags"
              data-calendar-bulk-edit-target="tagsRow"
@@ -406,23 +450,28 @@
     <% end %>
   <% end %>
 
-  <table class="event-table event-calendars__table">
+  <table class="event-table event-calendars__table <%= table_modifier_class %>">
     <thead>
       <tr>
-        <% if show_event_column %>
-          <th class="event-calendars__event-column">Event</th>
-        <% end %>
-        <% if show_status_first %>
-          <th class="event-calendars__status-column">Status</th>
-        <% end %>
-        <th class="event-calendars__schedule-column">Schedule</th>
-        <th class="event-calendars__title-column">Title</th>
-        <% if show_relative %>
-          <th>Relation</th>
-        <% else %>
-          <th>Vendor</th>
-          <th>Location</th>
-          <th>Team</th>
+        <% column_order.each do |column| %>
+          <% case column %>
+          <% when :schedule %>
+            <th class="event-calendars__schedule-column">Schedule</th>
+          <% when :status %>
+            <th class="event-calendars__status-column">Status</th>
+          <% when :event %>
+            <th class="event-calendars__event-column">Event</th>
+          <% when :title %>
+            <th class="event-calendars__title-column">Title</th>
+          <% when :vendor %>
+            <th>Vendor</th>
+          <% when :location %>
+            <th>Location</th>
+          <% when :team %>
+            <th>Team</th>
+          <% when :relation %>
+            <th>Relation</th>
+          <% end %>
         <% end %>
         <% if show_tags %>
           <th>Tags</th>
@@ -482,6 +531,14 @@
         <% title_text, title_path = item_link_proc.call(item) %>
         <% title_base_path = title_path.to_s.split("?").first %>
         <% team_label = calendar_item_team_label(item) %>
+        <% tooltip = calendar_item_relative_tooltip(item) %>
+        <% schedule_label = if schedule_label_proc
+                              schedule_label_proc.call(item)
+                            elsif monthly_segments
+                              calendar_item_day_label_with_marker(item, item_timezone)
+                            else
+                              calendar_item_time_only_label_with_marker(item, item_timezone)
+                            end %>
         <tr id="<%= timeline_row_id %>"
             class="event-calendars__row <%= calendar_item_row_classes(item) %>"
             data-calendar-bulk-edit-target="row"
@@ -490,52 +547,51 @@
             data-calendar-item-start-at="<%= item.effective_starts_at&.iso8601 %>"
             data-calendar-item-end-at="<%= item.effective_ends_at&.iso8601 %>"
             data-calendar-item-relative="<%= item.relative? %>"
-            data-calendar-search-text="<%= calendar_item_search_text(item) %>"
+            data-calendar-search-text="<%= search_text_proc.call(item) %>"
+            data-calendar-event-values="<%= calendar_item_filter_values_json(item, :event) %>"
+            data-calendar-status-values="<%= calendar_item_filter_values_json(item, :status) %>"
             data-calendar-vendor-values="<%= calendar_item_filter_values_json(item, :vendor) %>"
             data-calendar-location-values="<%= calendar_item_filter_values_json(item, :location) %>"
             data-calendar-team-values="<%= calendar_item_filter_values_json(item, :team) %>"
             data-calendar-tag-values="<%= calendar_item_filter_values_json(item, :tag) %>"
             data-calendar-group-key="<%= group_by_date ? bucket_key : '' %>">
-          <% tooltip = calendar_item_relative_tooltip(item) %>
-          <% if show_event_column %>
-            <td class="event-calendars__event-column" data-calendar-bulk-edit-target="searchableText">
-              <%= event_column_proc.call(item) %>
-            </td>
-          <% end %>
-          <% if show_status_first %>
-            <td class="event-calendars__status-value"><%= calendar_item_status_label(item) %></td>
-          <% end %>
-          <% schedule_label = if schedule_label_proc
-                                schedule_label_proc.call(item)
-                              elsif monthly_segments
-                                calendar_item_day_label_with_marker(item, item_timezone)
-                              else
-                                calendar_item_time_only_label_with_marker(item, item_timezone)
-                              end %>
-          <td class="event-calendars__schedule-column" title="<%= tooltip.to_s %>"><%= schedule_label %></td>
-          <td class="event-calendars__title-column">
-            <%= link_to title_text,
-                        title_path,
-                        class: "event-calendars__title-link",
-                        data: {
-                          calendar_bulk_edit_target: [("returnLink" if bulk_edit), "searchableText"].compact.join(" "),
-                          base_path: (title_base_path if bulk_edit),
-                          row_id: (timeline_row_id if bulk_edit)
-                        }.compact %>
-            <% if item.notes.present? %>
-              <div class="event-calendars__note-group" data-calendar-bulk-edit-target="searchableText">
-                <%= simple_format(item.notes, class: "event-calendars__note") %>
-              </div>
+          <% column_order.each do |column| %>
+            <% case column %>
+            <% when :schedule %>
+              <td class="event-calendars__schedule-column" title="<%= tooltip.to_s %>"><%= schedule_label %></td>
+            <% when :status %>
+              <td class="event-calendars__status-value"><%= calendar_item_status_label(item) %></td>
+            <% when :event %>
+              <td class="event-calendars__event-column" data-calendar-bulk-edit-target="searchableText">
+                <%= event_column_proc.call(item) %>
+              </td>
+            <% when :title %>
+              <td class="event-calendars__title-column">
+                <%= link_to title_text,
+                            title_path,
+                            class: "event-calendars__title-link",
+                            data: {
+                              calendar_bulk_edit_target: [("returnLink" if link_return_to), "searchableText"].compact.join(" "),
+                              base_path: (title_base_path if bulk_edit),
+                              row_id: (timeline_row_id if bulk_edit)
+                            }.compact %>
+                <% if item.notes.present? %>
+                  <div class="event-calendars__note-group" data-calendar-bulk-edit-target="searchableText">
+                    <%= simple_format(item.notes, class: "event-calendars__note") %>
+                  </div>
+                <% end %>
+              </td>
+            <% when :vendor %>
+              <td data-calendar-bulk-edit-target="searchableText"><%= item.vendor_name.presence || "—" %></td>
+            <% when :location %>
+              <td data-calendar-bulk-edit-target="searchableText"><%= item.location_name.presence || "—" %></td>
+            <% when :team %>
+              <td data-calendar-bulk-edit-target="searchableText">
+                <%= team_label %>
+              </td>
+            <% when :relation %>
+              <td><%= calendar_item_relative_label(item) || "—" %></td>
             <% end %>
-          </td>
-          <% if show_relative %>
-            <td><%= calendar_item_relative_label(item) || "—" %></td>
-          <% else %>
-            <td data-calendar-bulk-edit-target="searchableText"><%= item.vendor_name.presence || "—" %></td>
-            <td data-calendar-bulk-edit-target="searchableText"><%= item.location_name.presence || "—" %></td>
-            <td data-calendar-bulk-edit-target="searchableText">
-              <%= team_label %>
-            </td>
           <% end %>
           <% if show_tags %>
             <td>
@@ -553,11 +609,11 @@
           <% if show_edit_button %>
             <td class="event-calendars__row-action">
               <%= link_to "Edit",
-                          edit_event_calendar_item_path(calendar.event, item, return_to: "#{request.fullpath}##{timeline_row_id}"),
+                          edit_event_calendar_item_path(item_calendar.event, item, return_to: "#{request.fullpath}##{timeline_row_id}"),
                           class: "event-calendars__edit-link",
                           data: (bulk_edit ? {
                             calendar_bulk_edit_target: "returnLink",
-                            base_path: edit_event_calendar_item_path(calendar.event, item),
+                            base_path: edit_event_calendar_item_path(item_calendar.event, item),
                             row_id: timeline_row_id
                           } : {}) %>
             </td>
