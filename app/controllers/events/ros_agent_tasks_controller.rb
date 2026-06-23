@@ -63,14 +63,15 @@ module Events
         return
       end
 
-      batch.answer!(answers_params)
+      submitted_answers = answers_params
+      batch.answer!(submitted_answers)
       @task.append_event!(
         event_type: "questions_answered",
         message: "Planner answered agent questions.",
-        payload: { answers: answers_params },
+        payload: { answers: submitted_answers },
         created_by: current_user
       )
-      enqueue_runner(:initial_run)
+      enqueue_runner(:answer_questions)
       redirect_to event_ros_agent_task_path(@event, @task), notice: "Answers submitted."
     end
 
@@ -165,7 +166,10 @@ module Events
     end
 
     def answers_params
-      params.fetch(:answers, {}).permit!.to_h
+      selected_answers = params.fetch(:answers, {}).permit!.to_h
+      freeform_answers = params.fetch(:freeform_answers, {}).permit!.to_h
+
+      selected_answers.merge(freeform_answers.compact_blank)
     end
 
     def task_source_files

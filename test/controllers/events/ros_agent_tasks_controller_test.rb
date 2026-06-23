@@ -184,6 +184,17 @@ module Events
 
     test "show anchors open planning questions so polling can reveal them" do
       @task.update!(status: "needs_input")
+      agent_task_question_batches(:open_questions).update!(
+        questions_json: [
+          {
+            "key" => "date_mapping",
+            "label" => "Date Mapping",
+            "question" => "Should the source Saturday timeline map to the event wedding date?",
+            "options" => [{ "value" => "map_saturday", "label" => "Map Saturday", "recommended" => true }],
+            "freeform_allowed" => true
+          }
+        ]
+      )
 
       get event_ros_agent_task_path(@event, @task)
 
@@ -191,6 +202,9 @@ module Events
       assert_select "section#planning-questions[tabindex='-1']", count: 1
       assert_select "section#planning-questions h2", text: "Planning Questions"
       assert_select "form[action='#{answer_questions_event_ros_agent_task_path(@event, @task)}']", count: 1
+      assert_select "input[type='radio'][name='answers[date_mapping]']", count: 1
+      assert_select "input[type='text'][name='freeform_answers[date_mapping]']", count: 1
+      assert_select "input[type='text'][name='answers[date_mapping]']", count: 0
     end
 
     test "show anchors draft ROS so polling can reveal it" do
@@ -469,6 +483,10 @@ module Events
             answers: {
               date_mapping: "map_saturday_to_wedding_date",
               scrub_names: "remove_source_names"
+            },
+            freeform_answers: {
+              date_mapping: "",
+              scrub_names: "Remove names but keep vendor roles."
             }
           }
         end
@@ -477,7 +495,8 @@ module Events
       assert_redirected_to event_ros_agent_task_path(@event, @task)
       assert_equal "answered", batch.reload.status
       assert_equal "map_saturday_to_wedding_date", batch.answers_json["date_mapping"]
-      assert_equal [{ task_id: @task.id, mode: :initial_run }], enqueued
+      assert_equal "Remove names but keep vendor roles.", batch.answers_json["scrub_names"]
+      assert_equal [{ task_id: @task.id, mode: :answer_questions }], enqueued
       assert_equal "questions_answered", @task.events.order(:created_at).last.event_type
     end
 

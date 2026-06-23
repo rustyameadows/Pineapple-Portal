@@ -73,6 +73,30 @@ module RosAgent
       assert_includes content, "Wedding Day"
     end
 
+    test "answer question mode tells the agent to use planner answers" do
+      task = build_task(
+        question_batches: [
+          FakeQuestionBatch.new(
+            status: "answered",
+            questions_json: [{ "key" => "prior_day_setup", "label" => "Prior-day setup" }],
+            answers_json: { "prior_day_setup" => "wedding_day_only" }
+          )
+        ]
+      )
+
+      payload = PromptBuilder.new(
+        task: task,
+        mode: :answer_questions,
+        event_context: { event: { id: events(:one).id } },
+        source_inputs: []
+      ).build
+
+      content = payload.dig(:input, 0, :content).filter_map { |entry| entry[:text] }.join("\n")
+
+      assert_includes payload[:instructions], "Use the planner's answers to continue the ROS draft"
+      assert_includes content, "wedding_day_only"
+    end
+
     private
 
     def build_task(source_understanding_json: {}, draft_ros_json: {}, question_batches: [])

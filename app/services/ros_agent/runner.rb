@@ -247,6 +247,8 @@ module RosAgent
 
     def purpose_for_request(mode)
       case mode.to_sym
+      when :answer_questions
+        "questions"
       when :refine_draft
         "refinement"
       when :request_final_plan

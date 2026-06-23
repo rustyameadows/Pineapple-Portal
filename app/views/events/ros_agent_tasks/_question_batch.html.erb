@@ -15,7 +15,7 @@
             </label>
           <% end %>
           <% if question["freeform_allowed"] || Array(question["options"]).empty? %>
-            <%= text_field_tag "answers[#{question["key"]}]", nil, class: "event-form__input", placeholder: "Custom answer" %>
+            <%= text_field_tag "freeform_answers[#{question["key"]}]", nil, class: "event-form__input", placeholder: "Custom answer" %>
           <% end %>
         </div>
       <% end %>

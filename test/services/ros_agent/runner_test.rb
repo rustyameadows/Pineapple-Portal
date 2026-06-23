@@ -293,6 +293,39 @@ module RosAgent
       assert_equal({ "input_tokens" => 100, "output_tokens" => 50 }, task.usage_json)
     end
 
+    test "answer questions mode uses questions purpose and answer-aware prompt" do
+      task = FakeTask.new(event: events(:one), artifacts: [{ type: "input_file", file_id: "file_123" }])
+      response = response_hash(
+        payload: {
+          "state" => "draft_ready",
+          "summary" => "Draft ROS is ready for review.",
+          "draft_ros" => valid_draft_ros,
+          "assumptions" => [],
+          "review_notes" => [],
+          "suggested_next_questions" => []
+        }
+      )
+      trace_attributes = nil
+      client = FakeClient.new(response)
+
+      Runner.new(
+        task: task,
+        client: client,
+        prompt_builder_class: FakePromptBuilder,
+        source_document_uploader_class: FakeSourceDocumentUploader,
+        source_file_input_builder_class: FakeSourceFileInputBuilder,
+        event_context_class: FakeEventContext,
+        trace_recorder_class: ->(**attributes) {
+          trace_attributes = attributes
+          FakeTraceRecorder.new(**attributes)
+        }
+      ).call(mode: :answer_questions)
+
+      assert_equal "questions", trace_attributes[:purpose]
+      assert_equal "Prompt for answer_questions", client.payloads.first[:instructions]
+      assert_equal "drafting", task.status
+    end
+
     test "creates a question batch when the model needs planner input" do
       task = FakeTask.new(event: events(:one))
       response = response_hash(
