@@ -26,6 +26,18 @@
               <%= form.text_area :prompt, rows: 7, class: "event-form__textarea" %>
             </div>
 
+            <div class="event-form__grid">
+              <div class="event-form__group">
+                <%= form.label :model, "Model" %>
+                <%= form.select :model, AgentTask::MODEL_OPTIONS, {}, class: "event-form__select" %>
+              </div>
+
+              <div class="event-form__group">
+                <%= form.label :reasoning_effort, "Reasoning" %>
+                <%= form.select :reasoning_effort, AgentTask::REASONING_EFFORT_OPTIONS, {}, class: "event-form__select" %>
+              </div>
+            </div>
+
             <div class="event-form__group">
               <%= label_tag "agent_task_source_files", "Source files" %>
               <%= file_field_tag "agent_task[source_files][]", multiple: true, id: "agent_task_source_files", class: "event-form__input" %>

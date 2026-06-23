@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_22_190000) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_22_205000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -113,6 +113,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_22_190000) do
     t.jsonb "last_error_json", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "model", default: "gpt-5.5", null: false
+    t.string "reasoning_effort", default: "high", null: false
     t.index ["approved_by_id"], name: "index_agent_tasks_on_approved_by_id"
     t.index ["created_by_id"], name: "index_agent_tasks_on_created_by_id"
     t.index ["event_id", "created_at"], name: "index_agent_tasks_on_event_id_and_created_at"

@@ -33,6 +33,14 @@ module Events
       assert_select "form[action='#{event_ros_agent_tasks_path(event)}'][enctype='multipart/form-data']" do
         assert_select "textarea[name='agent_task[prompt]']"
         assert_select "input[name='agent_task[mode]'][value='build_ros_from_source']", count: 1
+        assert_select "select[name='agent_task[model]']" do
+          assert_select "option[value='gpt-5.5']", text: "GPT-5.5"
+          assert_select "option[value='gpt-5.4-mini']", text: "GPT-5.4 Mini"
+        end
+        assert_select "select[name='agent_task[reasoning_effort]']" do
+          assert_select "option[value='high']", text: "High"
+          assert_select "option[value='low']", text: "Low"
+        end
         assert_select "input[name='agent_task[source_files][]'][type='file'][multiple]", count: 1
         assert_select "input[name='agent_task[document_ids][]']", count: 0
       end
@@ -54,6 +62,8 @@ module Events
                     agent_task: {
                       prompt: "Adapt the uploaded schedule for this wedding.",
                       mode: "build_ros_from_source",
+                      model: "gpt-5.4-mini",
+                      reasoning_effort: "low",
                       source_files: [
                         fixture_file_upload("millar_sample.csv", "text/csv")
                       ]
@@ -71,6 +81,8 @@ module Events
       assert_redirected_to event_ros_agent_task_path(@event, created_task)
       assert_equal @user, created_task.created_by
       assert_equal "build_ros_from_source", created_task.mode
+      assert_equal "gpt-5.4-mini", created_task.model
+      assert_equal "low", created_task.reasoning_effort
       artifact = created_task.artifacts.order(:position).sole
       assert_nil artifact.document_id
       assert_equal "millar_sample.csv", artifact.filename

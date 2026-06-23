@@ -162,7 +162,7 @@ module Events
     end
 
     def task_params
-      params.require(:agent_task).permit(:prompt, :mode)
+      params.require(:agent_task).permit(:prompt, :mode, :model, :reasoning_effort)
     end
 
     def answers_params

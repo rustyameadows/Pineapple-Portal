@@ -10,6 +10,19 @@ class AgentTaskTest < ActiveSupport::TestCase
 
     assert_equal "draft", task.status
     assert_equal 0, task.current_plan_version
+    assert_equal "gpt-5.5", task.model
+    assert_equal "high", task.reasoning_effort
+  end
+
+  test "validates model and reasoning effort" do
+    task = agent_tasks(:draft_task)
+
+    task.model = "bogus-model"
+    task.reasoning_effort = "maximum"
+
+    assert_not task.valid?
+    assert_includes task.errors[:model], "is not included in the list"
+    assert_includes task.errors[:reasoning_effort], "is not included in the list"
   end
 
   test "requires prompt" do

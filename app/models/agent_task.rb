@@ -19,6 +19,19 @@ class AgentTask < ApplicationRecord
     analysis_only: "analysis_only"
   }.freeze
 
+  DEFAULT_MODEL = "gpt-5.5".freeze
+  DEFAULT_REASONING_EFFORT = "high".freeze
+  MODEL_OPTIONS = [
+    ["GPT-5.5", "gpt-5.5"],
+    ["GPT-5.4", "gpt-5.4"],
+    ["GPT-5.4 Mini", "gpt-5.4-mini"]
+  ].freeze
+  REASONING_EFFORT_OPTIONS = [
+    ["Low", "low"],
+    ["Medium", "medium"],
+    ["High", "high"]
+  ].freeze
+
   belongs_to :event
   belongs_to :created_by, class_name: "User"
   belongs_to :approved_by, class_name: "User", optional: true
@@ -30,11 +43,15 @@ class AgentTask < ApplicationRecord
 
   attribute :status, :string
   attribute :mode, :string
+  attribute :model, :string, default: DEFAULT_MODEL
+  attribute :reasoning_effort, :string, default: DEFAULT_REASONING_EFFORT
 
   enum :status, STATUSES, validate: true
   enum :mode, MODES, validate: true
 
   validates :prompt, presence: true
+  validates :model, inclusion: { in: MODEL_OPTIONS.map(&:second) }
+  validates :reasoning_effort, inclusion: { in: REASONING_EFFORT_OPTIONS.map(&:second) }
   validates :current_plan_version, numericality: { greater_than_or_equal_to: 0 }
 
   def ready_to_apply?
