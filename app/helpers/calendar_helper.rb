@@ -236,6 +236,47 @@ module CalendarHelper
     "TBD"
   end
 
+  def ros_agent_draft_array_label(values)
+    Array(values).map(&:presence).compact.join(", ").presence || "—"
+  end
+
+  def ros_agent_draft_source_refs_label(refs)
+    Array(refs).map do |ref|
+      if ref.is_a?(Hash)
+        [ref["artifact"], ref["locator"]].compact_blank.join(" — ").presence || ref.to_json
+      else
+        ref.to_s
+      end
+    end.compact_blank.join("; ").presence || "—"
+  end
+
+  def ros_agent_draft_date_mapping_label(date_mapping)
+    source_days = Array(date_mapping.to_h["source_days"])
+    return "—" if source_days.blank?
+
+    source_days.map do |day|
+      if day.is_a?(Hash)
+        [day["source_label"], day["target_date"]].compact_blank.join(" → ").presence || day.to_json
+      else
+        day.to_s
+      end
+    end.compact_blank.join("; ")
+  end
+
+  def ros_agent_draft_item_value(entry, key)
+    value = entry[key]
+    return "—" if value.nil? || value == ""
+
+    case value
+    when Array
+      value.to_json
+    when Hash
+      value.to_json
+    else
+      value.to_s
+    end
+  end
+
   def calendar_item_relative_label(item)
     return unless item.relative? && item.relative_anchor
 

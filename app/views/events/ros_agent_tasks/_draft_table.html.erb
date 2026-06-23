@@ -1,38 +1,105 @@
 <% draft = task.draft_ros_json || {} %>
 <% draft_days = Array(draft["draft_days"]) %>
 <% draft_timezone = ros_agent_draft_timezone(task) %>
+<% entries_by_day = draft_days.map { |day| [day, Array(day["entries"].presence || draft["draft_items"]).select { |entry| entry["day_label"].blank? || entry["day_label"] == day["label"] }] } %>
+<% all_draft_entries = entries_by_day.flat_map(&:last) %>
+<% preferred_item_keys = %w[day_label title timing duration_minutes notes location vendor_handling staff_handling tags confidence planner_review_needed source_refs] %>
+<% all_item_keys = all_draft_entries.flat_map(&:keys).uniq %>
+<% draft_item_keys = preferred_item_keys.select { |key| all_item_keys.include?(key) } + (all_item_keys - preferred_item_keys).sort %>
+<% draft_table_colspan = draft_item_keys.size + 1 %>
 
 <% if draft_days.any? %>
   <section class="event-section__body" id="draft-ros" tabindex="-1">
     <h2>Draft ROS</h2>
     <p class="event-section__note">Draft agent output. These rows are not live calendar records.</p>
 
-    <table class="event-table event-calendars__table">
-      <thead>
-        <tr>
-          <th class="event-calendars__schedule-column">Schedule</th>
-          <th class="event-calendars__title-column">Title</th>
-          <th>Location</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
+    <table class="event-table ros-agent-draft__summary-table">
       <tbody>
-        <% draft_days.each do |day| %>
-          <% entries = Array(day["entries"].presence || draft["draft_items"]).select { |entry| entry["day_label"].blank? || entry["day_label"] == day["label"] } %>
-          <tr class="event-calendars__date-row">
-            <td colspan="4"><span class="event-calendars__date-label"><%= ros_agent_draft_day_label(day, entries, draft_timezone) %></span></td>
-          </tr>
-          <% entries.each do |entry| %>
-            <tr class="event-calendars__row">
-              <td class="event-calendars__schedule-column"><%= ros_agent_draft_schedule_label(entry, draft_timezone) %></td>
-              <td class="event-calendars__title-column"><%= entry["title"] %></td>
-              <td><%= entry["location"] || entry["location_name"] || "—" %></td>
-              <td><%= simple_format(entry["notes"].to_s) %></td>
-            </tr>
-          <% end %>
-        <% end %>
+        <tr>
+          <th>Target Event Summary</th>
+          <td><%= draft["target_event_summary"].presence || "—" %></td>
+        </tr>
+        <tr>
+          <th>Date Mapping</th>
+          <td><%= ros_agent_draft_date_mapping_label(draft["date_mapping"]) %></td>
+        </tr>
+        <tr>
+          <th>Assumptions</th>
+          <td><%= ros_agent_draft_array_label(draft["assumptions"]) %></td>
+        </tr>
+        <tr>
+          <th>Review Flags</th>
+          <td><%= ros_agent_draft_array_label(draft["review_flags"]) %></td>
+        </tr>
+        <tr>
+          <th>Refinement Notes</th>
+          <td><%= ros_agent_draft_array_label(draft["refinement_notes"]) %></td>
+        </tr>
+        <tr>
+          <th>Source References</th>
+          <td><%= ros_agent_draft_source_refs_label(draft["source_references"]) %></td>
+        </tr>
       </tbody>
     </table>
+
+    <div class="ros-agent-draft__review" data-controller="ros-agent-draft-table">
+      <div class="ros-agent-draft__field-controls">
+        <button type="button"
+                class="ros-agent-draft__field-button"
+                data-ros-agent-draft-table-target="previousButton"
+                data-action="ros-agent-draft-table#previous">
+          Previous fields
+        </button>
+        <button type="button"
+                class="ros-agent-draft__field-button"
+                data-ros-agent-draft-table-target="nextButton"
+                data-action="ros-agent-draft-table#next">
+          Next fields
+        </button>
+      </div>
+
+      <div class="ros-agent-draft__table-shell"
+           tabindex="0"
+           data-ros-agent-draft-table-target="shell"
+           data-action="scroll->ros-agent-draft-table#sync">
+        <table class="event-table event-calendars__table ros-agent-draft__table">
+          <thead>
+            <tr>
+              <th class="event-calendars__schedule-column ros-agent-draft__schedule-column">Schedule</th>
+              <% draft_item_keys.each do |key| %>
+                <th><%= key %></th>
+              <% end %>
+            </tr>
+          </thead>
+          <tbody>
+            <% entries_by_day.each do |day, entries| %>
+              <tr class="event-calendars__date-row ros-agent-draft__date-row">
+                <td colspan="<%= draft_table_colspan %>">
+                  <span class="event-calendars__date-label"><%= ros_agent_draft_day_label(day, entries, draft_timezone) %></span>
+                  <div class="event-section__note">
+                    Agent day label: <%= day["label"].presence || "—" %>
+                    <% if day["date"].present? %>
+                      · Schema date: <%= day["date"] %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+              <% entries.each do |entry| %>
+                <tr class="event-calendars__row">
+                  <td class="event-calendars__schedule-column ros-agent-draft__schedule-column"><%= ros_agent_draft_schedule_label(entry, draft_timezone) %></td>
+                  <% draft_item_keys.each do |key| %>
+                    <td><%= ros_agent_draft_item_value(entry, key) %></td>
+                  <% end %>
+                </tr>
+              <% end %>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3>Raw Draft JSON</h3>
+    <pre class="ros-agent-draft__raw-json"><%= JSON.pretty_generate(draft) %></pre>
 
     <%= form_with url: refine_draft_event_ros_agent_task_path(@event, task), method: :post, local: true do %>
       <div class="event-form__group">

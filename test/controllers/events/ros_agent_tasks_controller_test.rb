@@ -221,19 +221,47 @@ module Events
       @task.update!(
         status: "drafting",
         draft_ros_json: {
+          "target_event_summary" => "A two-day adapted wedding ROS.",
+          "date_mapping" => {
+            "source_days" => [
+              { "source_label" => "Friday source", "target_date" => "2027-10-15" }
+            ]
+          },
           "draft_days" => [
             {
               "label" => "Friday Pre-Event Production",
+              "date" => "2027-10-15",
               "entries" => [
                 {
                   "title" => "Production / Entertainment Crew Line Check",
-                  "timing" => { "kind" => "absolute", "starts_at" => "2027-10-15T18:00:00-04:00" },
-                  "duration_minutes" => nil,
+                  "day_label" => "Friday Pre-Event Production",
+                  "timing" => {
+                    "kind" => "relative",
+                    "starts_at" => "2027-10-15T18:00:00-04:00",
+                    "relative_anchor_title" => "Guest Arrival",
+                    "relative_offset_minutes" => -120
+                  },
+                  "duration_minutes" => 120,
                   "notes" => "Adapted from source.",
-                  "location" => "TBD"
+                  "location" => "TBD",
+                  "vendor_handling" => "placeholder",
+                  "staff_handling" => "map_to_event_team",
+                  "tags" => ["Production", "Music"],
+                  "confidence" => "medium",
+                  "planner_review_needed" => true,
+                  "custom_agent_field" => "do not hide me",
+                  "source_refs" => [
+                    { "artifact" => "millar_sample.csv", "locator" => "row 2" }
+                  ]
                 }
               ]
             }
+          ],
+          "assumptions" => ["Use Friday for production checks."],
+          "review_flags" => ["Confirm whether a production check is needed."],
+          "refinement_notes" => ["Planner asked for a cleaner display."],
+          "source_references" => [
+            { "artifact" => "millar_sample.csv", "locator" => "Friday section" }
           ]
         }
       )
@@ -241,10 +269,33 @@ module Events
       get event_ros_agent_task_path(@event, @task)
 
       assert_response :success
+      assert_select "#draft-ros [data-controller='ros-agent-draft-table']", 1
+      assert_select "#draft-ros .ros-agent-draft__table-shell[data-ros-agent-draft-table-target='shell']", 1
+      assert_select "#draft-ros button", text: "Previous fields"
+      assert_select "#draft-ros button", text: "Next fields"
       assert_select "#draft-ros .event-calendars__date-label", text: "Friday, October 15"
-      assert_select "#draft-ros td.event-calendars__schedule-column", text: "6:00 PM"
-      assert_no_match "Friday Pre-Event Production", response.body
-      assert_no_match "2027-10-15T18:00:00-04:00", response.body
+      assert_select "#draft-ros", text: /Friday Pre-Event Production/
+      assert_select "#draft-ros td.event-calendars__schedule-column", text: "6:00 PM – 8:00 PM"
+      assert_select "#draft-ros", text: /A two-day adapted wedding ROS/
+      assert_select "#draft-ros", text: /Friday source/
+      assert_select "#draft-ros", text: /Use Friday for production checks/
+      assert_select "#draft-ros", text: /Confirm whether a production check is needed/
+      assert_select "#draft-ros", text: /Planner asked for a cleaner display/
+      assert_select "#draft-ros", text: /millar_sample.csv/
+      assert_select "#draft-ros", text: /relative/
+      assert_select "#draft-ros", text: /2027-10-15T18:00:00-04:00/
+      assert_select "#draft-ros", text: /Guest Arrival/
+      assert_select "#draft-ros", text: /-120/
+      assert_select "#draft-ros", text: /120/
+      assert_select "#draft-ros", text: /Adapted from source/
+      assert_select "#draft-ros", text: /TBD/
+      assert_select "#draft-ros", text: /placeholder/
+      assert_select "#draft-ros", text: /map_to_event_team/
+      assert_select "#draft-ros", text: /Production/
+      assert_select "#draft-ros", text: /Music/
+      assert_select "#draft-ros", text: /medium/
+      assert_select "#draft-ros", text: /true/
+      assert_select "#draft-ros", text: /do not hide me/
     end
 
     test "show anchors review plan so polling can reveal it" do
