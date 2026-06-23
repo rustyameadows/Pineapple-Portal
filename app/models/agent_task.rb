@@ -23,13 +23,15 @@ class AgentTask < ApplicationRecord
   DEFAULT_REASONING_EFFORT = "high".freeze
   MODEL_OPTIONS = [
     ["GPT-5.5", "gpt-5.5"],
-    ["GPT-5.4", "gpt-5.4"],
     ["GPT-5.4 Mini", "gpt-5.4-mini"]
   ].freeze
   REASONING_EFFORT_OPTIONS = [
+    ["None", "none"],
+    ["Minimal", "minimal"],
     ["Low", "low"],
     ["Medium", "medium"],
-    ["High", "high"]
+    ["High", "high"],
+    ["X-High", "xhigh"]
   ].freeze
 
   belongs_to :event

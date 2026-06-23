@@ -35,11 +35,14 @@ module Events
         assert_select "input[name='agent_task[mode]'][value='build_ros_from_source']", count: 1
         assert_select "select[name='agent_task[model]']" do
           assert_select "option[value='gpt-5.5']", text: "GPT-5.5"
+          assert_select "option[value='gpt-5.4']", count: 0
           assert_select "option[value='gpt-5.4-mini']", text: "GPT-5.4 Mini"
         end
         assert_select "select[name='agent_task[reasoning_effort]']" do
+          assert_select "option[value='none']", text: "None"
+          assert_select "option[value='minimal']", text: "Minimal"
           assert_select "option[value='high']", text: "High"
-          assert_select "option[value='low']", text: "Low"
+          assert_select "option[value='xhigh']", text: "X-High"
         end
         assert_select "input[name='agent_task[source_files][]'][type='file'][multiple]", count: 1
         assert_select "input[name='agent_task[document_ids][]']", count: 0
