@@ -1,12 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-const FACETS = ["vendor", "location", "team", "tag"]
-const FACET_PARAMS = {
-  vendor: "vendors[]",
-  location: "locations[]",
-  team: "teams[]",
-  tag: "tags[]"
-}
+const DEFAULT_FACETS = ["vendor", "location", "team", "tag"]
 
 export default class extends Controller {
   static highlightName = "calendar-bulk-edit-search-match"
@@ -43,6 +37,7 @@ export default class extends Controller {
     "searchableText",
     "searchInput",
     "selectionCount",
+    "statusInput",
     "statusRow",
     "tableShell",
     "tagsRow",
@@ -61,17 +56,14 @@ export default class extends Controller {
   ]
 
   connect() {
+    const filterFacets = this.filterFacets
+
     this.rowStates = this.rowTargets.map((row) => ({
       element: row,
       checkbox: row.querySelector("input.event-calendars__bulk-checkbox"),
       groupKey: row.dataset.calendarGroupKey || "",
       searchText: row.dataset.calendarSearchText || "",
-      filters: {
-        vendor: this.parseFilterValues(row.dataset.calendarVendorValues),
-        location: this.parseFilterValues(row.dataset.calendarLocationValues),
-        team: this.parseFilterValues(row.dataset.calendarTeamValues),
-        tag: this.parseFilterValues(row.dataset.calendarTagValues)
-      }
+      filters: this.rowFilters(row, filterFacets)
     }))
 
     if (!this.hasSearchInputTarget && !this.hasFilterCheckboxTarget) {
@@ -106,7 +98,22 @@ export default class extends Controller {
   }
 
   actionChanged() {
+    this.pendingActionLabel = null
     this.updateActionState()
+  }
+
+  submitStatusAction(event) {
+    event.preventDefault()
+    if (!this.hasSelection) return
+
+    const status = event.currentTarget.dataset.bulkStatus || ""
+    if (!status) return
+
+    this.pendingActionLabel = event.currentTarget.dataset.bulkActionLabel || event.currentTarget.textContent.trim()
+    if (this.hasActionSelectTarget) this.actionSelectTarget.value = "set_status"
+    if (this.hasStatusInputTarget) this.statusInputTarget.value = status
+
+    this.confirm(event)
   }
 
   filtersChanged() {
@@ -622,11 +629,11 @@ export default class extends Controller {
   matchesFilters(rowState, query, activeFilters) {
     if (query.length > 0 && !rowState.searchText.includes(query)) return false
 
-    return FACETS.every((facet) => {
+    return this.filterFacets.every((facet) => {
       const selectedValues = activeFilters[facet]
       if (selectedValues.size === 0) return true
 
-      return rowState.filters[facet].some((value) => selectedValues.has(value))
+      return (rowState.filters[facet] || []).some((value) => selectedValues.has(value))
     })
   }
 
@@ -642,8 +649,7 @@ export default class extends Controller {
 
     if (rawQuery.length > 0) params.set("q", rawQuery)
 
-    FACETS.forEach((facet) => {
-      const param = FACET_PARAMS[facet]
+    this.filterParams.forEach((param) => {
       this.selectedFilterValuesForParam(param).forEach((value) => {
         params.append(param, value)
       })
@@ -677,6 +683,25 @@ export default class extends Controller {
     } catch (_error) {
       return []
     }
+  }
+
+  rowFilters(row, facets) {
+    return facets.reduce((filters, facet) => {
+      filters[facet] = this.parseFilterValues(row.dataset[this.rowFilterDatasetKey(facet)])
+      return filters
+    }, {})
+  }
+
+  rowFilterDatasetKey(facet) {
+    return `calendar${this.camelizeFacet(facet)}Values`
+  }
+
+  camelizeFacet(facet) {
+    return facet
+      .split(/[^a-z0-9]+/i)
+      .filter((part) => part.length > 0)
+      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+      .join("")
   }
 
   tokenizeFilterValue(value) {
@@ -882,7 +907,7 @@ export default class extends Controller {
   }
 
   get activeFilters() {
-    return FACETS.reduce((filters, facet) => {
+    return this.filterFacets.reduce((filters, facet) => {
       filters[facet] = new Set(
         this.filterCheckboxTargets
           .filter((checkbox) => checkbox.dataset.filterFacet === facet && checkbox.checked)
@@ -890,6 +915,22 @@ export default class extends Controller {
       )
       return filters
     }, {})
+  }
+
+  get filterFacets() {
+    const facets = this.filterCheckboxTargets
+      .map((checkbox) => checkbox.dataset.filterFacet)
+      .filter((facet) => facet && facet.length > 0)
+
+    return [...new Set(facets.length > 0 ? facets : DEFAULT_FACETS)]
+  }
+
+  get filterParams() {
+    const params = this.filterCheckboxTargets
+      .map((checkbox) => checkbox.dataset.filterParam)
+      .filter((param) => param && param.length > 0)
+
+    return [...new Set(params)]
   }
 
   get normalizedSearchQuery() {
@@ -987,9 +1028,10 @@ export default class extends Controller {
   }
 
   get currentActionLabel() {
+    if (this.pendingActionLabel) return this.pendingActionLabel
     if (!this.hasActionSelectTarget) return "the selected action"
 
-    const selectedOption = this.actionSelectTarget.selectedOptions[0]
+    const selectedOption = this.actionSelectTarget.selectedOptions?.[0]
     return selectedOption?.textContent?.trim() || "the selected action"
   }
 

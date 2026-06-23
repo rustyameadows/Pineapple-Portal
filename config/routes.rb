@@ -15,6 +15,7 @@ resources :users, only: [] do
 end
 
 get "decisions", to: "decisions#index", as: :decisions
+patch "decisions/bulk_update", to: "decisions#bulk_update", as: :decisions_bulk_update
 
 namespace :settings do
   get "run_of_show_defaults", to: "run_of_show_defaults#show", as: :run_of_show_defaults

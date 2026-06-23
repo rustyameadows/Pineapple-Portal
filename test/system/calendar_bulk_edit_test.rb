@@ -216,6 +216,50 @@ class CalendarBulkEditTest < ApplicationSystemTestCase
     assert_no_selector "input.event-calendars__bulk-checkbox[value='#{calendar_items(:afterparty).id}']:checked", visible: :all
   end
 
+  test "master decisions can filter select a segment and bulk update status with confirmation" do
+    decision_tag = @event.run_of_show_calendar.event_calendar_tags.create!(name: "Decisions")
+    flowers = calendar_items(:decision_flowers)
+    catering = calendar_items(:decision_catering)
+    [flowers, catering].each { |item| item.event_calendar_tags << decision_tag }
+
+    login_as_planner
+    visit decisions_path
+
+    assert_selector ".event-calendars__filter-summary-label", text: /event/i
+    assert_selector ".event-calendars__filter-summary-label", text: /status/i
+    assert_no_selector ".event-calendars__filter-summary-label", text: /vendor/i
+
+    fill_in_timeline_search("Florist")
+    assert_text "Select Florist"
+    assert_no_text "Approve Catering Menu"
+
+    fill_in_timeline_search("")
+    open_filter("Status")
+    set_filter_value("status", "planned", true)
+
+    assert_text "Approve Catering Menu"
+    assert_no_text "Select Florist"
+
+    within find("tr.event-calendars__date-row", text: /September 2025/i) do
+      click_button "Select"
+    end
+
+    assert_selector ".event-calendars__bulk-toolbar", visible: true
+    assert_selector ".event-calendars__bulk-count", text: /1\s+selected/
+
+    click_button "Mark as In Progress"
+    assert_selector "dialog[open]", text: "mark as in progress"
+    assert_equal "planned", catering.reload.status
+
+    within "dialog[open]" do
+      click_button "Confirm changes"
+    end
+
+    assert_text "Status updated for 1 decision."
+    assert_equal "in_progress", catering.reload.status
+    assert_equal "in_progress", flowers.reload.status
+  end
+
   test "run of show tag facet filters tagged and untagged rows" do
     login_as_planner
     visit event_calendar_path(@event)

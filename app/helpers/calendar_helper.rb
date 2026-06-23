@@ -394,6 +394,11 @@ module CalendarHelper
 
   def calendar_item_filter_values(item, facet)
     values = case facet.to_sym
+             when :event
+               event_name = item.event_calendar&.event&.name.to_s.strip
+               event_name.present? ? [ event_name ] : []
+             when :status
+               [ calendar_item_status_label(item) ]
              when :vendor
                value = item.vendor_name.to_s.strip
                value.present? ? [ value ] : []
@@ -418,7 +423,7 @@ module CalendarHelper
     normalized_values.presence || [ CALENDAR_FILTER_NONE_VALUE ]
   end
 
-  def calendar_filter_options(items, facet)
+  def calendar_filter_options(items, facet, include_none: true)
     labels_by_token = {}
 
     Array(items).each do |item|
@@ -432,17 +437,17 @@ module CalendarHelper
       end
     end
 
-    [
-      { label: "None", value: CALENDAR_FILTER_NONE_VALUE },
-      *labels_by_token.values
-                      .sort_by { |label| normalize_calendar_filter_value(label) }
-                      .map do |label|
-                        {
-                          label: label,
-                          value: calendar_filter_token(label)
-                        }
-                      end
-    ]
+    none_options = include_none ? [{ label: "None", value: CALENDAR_FILTER_NONE_VALUE }] : []
+    value_options = labels_by_token.values
+                                   .sort_by { |label| normalize_calendar_filter_value(label) }
+                                   .map do |label|
+                                     {
+                                       label: label,
+                                       value: calendar_filter_token(label)
+                                     }
+                                   end
+
+    none_options + value_options
   end
 
   def calendar_tag_filter_options(calendar)
