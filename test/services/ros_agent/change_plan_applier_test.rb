@@ -121,6 +121,83 @@ module RosAgent
       assert_includes item.event_calendar_tag_ids, tag.id
     end
 
+    test "omits nil non-null attributes so calendar item defaults apply" do
+      task = FakeTask.new(
+        event: @event,
+        status: "approved",
+        approved_plan_version: 3,
+        current_plan_version: 3
+      )
+
+      result = ChangePlanApplier.new(
+        task: task,
+        calendar: @calendar,
+        plan_hash: {
+          "operations" => [
+            {
+              "operation_id" => "create-item-1",
+              "operation_type" => "create_item",
+              "summary" => "Add guest arrival block",
+              "risk_level" => "low",
+              "item_attributes" => {
+                "title" => "Guest Arrival With Null Status",
+                "starts_at" => "2025-10-01T14:30:00Z",
+                "status" => nil,
+                "relative_offset_minutes" => nil,
+                "relative_before" => nil,
+                "relative_to_anchor_end" => nil,
+                "locked" => nil
+              }
+            }
+          ]
+        }
+      ).call
+
+      assert_predicate result, :applied?
+      item = @calendar.calendar_items.find_by!(title: "Guest Arrival With Null Status")
+      assert_equal "planned", item.status
+      assert_equal 0, item.relative_offset_minutes
+      assert_equal false, item.relative_before
+      assert_equal false, item.relative_to_anchor_end
+      assert_equal false, item.locked
+    end
+
+    test "keeps nullable clears on updates while omitting nil non-null attributes" do
+      item = calendar_items(:ceremony)
+      item.update!(notes: "Clear me", relative_before: true)
+      task = FakeTask.new(
+        event: @event,
+        status: "approved",
+        approved_plan_version: 3,
+        current_plan_version: 3
+      )
+
+      result = ChangePlanApplier.new(
+        task: task,
+        calendar: @calendar,
+        plan_hash: {
+          "operations" => [
+            {
+              "operation_id" => "update-item-1",
+              "operation_type" => "update_item",
+              "summary" => "Clear notes but leave relative flags alone",
+              "risk_level" => "low",
+              "target_item_id" => item.id,
+              "item_attributes" => {
+                "notes" => nil,
+                "relative_before" => nil
+              }
+            }
+          ]
+        }
+      ).call
+
+      assert_predicate result, :applied?
+      item.reload
+      assert_nil item.notes
+      assert_equal true, item.relative_before
+    end
+
     test "rolls back all changes when a later operation fails" do
       task = FakeTask.new(
         event: @event,

@@ -31,6 +31,7 @@ module RosAgent
         validate_common_fields(operation)
         validate_known_operation(operation)
         validate_create_item(operation) if operation_type(operation) == "create_item"
+        validate_item_status(operation)
         validate_existing_item(operation) if EXISTING_ITEM_OPERATIONS.include?(operation_type(operation))
         track_high_risk(operation)
       end
@@ -71,6 +72,14 @@ module RosAgent
       return if title.present?
 
       blocking_errors << "Operation #{operation_id(operation)} must provide attributes.title for create_item."
+    end
+
+    def validate_item_status(operation)
+      status = attributes_for(operation)["status"]
+      return if status.blank?
+      return if CalendarItem::STATUSES.value?(status)
+
+      blocking_errors << "Operation #{operation_id(operation)} has invalid item_attributes.status #{status}."
     end
 
     def validate_existing_item(operation)

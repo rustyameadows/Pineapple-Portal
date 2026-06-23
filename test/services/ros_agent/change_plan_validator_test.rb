@@ -113,5 +113,29 @@ module RosAgent
       assert_not result.valid?
       assert_includes result.blocking_errors, "Operation create-1 must provide attributes.title for create_item."
     end
+
+    test "blocks invalid calendar item status values" do
+      result = ChangePlanValidator.new(
+        task: @task,
+        calendar: @calendar,
+        plan_hash: {
+          "operations" => [
+            {
+              "operation_id" => "create-1",
+              "operation_type" => "create_item",
+              "summary" => "Add a row with a bad status",
+              "risk_level" => "low",
+              "item_attributes" => {
+                "title" => "Guest Arrival",
+                "status" => "confirmed"
+              }
+            }
+          ]
+        }
+      ).call
+
+      assert_not result.valid?
+      assert_includes result.blocking_errors, "Operation create-1 has invalid item_attributes.status confirmed."
+    end
   end
 end

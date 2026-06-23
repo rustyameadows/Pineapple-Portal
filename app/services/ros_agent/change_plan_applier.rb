@@ -14,6 +14,9 @@ module RosAgent
       relative_anchor_id relative_offset_minutes relative_before
       relative_to_anchor_end locked status
     ].freeze
+    NON_NULL_ITEM_ATTRIBUTES = %w[
+      title relative_offset_minutes relative_before relative_to_anchor_end locked status
+    ].freeze
 
     def initialize(task:, calendar:, plan_hash:)
       @task = task
@@ -149,6 +152,7 @@ module RosAgent
 
     def item_attributes(operation)
       attrs = attributes_for(operation).slice(*ITEM_ATTRIBUTES)
+      NON_NULL_ITEM_ATTRIBUTES.each { |key| attrs.delete(key) if attrs[key].nil? }
       if attrs.key?("starts_at") && attrs["starts_at"].present?
         attrs["starts_at"] = Time.zone.parse(attrs["starts_at"].to_s)
       end
