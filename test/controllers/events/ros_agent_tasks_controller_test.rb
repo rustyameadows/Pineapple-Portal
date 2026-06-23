@@ -260,8 +260,8 @@ module Events
               ]
             }
           ],
-          "assumptions" => ["Use Friday for production checks."],
-          "review_flags" => ["Confirm whether a production check is needed."],
+          "assumptions" => ["Use Friday for production checks.", "Confirm the wedding day anchor."],
+          "review_flags" => ["Confirm whether a production check is needed.", "Confirm source-only placeholders."],
           "refinement_notes" => ["Planner asked for a cleaner display."],
           "source_references" => [
             { "artifact" => "millar_sample.csv", "locator" => "Friday section" }
@@ -284,7 +284,10 @@ module Events
       assert_select "#draft-ros", text: /A two-day adapted wedding ROS/
       assert_select "#draft-ros", text: /Friday source/
       assert_select "#draft-ros", text: /Use Friday for production checks/
+      assert_select "#draft-ros .ros-agent-draft__summary-list li", text: "Use Friday for production checks."
+      assert_select "#draft-ros .ros-agent-draft__summary-list li", text: "Confirm the wedding day anchor."
       assert_select "#draft-ros", text: /Confirm whether a production check is needed/
+      assert_select "#draft-ros .ros-agent-draft__summary-list li", text: "Confirm source-only placeholders."
       assert_select "#draft-ros", text: /Planner asked for a cleaner display/
       assert_select "#draft-ros", text: /millar_sample.csv/
       assert_select "#draft-ros", text: /relative/

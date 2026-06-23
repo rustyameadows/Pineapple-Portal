@@ -873,6 +873,17 @@
   overflow-wrap: anywhere;
 }
 
+.ros-agent-draft__summary-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.ros-agent-draft__summary-list li {
+  line-height: 1.45;
+}
+
 #draft-ros {
   min-width: 0;
   overflow: hidden;

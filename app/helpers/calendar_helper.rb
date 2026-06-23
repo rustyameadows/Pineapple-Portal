@@ -252,30 +252,42 @@ module CalendarHelper
   end
 
   def ros_agent_draft_array_label(values)
-    Array(values).map(&:presence).compact.join(", ").presence || "—"
+    ros_agent_draft_list_label(Array(values).map(&:presence).compact)
   end
 
   def ros_agent_draft_source_refs_label(refs)
-    Array(refs).map do |ref|
+    items = Array(refs).map do |ref|
       if ref.is_a?(Hash)
         [ref["artifact"], ref["locator"]].compact_blank.join(" — ").presence || ref.to_json
       else
         ref.to_s
       end
-    end.compact_blank.join("; ").presence || "—"
+    end.compact_blank
+
+    ros_agent_draft_list_label(items)
   end
 
   def ros_agent_draft_date_mapping_label(date_mapping)
     source_days = Array(date_mapping.to_h["source_days"])
     return "—" if source_days.blank?
 
-    source_days.map do |day|
+    items = source_days.map do |day|
       if day.is_a?(Hash)
         [day["source_label"], day["target_date"]].compact_blank.join(" → ").presence || day.to_json
       else
         day.to_s
       end
-    end.compact_blank.join("; ")
+    end.compact_blank
+
+    ros_agent_draft_list_label(items)
+  end
+
+  def ros_agent_draft_list_label(items)
+    return "—" if items.blank?
+
+    content_tag(:ul, class: "ros-agent-draft__summary-list") do
+      safe_join(items.map { |item| content_tag(:li, item) })
+    end
   end
 
   def ros_agent_draft_item_value(entry, key)
