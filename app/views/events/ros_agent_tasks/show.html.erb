@@ -28,9 +28,9 @@
           <p><strong>Request:</strong> <%= @task.prompt %></p>
         </section>
 
-        <%= render "question_batch", task: @task, question_batch: @open_question_batch %>
-        <%= render "draft_table", task: @task %>
-        <%= render "preview", task: @task %>
+        <div id="ros-agent-action-sections">
+          <%= render "action_sections", task: @task, question_batch: @open_question_batch %>
+        </div>
 
         <% if @task.trace_summary_json.present? %>
           <section class="event-section__body">

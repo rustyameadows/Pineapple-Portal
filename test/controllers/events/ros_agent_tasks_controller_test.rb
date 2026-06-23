@@ -378,6 +378,43 @@ module Events
       assert_equal false, body["active"]
       assert_equal "Draft Ready", body["status_label"]
       assert_equal "draft-ros", body["action_anchor"]
+      assert_includes body["action_sections_html"], "id=\"draft-ros\""
+      assert_includes body["action_sections_html"], "Ceremony"
+    end
+
+    test "status keeps polling during refinement even when an old draft exists" do
+      @task.update!(
+        status: "drafting",
+        draft_ros_json: {
+          "draft_days" => [
+            {
+              "label" => "Wedding Day",
+              "entries" => [
+                { "time_label" => "4:00 PM", "title" => "Old Ceremony Draft" }
+              ]
+            }
+          ]
+        }
+      )
+      @task.llm_calls.create!(
+        purpose: "refinement",
+        provider: "openai",
+        model: "gpt-5.5",
+        reasoning_effort: "high",
+        status: "pending",
+        attempt: 1,
+        started_at: Time.current,
+        request_json: {}
+      )
+
+      get status_event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      body = JSON.parse(response.body)
+      assert_equal true, body["active"]
+      assert_equal "Drafting", body["status_label"]
+      assert_equal "draft-ros", body["action_anchor"]
+      assert_includes body["action_sections_html"], "Old Ceremony Draft"
     end
 
     test "status marks review plan as actionable for live polling" do
@@ -402,6 +439,32 @@ module Events
       assert_equal false, body["active"]
       assert_equal "Ready For Review", body["status_label"]
       assert_equal "review-plan", body["action_anchor"]
+      assert_includes body["action_sections_html"], "id=\"review-plan\""
+      assert_includes body["action_sections_html"], "Ceremony"
+    end
+
+    test "status renders planning questions for live polling" do
+      @task.update!(status: "needs_input")
+      agent_task_question_batches(:open_questions).update!(
+        questions_json: [
+          {
+            "key" => "date_mapping",
+            "label" => "Date Mapping",
+            "question" => "Should the source Saturday timeline map to the event wedding date?",
+            "options" => [{ "value" => "map_saturday", "label" => "Map Saturday", "recommended" => true }],
+            "freeform_allowed" => true
+          }
+        ]
+      )
+
+      get status_event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      body = JSON.parse(response.body)
+      assert_equal false, body["active"]
+      assert_equal "planning-questions", body["action_anchor"]
+      assert_includes body["action_sections_html"], "id=\"planning-questions\""
+      assert_includes body["action_sections_html"], "Date Mapping"
     end
 
     test "status returns no-cache json with source files llm calls events and last error" do

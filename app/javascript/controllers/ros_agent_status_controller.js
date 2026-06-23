@@ -61,13 +61,14 @@ export default class extends Controller {
     this.updateTarget("llmCalls", this.renderLlmCalls(data.llm_calls))
     this.updateTarget("latestError", this.renderLatestError(data.last_error))
     this.updateTarget("taskHistory", this.renderTaskHistory(data.task_events))
+    this.updateActionSections(data.action_sections_html)
 
     if (!active) {
       window.clearInterval(this.pollTimer)
     }
 
     if (nextActionAnchor && (nextStatus !== previousStatus || nextActionAnchor !== previousActionAnchor)) {
-      this.revealActionForAnchor(nextActionAnchor, { reloadIfMissing: true })
+      this.revealActionForAnchor(nextActionAnchor, { reloadIfMissing: false })
     }
   }
 
@@ -94,6 +95,15 @@ export default class extends Controller {
   updateTarget(targetName, html) {
     const target = this[`has${targetName.charAt(0).toUpperCase()}${targetName.slice(1)}Target`] ? this[`${targetName}Target`] : null
     if (!target) return
+    target.innerHTML = html
+  }
+
+  updateActionSections(html) {
+    if (typeof html !== "string") return
+
+    const target = document.getElementById("ros-agent-action-sections")
+    if (!target) return
+
     target.innerHTML = html
   }
 

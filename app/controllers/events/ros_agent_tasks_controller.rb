@@ -45,7 +45,7 @@ module Events
     end
 
     def show
-      @open_question_batch = @task.question_batches.open.order(:position).last
+      @open_question_batch = open_question_batch_for(@task)
       @task_events = @task.events.includes(:created_by).order(created_at: :asc, id: :asc)
       @artifacts = @task.artifacts.order(:position)
       @status_snapshot = task_status_snapshot
@@ -231,6 +231,7 @@ module Events
         active: active_status?(@task),
         status_label: status_label_for(@task),
         action_anchor: action_anchor_for(@task),
+        action_sections_html: action_sections_html_for(@task),
         source_files: source_file_artifacts.map { |artifact| serialize_source_file(artifact) },
         llm_calls: @task.llm_calls.order(:started_at, :created_at, :id).map { |call| serialize_llm_call(call) },
         task_events: @task.events.includes(:created_by).order(created_at: :asc, id: :asc).map { |event| serialize_task_event(event) },
@@ -245,12 +246,14 @@ module Events
     end
 
     def active_status?(task)
+      return true if in_flight_llm_call?(task)
       return false if task.drafting? && task.draft_ros_json.present?
 
       %w[draft analyzing drafting planning applying].include?(task.status.to_s)
     end
 
     def status_label_for(task)
+      return task.status.to_s.titleize if in_flight_llm_call?(task)
       return "Draft Ready" if task.drafting? && task.draft_ros_json.present?
 
       task.status.to_s.titleize
@@ -262,6 +265,25 @@ module Events
       return "draft-ros" if task.drafting? && task.draft_ros_json.present?
 
       nil
+    end
+
+    def in_flight_llm_call?(task)
+      task.llm_calls.pending.where(started_at: 15.minutes.ago..).exists?
+    end
+
+    def open_question_batch_for(task)
+      task.question_batches.open.order(:position).last
+    end
+
+    def action_sections_html_for(task)
+      render_to_string(
+        partial: "events/ros_agent_tasks/action_sections",
+        formats: [:html],
+        locals: {
+          task: task,
+          question_batch: open_question_batch_for(task)
+        }
+      )
     end
 
     def serialize_source_file(artifact)
