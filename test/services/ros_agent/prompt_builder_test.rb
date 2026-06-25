@@ -58,6 +58,19 @@ module RosAgent
       assert_includes payload[:instructions], "Notes are event-facing item subcopy"
     end
 
+    test "instructs the draft to include every intended event item" do
+      payload = PromptBuilder.new(
+        task: build_task,
+        mode: :initial_run,
+        event_context: { event: { id: events(:one).id } },
+        source_inputs: []
+      ).build
+
+      assert_includes payload[:instructions], "The draft ROS must include every intended event item as draft_items."
+      assert_includes payload[:instructions], "If the planner asks you to combine items from multiple sources, combine them and include the resulting event items in the draft."
+      assert_includes payload[:instructions], "Do not merely reference future work like merging files, adding items later, or completing the ROS outside the draft."
+    end
+
     test "requires explicit planner intent before writing vendor values" do
       payload = PromptBuilder.new(
         task: build_task,

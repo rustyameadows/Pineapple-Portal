@@ -8,6 +8,9 @@ module RosAgent
     }.freeze
 
     DRAFT_DETAIL_INSTRUCTIONS = [
+      "The draft ROS must include every intended event item as draft_items.",
+      "If the planner asks you to combine items from multiple sources, combine them and include the resulting event items in the draft.",
+      "Do not merely reference future work like merging files, adding items later, or completing the ROS outside the draft.",
       "Use draft item details sparingly; most draft_items should have details: [].",
       "Details may only use field values notes, location, vendor_handling, staff_handling, or tags.",
       "Do not write TBD, placeholders, or generic cleanup commentary into details.",
