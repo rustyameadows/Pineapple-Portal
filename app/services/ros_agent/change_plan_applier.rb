@@ -99,6 +99,7 @@ module RosAgent
       item = calendar.calendar_items.create!(item_attributes(operation).merge(position: next_position))
       created_items_by_operation_id[operation_id(operation)] = item
       operation_counts[:create_count] += 1
+      apply_tags_to_item(item, operation)
     end
 
     def update_item(operation)
@@ -126,10 +127,21 @@ module RosAgent
 
     def assign_tags(operation)
       item = target_item(operation)
-      tag_ids = Array(operation["tag_ids"] || operation[:tag_ids]).map(&:to_i).reject(&:zero?)
-      tag_ids += Array(operation["tag_names"] || operation[:tag_names]).filter_map { |name| tag_for_name(name)&.id }
+      apply_tags_to_item(item, operation)
+    end
+
+    def apply_tags_to_item(item, operation)
+      tag_ids = tag_ids_for(operation)
+      return if tag_ids.blank?
+
       item.update!(event_calendar_tag_ids: (item.event_calendar_tag_ids + tag_ids).uniq)
       operation_counts[:assign_tag_count] += 1
+    end
+
+    def tag_ids_for(operation)
+      tag_ids = Array(operation["tag_ids"] || operation[:tag_ids]).map(&:to_i).reject(&:zero?)
+      tag_ids += Array(operation["tag_names"] || operation[:tag_names]).filter_map { |name| tag_for_name(name)&.id }
+      tag_ids.uniq
     end
 
     def tag_for_name(raw_name)

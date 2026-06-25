@@ -12,7 +12,7 @@ module RosAgent
         create_count: operations.count { |operation| operation_type(operation) == "create_item" },
         update_count: operations.count { |operation| operation_type(operation) == "update_item" },
         delete_count: operations.count { |operation| operation_type(operation) == "delete_item" },
-        tag_change_count: operations.count { |operation| %w[create_tag assign_tags].include?(operation_type(operation)) },
+        tag_change_count: operations.count { |operation| tag_change?(operation) },
         time_change_count: operations.count { |operation| time_change?(operation) },
         assumptions: Array(plan_hash["assumptions"] || plan_hash[:assumptions]),
         warnings: Array(plan_hash["warnings"] || plan_hash[:warnings]) + validator_result.warnings,
@@ -42,7 +42,7 @@ module RosAgent
         operation_id: operation_id(operation),
         summary: operation["summary"] || operation[:summary],
         before: nil,
-        after: attributes_for(operation).to_h.symbolize_keys
+        after: attributes_for(operation).to_h.symbolize_keys.merge(tag_snapshot(operation))
       }
     end
 
@@ -83,6 +83,22 @@ module RosAgent
     def time_change?(operation)
       attrs = attributes_for(operation)
       attrs.key?("starts_at") || attrs.key?("time_caption") || attrs.key?("relative_anchor_id") || attrs.key?("relative_offset_minutes")
+    end
+
+    def tag_change?(operation)
+      return true if %w[create_tag assign_tags].include?(operation_type(operation))
+
+      Array(operation["tag_ids"] || operation[:tag_ids]).any? ||
+        Array(operation["tag_names"] || operation[:tag_names]).any?
+    end
+
+    def tag_snapshot(operation)
+      {}.tap do |snapshot|
+        tag_ids = Array(operation["tag_ids"] || operation[:tag_ids])
+        tag_names = Array(operation["tag_names"] || operation[:tag_names])
+        snapshot[:tag_ids] = tag_ids if tag_ids.any?
+        snapshot[:tag_names] = tag_names if tag_names.any?
+      end
     end
 
     def operation_id(operation)

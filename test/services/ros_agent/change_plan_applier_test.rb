@@ -123,6 +123,45 @@ module RosAgent
       assert_includes item.event_calendar_tag_ids, tag.id
     end
 
+    test "applies top-level tags on create item operations" do
+      task = FakeTask.new(
+        event: @event,
+        status: "approved",
+        approved_plan_version: 3,
+        current_plan_version: 3
+      )
+      vendor_tag = event_calendar_tags(:vendor)
+      day_of_tag = event_calendar_tags(:day_of)
+
+      result = ChangePlanApplier.new(
+        task: task,
+        calendar: @calendar,
+        plan_hash: {
+          "operations" => [
+            {
+              "operation_id" => "create-item-1",
+              "operation_type" => "create_item",
+              "summary" => "Add production load-in.",
+              "risk_level" => "low",
+              "tag_ids" => [vendor_tag.id],
+              "tag_names" => [day_of_tag.name],
+              "item_attributes" => {
+                "title" => "Production Load-In",
+                "starts_at" => "2025-10-01T14:30:00Z"
+              }
+            }
+          ]
+        }
+      ).call
+
+      assert_predicate result, :applied?
+      assert_equal({ create_count: 1, update_count: 0, delete_count: 0, create_tag_count: 0, assign_tag_count: 1 }, task.applied_operation_counts)
+
+      item = @calendar.calendar_items.find_by!(title: "Production Load-In")
+
+      assert_equal [day_of_tag.id, vendor_tag.id].sort, item.event_calendar_tag_ids.sort
+    end
+
     test "omits nil non-null attributes so calendar item defaults apply" do
       task = FakeTask.new(
         event: @event,

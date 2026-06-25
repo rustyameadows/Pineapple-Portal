@@ -23,6 +23,8 @@ module RosAgent
               "operation_type" => "create_item",
               "summary" => "Add guest arrival block",
               "risk_level" => "low",
+              "tag_ids" => [event_calendar_tags(:vendor).id],
+              "tag_names" => ["Vendor"],
               "attributes" => {
                 "title" => "Guest Arrival",
                 "starts_at" => "2025-10-01T14:30:00Z",
@@ -37,7 +39,7 @@ module RosAgent
       assert_equal 1, preview[:create_count]
       assert_equal 0, preview[:update_count]
       assert_equal 0, preview[:delete_count]
-      assert_equal 0, preview[:tag_change_count]
+      assert_equal 1, preview[:tag_change_count]
       assert_equal 1, preview[:time_change_count]
       assert_equal ["Use the existing venue timing."], preview[:assumptions]
       assert_equal ["Planner should confirm shuttle timing."], preview[:warnings]
@@ -47,6 +49,8 @@ module RosAgent
       assert_equal "create-1", row[:operation_id]
       assert_equal "Guest Arrival", row[:after][:title]
       assert_equal "Front Drive", row[:after][:location_name]
+      assert_equal ["Vendor"], row[:after][:tag_names]
+      assert_equal [event_calendar_tags(:vendor).id], row[:after][:tag_ids]
     end
   end
 end
