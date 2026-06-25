@@ -8,15 +8,14 @@ module RosAgent
         {
           type: "object",
           additionalProperties: false,
-          required: %w[target_event_summary date_mapping draft_days draft_items assumptions review_flags refinement_notes source_references],
+          required: %w[target_event_summary date_mapping draft_items assumptions review_flags refinement_notes source_references],
           properties: {}
         }
       end
 
       def self.validate!(payload)
-        SchemaValidator.require_object!(payload, %w[target_event_summary date_mapping draft_days draft_items assumptions review_flags refinement_notes source_references])
+        SchemaValidator.require_object!(payload, %w[target_event_summary date_mapping draft_items assumptions review_flags refinement_notes source_references])
         SchemaValidator.require_present!(payload, "target_event_summary")
-        SchemaValidator.require_array!(payload, "draft_days", allow_empty: false)
         SchemaValidator.require_array!(payload, "draft_items")
 
         Array(payload["draft_items"]).each_with_index do |item, index|

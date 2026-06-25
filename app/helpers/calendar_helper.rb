@@ -222,7 +222,7 @@ module CalendarHelper
 
     return date.strftime("%A, %B %-d") if date
 
-    day["label"].presence || "Date TBD"
+    day["label"].presence || "Needs timing"
   end
 
   def ros_agent_draft_schedule_label(entry, timezone)
@@ -248,6 +248,40 @@ module CalendarHelper
     entries.select do |entry|
       entry_date = ros_agent_draft_entry_start_time(entry, timezone)&.to_date
       entry_date.present? && target_date.present? && entry_date == target_date
+    end
+  end
+
+  def ros_agent_draft_entries_grouped_by_day(draft, timezone)
+    entries = Array(draft["draft_items"])
+    return ros_agent_draft_legacy_entries_grouped_by_day(draft, timezone) if entries.blank?
+
+    indexed_entries = entries.each_with_index.map do |entry, index|
+      start_time = ros_agent_draft_entry_start_time(entry, timezone)
+      {
+        entry: entry,
+        index: index,
+        start_time: start_time,
+        date: start_time&.to_date
+      }
+    end
+
+    indexed_entries
+      .group_by { |item| item[:date] }
+      .sort_by { |date, _items| [date.nil? ? 1 : 0, date || Date.new(9999, 12, 31)] }
+      .map do |date, items|
+        sorted_entries = items.sort_by { |item| [item[:start_time] || Time.zone.at(0), item[:index]] }.map { |item| item[:entry] }
+        day = date ? { "date" => date.iso8601 } : { "label" => "Needs timing", "date" => nil }
+
+        [day, sorted_entries]
+      end
+  end
+
+  def ros_agent_draft_legacy_entries_grouped_by_day(draft, timezone)
+    Array(draft["draft_days"]).filter_map do |day|
+      entries = ros_agent_draft_entries_for_day(draft, day, timezone)
+      next if entries.blank?
+
+      [day, entries]
     end
   end
 

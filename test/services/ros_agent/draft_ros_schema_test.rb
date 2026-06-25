@@ -12,10 +12,6 @@ module RosAgent
               { "source_label" => "Saturday, June 14", "target_date" => "2025-10-01" }
             ]
           },
-          "draft_days" => [
-            { "label" => "Day Before", "date" => "2025-09-30" },
-            { "label" => "Wedding Day", "date" => "2025-10-01" }
-          ],
           "draft_items" => [
             {
               "title" => "Crew Call",
@@ -90,21 +86,18 @@ module RosAgent
         assert_includes error.message, "draft_items[0].details[0].field"
       end
 
-      test "rejects a payload without draft days" do
-        error = assert_raises(ArgumentError) do
-          DraftRosSchema.validate!(
-            "target_event_summary" => "Wedding summary",
-            "date_mapping" => { "source_days" => [] },
-            "draft_days" => [],
-            "draft_items" => [],
-            "assumptions" => [],
-            "review_flags" => [],
-            "refinement_notes" => [],
-            "source_references" => []
-          )
-        end
+      test "accepts a payload without draft days" do
+        payload = {
+          "target_event_summary" => "Wedding summary",
+          "date_mapping" => { "source_days" => [] },
+          "draft_items" => [],
+          "assumptions" => [],
+          "review_flags" => [],
+          "refinement_notes" => [],
+          "source_references" => []
+        }
 
-        assert_includes error.message, "draft_days"
+        assert_equal payload, DraftRosSchema.validate!(payload)
       end
 
       test "rejects draft items without a title" do
@@ -112,7 +105,6 @@ module RosAgent
           DraftRosSchema.validate!(
             "target_event_summary" => "Wedding summary",
             "date_mapping" => { "source_days" => [] },
-            "draft_days" => [{ "label" => "Wedding Day", "date" => "2025-10-01" }],
             "draft_items" => [
               {
                 "title" => " ",
@@ -138,7 +130,6 @@ module RosAgent
         {
           "target_event_summary" => "Wedding summary",
           "date_mapping" => { "source_days" => [] },
-          "draft_days" => [{ "label" => "Wedding Day", "date" => "2025-10-01" }],
           "draft_items" => [],
           "assumptions" => [],
           "review_flags" => [],

@@ -71,6 +71,19 @@ module RosAgent
       assert_includes payload[:instructions], "Do not merely reference future work like merging files, adding items later, or completing the ROS outside the draft."
     end
 
+    test "instructs the agent not to create conceptual day labels or day sections" do
+      payload = PromptBuilder.new(
+        task: build_task,
+        mode: :initial_run,
+        event_context: { event: { id: events(:one).id } },
+        source_inputs: []
+      ).build
+
+      assert_includes payload[:instructions], "Do not create conceptual day labels or day sections as work product."
+      assert_includes payload[:instructions], "The app groups by actual item dates."
+      assert_includes payload[:instructions], "Day labels are not a substitute for items."
+    end
+
     test "requires explicit planner intent before writing vendor values" do
       payload = PromptBuilder.new(
         task: build_task,

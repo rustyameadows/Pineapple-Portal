@@ -31,6 +31,15 @@ module RosAgent
         assert_includes detail_schema[:required], "source_refs"
       end
 
+      test "draft ROS schema does not ask the model for day labels or day sections" do
+        format = ResponseFormat.for_mode(:initial_run)
+        draft_ros_schema = format.dig(:schema, :properties, "draft_ros", :anyOf, 0)
+
+        refute_includes draft_ros_schema[:required], "draft_days"
+        refute_includes draft_ros_schema[:properties].keys, "draft_days"
+        assert_includes draft_ros_schema[:required], "draft_items"
+      end
+
       test "builds strict final change plan response format" do
         format = ResponseFormat.for_mode(:request_final_plan)
 

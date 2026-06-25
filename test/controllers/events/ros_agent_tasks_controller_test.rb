@@ -317,8 +317,9 @@ module Events
       assert_select "#draft-ros button", text: "Previous fields"
       assert_select "#draft-ros button", text: "Next fields"
       assert_select "#draft-ros .event-calendars__date-label", text: "Friday, October 15"
-      assert_select "#draft-ros .event-calendars__date-label", text: "Saturday, October 16"
+      assert_select "#draft-ros .event-calendars__date-label", text: "Saturday, October 16", count: 0
       assert_select "#draft-ros .ros-agent-draft__table tbody tr.event-calendars__row", count: 1
+      assert_no_match "Agent day label", response.body
       assert_select "#draft-ros", text: /Friday Pre-Event Production/
       assert_select "#draft-ros td.event-calendars__schedule-column", text: "6:00 PM – 8:00 PM"
       assert_select "#draft-ros", text: /A two-day adapted wedding ROS/
@@ -346,6 +347,44 @@ module Events
       assert_select "#draft-ros", text: /Music/
       assert_select "#draft-ros", text: /medium/
       assert_select "#draft-ros", text: /do not hide me/
+    end
+
+    test "show renders every draft item even when legacy draft days omit item dates" do
+      @event.run_of_show_calendar.update!(timezone: "America/New_York")
+      @task.update!(
+        status: "drafting",
+        draft_ros_json: {
+          "target_event_summary" => "A production timeline with many dated rows.",
+          "date_mapping" => { "source_days" => [] },
+          "draft_days" => [
+            { "label" => "Load-In Begins", "date" => "2027-09-18" },
+            { "label" => "Event Day", "date" => "2027-10-14" }
+          ],
+          "draft_items" => [
+            draft_item("Parking Lot Available for Staging", "2027-09-18T00:00:00-04:00", "row 2"),
+            draft_item("Intermediate Production Build", "2027-09-19T08:00:00-04:00", "row 8"),
+            draft_item("Final Prep Before Event", "2027-10-13T14:00:00-04:00", "row 125"),
+            draft_item("Three Sprinter Vans", "2027-10-14T07:00:00-04:00", "row 151")
+          ],
+          "assumptions" => [],
+          "review_flags" => [],
+          "refinement_notes" => [],
+          "source_references" => []
+        }
+      )
+
+      get event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      assert_select "#draft-ros .ros-agent-draft__table tbody tr.event-calendars__row", count: 4
+      assert_select "#draft-ros", text: /Parking Lot Available for Staging/
+      assert_select "#draft-ros", text: /Intermediate Production Build/
+      assert_select "#draft-ros", text: /Final Prep Before Event/
+      assert_select "#draft-ros", text: /Three Sprinter Vans/
+      assert_select "#draft-ros .event-calendars__date-label", text: "Saturday, September 18"
+      assert_select "#draft-ros .event-calendars__date-label", text: "Sunday, September 19"
+      assert_select "#draft-ros .event-calendars__date-label", text: "Wednesday, October 13"
+      assert_select "#draft-ros .event-calendars__date-label", text: "Thursday, October 14"
     end
 
     test "show anchors review plan so polling can reveal it" do
@@ -756,6 +795,24 @@ module Events
     end
 
     private
+
+    def draft_item(title, starts_at, source_row)
+      {
+        "title" => title,
+        "timing" => {
+          "kind" => "fixed",
+          "starts_at" => starts_at,
+          "relative_anchor_title" => nil,
+          "relative_offset_minutes" => nil
+        },
+        "duration_minutes" => 60,
+        "confidence" => "high",
+        "source_refs" => [
+          { "artifact" => "production_timeline.csv", "locator" => source_row }
+        ],
+        "details" => []
+      }
+    end
 
     class FakeStorage
       attr_reader :uploads

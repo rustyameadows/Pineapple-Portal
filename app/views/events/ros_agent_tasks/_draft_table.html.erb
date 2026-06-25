@@ -1,7 +1,6 @@
 <% draft = task.draft_ros_json || {} %>
-<% draft_days = Array(draft["draft_days"]) %>
 <% draft_timezone = ros_agent_draft_timezone(task) %>
-<% entries_by_day = draft_days.map { |day| [day, ros_agent_draft_entries_for_day(draft, day, draft_timezone)] } %>
+<% entries_by_day = ros_agent_draft_entries_grouped_by_day(draft, draft_timezone) %>
 <% all_draft_entries = entries_by_day.flat_map(&:last).map { |entry| ros_agent_draft_display_entry(entry) } %>
 <% preferred_item_keys = %w[title timing duration_minutes notes location vendor_handling staff_handling tags confidence planner_review_needed source_refs] %>
 <% hidden_item_keys = %w[details day_label] %>
@@ -9,7 +8,7 @@
 <% draft_item_keys = preferred_item_keys.select { |key| all_item_keys.include?(key) } + (all_item_keys - preferred_item_keys).sort %>
 <% draft_table_colspan = draft_item_keys.size + 1 %>
 
-<% if draft_days.any? %>
+<% if entries_by_day.any? %>
   <section class="event-section__body" id="draft-ros" tabindex="-1">
     <h2>Draft ROS</h2>
     <p class="event-section__note">Draft agent output. These rows are not live calendar records.</p>
@@ -77,12 +76,6 @@
               <tr class="event-calendars__date-row ros-agent-draft__date-row">
                 <td colspan="<%= draft_table_colspan %>">
                   <span class="event-calendars__date-label"><%= ros_agent_draft_day_label(day, entries, draft_timezone) %></span>
-                  <div class="event-section__note">
-                    Agent day label: <%= day["label"].presence || "—" %>
-                    <% if day["date"].present? %>
-                      · Schema date: <%= day["date"] %>
-                    <% end %>
-                  </div>
                 </td>
               </tr>
               <% entries.each do |entry| %>

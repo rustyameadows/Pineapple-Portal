@@ -73,7 +73,7 @@ module RosAgent
       def self.draft_ros_schema
         object_schema(
           required: %w[
-            target_event_summary date_mapping draft_days draft_items assumptions
+            target_event_summary date_mapping draft_items assumptions
             review_flags refinement_notes source_references
           ],
           properties: {
@@ -84,16 +84,6 @@ module RosAgent
                 source_days: { type: "array", items: date_mapping_day_schema }
               }
             ),
-            draft_days: {
-              type: "array",
-              items: object_schema(
-                required: %w[label date],
-                properties: {
-                  label: string_schema,
-                  date: nullable(string_schema)
-                }
-              )
-            },
             draft_items: { type: "array", items: draft_item_schema },
             assumptions: string_array_schema,
             review_flags: string_array_schema,
