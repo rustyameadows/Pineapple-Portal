@@ -20,7 +20,8 @@ module RosAgent
       "Do not write TBD, placeholders, or generic cleanup commentary into details.",
       "Do not use details for reasoning such as source name removed, source vendor removed, or adapted from source.",
       "Notes are event-facing item subcopy only, not commentary on your work.",
-      "Only include location, vendor handling, staff handling, or tags when the source or current event gives a genuinely useful value for that item."
+      "Only include location, vendor handling, staff handling, or tags when the source or current event gives a genuinely useful value for that item.",
+      "IMPORTANT: the draft ROS must contain multiple event items and should include all items that will eventually be included in the final ROS."
     ].freeze
     VENDOR_INTENT_INSTRUCTIONS = [
       "Never assign, preserve, blank, convert, or placeholder vendors unless the planner explicitly instructs it.",
@@ -31,6 +32,14 @@ module RosAgent
       "If the planner asks for placeholders, use placeholder strings.",
       "If the planner asks for blanks, leave vendor fields blank.",
       "If the planner asks to use current event vendors, use only event-context vendors where the match is clear; ask again for ambiguous assignments."
+    ].freeze
+    FINAL_PLAN_INSTRUCTIONS = [
+      "You are finalizing a planner-reviewed detailed draft into approval-ready calendar operations.",
+      "Do not summarize, compress, deduplicate, or sample draft_items.",
+      "Repeated titles on different dates are separate calendar items.",
+      "Every draft item that should exist in the ROS must become a create_item or update_item operation.",
+      "Before returning ready_for_review, compare the draft_items count to the create_item/update_item operations that represent them.",
+      "If the counts do not match, fix the operations array before responding."
     ].freeze
 
     def initialize(task:, mode:, event_context:, source_inputs:)
@@ -69,8 +78,13 @@ module RosAgent
         "Return one of: source_understood, needs_input, draft_ready, ready_for_review.",
         *DRAFT_DETAIL_INSTRUCTIONS,
         *VENDOR_INTENT_INSTRUCTIONS,
+        *final_plan_instructions,
         MODE_INSTRUCTIONS.fetch(mode, MODE_INSTRUCTIONS[:initial_run])
       ].join("\n")
+    end
+
+    def final_plan_instructions
+      mode == :request_final_plan ? FINAL_PLAN_INSTRUCTIONS : []
     end
 
     def context_text

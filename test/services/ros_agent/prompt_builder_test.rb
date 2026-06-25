@@ -69,6 +69,7 @@ module RosAgent
       assert_includes payload[:instructions], "The draft ROS must include every intended event item as draft_items."
       assert_includes payload[:instructions], "If the planner asks you to combine items from multiple sources, combine them and include the resulting event items in the draft."
       assert_includes payload[:instructions], "Do not merely reference future work like merging files, adding items later, or completing the ROS outside the draft."
+      assert_includes payload[:instructions], "IMPORTANT: the draft ROS must contain multiple event items and should include all items that will eventually be included in the final ROS."
     end
 
     test "instructs the agent not to create conceptual day labels or day sections" do
@@ -129,6 +130,21 @@ module RosAgent
       assert_includes content, "Two-day entertainment-heavy event."
       assert_includes content, "map_saturday_to_wedding_date"
       assert_includes content, "Wedding Day"
+    end
+
+    test "request final plan mode requires faithful draft item coverage" do
+      payload = PromptBuilder.new(
+        task: build_task,
+        mode: :request_final_plan,
+        event_context: { event: { id: events(:one).id } },
+        source_inputs: []
+      ).build
+
+      assert_includes payload[:instructions], "You are finalizing a planner-reviewed detailed draft into approval-ready calendar operations."
+      assert_includes payload[:instructions], "Do not summarize, compress, deduplicate, or sample draft_items."
+      assert_includes payload[:instructions], "Repeated titles on different dates are separate calendar items."
+      assert_includes payload[:instructions], "Every draft item that should exist in the ROS must become a create_item or update_item operation."
+      assert_includes payload[:instructions], "Before returning ready_for_review, compare the draft_items count to the create_item/update_item operations that represent them."
     end
 
     test "answer question mode tells the agent to use planner answers" do
