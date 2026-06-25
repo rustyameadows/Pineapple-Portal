@@ -35,6 +35,40 @@ module RosAgent
       assert_empty result.high_risk_operation_ids
     end
 
+    test "does not block roster or placeholder vendor names" do
+      result = ChangePlanValidator.new(
+        task: @task,
+        calendar: @calendar,
+        plan_hash: {
+          "operations" => [
+            {
+              "operation_id" => "create-roster-vendor",
+              "operation_type" => "create_item",
+              "summary" => "Add catering arrival",
+              "risk_level" => "low",
+              "item_attributes" => {
+                "title" => "Catering Arrival",
+                "vendor_name" => "Sunshine Catering"
+              }
+            },
+            {
+              "operation_id" => "create-placeholder-vendor",
+              "operation_type" => "create_item",
+              "summary" => "Add DJ placeholder arrival",
+              "risk_level" => "low",
+              "item_attributes" => {
+                "title" => "DJ Arrival",
+                "vendor_name" => "DJ TBD"
+              }
+            }
+          ]
+        }
+      ).call
+
+      assert_predicate result, :valid?
+      assert_empty result.blocking_errors
+    end
+
     test "blocks existing item operations outside the task event calendar" do
       other_calendar = events(:two).event_calendars.create!(
         name: "Run of Show",

@@ -10,6 +10,7 @@ module RosAgent
         event: event_payload,
         run_of_show_calendar: calendar_payload,
         current_calendar_items: current_calendar_items,
+        vendors: vendors_payload,
         tags: tags_payload,
         views: views_payload,
         team: team_payload,
@@ -100,6 +101,17 @@ module RosAgent
 
       calendar.event_calendar_tags.order(:position, :name).map do |tag|
         { id: tag.id, name: tag.name, color_token: tag.color_token, position: tag.position }
+      end
+    end
+
+    def vendors_payload
+      event.event_vendors.includes(:global_vendor).ordered.map do |vendor|
+        {
+          id: vendor.id,
+          global_vendor_id: vendor.global_vendor_id,
+          name: vendor.name,
+          vendor_type: vendor.vendor_type.presence || vendor.global_vendor&.default_vendor_type
+        }
       end
     end
 

@@ -90,6 +90,7 @@ module RosAgent
                   "title" => "Guest Arrival",
                   "starts_at" => "2025-10-01T14:30:00Z",
                   "duration_minutes" => 30,
+                  "vendor_name" => "DJ TBD",
                   "location_name" => "Front Drive"
                 }
               },
@@ -118,6 +119,7 @@ module RosAgent
       tag = @calendar.event_calendar_tags.find_by!(name: "Logistics")
 
       assert_equal "Front Drive", item.location_name
+      assert_equal "DJ TBD", item.vendor_name
       assert_includes item.event_calendar_tag_ids, tag.id
     end
 

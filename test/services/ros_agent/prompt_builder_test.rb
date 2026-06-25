@@ -58,6 +58,24 @@ module RosAgent
       assert_includes payload[:instructions], "Notes are event-facing item subcopy"
     end
 
+    test "requires explicit planner intent before writing vendor values" do
+      payload = PromptBuilder.new(
+        task: build_task,
+        mode: :initial_run,
+        event_context: { event: { id: events(:one).id } },
+        source_inputs: []
+      ).build
+
+      assert_includes payload[:instructions], "Never assign, preserve, blank, convert, or placeholder vendors unless the planner explicitly instructs it."
+      assert_includes payload[:instructions], "If the request does not mention vendors, ask a vendor-handling question."
+      assert_includes payload[:instructions], "Do you want me to leave vendors blank, or apply the vendors already linked to this event where they clearly fit?"
+      assert_includes payload[:instructions], "Do you want me to leave vendors blank, or convert source ROS vendor roles into temporary placeholders like DJ TBD or Catering TBD?"
+      assert_includes payload[:instructions], "If source vendor names appear, do not copy them unless the planner explicitly asks."
+      assert_includes payload[:instructions], "If the planner asks for placeholders, use placeholder strings."
+      assert_includes payload[:instructions], "If the planner asks for blanks, leave vendor fields blank."
+      assert_includes payload[:instructions], "If the planner asks to use current event vendors, use only event-context vendors where the match is clear; ask again for ambiguous assignments."
+    end
+
     test "includes source understanding, question answers, and draft scratchpad for refinement modes" do
       task = build_task(
         source_understanding_json: { "overall_read" => "Two-day entertainment-heavy event." },

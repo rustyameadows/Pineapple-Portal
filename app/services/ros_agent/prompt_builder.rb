@@ -15,6 +15,16 @@ module RosAgent
       "Notes are event-facing item subcopy only, not commentary on your work.",
       "Only include location, vendor handling, staff handling, or tags when the source or current event gives a genuinely useful value for that item."
     ].freeze
+    VENDOR_INTENT_INSTRUCTIONS = [
+      "Never assign, preserve, blank, convert, or placeholder vendors unless the planner explicitly instructs it.",
+      "If the request does not mention vendors, ask a vendor-handling question.",
+      "If the event has linked vendors, ask: Do you want me to leave vendors blank, or apply the vendors already linked to this event where they clearly fit?",
+      "If the event has no linked vendors, ask: Do you want me to leave vendors blank, or convert source ROS vendor roles into temporary placeholders like DJ TBD or Catering TBD?",
+      "If source vendor names appear, do not copy them unless the planner explicitly asks.",
+      "If the planner asks for placeholders, use placeholder strings.",
+      "If the planner asks for blanks, leave vendor fields blank.",
+      "If the planner asks to use current event vendors, use only event-context vendors where the match is clear; ask again for ambiguous assignments."
+    ].freeze
 
     def initialize(task:, mode:, event_context:, source_inputs:)
       @task = task
@@ -51,6 +61,7 @@ module RosAgent
         "Maintain a draft ROS scratchpad before final approval.",
         "Return one of: source_understood, needs_input, draft_ready, ready_for_review.",
         *DRAFT_DETAIL_INSTRUCTIONS,
+        *VENDOR_INTENT_INSTRUCTIONS,
         MODE_INSTRUCTIONS.fetch(mode, MODE_INSTRUCTIONS[:initial_run])
       ].join("\n")
     end

@@ -14,6 +14,20 @@ module RosAgent
       assert_equal "UTC", payload.dig(:run_of_show_calendar, :timezone)
       assert_equal "Ada Fixture", payload.dig(:team, :planners, 0, :name)
       assert_equal "Vendor Only", payload.dig(:views, 0, :name)
+      assert_equal [
+        {
+          id: event_vendors(:catering).id,
+          global_vendor_id: event_vendors(:catering).global_vendor_id,
+          name: "Sunshine Catering",
+          vendor_type: "Catering"
+        },
+        {
+          id: event_vendors(:lighting).id,
+          global_vendor_id: event_vendors(:lighting).global_vendor_id,
+          name: "Bright Lights Production",
+          vendor_type: "Lighting"
+        }
+      ], payload.fetch(:vendors)
       assert_includes payload.dig(:tags).map { |tag| tag[:name] }, "Vendor"
       assert_includes payload.dig(:defaults, :tags).map { |tag| tag[:name] }, "Day Of"
       assert_includes payload.dig(:defaults, :views).map { |view| view[:name] }, "Decision Calendar"
