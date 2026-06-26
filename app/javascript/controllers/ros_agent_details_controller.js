@@ -1,17 +1,23 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["dialog"]
+  static targets = ["taskDialog", "canvasDialog"]
 
   open(event) {
-    event.preventDefault()
-    this.lastTrigger = event.currentTarget
-    this.showDialog()
+    this.openCanvas(event)
+  }
+
+  openTask(event) {
+    this.openDialog(this.hasTaskDialogTarget ? this.taskDialogTarget : null, event)
+  }
+
+  openCanvas(event) {
+    this.openDialog(this.hasCanvasDialogTarget ? this.canvasDialogTarget : null, event)
   }
 
   close(event) {
     if (event) event.preventDefault()
-    this.hideDialog()
+    this.hideDialog(this.openDialogTarget())
     this.restoreFocus()
   }
 
@@ -21,28 +27,47 @@ export default class extends Controller {
   }
 
   handleBackdropClose(event) {
-    if (!this.hasDialogTarget || event.target !== this.dialogTarget) return
+    if (!this.dialogTargets().includes(event.target)) return
     this.close()
   }
 
-  showDialog() {
-    if (!this.hasDialogTarget) return
+  openDialog(dialog, event) {
+    if (event) event.preventDefault()
+    if (!dialog) return
 
-    if (typeof this.dialogTarget.showModal === "function") {
-      this.dialogTarget.showModal()
+    this.lastTrigger = event?.currentTarget
+    this.showDialog(dialog)
+  }
+
+  showDialog(dialog) {
+    if (!dialog) return
+
+    if (typeof dialog.showModal === "function") {
+      dialog.showModal()
     } else {
-      this.dialogTarget.setAttribute("open", "open")
+      dialog.setAttribute("open", "open")
     }
   }
 
-  hideDialog() {
-    if (!this.hasDialogTarget || !this.dialogTarget.hasAttribute("open")) return
+  hideDialog(dialog) {
+    if (!dialog || !dialog.hasAttribute("open")) return
 
-    if (typeof this.dialogTarget.close === "function") {
-      this.dialogTarget.close()
+    if (typeof dialog.close === "function") {
+      dialog.close()
     } else {
-      this.dialogTarget.removeAttribute("open")
+      dialog.removeAttribute("open")
     }
+  }
+
+  openDialogTarget() {
+    return this.dialogTargets().find((dialog) => dialog.hasAttribute("open"))
+  }
+
+  dialogTargets() {
+    return [
+      this.hasTaskDialogTarget ? this.taskDialogTarget : null,
+      this.hasCanvasDialogTarget ? this.canvasDialogTarget : null
+    ].filter(Boolean)
   }
 
   restoreFocus() {

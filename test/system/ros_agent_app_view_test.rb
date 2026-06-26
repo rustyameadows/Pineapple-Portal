@@ -129,4 +129,49 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
     assert_operator metrics["bodyScrollWidth"], :>, metrics["bodyClientWidth"] + 100
     assert_operator metrics["tableWidth"], :>, metrics["bodyClientWidth"] + 100
   end
+
+  test "canvas and status details open separate overlays" do
+    @task.update!(
+      status: "drafting",
+      draft_ros_json: {
+        "draft_days" => [
+          {
+            "label" => "Wedding Day",
+            "entries" => [
+              { "time_label" => "4:00 PM", "title" => "Ceremony" }
+            ]
+          }
+        ],
+        "assumptions" => ["Use the ceremony as the anchor."],
+        "review_flags" => ["Confirm vendor arrival."],
+        "refinement_notes" => ["Planner requested shorter notes."]
+      }
+    )
+    @task.append_event!(event_type: "drafted", message: "Agent produced draft.", created_by: users(:one))
+
+    login_as_planner
+    page.current_window.resize_to(1400, 900)
+    visit event_ros_agent_task_path(@event, @task)
+
+    click_button "Details"
+
+    within ".ros-agent-canvas-details-dialog[open]" do
+      assert_text "Canvas Details"
+      assert_text "Use the ceremony as the anchor."
+      assert_text "Draft JSON"
+      assert_no_text "Task History"
+    end
+
+    within ".ros-agent-canvas-details-dialog[open]" do
+      click_button "Close"
+    end
+
+    find(".ros-agent-status-trigger").click
+
+    within ".ros-agent-task-details-dialog[open]" do
+      assert_text "Task Details"
+      assert_text "Task History"
+      assert_text "Agent produced draft."
+    end
+  end
 end

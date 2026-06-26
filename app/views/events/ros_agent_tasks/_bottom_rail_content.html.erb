@@ -7,8 +7,17 @@
 
 <div class="ros-agent-bottom-rail__status">
   <span class="ros-agent-bottom-rail__label">Status</span>
-  <span class="event-approvals__status-pill event-approvals__status-pill--<%= status %>"
-        data-ros-agent-status-target="statusLabel"><%= status_label %></span>
+  <% status_pill_class = "event-approvals__status-pill event-approvals__status-pill--#{status}" %>
+  <% if local_assigns[:new_task] %>
+    <span class="<%= status_pill_class %>"
+          data-ros-agent-status-target="statusLabel"><%= status_label %></span>
+  <% else %>
+    <button type="button"
+            class="<%= status_pill_class %> ros-agent-status-trigger"
+            data-action="ros-agent-details#openTask"
+            data-ros-agent-status-target="statusLabel"
+            aria-label="Open task details"><%= status_label %></button>
+  <% end %>
   <p class="sr-only" data-ros-agent-status-target="statusSummary">
     <%= active ? "#{status_label}." : "#{status_label}." %>
   </p>

@@ -273,6 +273,7 @@ module Events
       snapshot[:canvas_html] = canvas_html_for(@task, question_batch, canvas_state)
       snapshot[:bottom_rail_html] = bottom_rail_html_for(@task, snapshot, canvas_state)
       snapshot[:metadata_html] = metadata_html_for(@task, snapshot)
+      snapshot[:canvas_metadata_html] = canvas_metadata_html_for(@task, snapshot, canvas_state, question_batch)
       snapshot[:action_sections_html] = snapshot[:canvas_html]
       snapshot
     end
@@ -368,6 +369,19 @@ module Events
         locals: {
           task: task,
           status_snapshot: status_snapshot
+        }
+      )
+    end
+
+    def canvas_metadata_html_for(task, status_snapshot, canvas_state, question_batch)
+      render_to_string(
+        partial: "events/ros_agent_tasks/canvas_metadata",
+        formats: [:html],
+        locals: {
+          task: task,
+          status_snapshot: status_snapshot,
+          canvas_state: canvas_state,
+          question_batch: question_batch
         }
       )
     end

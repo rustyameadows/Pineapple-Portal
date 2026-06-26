@@ -25,7 +25,11 @@
                        canvas_state: canvas_state %>
           </footer>
 
-          <%= render "details_dialog", task: @task, status_snapshot: @status_snapshot %>
+          <%= render "details_dialog",
+                     task: @task,
+                     status_snapshot: @status_snapshot,
+                     canvas_state: canvas_state,
+                     question_batch: @open_question_batch %>
         </div>
       </div>
     </main>

@@ -301,6 +301,13 @@
   letter-spacing: 0.06em;
 }
 
+.ros-agent-status-trigger {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
+  margin: 0;
+}
+
 .ros-agent-bottom-rail__actions {
   display: flex;
   flex: 1 1 auto;

@@ -7,7 +7,7 @@ const ACTION_ANCHORS = {
 }
 
 export default class extends Controller {
-  static targets = ["statusLabel", "statusSummary", "sourceFiles", "llmCalls", "latestError", "taskHistory", "canvas", "bottomRail", "metadata"]
+  static targets = ["statusLabel", "statusSummary", "sourceFiles", "llmCalls", "latestError", "taskHistory", "canvas", "bottomRail", "metadata", "canvasMetadata"]
   static values = {
     statusUrl: String,
     initialStatus: String,
@@ -59,6 +59,7 @@ export default class extends Controller {
     this.updateTarget("canvas", data.canvas_html)
     this.updateTarget("bottomRail", data.bottom_rail_html)
     this.updateTarget("metadata", data.metadata_html)
+    this.updateTarget("canvasMetadata", data.canvas_metadata_html)
     this.updateStatusLabel(nextStatus, data.status_label)
     this.updateStatusSummary(nextStatus, active, data.status_label)
     this.updateTarget("sourceFiles", this.renderSourceFiles(data.source_files))
@@ -80,7 +81,8 @@ export default class extends Controller {
     if (!this.hasStatusLabelTarget) return
 
     this.statusLabelTarget.textContent = label || this.humanizeStatus(status)
-    this.statusLabelTarget.className = `event-approvals__status-pill event-approvals__status-pill--${status || "draft"}`
+    const triggerClass = this.statusLabelTarget.classList.contains("ros-agent-status-trigger") ? " ros-agent-status-trigger" : ""
+    this.statusLabelTarget.className = `event-approvals__status-pill event-approvals__status-pill--${status || "draft"}${triggerClass}`
   }
 
   updateStatusSummary(status, active, label) {

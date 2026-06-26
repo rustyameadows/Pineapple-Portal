@@ -200,11 +200,18 @@ module Events
       assert_select ".ros-agent-canvas__body #review-plan", count: 1
       assert_select ".ros-agent-canvas__body #draft-ros", count: 0
       assert_select ".ros-agent-canvas__body #planning-questions", count: 0
-      assert_select ".ros-agent-details-dialog", count: 1
-      assert_select ".ros-agent-details-dialog", text: /millar-run-of-show.pdf/
-      assert_select ".ros-agent-details-dialog", text: /file_source_123/
-      assert_select ".ros-agent-details-dialog", text: /Drafted plan/
-      assert_select ".ros-agent-details-trigger", text: "Details"
+      assert_select ".ros-agent-details-dialog", count: 2
+      assert_select ".ros-agent-task-details-dialog[data-ros-agent-details-target='taskDialog']", count: 1
+      assert_select ".ros-agent-task-details-dialog", text: /millar-run-of-show.pdf/
+      assert_select ".ros-agent-task-details-dialog", text: /file_source_123/
+      assert_select ".ros-agent-task-details-dialog", text: /Drafted plan/
+      assert_select ".ros-agent-canvas-details-dialog[data-ros-agent-details-target='canvasDialog']", count: 1
+      assert_select ".ros-agent-canvas-details-dialog", text: /Assumptions/
+      assert_select ".ros-agent-canvas-details-dialog", text: /Plan JSON/
+      assert_select ".ros-agent-canvas-details-dialog", text: /Task History/, count: 0
+      assert_select ".ros-agent-canvas-details-dialog", text: /OpenAI Calls/, count: 0
+      assert_select ".ros-agent-details-trigger[data-action='ros-agent-details#openCanvas']", text: "Details"
+      assert_select ".ros-agent-status-trigger[data-action='ros-agent-details#openTask'][data-ros-agent-status-target='statusLabel']", count: 1
       assert_select "#review-plan table", text: /Oct 1/
       assert_select "#review-plan table", text: /2:30 PM/
       assert_no_match "2025-10-01T14:30:00Z", css_select("#review-plan").to_s
@@ -476,6 +483,8 @@ module Events
       assert_includes body["canvas_html"], "Ceremony"
       assert_includes body["bottom_rail_html"], "Request Final Plan"
       assert_includes body["metadata_html"], "Task History"
+      assert_includes body["canvas_metadata_html"], "Draft JSON"
+      assert_not_includes body["canvas_metadata_html"], "Task History"
     end
 
     test "status keeps polling during refinement even when an old draft exists" do
