@@ -243,7 +243,13 @@ module CalendarHelper
     timezone = ros_agent_draft_timezone(task)
     start_time = parse_ros_agent_draft_time(attrs["starts_at"], timezone)
     finish_time = ros_agent_preview_finish_time(attrs, start_time)
-    effective_time_label(start_time, finish_time, timezone) || attrs["starts_at"].presence || "—"
+    if start_time
+      date_label = start_time.in_time_zone(timezone).strftime("%b %-d")
+      time_label = effective_time_only_label(start_time, finish_time, timezone)
+      return [date_label, time_label].compact.join(" • ") if time_label.present?
+    end
+
+    attrs["starts_at"].presence || "—"
   end
 
   def ros_agent_draft_entries_for_day(draft, day, timezone)

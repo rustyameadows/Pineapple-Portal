@@ -162,6 +162,76 @@ module RosAgent
       assert_equal [day_of_tag.id, vendor_tag.id].sort, item.event_calendar_tag_ids.sort
     end
 
+    test "applies date-only starts in the event calendar timezone" do
+      @calendar.update!(timezone: "America/New_York")
+      task = FakeTask.new(
+        event: @event,
+        status: "approved",
+        approved_plan_version: 3,
+        current_plan_version: 3
+      )
+
+      result = ChangePlanApplier.new(
+        task: task,
+        calendar: @calendar,
+        plan_hash: {
+          "operations" => [
+            {
+              "operation_id" => "create-item-1",
+              "operation_type" => "create_item",
+              "summary" => "Add all-day production item.",
+              "risk_level" => "low",
+              "item_attributes" => {
+                "title" => "Production Load-In",
+                "starts_at" => "2026-07-12"
+              }
+            }
+          ]
+        }
+      ).call
+
+      assert_predicate result, :applied?
+      item = @calendar.calendar_items.find_by!(title: "Production Load-In")
+      local_start = item.starts_at.in_time_zone(@calendar.timezone)
+
+      assert_equal "2026-07-12 00:00", local_start.strftime("%Y-%m-%d %H:%M")
+    end
+
+    test "applies explicit local datetimes in the event calendar timezone" do
+      @calendar.update!(timezone: "America/New_York")
+      task = FakeTask.new(
+        event: @event,
+        status: "approved",
+        approved_plan_version: 3,
+        current_plan_version: 3
+      )
+
+      result = ChangePlanApplier.new(
+        task: task,
+        calendar: @calendar,
+        plan_hash: {
+          "operations" => [
+            {
+              "operation_id" => "create-item-1",
+              "operation_type" => "create_item",
+              "summary" => "Add lift delivery.",
+              "risk_level" => "low",
+              "item_attributes" => {
+                "title" => "Lift Delivery",
+                "starts_at" => "2026-07-12T09:00:00"
+              }
+            }
+          ]
+        }
+      ).call
+
+      assert_predicate result, :applied?
+      item = @calendar.calendar_items.find_by!(title: "Lift Delivery")
+      local_start = item.starts_at.in_time_zone(@calendar.timezone)
+
+      assert_equal "2026-07-12 09:00", local_start.strftime("%Y-%m-%d %H:%M")
+    end
+
     test "omits nil non-null attributes so calendar item defaults apply" do
       task = FakeTask.new(
         event: @event,

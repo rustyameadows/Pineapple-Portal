@@ -96,7 +96,12 @@ module RosAgent
     end
 
     def create_item(operation)
-      item = calendar.calendar_items.create!(item_attributes(operation).merge(position: next_position))
+      attrs = item_attributes(operation).merge(position: next_position)
+      starts_at_provided = attrs.key?("starts_at")
+      starts_at = attrs.delete("starts_at") if starts_at_provided
+      item = calendar.calendar_items.build(attrs)
+      item.starts_at = starts_at if starts_at_provided
+      item.save!
       created_items_by_operation_id[operation_id(operation)] = item
       operation_counts[:create_count] += 1
       apply_tags_to_item(item, operation)
@@ -165,9 +170,6 @@ module RosAgent
     def item_attributes(operation)
       attrs = attributes_for(operation).slice(*ITEM_ATTRIBUTES)
       NON_NULL_ITEM_ATTRIBUTES.each { |key| attrs.delete(key) if attrs[key].nil? }
-      if attrs.key?("starts_at") && attrs["starts_at"].present?
-        attrs["starts_at"] = Time.zone.parse(attrs["starts_at"].to_s)
-      end
       attrs
     end
 
