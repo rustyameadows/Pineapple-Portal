@@ -35,9 +35,14 @@ module RosAgent
     ].freeze
     FINAL_PLAN_INSTRUCTIONS = [
       "You are finalizing a planner-reviewed detailed draft into approval-ready calendar operations.",
+      "This is not a narrative plan or summary.",
+      "Each operation is one database write the app will perform.",
+      "There is no bulk create operation.",
+      "Rails will not expand references to draft_items.",
       "Do not summarize, compress, deduplicate, or sample draft_items.",
       "Repeated titles on different dates are separate calendar items.",
       "Every draft item that should exist in the ROS must become a create_item or update_item operation.",
+      "If the draft has 198 item rows and all should be created, return 198 create_item operations.",
       "Before returning ready_for_review, compare the draft_items count to the create_item/update_item operations that represent them.",
       "If the counts do not match, fix the operations array before responding."
     ].freeze

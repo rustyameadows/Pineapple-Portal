@@ -2,12 +2,12 @@ require "test_helper"
 
 module RosAgent
   class ChangePlanValidatorTest < ActiveSupport::TestCase
-    TaskStub = Struct.new(:event, keyword_init: true)
+    TaskStub = Struct.new(:event, :draft_ros_json, keyword_init: true)
 
     setup do
       @event = events(:one)
       @calendar = event_calendars(:run_of_show)
-      @task = TaskStub.new(event: @event)
+      @task = TaskStub.new(event: @event, draft_ros_json: {})
     end
 
     test "accepts a minimal create item operation" do
@@ -146,6 +146,63 @@ module RosAgent
 
       assert_not result.valid?
       assert_includes result.blocking_errors, "Operation create-1 must provide attributes.title for create_item."
+    end
+
+    test "blocks bulk create placeholders that reference the draft instead of item operations" do
+      result = ChangePlanValidator.new(
+        task: @task,
+        calendar: @calendar,
+        plan_hash: {
+          "operations" => [
+            {
+              "operation_id" => "op_create_all_draft_items",
+              "operation_type" => "create_item",
+              "summary" => "Create all event items from the reviewed combined draft ROS.",
+              "risk_level" => "low",
+              "item_attributes" => {
+                "title" => "Bulk create: 169 adapted ROS items from reviewed draft"
+              }
+            }
+          ]
+        }
+      ).call
+
+      assert_not result.valid?
+      assert_includes result.blocking_errors, "Operation op_create_all_draft_items looks like a bulk create placeholder. Return one create_item operation per calendar item instead."
+    end
+
+    test "blocks final plans that cover fewer item operations than draft items" do
+      task = TaskStub.new(
+        event: @event,
+        draft_ros_json: {
+          "draft_items" => [
+            { "title" => "Crew Call" },
+            { "title" => "Production Check" },
+            { "title" => "Guest Arrival" }
+          ]
+        }
+      )
+
+      result = ChangePlanValidator.new(
+        task: task,
+        calendar: @calendar,
+        plan_hash: {
+          "operations" => [
+            {
+              "operation_id" => "create-1",
+              "operation_type" => "create_item",
+              "summary" => "Add crew call",
+              "risk_level" => "low",
+              "item_attributes" => {
+                "title" => "Crew Call"
+              }
+            }
+          ]
+        }
+      ).call
+
+      assert_not result.valid?
+      assert_includes result.blocking_errors, "Final plan has 1 create_item/update_item operations, but the draft ROS has 3 draft_items. Return one create_item or update_item operation for each draft item that should exist in the ROS."
     end
 
     test "blocks invalid calendar item status values" do

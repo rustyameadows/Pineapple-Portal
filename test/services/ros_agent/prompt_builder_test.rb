@@ -145,6 +145,11 @@ module RosAgent
       assert_includes payload[:instructions], "Repeated titles on different dates are separate calendar items."
       assert_includes payload[:instructions], "Every draft item that should exist in the ROS must become a create_item or update_item operation."
       assert_includes payload[:instructions], "Before returning ready_for_review, compare the draft_items count to the create_item/update_item operations that represent them."
+      assert_includes payload[:instructions], "This is not a narrative plan or summary."
+      assert_includes payload[:instructions], "Each operation is one database write the app will perform."
+      assert_includes payload[:instructions], "There is no bulk create operation."
+      assert_includes payload[:instructions], "Rails will not expand references to draft_items."
+      assert_includes payload[:instructions], "If the draft has 198 item rows and all should be created, return 198 create_item operations."
     end
 
     test "answer question mode tells the agent to use planner answers" do

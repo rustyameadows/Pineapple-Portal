@@ -16,6 +16,15 @@ module RosAgent
 
     EXISTING_ITEM_OPERATIONS = %w[update_item delete_item assign_tags].freeze
     KNOWN_OPERATIONS = %w[create_item update_item delete_item create_tag assign_tags].freeze
+    BULK_ITEM_PLACEHOLDER_PATTERNS = [
+      /\bbulk\s+(create|creation|add|insert)\b/i,
+      /\bcreate\s+all\b/i,
+      /\ball\s+(draft|reviewed|adapted|event|ros)\s+items?\b/i,
+      /\bdraft_items\b/i,
+      /\bdraft item set\b/i,
+      /\breviewed draft scratchpad\b/i,
+      /\bsource draft\b/i
+    ].freeze
 
     def initialize(task:, calendar:, plan_hash:)
       @task = task
@@ -35,6 +44,7 @@ module RosAgent
         validate_existing_item(operation) if EXISTING_ITEM_OPERATIONS.include?(operation_type(operation))
         track_high_risk(operation)
       end
+      validate_draft_item_operation_coverage
 
       Result.new(
         blocking_errors: blocking_errors,
@@ -69,9 +79,13 @@ module RosAgent
 
     def validate_create_item(operation)
       title = attributes_for(operation)["title"]
-      return if title.present?
+      if title.blank?
+        blocking_errors << "Operation #{operation_id(operation)} must provide attributes.title for create_item."
+      end
 
-      blocking_errors << "Operation #{operation_id(operation)} must provide attributes.title for create_item."
+      return unless bulk_item_placeholder?(operation)
+
+      blocking_errors << "Operation #{operation_id(operation)} looks like a bulk create placeholder. Return one create_item operation per calendar item instead."
     end
 
     def validate_item_status(operation)
@@ -90,6 +104,16 @@ module RosAgent
       return if item.present?
 
       blocking_errors << "Operation #{operation_id(operation)} targets an item outside this run of show calendar."
+    end
+
+    def validate_draft_item_operation_coverage
+      draft_count = draft_item_count
+      return if draft_count.zero?
+
+      item_operation_count = operations.count { |operation| %w[create_item update_item].include?(operation_type(operation)) }
+      return if item_operation_count >= draft_count
+
+      blocking_errors << "Final plan has #{item_operation_count} create_item/update_item operations, but the draft ROS has #{draft_count} draft_items. Return one create_item or update_item operation for each draft item that should exist in the ROS."
     end
 
     def track_high_risk(operation)
@@ -115,6 +139,25 @@ module RosAgent
     def attributes_for(operation)
       (operation["attributes"] || operation[:attributes] ||
         operation["item_attributes"] || operation[:item_attributes] || {}).with_indifferent_access
+    end
+
+    def draft_item_count
+      return 0 unless task.respond_to?(:draft_ros_json)
+
+      draft_ros = task.draft_ros_json || {}
+      Array(draft_ros["draft_items"] || draft_ros[:draft_items]).count
+    end
+
+    def bulk_item_placeholder?(operation)
+      text = [
+        operation_id(operation),
+        operation["summary"] || operation[:summary],
+        operation["reasoning_summary"] || operation[:reasoning_summary],
+        attributes_for(operation)["title"],
+        attributes_for(operation)["notes"]
+      ].compact.join(" ")
+
+      BULK_ITEM_PLACEHOLDER_PATTERNS.any? { |pattern| text.match?(pattern) }
     end
   end
 end
