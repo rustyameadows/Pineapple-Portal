@@ -273,7 +273,8 @@ module Events
 
       assert_response :success
       assert_select ".ros-agent-canvas__body section#draft-ros[tabindex='-1']", count: 1
-      assert_select "section#draft-ros h2", text: "Draft ROS"
+      assert_select "section#draft-ros h2", text: "Draft ROS", count: 0
+      assert_select "section#draft-ros", text: /Draft agent output/, count: 0
       assert_select ".ros-agent-bottom-rail form[action='#{refine_draft_event_ros_agent_task_path(@event, @task)}']", count: 1
       assert_select ".ros-agent-bottom-rail form[action='#{request_final_plan_event_ros_agent_task_path(@event, @task)}']", count: 1
     end
@@ -345,24 +346,25 @@ module Events
       get event_ros_agent_task_path(@event, @task)
 
       assert_response :success
-      assert_select "#draft-ros [data-controller='ros-agent-draft-table']", 1
-      assert_select "#draft-ros .ros-agent-draft__table-shell[data-ros-agent-draft-table-target='shell']", 1
+      assert_select "#draft-ros > .ros-agent-draft__table", 1
+      assert_select "#draft-ros [data-controller='ros-agent-draft-table']", 0
+      assert_select "#draft-ros .ros-agent-draft__table-shell", 0
+      assert_select "#draft-ros .ros-agent-draft__summary-table", 0
+      assert_select "#draft-ros", text: /Target Event Summary/, count: 0
+      assert_select "#draft-ros", text: /Draft agent output/, count: 0
       assert_select "#draft-ros button", text: "Previous fields", count: 0
       assert_select "#draft-ros button", text: "Next fields", count: 0
       assert_select "#draft-ros .event-calendars__date-label", text: "Friday, October 15"
       assert_select "#draft-ros .event-calendars__date-label", text: "Saturday, October 16", count: 0
       assert_select "#draft-ros .ros-agent-draft__table tbody tr.event-calendars__row", count: 1
       assert_no_match "Agent day label", response.body
-      assert_select "#draft-ros", text: /Friday Pre-Event Production/
+      assert_select "#draft-ros", text: /Friday Pre-Event Production/, count: 0
       assert_select "#draft-ros td.event-calendars__schedule-column", text: "6:00 PM – 8:00 PM"
-      assert_select "#draft-ros", text: /A two-day adapted wedding ROS/
-      assert_select "#draft-ros", text: /Friday source/
-      assert_select "#draft-ros", text: /Use Friday for production checks/
-      assert_select "#draft-ros .ros-agent-draft__summary-list li", text: "Use Friday for production checks."
-      assert_select "#draft-ros .ros-agent-draft__summary-list li", text: "Confirm the wedding day anchor."
-      assert_select "#draft-ros", text: /Confirm whether a production check is needed/
-      assert_select "#draft-ros .ros-agent-draft__summary-list li", text: "Confirm source-only placeholders."
-      assert_select "#draft-ros", text: /Planner asked for a cleaner display/
+      assert_select "#draft-ros", text: /A two-day adapted wedding ROS/, count: 0
+      assert_select "#draft-ros", text: /Friday source/, count: 0
+      assert_select "#draft-ros", text: /Use Friday for production checks/, count: 0
+      assert_select "#draft-ros", text: /Confirm whether a production check is needed/, count: 0
+      assert_select "#draft-ros", text: /Planner asked for a cleaner display/, count: 0
       assert_select "#draft-ros", text: /millar_sample.csv/
       assert_select "#draft-ros", text: /relative/
       assert_select "#draft-ros", text: /2027-10-15T18:00:00-04:00/

@@ -453,8 +453,14 @@
   white-space: pre-wrap;
 }
 
-.ros-agent-canvas .ros-agent-draft__table-shell {
-  max-height: none;
+.ros-agent-draft__surface {
+  width: var(--ros-agent-draft-table-width, 100%);
+  min-width: 100%;
+}
+
+.ros-agent-canvas .ros-agent-draft__table {
+  width: 100%;
+  min-width: 100%;
 }
 
 .ros-agent-canvas .event-calendars__table {

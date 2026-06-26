@@ -79,4 +79,54 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
       document.querySelector("input[name='answers[date_mapping]'][value='__custom__']").checked
     JS
   end
+
+  test "draft table scrolls horizontally through the canvas body" do
+    @task.update!(
+      status: "drafting",
+      draft_ros_json: {
+        "draft_days" => [
+          {
+            "label" => "Production Day",
+            "entries" => [
+              {
+                "time_label" => "9:00 AM",
+                "title" => "Tent Build",
+                "timing" => { "kind" => "date", "starts_at" => "2026-07-20" },
+                "duration_minutes" => 120,
+                "notes" => "Confirm build details.",
+                "location" => "Lawn",
+                "vendor_handling" => "Skyline Tent Co.",
+                "staff_handling" => "Production captain",
+                "tags" => ["Production"],
+                "confidence" => "high",
+                "planner_review_needed" => "Confirm exact footprint.",
+                "source_refs" => [{ "artifact" => "production.csv", "locator" => "row 4" }]
+              }
+            ]
+          }
+        ]
+      }
+    )
+
+    login_as_planner
+    page.current_window.resize_to(1400, 900)
+    visit event_ros_agent_task_path(@event, @task)
+
+    metrics = page.evaluate_script(<<~JS)
+      (() => {
+        const body = document.querySelector(".ros-agent-canvas__body")
+        const table = document.querySelector("#draft-ros > table.ros-agent-draft__table")
+        return {
+          bodyClientWidth: body.clientWidth,
+          bodyScrollWidth: body.scrollWidth,
+          innerShellCount: document.querySelectorAll("#draft-ros .ros-agent-draft__table-shell").length,
+          tableWidth: table.getBoundingClientRect().width
+        }
+      })()
+    JS
+
+    assert_equal 0, metrics["innerShellCount"]
+    assert_operator metrics["bodyScrollWidth"], :>, metrics["bodyClientWidth"] + 100
+    assert_operator metrics["tableWidth"], :>, metrics["bodyClientWidth"] + 100
+  end
 end
