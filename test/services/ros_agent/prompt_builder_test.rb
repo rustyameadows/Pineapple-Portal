@@ -72,6 +72,19 @@ module RosAgent
       assert_includes payload[:instructions], "IMPORTANT: the draft ROS must contain multiple event items and should include all items that will eventually be included in the final ROS."
     end
 
+    test "instructs the agent how to use time captions" do
+      payload = PromptBuilder.new(
+        task: build_task,
+        mode: :initial_run,
+        event_context: { event: { id: events(:one).id } },
+        source_inputs: []
+      ).build
+
+      assert_includes payload[:instructions], "Use time_caption for display labels like All day, EOD, TBD, or timing coming soon."
+      assert_includes payload[:instructions], "time_caption is not a substitute for starts_at"
+      assert_includes payload[:instructions], "Do not use time_caption for normal exact clock times"
+    end
+
     test "instructs the agent not to create conceptual day labels or day sections" do
       payload = PromptBuilder.new(
         task: build_task,

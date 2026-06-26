@@ -232,6 +232,40 @@ module RosAgent
       assert_equal "2026-07-12 09:00", local_start.strftime("%Y-%m-%d %H:%M")
     end
 
+    test "applies time captions to created items" do
+      task = FakeTask.new(
+        event: @event,
+        status: "approved",
+        approved_plan_version: 3,
+        current_plan_version: 3
+      )
+
+      result = ChangePlanApplier.new(
+        task: task,
+        calendar: @calendar,
+        plan_hash: {
+          "operations" => [
+            {
+              "operation_id" => "create-item-1",
+              "operation_type" => "create_item",
+              "summary" => "Add vendor available window.",
+              "risk_level" => "low",
+              "item_attributes" => {
+                "title" => "Vendor Available Window",
+                "starts_at" => "2026-07-12",
+                "time_caption" => "All day"
+              }
+            }
+          ]
+        }
+      ).call
+
+      assert_predicate result, :applied?
+      item = @calendar.calendar_items.find_by!(title: "Vendor Available Window")
+
+      assert_equal "All day", item.time_caption
+    end
+
     test "omits nil non-null attributes so calendar item defaults apply" do
       task = FakeTask.new(
         event: @event,

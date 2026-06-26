@@ -22,6 +22,11 @@ module RosAgent
           raise ArgumentError, "draft_items[#{index}].title is required" if item["title"].blank?
           SchemaValidator.require_array!(item, "details")
 
+          time_caption = item["time_caption"]
+          if !time_caption.nil? && !time_caption.is_a?(String)
+            raise ArgumentError, "draft_items[#{index}].time_caption must be a string"
+          end
+
           confidence = item["confidence"]
           unless confidence.blank? || CONFIDENCE_VALUES.include?(confidence)
             raise ArgumentError, "draft_items[#{index}].confidence must be one of #{CONFIDENCE_VALUES.join(', ')}"

@@ -23,7 +23,8 @@ module RosAgent
           refute_includes draft_item_schema[:properties].keys, key
         end
 
-        assert_equal %w[title timing duration_minutes confidence source_refs details], draft_item_schema[:required]
+        assert_equal %w[title timing duration_minutes confidence source_refs details time_caption], draft_item_schema[:required]
+        assert_includes draft_item_schema[:properties].keys, "time_caption"
 
         detail_schema = draft_item_schema.dig(:properties, "details", :items)
         assert_equal detail_schema[:properties].keys, detail_schema[:required]

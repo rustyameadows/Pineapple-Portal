@@ -19,6 +19,7 @@ module RosAgent
               "duration_minutes" => 60,
               "confidence" => "high",
               "source_refs" => [{ "artifact" => "millar_sample.csv", "locator" => "Saturday row 4" }],
+              "time_caption" => nil,
               "details" => [
                 {
                   "field" => "notes",
@@ -51,12 +52,35 @@ module RosAgent
               "duration_minutes" => 60,
               "confidence" => "high",
               "source_refs" => [],
+              "time_caption" => "All day",
               "details" => []
             }
           ]
         )
 
         assert_equal payload, DraftRosSchema.validate!(payload)
+      end
+
+      test "rejects non-string draft item time captions" do
+        error = assert_raises(ArgumentError) do
+          DraftRosSchema.validate!(
+            base_payload(
+              "draft_items" => [
+                {
+                  "title" => "Crew Call",
+                  "timing" => { "kind" => "absolute", "starts_at" => "2025-10-01T08:00:00Z" },
+                  "duration_minutes" => 60,
+                  "confidence" => "high",
+                  "source_refs" => [],
+                  "time_caption" => ["All day"],
+                  "details" => []
+                }
+              ]
+            )
+          )
+        end
+
+        assert_includes error.message, "draft_items[0].time_caption"
       end
 
       test "rejects draft item details with unknown fields" do
@@ -70,6 +94,7 @@ module RosAgent
                   "duration_minutes" => 60,
                   "confidence" => "high",
                   "source_refs" => [],
+                  "time_caption" => nil,
                   "details" => [
                     {
                       "field" => "planner_review_needed",
@@ -111,6 +136,7 @@ module RosAgent
                 "timing" => { "kind" => "absolute", "starts_at" => "2025-10-01T08:00:00Z" },
                 "confidence" => "high",
                 "source_refs" => [],
+                "time_caption" => nil,
                 "details" => []
               }
             ],

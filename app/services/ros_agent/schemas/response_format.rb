@@ -157,7 +157,7 @@ module RosAgent
       def self.draft_item_schema
         object_schema(
           required: %w[
-            title timing duration_minutes confidence source_refs details
+            title timing duration_minutes confidence source_refs details time_caption
           ],
           properties: {
             title: string_schema,
@@ -173,7 +173,8 @@ module RosAgent
             duration_minutes: nullable(integer_schema),
             confidence: { type: "string", enum: DraftRosSchema::CONFIDENCE_VALUES },
             source_refs: { type: "array", items: source_ref_schema },
-            details: { type: "array", items: draft_item_detail_schema }
+            details: { type: "array", items: draft_item_detail_schema },
+            time_caption: nullable(string_schema)
           }
         )
       end

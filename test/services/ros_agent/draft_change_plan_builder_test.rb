@@ -56,6 +56,25 @@ module RosAgent
       assert_equal [], operation["tag_ids"]
     end
 
+    test "promotes draft time captions into item attributes" do
+      task = TaskStub.new(
+        event: @event,
+        draft_ros_json: {
+          "draft_items" => [
+            draft_item("Vendor Available Window", "2026-07-12", "row 2", time_caption: "All day"),
+            draft_item("Venue Lockup", "2026-07-12", "row 3", time_caption: "EOD")
+          ],
+          "assumptions" => [],
+          "review_flags" => [],
+          "refinement_notes" => []
+        }
+      )
+
+      plan = DraftChangePlanBuilder.new(task: task, calendar: @calendar).call
+
+      assert_equal ["All day", "EOD"], plan["operations"].map { |operation| operation.dig("item_attributes", "time_caption") }
+    end
+
     test "preserves draft assumptions and review notes as final review text" do
       plan = DraftChangePlanBuilder.new(task: @task, calendar: @calendar).call
 
@@ -83,7 +102,7 @@ module RosAgent
 
     private
 
-    def draft_item(title, starts_at, source_row, details: [], duration_minutes: 60)
+    def draft_item(title, starts_at, source_row, details: [], duration_minutes: 60, time_caption: nil)
       {
         "title" => title,
         "timing" => {
@@ -97,6 +116,7 @@ module RosAgent
         "source_refs" => [
           { "artifact" => "source.csv", "locator" => source_row }
         ],
+        "time_caption" => time_caption,
         "details" => details
       }
     end
