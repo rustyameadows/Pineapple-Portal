@@ -17,7 +17,6 @@ export default class extends Controller {
   connect() {
     this.currentStatus = this.initialStatusValue || ""
     this.currentActionAnchor = this.initialActionAnchorValue || this.actionAnchorForStatus(this.currentStatus)
-    this.revealActionForAnchor(this.currentActionAnchor, { reloadIfMissing: false })
     if (!this.shouldPoll(this.currentStatus)) return
 
     this.pollTimer = window.setInterval(() => this.pollStatus(), 2000)
@@ -68,7 +67,7 @@ export default class extends Controller {
     }
 
     if (nextActionAnchor && (nextStatus !== previousStatus || nextActionAnchor !== previousActionAnchor)) {
-      this.revealActionForAnchor(nextActionAnchor, { reloadIfMissing: false })
+      this.scrollToAnchor(nextActionAnchor)
     }
   }
 
@@ -103,6 +102,7 @@ export default class extends Controller {
 
     const target = document.getElementById("ros-agent-action-sections")
     if (!target) return
+    if (target.innerHTML === html) return
 
     target.innerHTML = html
   }
@@ -111,31 +111,13 @@ export default class extends Controller {
     return ACTION_ANCHORS[status] || null
   }
 
-  revealActionForAnchor(anchorId, { reloadIfMissing }) {
+  scrollToAnchor(anchorId) {
     if (!anchorId) return
 
     const target = document.getElementById(anchorId)
-    if (target) {
-      this.scrollToTarget(target, anchorId)
-      return
-    }
-
-    if (reloadIfMissing) {
-      window.location.assign(this.urlWithHash(anchorId))
-    }
-  }
-
-  scrollToTarget(target, anchorId) {
-    if (window.location.hash !== `#${anchorId}`) {
-      window.history.replaceState(null, "", this.urlWithHash(anchorId))
-    }
+    if (!target) return
 
     target.scrollIntoView({ block: "start", behavior: "smooth" })
-    target.focus({ preventScroll: true })
-  }
-
-  urlWithHash(anchorId) {
-    return `${window.location.pathname}${window.location.search}#${anchorId}`
   }
 
   renderSourceFiles(sourceFiles = []) {
