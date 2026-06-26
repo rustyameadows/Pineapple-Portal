@@ -3,7 +3,7 @@ module RosAgent
     MODE_INSTRUCTIONS = {
       initial_run: "Understand source documents, ask necessary questions, or draft the ROS.",
       answer_questions: "Use the planner's answers to continue the ROS draft.",
-      refine_draft: "Revise the draft ROS scratchpad using the planner refinement.",
+      refine_draft: "Revise the full current draft ROS scratchpad using planner_refinement_prompt. Return the full revised draft, not a patch or summary.",
       request_final_plan: "Turn the latest draft ROS scratchpad into a final ROS change plan."
     }.freeze
 
@@ -105,7 +105,9 @@ module RosAgent
         source_understanding: source_understanding,
         draft_ros: task.draft_ros_json,
         question_answers: question_answers
-      }.to_json
+      }.tap do |context|
+        context[:planner_refinement_prompt] = latest_refinement_prompt if mode == :refine_draft
+      end.to_json
     end
 
     def source_understanding
@@ -125,6 +127,16 @@ module RosAgent
           answers: batch.answers_json
         }
       end
+    end
+
+    def latest_refinement_prompt
+      return unless task.respond_to?(:events)
+
+      event = task.events
+                  .where(event_type: "draft_refinement_requested")
+                  .order(:created_at, :id)
+                  .last
+      event&.payload_json.to_h["refinement_prompt"].to_s
     end
   end
 end

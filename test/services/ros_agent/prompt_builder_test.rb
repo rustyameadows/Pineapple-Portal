@@ -4,6 +4,20 @@ module RosAgent
   class PromptBuilderTest < ActiveSupport::TestCase
     FakeArtifact = Struct.new(:filename, keyword_init: true)
     FakeQuestionBatch = Struct.new(:questions_json, :answers_json, :status, keyword_init: true)
+    FakeEventRelation = Struct.new(:events, keyword_init: true) do
+      def where(event_type:)
+        self.class.new(events: events.select { |event| event.event_type == event_type })
+      end
+
+      def order(*)
+        self.class.new(events: events.sort_by(&:created_at))
+      end
+
+      def last
+        events.last
+      end
+    end
+    FakeEvent = Struct.new(:event_type, :payload_json, :created_at, keyword_init: true)
     FakeTask = Struct.new(
       :id,
       :event,
@@ -12,6 +26,7 @@ module RosAgent
       :source_understanding_json,
       :draft_ros_json,
       :question_batches,
+      :events,
       keyword_init: true
     )
 
@@ -145,6 +160,27 @@ module RosAgent
       assert_includes content, "Wedding Day"
     end
 
+    test "includes the latest planner refinement prompt for draft refinement mode" do
+      task = build_task(
+        draft_ros_json: { "draft_items" => [{ "title" => "Crew Call" }] },
+        refinement_prompts: ["old instruction", "this is missing vendors"]
+      )
+
+      payload = PromptBuilder.new(
+        task: task,
+        mode: :refine_draft,
+        event_context: { event: { id: events(:one).id } },
+        source_inputs: []
+      ).build
+
+      content = payload.dig(:input, 0, :content).filter_map { |entry| entry[:text] }.join("\n")
+
+      assert_includes payload[:instructions], "Revise the full current draft ROS scratchpad using planner_refinement_prompt"
+      assert_includes payload[:instructions], "Return the full revised draft, not a patch or summary"
+      assert_includes content, "this is missing vendors"
+      refute_includes content, "old instruction"
+    end
+
     test "request final plan mode requires faithful draft item coverage" do
       payload = PromptBuilder.new(
         task: build_task,
@@ -191,7 +227,15 @@ module RosAgent
 
     private
 
-    def build_task(source_understanding_json: {}, draft_ros_json: {}, question_batches: [])
+    def build_task(source_understanding_json: {}, draft_ros_json: {}, question_batches: [], refinement_prompts: [])
+      refinement_events = refinement_prompts.each_with_index.map do |prompt, index|
+        FakeEvent.new(
+          event_type: "draft_refinement_requested",
+          payload_json: { "refinement_prompt" => prompt },
+          created_at: Time.utc(2026, 1, 1, 12, index, 0)
+        )
+      end
+
       FakeTask.new(
         id: 42,
         event: events(:one),
@@ -199,7 +243,8 @@ module RosAgent
         artifacts: [FakeArtifact.new(filename: "millar_sample.csv")],
         source_understanding_json: source_understanding_json,
         draft_ros_json: draft_ros_json,
-        question_batches: question_batches
+        question_batches: question_batches,
+        events: FakeEventRelation.new(events: refinement_events)
       )
     end
   end
