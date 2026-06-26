@@ -15,7 +15,6 @@
 
         <%= render "topbar", event: @event %>
         <%= render "prompt_strip", event: @event, task: @task, form: form, source_files: [] %>
-        <%= render "canvas", event: @event, task: @task, question_batch: nil, canvas_state: "setup", show_details: false %>
 
         <footer class="ros-agent-bottom-rail" data-ros-agent-status-target="bottomRail">
           <%= render "bottom_rail_content",

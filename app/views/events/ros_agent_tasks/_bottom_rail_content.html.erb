@@ -45,18 +45,10 @@
                   form_class: "ros-agent-rail-button-form" %>
   <% elsif canvas_state == "plan" %>
     <% blocking_errors = Array(task.validation_json.to_h["blocking_errors"]) %>
-    <% warnings = Array(task.preview_json.to_h["warnings"] || task.validation_json.to_h["warnings"]) %>
     <% if blocking_errors.any? %>
       <div class="ros-agent-bottom-rail__messages ros-agent-bottom-rail__messages--error">
         <% blocking_errors.each do |error| %>
           <p><%= error %></p>
-        <% end %>
-      </div>
-    <% end %>
-    <% if warnings.any? %>
-      <div class="ros-agent-bottom-rail__messages ros-agent-bottom-rail__messages--warning">
-        <% warnings.each do |warning| %>
-          <p><%= warning %></p>
         <% end %>
       </div>
     <% end %>

@@ -6,6 +6,87 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
     @task = agent_tasks(:draft_task)
   end
 
+  test "new agent assist centers the prompt strip without a setup canvas" do
+    login_as_planner
+    page.current_window.resize_to(1400, 900)
+    visit new_event_ros_agent_task_path(@event)
+
+    assert_selector ".ros-agent-app.ros-agent-app--new"
+    assert_selector ".ros-agent-prompt-strip"
+    assert_no_selector ".ros-agent-canvas"
+
+    metrics = page.evaluate_script(<<~JS)
+      (() => {
+        const app = document.querySelector(".ros-agent-app")
+        const prompt = document.querySelector(".ros-agent-prompt-strip")
+        const bottom = document.querySelector(".ros-agent-bottom-rail")
+        const promptRect = prompt.getBoundingClientRect()
+        const bottomRect = bottom.getBoundingClientRect()
+
+        return {
+          appHeight: app.getBoundingClientRect().height,
+          bottomBottom: bottomRect.bottom,
+          documentScrollable: document.documentElement.scrollHeight > window.innerHeight + 2,
+          promptCenterY: promptRect.top + (promptRect.height / 2),
+          promptHeight: promptRect.height,
+          viewportCenterY: window.innerHeight / 2,
+          viewportHeight: window.innerHeight
+        }
+      })()
+    JS
+
+    assert_equal false, metrics["documentScrollable"]
+    assert_in_delta metrics["viewportHeight"], metrics["appHeight"], 4
+    assert_in_delta metrics["viewportHeight"] * 0.15, metrics["promptHeight"], 16
+    assert_in_delta metrics["viewportCenterY"], metrics["promptCenterY"], 80
+    assert_in_delta metrics["viewportHeight"], metrics["bottomBottom"], 24
+  end
+
+  test "show model settings are two up while new settings stay stacked" do
+    login_as_planner
+    page.current_window.resize_to(1400, 900)
+
+    visit event_ros_agent_task_path(@event, @task)
+    show_metrics = page.evaluate_script(<<~JS)
+      (() => {
+        const items = Array.from(document.querySelectorAll(".ros-agent-settings-list > div"))
+        const [model, reasoning] = items.map((item) => item.getBoundingClientRect())
+
+        return {
+          itemCount: items.length,
+          modelLeft: Math.round(model.left),
+          modelTop: Math.round(model.top),
+          reasoningLeft: Math.round(reasoning.left),
+          reasoningTop: Math.round(reasoning.top)
+        }
+      })()
+    JS
+
+    assert_equal 2, show_metrics["itemCount"]
+    assert_in_delta show_metrics["modelTop"], show_metrics["reasoningTop"], 2
+    assert_operator show_metrics["reasoningLeft"], :>, show_metrics["modelLeft"] + 20
+
+    visit new_event_ros_agent_task_path(@event)
+    new_metrics = page.evaluate_script(<<~JS)
+      (() => {
+        const items = Array.from(document.querySelectorAll(".ros-agent-settings-grid > .event-form__group"))
+        const [model, reasoning] = items.map((item) => item.getBoundingClientRect())
+
+        return {
+          itemCount: items.length,
+          modelLeft: Math.round(model.left),
+          modelTop: Math.round(model.top),
+          reasoningLeft: Math.round(reasoning.left),
+          reasoningTop: Math.round(reasoning.top)
+        }
+      })()
+    JS
+
+    assert_equal 2, new_metrics["itemCount"]
+    assert_in_delta new_metrics["modelLeft"], new_metrics["reasoningLeft"], 2
+    assert_operator new_metrics["reasoningTop"], :>, new_metrics["modelTop"] + 12
+  end
+
   test "agent assist app owns desktop scrolling and falls back on small screens" do
     @task.update!(
       status: "drafting",

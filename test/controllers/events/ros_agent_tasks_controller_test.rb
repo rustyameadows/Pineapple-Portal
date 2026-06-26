@@ -42,7 +42,7 @@ module Events
       assert_select ".ros-agent-prompt-strip__prompt h2", text: "Prompt"
       assert_select ".ros-agent-prompt-strip__settings h2", text: "Settings"
       assert_select ".ros-agent-prompt-strip .ros-agent-field-label", count: 0
-      assert_select ".ros-agent-canvas[data-ros-agent-status-target='canvas']", count: 1
+      assert_select ".ros-agent-canvas[data-ros-agent-status-target='canvas']", count: 0
       assert_select ".ros-agent-canvas__header .ros-agent-canvas__label", count: 0
       assert_select ".ros-agent-bottom-rail[data-ros-agent-status-target='bottomRail']", count: 1
       assert_select ".ros-agent-bottom-rail__status p.sr-only[data-ros-agent-status-target='statusSummary']", count: 1
@@ -589,7 +589,7 @@ module Events
       assert_includes body["bottom_rail_html"], "Approve Plan"
     end
 
-    test "status keeps review warnings visible with the plan approval action" do
+    test "status keeps review warnings out of the plan bottom rail" do
       @task.update!(
         status: "ready_for_review",
         plan_json: { "operations" => [{ "operation_id" => "create-1", "operation_type" => "create_item" }] },
@@ -610,8 +610,32 @@ module Events
 
       assert_response :success
       body = JSON.parse(response.body)
-      assert_includes body["bottom_rail_html"], "Confirm vendor arrival before apply."
+      assert_not_includes body["bottom_rail_html"], "Confirm vendor arrival before apply."
       assert_includes body["bottom_rail_html"], "Approve Plan"
+    end
+
+    test "applied status bottom rail omits retained plan warnings" do
+      @task.update!(
+        status: "applied",
+        plan_json: {
+          "warnings" => ["If vendors are later linked, these blank assignments can be mapped categorically."],
+          "operations" => [{ "operation_id" => "create-1", "operation_type" => "create_item" }]
+        },
+        preview_json: {
+          "warnings" => ["If vendors are later linked, these blank assignments can be mapped categorically."],
+          "grouped_preview_rows" => { "creates" => [], "updates" => [], "deletes" => [] }
+        }
+      )
+
+      get status_event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      body = JSON.parse(response.body)
+      assert_equal "Applied", body["status_label"]
+      assert_equal "plan", body["canvas_state"]
+      assert_not_includes body["bottom_rail_html"], "If vendors are later linked"
+      assert_not_includes body["bottom_rail_html"], "Apply Approved Plan"
+      assert_not_includes body["bottom_rail_html"], "Approve Plan"
     end
 
     test "status renders planning questions for live polling" do

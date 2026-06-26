@@ -17,6 +17,27 @@
   color: var(--color-dark-brown);
 }
 
+.ros-agent-app--new {
+  grid-template-rows:
+    minmax(3rem, 5svh)
+    minmax(0, 1fr)
+    minmax(7.5rem, 15svh)
+    minmax(0, 1fr)
+    minmax(4rem, 8svh);
+}
+
+.ros-agent-app--new .ros-agent-topbar {
+  grid-row: 1;
+}
+
+.ros-agent-app--new .ros-agent-prompt-strip {
+  grid-row: 3;
+}
+
+.ros-agent-app--new .ros-agent-bottom-rail {
+  grid-row: 5;
+}
+
 .ros-agent-topbar,
 .ros-agent-prompt-strip,
 .ros-agent-canvas,
@@ -119,6 +140,17 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.ros-agent-settings-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.ros-agent-settings-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.35rem;
 }
 
 .ros-agent-attachment-list li,
@@ -376,11 +408,6 @@
   color: #6c2121;
 }
 
-.ros-agent-bottom-rail__messages--warning {
-  border-color: color-mix(in srgb, var(--color-brown) 22%, white);
-  color: var(--color-brown);
-}
-
 .ros-agent-bottom-rail__messages p {
   margin: 0;
 }
@@ -503,6 +530,12 @@
     height: auto;
     min-height: 100svh;
     overflow: visible;
+  }
+
+  .ros-agent-app--new .ros-agent-topbar,
+  .ros-agent-app--new .ros-agent-prompt-strip,
+  .ros-agent-app--new .ros-agent-bottom-rail {
+    grid-row: auto;
   }
 
   .ros-agent-prompt-strip,
