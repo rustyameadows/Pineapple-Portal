@@ -23,6 +23,7 @@ import LocalSelectController from "controllers/local_select_controller"
 import RosAgentTaskController from "controllers/ros_agent_task_controller"
 import RosAgentStatusController from "controllers/ros_agent_status_controller"
 import RosAgentDraftTableController from "controllers/ros_agent_draft_table_controller"
+import RosAgentDetailsController from "controllers/ros_agent_details_controller"
 
 application.register("decision-modal", DecisionModalController)
 application.register("questionnaire", QuestionnaireController)
@@ -47,3 +48,4 @@ application.register("local-select", LocalSelectController)
 application.register("ros-agent-task", RosAgentTaskController)
 application.register("ros-agent-status", RosAgentStatusController)
 application.register("ros-agent-draft-table", RosAgentDraftTableController)
+application.register("ros-agent-details", RosAgentDetailsController)

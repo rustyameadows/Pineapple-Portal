@@ -1,27 +1,58 @@
 <% if question_batch %>
-  <section class="event-section__body" id="planning-questions" tabindex="-1">
+  <% current_event = local_assigns.fetch(:event, @event) %>
+  <section class="ros-agent-canvas-panel" id="planning-questions" tabindex="-1">
     <h2>Planning Questions</h2>
     <p><%= question_batch.summary %></p>
 
-    <%= form_with url: answer_questions_event_ros_agent_task_path(@event, task), method: :post, local: true do %>
-      <% question_batch.questions_json.each do |question| %>
-        <div class="event-form__group">
-          <label><%= question["label"] %></label>
-          <p><%= question["question"] %></p>
-          <% Array(question["options"]).each do |option| %>
-            <label class="calendar-item-form__pill">
-              <%= radio_button_tag "answers[#{question["key"]}]", option["value"], option["recommended"], data: { ros_agent_task_target: ("recommendedAnswer" if option["recommended"]) } %>
-              <span><%= option["label"] || option["value"] %></span>
-            </label>
-          <% end %>
-          <% if question["freeform_allowed"] || Array(question["options"]).empty? %>
-            <%= text_field_tag "freeform_answers[#{question["key"]}]", nil, class: "event-form__input", placeholder: "Custom answer" %>
-          <% end %>
-        </div>
-      <% end %>
+    <%= form_with url: answer_questions_event_ros_agent_task_path(current_event, task),
+                  method: :post,
+                  local: true,
+                  id: "ros-agent-question-form",
+                  class: "ros-agent-question-form" do %>
+      <div class="ros-agent-question-grid">
+        <% question_batch.questions_json.each do |question| %>
+          <% options = Array(question["options"]) %>
+          <% question_key = question["key"].to_s %>
+          <% custom_radio_id = "answer_#{question_key.parameterize}_custom" %>
 
-      <button type="button" class="event-section__cta event-section__cta--secondary" data-action="ros-agent-task#useRecommendedAnswers">Use recommended answers</button>
-      <%= submit_tag "Submit answers", class: "event-section__cta" %>
+          <article class="ros-agent-question-card">
+            <header>
+              <h3><%= question["label"] %></h3>
+              <p><%= question["question"] %></p>
+            </header>
+
+            <div class="ros-agent-question-card__options">
+              <% options.each do |option| %>
+                <label class="calendar-item-form__pill">
+                  <%= radio_button_tag "answers[#{question_key}]",
+                                       option["value"],
+                                       option["recommended"],
+                                       data: { ros_agent_task_target: ("recommendedAnswer" if option["recommended"]) } %>
+                  <span><%= option["label"] || option["value"] %></span>
+                </label>
+              <% end %>
+
+              <% if question["freeform_allowed"] || options.empty? %>
+                <label class="calendar-item-form__pill ros-agent-question-card__custom-choice" for="<%= custom_radio_id %>">
+                  <%= radio_button_tag "answers[#{question_key}]",
+                                       ros_agent_custom_answer_value,
+                                       options.empty?,
+                                       id: custom_radio_id %>
+                  <span>Custom answer</span>
+                </label>
+                <%= text_field_tag "custom_answers[#{question_key}]",
+                                   nil,
+                                   class: "event-form__input",
+                                   placeholder: "Type a custom answer",
+                                   data: {
+                                     action: "input->ros-agent-task#selectCustomAnswer",
+                                     custom_answer_radio_id: custom_radio_id
+                                   } %>
+              <% end %>
+            </div>
+          </article>
+        <% end %>
+      </div>
     <% end %>
   </section>
 <% end %>

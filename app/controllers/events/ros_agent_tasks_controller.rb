@@ -1,5 +1,7 @@
 module Events
   class RosAgentTasksController < ApplicationController
+    CUSTOM_ANSWER_VALUE = RosAgentTasksHelper::CUSTOM_ANSWER_VALUE
+
     before_action :set_event
     before_action :set_task, only: %i[show status answer_questions refine_draft request_final_plan approve apply]
 
@@ -63,8 +65,16 @@ module Events
         return
       end
 
+      blank_custom_answer_labels = blank_custom_answer_labels_for(batch)
+      if blank_custom_answer_labels.any?
+        redirect_to event_ros_agent_task_path(@event, @task),
+                    alert: "Add a custom answer or choose a listed option for #{blank_custom_answer_labels.to_sentence}."
+        return
+      end
+
       submitted_answers = answers_params
       batch.answer!(submitted_answers)
+      @task.update!(status: AgentTask::STATUSES[:analyzing])
       @task.append_event!(
         event_type: "questions_answered",
         message: "Planner answered agent questions.",
@@ -83,6 +93,7 @@ module Events
         payload: { refinement_prompt: refinement_prompt },
         created_by: current_user
       )
+      @task.update!(status: AgentTask::STATUSES[:drafting])
       enqueue_runner(:refine_draft)
       redirect_to event_ros_agent_task_path(@event, @task), notice: "Draft refinement requested."
     end
@@ -98,6 +109,7 @@ module Events
         message: "Planner requested final ROS plan.",
         created_by: current_user
       )
+      @task.update!(status: AgentTask::STATUSES[:planning])
       enqueue_runner(:request_final_plan)
       redirect_to event_ros_agent_task_path(@event, @task), notice: "Final plan requested."
     end
@@ -167,9 +179,28 @@ module Events
 
     def answers_params
       selected_answers = params.fetch(:answers, {}).permit!.to_h
-      freeform_answers = params.fetch(:freeform_answers, {}).permit!.to_h
+      custom_answers = params.fetch(:custom_answers, {}).permit!.to_h.compact_blank
+      legacy_freeform_answers = params.fetch(:freeform_answers, {}).permit!.to_h.compact_blank
 
-      selected_answers.merge(freeform_answers.compact_blank)
+      normalized_answers = selected_answers.to_h do |key, value|
+        answer_value = value == CUSTOM_ANSWER_VALUE ? custom_answers[key].presence : value
+        [key, answer_value]
+      end.compact_blank
+
+      normalized_answers.merge(legacy_freeform_answers)
+    end
+
+    def blank_custom_answer_labels_for(batch)
+      selected_answers = params.fetch(:answers, {}).permit!.to_h
+      custom_answers = params.fetch(:custom_answers, {}).permit!.to_h
+      question_labels = batch.questions_json.index_by { |question| question["key"].to_s }.transform_values { |question| question["label"].presence || question["key"].to_s.humanize }
+
+      selected_answers.filter_map do |key, value|
+        next unless value == CUSTOM_ANSWER_VALUE
+        next if custom_answers[key].to_s.strip.present?
+
+        question_labels[key] || key.to_s.humanize
+      end
     end
 
     def task_source_files
@@ -226,17 +257,24 @@ module Events
     end
 
     def task_status_snapshot
-      {
+      question_batch = open_question_batch_for(@task)
+      canvas_state = canvas_state_for(@task, question_batch)
+      snapshot = {
         status: @task.status,
         active: active_status?(@task),
         status_label: status_label_for(@task),
         action_anchor: action_anchor_for(@task),
-        action_sections_html: action_sections_html_for(@task),
+        canvas_state: canvas_state,
         source_files: source_file_artifacts.map { |artifact| serialize_source_file(artifact) },
         llm_calls: @task.llm_calls.order(:started_at, :created_at, :id).map { |call| serialize_llm_call(call) },
         task_events: @task.events.includes(:created_by).order(created_at: :asc, id: :asc).map { |event| serialize_task_event(event) },
         last_error: @task.respond_to?(:last_error_json) ? @task.last_error_json.presence : nil
       }
+      snapshot[:canvas_html] = canvas_html_for(@task, question_batch, canvas_state)
+      snapshot[:bottom_rail_html] = bottom_rail_html_for(@task, snapshot, canvas_state)
+      snapshot[:metadata_html] = metadata_html_for(@task, snapshot)
+      snapshot[:action_sections_html] = snapshot[:canvas_html]
+      snapshot
     end
 
     def source_file_artifacts
@@ -247,6 +285,7 @@ module Events
 
     def active_status?(task)
       return true if in_flight_llm_call?(task)
+      return true if task.drafting? && draft_refinement_pending?(task)
       return false if task.drafting? && task.draft_ros_json.present?
 
       %w[draft analyzing drafting planning applying].include?(task.status.to_s)
@@ -254,7 +293,7 @@ module Events
 
     def status_label_for(task)
       return task.status.to_s.titleize if in_flight_llm_call?(task)
-      return "Draft Ready" if task.drafting? && task.draft_ros_json.present?
+      return "Draft Ready" if task.drafting? && task.draft_ros_json.present? && !draft_refinement_pending?(task)
 
       task.status.to_s.titleize
     end
@@ -271,8 +310,66 @@ module Events
       task.llm_calls.pending.where(started_at: 15.minutes.ago..).exists?
     end
 
+    def draft_refinement_pending?(task)
+      task.events.order(created_at: :desc, id: :desc).limit(1).pick(:event_type) == "draft_refinement_requested"
+    end
+
     def open_question_batch_for(task)
       task.question_batches.open.order(:position).last
+    end
+
+    def canvas_state_for(task, question_batch)
+      return "plan" if task.preview_json.present? && (task.ready_for_review? || task.approved? || task.applying? || task.applied?)
+      return "questions" if task.needs_input? && question_batch.present?
+      return "draft" if task.planning? && task.draft_ros_json.present?
+      return "working" if working_canvas?(task)
+      return "plan" if task.preview_json.present?
+      return "draft" if task.draft_ros_json.present?
+      return "questions" if question_batch.present?
+
+      "working"
+    end
+
+    def working_canvas?(task)
+      active_status?(task) && !task.planning? && !task.preview_json.present?
+    end
+
+    def canvas_html_for(task, question_batch, canvas_state)
+      render_to_string(
+        partial: "events/ros_agent_tasks/canvas_content",
+        formats: [:html],
+        locals: {
+          event: @event,
+          task: task,
+          question_batch: question_batch,
+          canvas_state: canvas_state,
+          show_details: true
+        }
+      )
+    end
+
+    def bottom_rail_html_for(task, status_snapshot, canvas_state)
+      render_to_string(
+        partial: "events/ros_agent_tasks/bottom_rail_content",
+        formats: [:html],
+        locals: {
+          event: @event,
+          task: task,
+          status_snapshot: status_snapshot,
+          canvas_state: canvas_state
+        }
+      )
+    end
+
+    def metadata_html_for(task, status_snapshot)
+      render_to_string(
+        partial: "events/ros_agent_tasks/metadata",
+        formats: [:html],
+        locals: {
+          task: task,
+          status_snapshot: status_snapshot
+        }
+      )
     end
 
     def action_sections_html_for(task)

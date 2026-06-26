@@ -1,0 +1,520 @@
+.event-layout__main:has(.ros-agent-app) {
+  min-height: 100svh;
+  overflow: hidden;
+}
+
+.ros-agent-app {
+  display: grid;
+  grid-template-rows: minmax(3rem, 5svh) minmax(7.5rem, 15svh) minmax(0, 1fr) minmax(4rem, 8svh);
+  gap: 0.65rem;
+  height: 100svh;
+  min-height: 0;
+  padding: 0.75rem;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(250, 249, 245, 0.9)),
+    var(--color-light-cream);
+  color: var(--color-dark-brown);
+}
+
+.ros-agent-topbar,
+.ros-agent-prompt-strip,
+.ros-agent-canvas,
+.ros-agent-bottom-rail {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 68%, white);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 8px 24px rgba(60, 46, 37, 0.05);
+}
+
+.ros-agent-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 0.75rem;
+}
+
+.ros-agent-topbar h1,
+.ros-agent-prompt-strip h2,
+.ros-agent-canvas__header h2,
+.ros-agent-details-dialog__header h2 {
+  margin: 0;
+  letter-spacing: 0;
+  color: var(--color-dark-brown);
+}
+
+.ros-agent-topbar h1 {
+  font-size: 1.2rem;
+}
+
+.ros-agent-topbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.ros-agent-prompt-strip {
+  display: grid;
+  grid-template-columns: minmax(9rem, 15%) minmax(0, 1fr) minmax(10rem, 15%);
+  gap: 0.65rem;
+  padding: 0.65rem;
+  overflow: hidden;
+}
+
+.ros-agent-prompt-strip > div {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 42%, white);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-white) 82%, var(--color-light-cream));
+}
+
+.ros-agent-prompt-strip h2,
+.ros-agent-canvas__label,
+.ros-agent-bottom-rail__label {
+  font-family: var(--font-family-sans);
+  font-size: 0.68rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--color-brown);
+}
+
+.ros-agent-prompt-strip__prompt p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.ros-agent-prompt-input {
+  min-height: 4.2rem;
+  resize: none;
+}
+
+.ros-agent-file-input,
+.ros-agent-prompt-input,
+.ros-agent-settings-grid .event-form__select,
+.ros-agent-rail-form .event-form__textarea,
+.ros-agent-question-card .event-form__input {
+  width: 100%;
+  border: 1px solid var(--color-sea-foam);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  color: var(--color-dark-brown);
+}
+
+.ros-agent-attachment-list,
+.ros-agent-settings-list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ros-agent-attachment-list li,
+.ros-agent-settings-list div {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.ros-agent-attachment-list span,
+.ros-agent-settings-list dd {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ros-agent-attachment-list small,
+.ros-agent-settings-list dt,
+.ros-agent-muted {
+  margin: 0;
+  color: var(--color-brown);
+  font-size: 0.82rem;
+}
+
+.ros-agent-settings-list dd {
+  margin: 0;
+  font-family: var(--font-family-sans);
+  font-size: 0.82rem;
+}
+
+.ros-agent-canvas {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.ros-agent-canvas__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-sea-foam) 46%, white);
+}
+
+.ros-agent-canvas__header h2 {
+  margin-top: 0.1rem;
+  font-size: 1.15rem;
+}
+
+.ros-agent-canvas__body {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.8rem;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.ros-agent-canvas-panel {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.ros-agent-canvas-panel > h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--color-dark-brown);
+}
+
+.ros-agent-canvas-panel > p {
+  margin: 0;
+  color: var(--color-brown);
+}
+
+.ros-agent-setup-panel,
+.ros-agent-working {
+  display: grid;
+  min-height: 100%;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 48%, white);
+  border-radius: var(--radius-md);
+  background: linear-gradient(115deg, #f8f8f8 0%, #dedede 38%, #f5f5f5 62%, #d8d8d8 100%);
+  background-size: 240% 240%;
+}
+
+.ros-agent-working {
+  animation: ros-agent-working-shimmer 3.5s ease-in-out infinite;
+}
+
+.ros-agent-working p,
+.ros-agent-setup-panel p {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #4b5563;
+}
+
+@keyframes ros-agent-working-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.ros-agent-question-form {
+  min-width: 0;
+}
+
+.ros-agent-question-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.ros-agent-question-card {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--color-sea-foam);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+}
+
+.ros-agent-question-card h3,
+.ros-agent-question-card p {
+  margin: 0;
+}
+
+.ros-agent-question-card h3 {
+  font-size: 0.98rem;
+  color: var(--color-dark-brown);
+}
+
+.ros-agent-question-card p {
+  color: var(--color-brown);
+  line-height: 1.4;
+}
+
+.ros-agent-question-card__options {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ros-agent-question-card__custom-choice {
+  justify-self: start;
+}
+
+.ros-agent-bottom-rail {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  overflow: hidden;
+}
+
+.ros-agent-bottom-rail__status {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: max-content;
+  padding: 0.32rem 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 50%, white);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-white) 82%, var(--color-light-cream));
+}
+
+.ros-agent-bottom-rail__label {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+}
+
+.ros-agent-bottom-rail__actions {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  min-width: 0;
+  max-height: 100%;
+  overflow: auto;
+}
+
+.ros-agent-bottom-rail__actions:empty {
+  display: none;
+}
+
+.ros-agent-bottom-rail .button {
+  white-space: nowrap;
+}
+
+.ros-agent-rail-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.ros-agent-rail-form--refine {
+  flex: 1 1 28rem;
+  min-width: min(100%, 22rem);
+}
+
+.ros-agent-rail-form--refine .event-form__textarea {
+  min-height: 2.5rem;
+  max-height: 3.4rem;
+  line-height: 1.25;
+  resize: none;
+}
+
+.ros-agent-rail-form--approve {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.ros-agent-rail-button-form {
+  margin: 0;
+}
+
+.ros-agent-bottom-rail__messages {
+  display: grid;
+  flex: 1 1 22rem;
+  gap: 0.2rem;
+  max-width: min(42rem, 100%);
+  max-height: 4rem;
+  overflow: auto;
+  padding: 0.42rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 36%, white);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-white) 86%, var(--color-light-cream));
+  font-size: 0.86rem;
+  line-height: 1.3;
+}
+
+.ros-agent-bottom-rail__messages--error {
+  border-color: color-mix(in srgb, #6c2121 26%, white);
+  color: #6c2121;
+}
+
+.ros-agent-bottom-rail__messages--warning {
+  border-color: color-mix(in srgb, var(--color-brown) 22%, white);
+  color: var(--color-brown);
+}
+
+.ros-agent-bottom-rail__messages p {
+  margin: 0;
+}
+
+.ros-agent-details-dialog {
+  width: min(72rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 45%, white);
+  border-radius: var(--radius-lg);
+  background: var(--color-white);
+  color: var(--color-dark-brown);
+  z-index: var(--z-modal);
+}
+
+.ros-agent-details-dialog::backdrop {
+  background: color-mix(in srgb, var(--color-dark-brown) 34%, transparent);
+}
+
+.ros-agent-details-dialog__panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  max-height: calc(100svh - 2.5rem);
+}
+
+.ros-agent-details-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-sea-foam) 45%, white);
+}
+
+.ros-agent-details-dialog__body {
+  display: grid;
+  gap: 1rem;
+  min-height: 0;
+  padding: 1rem;
+  overflow: auto;
+}
+
+.ros-agent-details__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.ros-agent-details__section {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--color-sea-foam) 55%, white);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-white) 88%, var(--color-light-cream));
+}
+
+.ros-agent-details__section h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-dark-brown);
+}
+
+.ros-agent-details__json {
+  max-height: 22rem;
+  overflow: auto;
+  margin: 0.5rem 0 0;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-light-cream) 72%, white);
+  color: var(--color-dark-brown);
+  font-family: var(--font-family-mono);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.ros-agent-canvas .ros-agent-draft__table-shell {
+  max-height: none;
+}
+
+.ros-agent-canvas .event-calendars__table {
+  margin-top: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ros-agent-working {
+    animation: none;
+  }
+}
+
+@media (max-width: 900px), (max-height: 720px) {
+  .event-layout__main:has(.ros-agent-app) {
+    overflow: visible;
+  }
+
+  .ros-agent-app {
+    grid-template-rows: auto auto auto auto;
+    height: auto;
+    min-height: 100svh;
+    overflow: visible;
+  }
+
+  .ros-agent-prompt-strip,
+  .ros-agent-bottom-rail {
+    grid-template-columns: 1fr;
+  }
+
+  .ros-agent-prompt-strip,
+  .ros-agent-prompt-strip > div,
+  .ros-agent-canvas,
+  .ros-agent-canvas__body,
+  .ros-agent-bottom-rail {
+    overflow: visible;
+  }
+
+  .ros-agent-bottom-rail {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ros-agent-bottom-rail__status {
+    align-self: flex-start;
+  }
+
+  .ros-agent-question-grid,
+  .ros-agent-details__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ros-agent-bottom-rail__actions,
+  .ros-agent-rail-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ros-agent-topbar,
+  .ros-agent-canvas__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

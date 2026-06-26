@@ -30,6 +30,22 @@ module Events
       get new_event_ros_agent_task_path(event)
 
       assert_response :success
+      assert_select ".ros-agent-app.ros-agent-app--new", count: 1
+      assert_select ".ros-agent-topbar h1", text: "Agent Assist"
+      assert_select ".ros-agent-topbar a", text: "Back to ROS"
+      assert_select ".ros-agent-topbar a", text: "Task List"
+      assert_select ".ros-agent-prompt-strip", count: 1
+      assert_select ".ros-agent-prompt-strip__attachments", count: 1
+      assert_select ".ros-agent-prompt-strip__prompt", count: 1
+      assert_select ".ros-agent-prompt-strip__settings", count: 1
+      assert_select ".ros-agent-prompt-strip__attachments h2", text: "Attachments"
+      assert_select ".ros-agent-prompt-strip__prompt h2", text: "Prompt"
+      assert_select ".ros-agent-prompt-strip__settings h2", text: "Settings"
+      assert_select ".ros-agent-prompt-strip .ros-agent-field-label", count: 0
+      assert_select ".ros-agent-canvas[data-ros-agent-status-target='canvas']", count: 1
+      assert_select ".ros-agent-canvas__header .ros-agent-canvas__label", count: 0
+      assert_select ".ros-agent-bottom-rail[data-ros-agent-status-target='bottomRail']", count: 1
+      assert_select ".ros-agent-bottom-rail__status p.sr-only[data-ros-agent-status-target='statusSummary']", count: 1
       assert_select "form[action='#{event_ros_agent_tasks_path(event)}'][enctype='multipart/form-data']" do
         assert_select "textarea[name='agent_task[prompt]']"
         assert_select "input[name='agent_task[mode]'][value='build_ros_from_source']", count: 1
@@ -46,6 +62,7 @@ module Events
         end
         assert_select "input[name='agent_task[source_files][]'][type='file'][multiple]", count: 1
         assert_select "input[name='agent_task[document_ids][]']", count: 0
+        assert_select ".ros-agent-bottom-rail input[type='submit']", value: "Start Agent Assist"
       end
       assert_no_match "No uploaded documents are available for this event.", response.body
     end
@@ -178,14 +195,19 @@ module Events
 
       assert_response :success
       assert_select "h1", text: /Agent Assist/
-      assert_select "section", text: /millar-run-of-show.pdf/
-      assert_select "section", text: /file_source_123/
-      assert_select "section", text: /A few planning decisions will materially change/
-      assert_select "table", text: /Ceremony/
-      assert_select "section", text: /Drafted plan/
+      assert_select ".ros-agent-app.ros-agent-app--show", count: 1
+      assert_select ".ros-agent-prompt-strip__prompt", text: /Adapt this prior event/
+      assert_select ".ros-agent-canvas__body #review-plan", count: 1
+      assert_select ".ros-agent-canvas__body #draft-ros", count: 0
+      assert_select ".ros-agent-canvas__body #planning-questions", count: 0
+      assert_select ".ros-agent-details-dialog", count: 1
+      assert_select ".ros-agent-details-dialog", text: /millar-run-of-show.pdf/
+      assert_select ".ros-agent-details-dialog", text: /file_source_123/
+      assert_select ".ros-agent-details-dialog", text: /Drafted plan/
+      assert_select ".ros-agent-details-trigger", text: "Details"
       assert_select "#review-plan table", text: /Oct 1/
       assert_select "#review-plan table", text: /2:30 PM/
-      assert_no_match "2025-10-01T14:30:00Z", response.body
+      assert_no_match "2025-10-01T14:30:00Z", css_select("#review-plan").to_s
     end
 
     test "show renders live status controller for active tasks" do
@@ -198,6 +220,7 @@ module Events
       assert_select "[data-ros-agent-status-status-url-value='#{status_event_ros_agent_task_path(@event, @task)}']", count: 1
       assert_select "[data-ros-agent-status-initial-status-value='drafting']", count: 1
       assert_select "[data-ros-agent-status-target='statusLabel']", text: "Drafting"
+      assert_select ".ros-agent-working", text: /working on it/
     end
 
     test "show anchors open planning questions so polling can reveal them" do
@@ -217,12 +240,18 @@ module Events
       get event_ros_agent_task_path(@event, @task)
 
       assert_response :success
-      assert_select "section#planning-questions[tabindex='-1']", count: 1
+      assert_select ".ros-agent-canvas__body section#planning-questions[tabindex='-1']", count: 1
       assert_select "section#planning-questions h2", text: "Planning Questions"
+      assert_select ".ros-agent-question-grid .ros-agent-question-card", count: 1
       assert_select "form[action='#{answer_questions_event_ros_agent_task_path(@event, @task)}']", count: 1
-      assert_select "input[type='radio'][name='answers[date_mapping]']", count: 1
-      assert_select "input[type='text'][name='freeform_answers[date_mapping]']", count: 1
+      assert_select "input[type='radio'][name='answers[date_mapping]']", count: 2
+      assert_select "input[type='radio'][name='answers[date_mapping]'][value='map_saturday']", count: 1
+      assert_select "input[type='radio'][name='answers[date_mapping]'][value='__custom__']", count: 1
+      assert_select "input[type='text'][name='custom_answers[date_mapping]'][data-action*='ros-agent-task#selectCustomAnswer']", count: 1
+      assert_select "input[type='text'][name='freeform_answers[date_mapping]']", count: 0
       assert_select "input[type='text'][name='answers[date_mapping]']", count: 0
+      assert_select "button", text: "Use recommended answers", count: 0
+      assert_select ".ros-agent-bottom-rail input[type='submit'][form='ros-agent-question-form']", value: "Submit Answers"
     end
 
     test "show anchors draft ROS so polling can reveal it" do
@@ -243,9 +272,10 @@ module Events
       get event_ros_agent_task_path(@event, @task)
 
       assert_response :success
-      assert_select "section#draft-ros[tabindex='-1']", count: 1
+      assert_select ".ros-agent-canvas__body section#draft-ros[tabindex='-1']", count: 1
       assert_select "section#draft-ros h2", text: "Draft ROS"
-      assert_select "form[action='#{refine_draft_event_ros_agent_task_path(@event, @task)}']", count: 1
+      assert_select ".ros-agent-bottom-rail form[action='#{refine_draft_event_ros_agent_task_path(@event, @task)}']", count: 1
+      assert_select ".ros-agent-bottom-rail form[action='#{request_final_plan_event_ros_agent_task_path(@event, @task)}']", count: 1
     end
 
     test "show formats draft ROS day groups and schedule times" do
@@ -317,8 +347,8 @@ module Events
       assert_response :success
       assert_select "#draft-ros [data-controller='ros-agent-draft-table']", 1
       assert_select "#draft-ros .ros-agent-draft__table-shell[data-ros-agent-draft-table-target='shell']", 1
-      assert_select "#draft-ros button", text: "Previous fields"
-      assert_select "#draft-ros button", text: "Next fields"
+      assert_select "#draft-ros button", text: "Previous fields", count: 0
+      assert_select "#draft-ros button", text: "Next fields", count: 0
       assert_select "#draft-ros .event-calendars__date-label", text: "Friday, October 15"
       assert_select "#draft-ros .event-calendars__date-label", text: "Saturday, October 16", count: 0
       assert_select "#draft-ros .ros-agent-draft__table tbody tr.event-calendars__row", count: 1
@@ -410,18 +440,12 @@ module Events
       get event_ros_agent_task_path(@event, @task)
 
       assert_response :success
-      assert_select "section#review-plan[tabindex='-1']", count: 1
+      assert_select ".ros-agent-canvas__body section#review-plan[tabindex='-1']", count: 1
       assert_select "section#review-plan h2", text: "Review Plan"
       assert_select "table", text: /Ceremony/
-      review_plan_html = response.body.match(/<section class="event-section__body" id="review-plan".*?<\/section>/m).to_s
       approve_path = approve_event_ros_agent_task_path(@event, @task)
-      approve_form_positions = review_plan_html.enum_for(:scan, /<form[^>]+action="#{Regexp.escape(approve_path)}"[^>]*>/).map do
-        Regexp.last_match.begin(0)
-      end
-
-      assert_equal 2, approve_form_positions.count
-      assert_operator approve_form_positions.first, :<, review_plan_html.index("<table")
-      assert_operator approve_form_positions.last, :>, review_plan_html.index("</table>")
+      assert_select "#review-plan form[action='#{approve_path}']", count: 0
+      assert_select ".ros-agent-bottom-rail form[action='#{approve_path}']", count: 1
     end
 
     test "status marks completed draft as actionable for live polling" do
@@ -445,9 +469,11 @@ module Events
       body = JSON.parse(response.body)
       assert_equal false, body["active"]
       assert_equal "Draft Ready", body["status_label"]
-      assert_equal "draft-ros", body["action_anchor"]
-      assert_includes body["action_sections_html"], "id=\"draft-ros\""
-      assert_includes body["action_sections_html"], "Ceremony"
+      assert_equal "draft", body["canvas_state"]
+      assert_includes body["canvas_html"], "id=\"draft-ros\""
+      assert_includes body["canvas_html"], "Ceremony"
+      assert_includes body["bottom_rail_html"], "Request Final Plan"
+      assert_includes body["metadata_html"], "Task History"
     end
 
     test "status keeps polling during refinement even when an old draft exists" do
@@ -481,13 +507,42 @@ module Events
       body = JSON.parse(response.body)
       assert_equal true, body["active"]
       assert_equal "Drafting", body["status_label"]
-      assert_equal "draft-ros", body["action_anchor"]
-      assert_includes body["action_sections_html"], "Old Ceremony Draft"
+      assert_equal "working", body["canvas_state"]
+      assert_includes body["canvas_html"], "working on it"
+      assert_not_includes body["canvas_html"], "Old Ceremony Draft"
+    end
+
+    test "status keeps draft canvas visible while final plan is being prepared" do
+      @task.update!(
+        status: "planning",
+        draft_ros_json: {
+          "draft_days" => [
+            {
+              "label" => "Wedding Day",
+              "entries" => [
+                { "time_label" => "4:00 PM", "title" => "Ceremony Draft" }
+              ]
+            }
+          ]
+        }
+      )
+
+      get status_event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      body = JSON.parse(response.body)
+      assert_equal true, body["active"]
+      assert_equal "Planning", body["status_label"]
+      assert_equal "draft", body["canvas_state"]
+      assert_includes body["canvas_html"], "Ceremony Draft"
+      assert_not_includes body["canvas_html"], "working on it"
     end
 
     test "status marks review plan as actionable for live polling" do
       @task.update!(
         status: "ready_for_review",
+        plan_json: { "operations" => [{ "operation_id" => "create-1", "operation_type" => "create_item" }] },
+        validation_json: { "blocking_errors" => [] },
         preview_json: {
           "summary" => "Create the wedding day ROS.",
           "operations" => [
@@ -506,9 +561,35 @@ module Events
       body = JSON.parse(response.body)
       assert_equal false, body["active"]
       assert_equal "Ready For Review", body["status_label"]
-      assert_equal "review-plan", body["action_anchor"]
-      assert_includes body["action_sections_html"], "id=\"review-plan\""
-      assert_includes body["action_sections_html"], "Ceremony"
+      assert_equal "plan", body["canvas_state"]
+      assert_includes body["canvas_html"], "id=\"review-plan\""
+      assert_includes body["canvas_html"], "Ceremony"
+      assert_includes body["bottom_rail_html"], "Approve Plan"
+    end
+
+    test "status keeps review warnings visible with the plan approval action" do
+      @task.update!(
+        status: "ready_for_review",
+        plan_json: { "operations" => [{ "operation_id" => "create-1", "operation_type" => "create_item" }] },
+        validation_json: { "blocking_errors" => [], "warnings" => ["Confirm vendor arrival before apply."] },
+        preview_json: {
+          "summary" => "Create the wedding day ROS.",
+          "operations" => [
+            {
+              "action" => "create",
+              "title" => "Ceremony",
+              "when" => "4:00 PM"
+            }
+          ]
+        }
+      )
+
+      get status_event_ros_agent_task_path(@event, @task)
+
+      assert_response :success
+      body = JSON.parse(response.body)
+      assert_includes body["bottom_rail_html"], "Confirm vendor arrival before apply."
+      assert_includes body["bottom_rail_html"], "Approve Plan"
     end
 
     test "status renders planning questions for live polling" do
@@ -530,9 +611,10 @@ module Events
       assert_response :success
       body = JSON.parse(response.body)
       assert_equal false, body["active"]
-      assert_equal "planning-questions", body["action_anchor"]
-      assert_includes body["action_sections_html"], "id=\"planning-questions\""
-      assert_includes body["action_sections_html"], "Date Mapping"
+      assert_equal "questions", body["canvas_state"]
+      assert_includes body["canvas_html"], "id=\"planning-questions\""
+      assert_includes body["canvas_html"], "Date Mapping"
+      assert_includes body["bottom_rail_html"], "Submit Answers"
     end
 
     test "status returns no-cache json with source files llm calls events and last error" do
@@ -626,10 +708,10 @@ module Events
           post answer_questions_event_ros_agent_task_path(@event, @task), params: {
             answers: {
               date_mapping: "map_saturday_to_wedding_date",
-              scrub_names: "remove_source_names"
+              scrub_names: "__custom__"
             },
-            freeform_answers: {
-              date_mapping: "",
+            custom_answers: {
+              date_mapping: "This should be ignored unless custom is selected.",
               scrub_names: "Remove names but keep vendor roles."
             }
           }
@@ -640,8 +722,51 @@ module Events
       assert_equal "answered", batch.reload.status
       assert_equal "map_saturday_to_wedding_date", batch.answers_json["date_mapping"]
       assert_equal "Remove names but keep vendor roles.", batch.answers_json["scrub_names"]
+      assert_equal "analyzing", @task.reload.status
       assert_equal [{ task_id: @task.id, mode: :answer_questions }], enqueued
       assert_equal "questions_answered", @task.events.order(:created_at).last.event_type
+    end
+
+    test "answer_questions accepts legacy freeform answers as a fallback" do
+      batch = agent_task_question_batches(:open_questions)
+
+      without_run_task_job do
+        post answer_questions_event_ros_agent_task_path(@event, @task), params: {
+          answers: {
+            date_mapping: "map_saturday_to_wedding_date"
+          },
+          freeform_answers: {
+            scrub_names: "Legacy custom answer."
+          }
+        }
+      end
+
+      assert_redirected_to event_ros_agent_task_path(@event, @task)
+      assert_equal "answered", batch.reload.status
+      assert_equal "map_saturday_to_wedding_date", batch.answers_json["date_mapping"]
+      assert_equal "Legacy custom answer.", batch.answers_json["scrub_names"]
+    end
+
+    test "answer_questions rejects a selected custom answer without custom text" do
+      batch = agent_task_question_batches(:open_questions)
+
+      assert_no_difference("AgentTaskEvent.count") do
+        post answer_questions_event_ros_agent_task_path(@event, @task), params: {
+          answers: {
+            date_mapping: "__custom__",
+            scrub_names: "remove_source_names"
+          },
+          custom_answers: {
+            date_mapping: "",
+            scrub_names: ""
+          }
+        }
+      end
+
+      assert_redirected_to event_ros_agent_task_path(@event, @task)
+      assert_equal "open", batch.reload.status
+      assert_equal({}, batch.answers_json)
+      assert_equal "Add a custom answer or choose a listed option for Date Mapping.", flash[:alert]
     end
 
     test "refine_draft records refinement guidance and enqueues the refinement run" do

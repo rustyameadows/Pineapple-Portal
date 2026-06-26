@@ -7,16 +7,18 @@ const ACTION_ANCHORS = {
 }
 
 export default class extends Controller {
-  static targets = ["statusLabel", "statusSummary", "sourceFiles", "llmCalls", "latestError", "taskHistory"]
+  static targets = ["statusLabel", "statusSummary", "sourceFiles", "llmCalls", "latestError", "taskHistory", "canvas", "bottomRail", "metadata"]
   static values = {
     statusUrl: String,
     initialStatus: String,
-    initialActionAnchor: String
+    initialActionAnchor: String,
+    initialCanvasState: String
   }
 
   connect() {
     this.currentStatus = this.initialStatusValue || ""
     this.currentActionAnchor = this.initialActionAnchorValue || this.actionAnchorForStatus(this.currentStatus)
+    this.currentCanvasState = this.initialCanvasStateValue || ""
     if (!this.shouldPoll(this.currentStatus)) return
 
     this.pollTimer = window.setInterval(() => this.pollStatus(), 2000)
@@ -46,14 +48,17 @@ export default class extends Controller {
   }
 
   applyStatus(data) {
-    const previousStatus = this.currentStatus
-    const previousActionAnchor = this.currentActionAnchor
     const nextStatus = data.status || this.currentStatus
     const nextActionAnchor = data.action_anchor || this.actionAnchorForStatus(nextStatus)
+    const nextCanvasState = data.canvas_state || this.currentCanvasState
     const active = data.active == null ? this.shouldPoll(nextStatus) : Boolean(data.active)
     this.currentStatus = nextStatus
     this.currentActionAnchor = nextActionAnchor
+    this.currentCanvasState = nextCanvasState
 
+    this.updateTarget("canvas", data.canvas_html)
+    this.updateTarget("bottomRail", data.bottom_rail_html)
+    this.updateTarget("metadata", data.metadata_html)
     this.updateStatusLabel(nextStatus, data.status_label)
     this.updateStatusSummary(nextStatus, active, data.status_label)
     this.updateTarget("sourceFiles", this.renderSourceFiles(data.source_files))
@@ -64,10 +69,6 @@ export default class extends Controller {
 
     if (!active) {
       window.clearInterval(this.pollTimer)
-    }
-
-    if (nextActionAnchor && (nextStatus !== previousStatus || nextActionAnchor !== previousActionAnchor)) {
-      this.scrollToAnchor(nextActionAnchor)
     }
   }
 

@@ -1,0 +1,159 @@
+<% status_snapshot ||= {} %>
+<% source_files = Array(status_snapshot[:source_files] || status_snapshot["source_files"]) %>
+<% llm_calls = Array(status_snapshot[:llm_calls] || status_snapshot["llm_calls"]) %>
+<% task_events = Array(status_snapshot[:task_events] || status_snapshot["task_events"]) %>
+<% last_error = status_snapshot[:last_error] || status_snapshot["last_error"] %>
+<% draft = task.draft_ros_json.to_h %>
+<% preview = task.preview_json.to_h %>
+<% validation = task.validation_json.to_h %>
+
+<div class="ros-agent-details__grid">
+  <section class="ros-agent-details__section">
+    <h3>Assumptions</h3>
+    <%= ros_agent_draft_array_label(draft["assumptions"] || task.plan_json.to_h["assumptions"]) %>
+  </section>
+
+  <section class="ros-agent-details__section">
+    <h3>Notes</h3>
+    <%= ros_agent_draft_array_label(draft["refinement_notes"] || task.plan_json.to_h["review_notes"]) %>
+  </section>
+
+  <section class="ros-agent-details__section">
+    <h3>Flags</h3>
+    <%= ros_agent_draft_array_label(draft["review_flags"] || preview["warnings"] || validation["warnings"]) %>
+  </section>
+
+  <section class="ros-agent-details__section">
+    <h3>Source References</h3>
+    <%= ros_agent_draft_source_refs_label(draft["source_references"]) %>
+  </section>
+</div>
+
+<section class="ros-agent-details__section">
+  <h3>Source Files</h3>
+  <% if source_files.any? %>
+    <table class="event-table">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Size</th>
+          <th>OpenAI File</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% source_files.each do |source_file| %>
+          <tr>
+            <td><%= source_file[:filename] || source_file["filename"] %></td>
+            <td><%= source_file[:size_label] || source_file["size_label"] %></td>
+            <td><%= source_file[:openai_file_id] || source_file["openai_file_id"] || (source_file[:openai_state] || source_file["openai_state"]).to_s.humanize %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="event-section__empty">No source files yet.</p>
+  <% end %>
+</section>
+
+<section class="ros-agent-details__section">
+  <h3>OpenAI Calls</h3>
+  <% if llm_calls.any? %>
+    <table class="event-table">
+      <thead>
+        <tr>
+          <th>Purpose</th>
+          <th>Status</th>
+          <th>Model</th>
+          <th>Duration</th>
+          <th>Usage</th>
+          <th>Error</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% llm_calls.each do |call| %>
+          <% usage = call[:usage] || call["usage"] || {} %>
+          <% error = call[:error] || call["error"] || {} %>
+          <tr>
+            <td><%= (call[:purpose] || call["purpose"]).to_s.humanize %></td>
+            <td><%= (call[:status] || call["status"]).to_s.humanize %></td>
+            <td><%= call[:model] || call["model"] %></td>
+            <td><%= call[:duration_label] || call["duration_label"] || ((call[:duration_ms] || call["duration_ms"]) ? "#{call[:duration_ms] || call["duration_ms"]} ms" : "—") %></td>
+            <td><%= usage.present? ? usage.to_json : "—" %></td>
+            <td><%= error.present? ? error["message"].to_s : "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="event-section__empty">No OpenAI calls yet.</p>
+  <% end %>
+</section>
+
+<section class="ros-agent-details__section">
+  <h3>Task History</h3>
+  <% if task_events.any? %>
+    <table class="event-table">
+      <thead>
+        <tr>
+          <th>Event</th>
+          <th>Message</th>
+          <th>When</th>
+          <th>By</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% task_events.each do |task_event| %>
+          <tr>
+            <td><%= (task_event[:event_type] || task_event["event_type"]).to_s.humanize %></td>
+            <td><%= task_event[:message] || task_event["message"] || "—" %></td>
+            <td><%= task_event[:created_at_label] || task_event["created_at_label"] || task_event[:created_at] || task_event["created_at"] || "—" %></td>
+            <td><%= task_event[:created_by] || task_event["created_by"] || "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="event-section__empty">No task history yet.</p>
+  <% end %>
+</section>
+
+<section class="ros-agent-details__section">
+  <h3>Latest Error</h3>
+  <% if last_error.present? %>
+    <p><strong><%= last_error[:class] || last_error["class"] || "Error" %>:</strong> <%= last_error[:message] || last_error["message"] %></p>
+  <% else %>
+    <p class="event-section__empty">No task error recorded yet.</p>
+  <% end %>
+</section>
+
+<section class="ros-agent-details__section">
+  <h3>Trace Summary</h3>
+  <% if task.trace_summary_json.present? %>
+    <p><%= task.trace_summary_json["latest_run_label"] %></p>
+    <% if task.trace_summary_json["tokens"].present? %>
+      <p>Tokens: <%= task.trace_summary_json["tokens"] %></p>
+    <% end %>
+  <% else %>
+    <p class="event-section__empty">No trace summary yet.</p>
+  <% end %>
+</section>
+
+<section class="ros-agent-details__section">
+  <h3>Raw JSON</h3>
+  <details>
+    <summary>Draft JSON</summary>
+    <pre class="ros-agent-details__json"><%= JSON.pretty_generate(draft) %></pre>
+  </details>
+  <details>
+    <summary>Plan JSON</summary>
+    <pre class="ros-agent-details__json"><%= JSON.pretty_generate(task.plan_json.to_h) %></pre>
+  </details>
+  <details>
+    <summary>Preview JSON</summary>
+    <pre class="ros-agent-details__json"><%= JSON.pretty_generate(preview) %></pre>
+  </details>
+  <details>
+    <summary>Validation JSON</summary>
+    <pre class="ros-agent-details__json"><%= JSON.pretty_generate(validation) %></pre>
+  </details>
+</section>

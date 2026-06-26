@@ -8,16 +8,11 @@
 ].flat_map { |action, rows| rows.map { |row| row.merge("action" => action) } } %>
 
 <% if preview.present? %>
-  <section class="event-section__body" id="review-plan" tabindex="-1">
+  <section class="ros-agent-canvas-panel" id="review-plan" tabindex="-1">
     <h2>Review Plan</h2>
 
     <% summary_parts = %w[create_count update_count delete_count tag_change_count time_change_count].filter_map { |key| value = preview[key]; "#{key.humanize}: #{value}" if value.present? } %>
     <p><%= summary_parts.any? ? summary_parts.join(", ") : preview["summary"] %></p>
-
-    <% blocking_errors = Array(task.validation_json["blocking_errors"]) %>
-    <% warnings = Array(preview["warnings"] || task.validation_json["warnings"]) %>
-
-    <%= render "preview_gate", task: task, blocking_errors: blocking_errors, warnings: warnings, id_suffix: "top" %>
 
     <% if grouped_rows.any? %>
       <table class="event-table event-calendars__table">
@@ -62,7 +57,5 @@
         </tbody>
       </table>
     <% end %>
-
-    <%= render "preview_gate", task: task, blocking_errors: blocking_errors, warnings: warnings, id_suffix: "bottom" %>
   </section>
 <% end %>

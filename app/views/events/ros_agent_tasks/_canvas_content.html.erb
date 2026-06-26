@@ -1,0 +1,38 @@
+<% canvas_state = canvas_state.to_s.presence || "working" %>
+<% canvas_title = case canvas_state
+                  when "questions" then "Planning Questions"
+                  when "draft" then "Proposed Event Items"
+                  when "plan" then "Review Plan"
+                  when "setup" then "Source Setup"
+                  else "Proposed Event Items"
+                  end %>
+
+<header class="ros-agent-canvas__header">
+  <div>
+    <h2><%= canvas_title %></h2>
+  </div>
+  <% if show_details %>
+    <button type="button"
+            class="button button--ghost button--small ros-agent-details-trigger"
+            data-action="ros-agent-details#open">
+      Details
+    </button>
+  <% end %>
+</header>
+
+<div class="ros-agent-canvas__body ros-agent-canvas__body--<%= canvas_state %>">
+  <% case canvas_state %>
+  <% when "questions" %>
+    <%= render "question_batch", event: event, task: task, question_batch: question_batch %>
+  <% when "draft" %>
+    <%= render "draft_table", event: event, task: task %>
+  <% when "plan" %>
+    <%= render "preview", event: event, task: task %>
+  <% when "setup" %>
+    <section class="ros-agent-setup-panel">
+      <p>Ready for source material.</p>
+    </section>
+  <% else %>
+    <%= render "working_canvas" %>
+  <% end %>
+</div>

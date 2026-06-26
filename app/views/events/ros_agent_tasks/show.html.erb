@@ -1,47 +1,33 @@
+<% canvas_state = @status_snapshot[:canvas_state] || @status_snapshot["canvas_state"] || "working" %>
+<% source_files = Array(@status_snapshot[:source_files] || @status_snapshot["source_files"]) %>
+
 <% provide :page_shell do %>
   <div class="event-layout">
     <%= render "events/sidebar_navigation", event: @event %>
 
-    <div class="event-layout__main">
+    <main class="event-layout__main">
       <%= render "shared/flash" %>
 
-      <section class="event-section">
-        <header class="event-section__header">
-          <div>
-            <p class="event-section__eyebrow">Run of Show</p>
-            <h1 class="event-section__title">Agent Assist</h1>
-            <p class="event-section__subtitle"><%= @task.prompt %></p>
-          </div>
-          <div class="event-calendars__schedule-actions">
-            <%= link_to "Back to ROS", event_calendar_path(@event), class: "event-section__cta event-section__cta--secondary" %>
-            <%= link_to "Task History", event_ros_agent_tasks_path(@event), class: "event-section__cta event-section__cta--secondary" %>
-          </div>
-        </header>
+      <div data-controller="ros-agent-status"
+           data-ros-agent-status-status-url-value="<%= status_event_ros_agent_task_path(@event, @task) %>"
+           data-ros-agent-status-initial-status-value="<%= @status_snapshot[:status] || @status_snapshot["status"] %>"
+           data-ros-agent-status-initial-canvas-state-value="<%= canvas_state %>">
+        <div class="ros-agent-app ros-agent-app--show" data-controller="ros-agent-task ros-agent-details">
+          <%= render "topbar", event: @event %>
+          <%= render "prompt_strip", event: @event, task: @task, source_files: source_files %>
+          <%= render "canvas", event: @event, task: @task, question_batch: @open_question_batch, canvas_state: canvas_state %>
 
-        <%= render "status_module",
-                   event: @event,
-                   task: @task,
-                   status_snapshot: @status_snapshot,
-                   status_url: status_event_ros_agent_task_path(@event, @task) %>
+          <footer class="ros-agent-bottom-rail" data-ros-agent-status-target="bottomRail">
+            <%= render "bottom_rail_content",
+                       event: @event,
+                       task: @task,
+                       status_snapshot: @status_snapshot,
+                       canvas_state: canvas_state %>
+          </footer>
 
-        <section class="event-section__body">
-          <p><strong>Request:</strong> <%= @task.prompt %></p>
-        </section>
-
-        <div id="ros-agent-action-sections">
-          <%= render "action_sections", task: @task, question_batch: @open_question_batch %>
+          <%= render "details_dialog", task: @task, status_snapshot: @status_snapshot %>
         </div>
-
-        <% if @task.trace_summary_json.present? %>
-          <section class="event-section__body">
-            <h2>Trace Summary</h2>
-            <p><%= @task.trace_summary_json["latest_run_label"] %></p>
-            <% if @task.trace_summary_json["tokens"].present? %>
-              <p>Tokens: <%= @task.trace_summary_json["tokens"] %></p>
-            <% end %>
-          </section>
-        <% end %>
-      </section>
-    </div>
+      </div>
+    </main>
   </div>
 <% end %>

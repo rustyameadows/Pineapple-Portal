@@ -1,0 +1,20 @@
+<dialog class="ros-agent-details-dialog"
+        data-ros-agent-details-target="dialog"
+        data-action="cancel->ros-agent-details#handleCancel click->ros-agent-details#handleBackdropClose">
+  <div class="ros-agent-details-dialog__panel">
+    <header class="ros-agent-details-dialog__header">
+      <div>
+        <p class="ros-agent-canvas__label">Response</p>
+        <h2>Details</h2>
+      </div>
+      <button type="button"
+              class="button button--ghost button--small"
+              data-action="ros-agent-details#close">
+        Close
+      </button>
+    </header>
+    <div class="ros-agent-details-dialog__body" data-ros-agent-status-target="metadata">
+      <%= render "metadata", task: task, status_snapshot: status_snapshot %>
+    </div>
+  </div>
+</dialog>

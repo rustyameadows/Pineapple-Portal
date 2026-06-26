@@ -1,0 +1,8 @@
+<section class="ros-agent-canvas" data-ros-agent-status-target="canvas">
+  <%= render "canvas_content",
+             event: event,
+             task: task,
+             question_batch: question_batch,
+             canvas_state: canvas_state,
+             show_details: local_assigns.fetch(:show_details, true) %>
+</section>

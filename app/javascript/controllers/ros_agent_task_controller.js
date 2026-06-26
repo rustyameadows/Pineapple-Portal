@@ -13,6 +13,14 @@ export default class extends Controller {
     })
   }
 
+  selectCustomAnswer(event) {
+    const radioId = event.currentTarget.dataset.customAnswerRadioId
+    if (!radioId) return
+
+    const radio = document.getElementById(radioId)
+    if (radio) radio.checked = true
+  }
+
   confirmHighRisk(event) {
     if (!this.hasHighRiskAcknowledgementTarget) return
     if (this.highRiskAcknowledgementTarget.checked) return
