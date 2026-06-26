@@ -49,7 +49,7 @@
               <td><%= row["action"] %></td>
               <td><%= row["summary"] %></td>
               <td><%= after["title"] || before["title"] || "—" %></td>
-              <td><%= after["starts_at"] || before["starts_at"] || "—" %></td>
+              <td><%= ros_agent_preview_when_label(task, before, after) %></td>
             </tr>
           <% end %>
         </tbody>
@@ -68,7 +68,7 @@
             <tr>
               <td><%= operation["action"] || operation["operation_type"] %></td>
               <td><%= operation["title"] || operation.dig("attributes", "title") || operation.dig("item_attributes", "title") || operation["summary"] %></td>
-              <td><%= operation["when"] || operation.dig("attributes", "starts_at") || operation.dig("item_attributes", "starts_at") || "—" %></td>
+              <td><%= operation["when"] || ros_agent_preview_when_label(task, {}, operation["attributes"] || operation["item_attributes"] || {}) %></td>
             </tr>
           <% end %>
         </tbody>

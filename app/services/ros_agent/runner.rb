@@ -10,6 +10,7 @@ module RosAgent
                    source_document_uploader_class: SourceDocumentUploader,
                    source_file_input_builder_class: SourceFileInputBuilder,
                    event_context_class: EventContext,
+                   draft_change_plan_builder_class: DraftChangePlanBuilder,
                    trace_recorder_class: TraceRecorder)
       @task = task
       @client = client
@@ -17,6 +18,7 @@ module RosAgent
       @source_document_uploader_class = source_document_uploader_class
       @source_file_input_builder_class = source_file_input_builder_class
       @event_context_class = event_context_class
+      @draft_change_plan_builder_class = draft_change_plan_builder_class
       @trace_recorder_class = trace_recorder_class
     end
 
@@ -28,6 +30,8 @@ module RosAgent
       model_call_purpose = nil
 
       mark_status!(status_for_mode(mode))
+      return promote_draft_to_change_plan! if mode.to_sym == :request_final_plan
+
       upload_source_documents!
 
       payload = nil
@@ -61,7 +65,7 @@ module RosAgent
 
     private
 
-    attr_reader :task, :client, :prompt_builder_class, :source_document_uploader_class, :source_file_input_builder_class, :event_context_class, :trace_recorder_class
+    attr_reader :task, :client, :prompt_builder_class, :source_document_uploader_class, :source_file_input_builder_class, :event_context_class, :draft_change_plan_builder_class, :trace_recorder_class
 
     def upload_source_documents!
       source_document_uploader_class.new(
@@ -69,6 +73,24 @@ module RosAgent
         client: client,
         trace_recorder_class: trace_recorder_class
       ).call
+    end
+
+    def promote_draft_to_change_plan!
+      payload = draft_change_plan_builder_class.new(
+        task: task,
+        calendar: run_of_show_calendar
+      ).call
+      validation_result = validate_change_plan!(payload)
+      preview = build_change_plan_preview(payload)
+      task.update!(
+        plan_json: payload,
+        validation_json: validation_result.as_json,
+        preview_json: preview,
+        current_plan_version: task.current_plan_version.to_i + 1,
+        status: "ready_for_review"
+      )
+      append_event!("ready_for_review", payload["summary"])
+      payload
     end
 
     def build_request_payload(mode)

@@ -161,7 +161,7 @@ module Events
             "creates" => [
               {
                 "summary" => "Create ceremony.",
-                "after" => { "title" => "Ceremony", "starts_at" => "2:00 PM" }
+                "after" => { "title" => "Ceremony", "starts_at" => "2025-10-01T14:30:00Z", "duration_minutes" => 30 }
               }
             ],
             "updates" => [],
@@ -183,6 +183,9 @@ module Events
       assert_select "section", text: /A few planning decisions will materially change/
       assert_select "table", text: /Ceremony/
       assert_select "section", text: /Drafted plan/
+      assert_select "#review-plan table", text: /Oct 1/
+      assert_select "#review-plan table", text: /2:30 PM/
+      assert_no_match "2025-10-01T14:30:00Z", response.body
     end
 
     test "show renders live status controller for active tasks" do

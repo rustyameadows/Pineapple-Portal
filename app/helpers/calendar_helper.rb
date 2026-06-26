@@ -236,6 +236,16 @@ module CalendarHelper
     "TBD"
   end
 
+  def ros_agent_preview_when_label(task, before, after)
+    attrs = (after.presence || before.presence || {}).with_indifferent_access
+    return attrs["time_caption"] if attrs["time_caption"].present?
+
+    timezone = ros_agent_draft_timezone(task)
+    start_time = parse_ros_agent_draft_time(attrs["starts_at"], timezone)
+    finish_time = ros_agent_preview_finish_time(attrs, start_time)
+    effective_time_label(start_time, finish_time, timezone) || attrs["starts_at"].presence || "—"
+  end
+
   def ros_agent_draft_entries_for_day(draft, day, timezone)
     nested_entries = Array(day["entries"])
     return nested_entries if nested_entries.present?
@@ -741,6 +751,15 @@ module CalendarHelper
     return unless start_time && entry["duration_minutes"].present?
 
     duration_minutes = Integer(entry["duration_minutes"], exception: false)
+    return unless duration_minutes&.positive?
+
+    start_time + duration_minutes.minutes
+  end
+
+  def ros_agent_preview_finish_time(attrs, start_time)
+    return unless start_time && attrs["duration_minutes"].present?
+
+    duration_minutes = Integer(attrs["duration_minutes"], exception: false)
     return unless duration_minutes&.positive?
 
     start_time + duration_minutes.minutes

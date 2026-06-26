@@ -403,11 +403,12 @@ module RosAgent
 
     test "stores the final change plan and increments plan version" do
       task = FakeTask.new(event: events(:one))
-      response = response_hash(payload: valid_change_plan)
+      task.draft_ros_json = valid_draft_ros
+      client = FakeClient.new([])
 
       Runner.new(
         task: task,
-        client: FakeClient.new(response),
+        client: client,
         prompt_builder_class: FakePromptBuilder,
         source_document_uploader_class: FakeSourceDocumentUploader,
         source_file_input_builder_class: FakeSourceFileInputBuilder,
@@ -416,7 +417,10 @@ module RosAgent
       ).call(mode: :request_final_plan)
 
       assert_equal "ready_for_review", task.status
-      assert_equal valid_change_plan, task.plan_json
+      assert_equal [], client.payloads
+      assert_equal "ready_for_review", task.plan_json["state"]
+      assert_equal 1, task.plan_json["operations"].length
+      assert_equal "Crew Call", task.plan_json.dig("operations", 0, "item_attributes", "title")
       assert_equal [], task.validation_json[:blocking_errors]
       assert_equal 1, task.preview_json[:create_count]
       assert_equal 2, task.current_plan_version
