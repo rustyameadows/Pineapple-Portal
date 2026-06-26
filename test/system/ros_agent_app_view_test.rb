@@ -49,13 +49,26 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
     visit event_ros_agent_task_path(@event, @task)
     show_metrics = page.evaluate_script(<<~JS)
       (() => {
+        const settingsHeading = document.querySelector(".ros-agent-prompt-strip__settings h2")
         const items = Array.from(document.querySelectorAll(".ros-agent-settings-list > div"))
         const [model, reasoning] = items.map((item) => item.getBoundingClientRect())
+        const [modelLabel, reasoningLabel] = items.map((item) => item.querySelector("dt"))
+        const [modelValue, reasoningValue] = items.map((item) => item.querySelector("dd"))
+        const settingsHeadingStyle = getComputedStyle(settingsHeading)
+        const modelValueStyle = getComputedStyle(modelValue)
 
         return {
           itemCount: items.length,
+          settingsHeadingFontSize: settingsHeadingStyle.fontSize,
+          settingsHeadingLetterSpacing: settingsHeadingStyle.letterSpacing,
+          modelLabelTransform: getComputedStyle(modelLabel).textTransform,
+          modelValueTransform: getComputedStyle(modelValue).textTransform,
+          modelValueFontSize: modelValueStyle.fontSize,
+          modelValueLetterSpacing: modelValueStyle.letterSpacing,
           modelLeft: Math.round(model.left),
           modelTop: Math.round(model.top),
+          reasoningLabelTransform: getComputedStyle(reasoningLabel).textTransform,
+          reasoningValueTransform: getComputedStyle(reasoningValue).textTransform,
           reasoningLeft: Math.round(reasoning.left),
           reasoningTop: Math.round(reasoning.top)
         }
@@ -63,6 +76,12 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
     JS
 
     assert_equal 2, show_metrics["itemCount"]
+    assert_equal "none", show_metrics["modelLabelTransform"]
+    assert_equal "none", show_metrics["reasoningLabelTransform"]
+    assert_equal "uppercase", show_metrics["modelValueTransform"]
+    assert_equal "uppercase", show_metrics["reasoningValueTransform"]
+    assert_equal show_metrics["settingsHeadingFontSize"], show_metrics["modelValueFontSize"]
+    assert_equal show_metrics["settingsHeadingLetterSpacing"], show_metrics["modelValueLetterSpacing"]
     assert_in_delta show_metrics["modelTop"], show_metrics["reasoningTop"], 2
     assert_operator show_metrics["reasoningLeft"], :>, show_metrics["modelLeft"] + 20
 
@@ -85,6 +104,33 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
     assert_equal 2, new_metrics["itemCount"]
     assert_in_delta new_metrics["modelLeft"], new_metrics["reasoningLeft"], 2
     assert_operator new_metrics["reasoningTop"], :>, new_metrics["modelTop"] + 12
+  end
+
+  test "top rail navigation buttons sit compactly inside the bar" do
+    login_as_planner
+    page.current_window.resize_to(1400, 900)
+    visit event_ros_agent_task_path(@event, @task)
+
+    metrics = page.evaluate_script(<<~JS)
+      (() => {
+        const topbar = document.querySelector(".ros-agent-topbar")
+        const topbarRect = topbar.getBoundingClientRect()
+        const buttonRects = Array.from(document.querySelectorAll(".ros-agent-topbar__actions .button")).map((button) => button.getBoundingClientRect())
+
+        return {
+          buttonCount: buttonRects.length,
+          buttonHeights: buttonRects.map((rect) => rect.height),
+          buttonsInside: buttonRects.every((rect) => rect.top >= topbarRect.top + 6 && rect.bottom <= topbarRect.bottom - 6),
+          topbarHeight: topbarRect.height
+        }
+      })()
+    JS
+
+    assert_equal 2, metrics["buttonCount"]
+    assert_equal true, metrics["buttonsInside"]
+    metrics["buttonHeights"].each do |height|
+      assert_operator height, :<=, 32
+    end
   end
 
   test "agent assist app owns desktop scrolling and falls back on small screens" do
