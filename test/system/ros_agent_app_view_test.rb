@@ -120,7 +120,9 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
           bodyClientWidth: body.clientWidth,
           bodyScrollWidth: body.scrollWidth,
           innerShellCount: document.querySelectorAll("#draft-ros .ros-agent-draft__table-shell").length,
-          tableWidth: table.getBoundingClientRect().width
+          tableWidth: table.getBoundingClientRect().width,
+          titleWidth: Array.from(table.querySelectorAll("thead th")).find((cell) => cell.textContent.trim() === "title").getBoundingClientRect().width,
+          notesWidth: Array.from(table.querySelectorAll("thead th")).find((cell) => cell.textContent.trim() === "notes").getBoundingClientRect().width
         }
       })()
     JS
@@ -128,6 +130,58 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
     assert_equal 0, metrics["innerShellCount"]
     assert_operator metrics["bodyScrollWidth"], :>, metrics["bodyClientWidth"] + 100
     assert_operator metrics["tableWidth"], :>, metrics["bodyClientWidth"] + 100
+    assert_operator metrics["titleWidth"], :>, metrics["notesWidth"]
+  end
+
+  test "draft table fills the canvas when visible columns fit" do
+    @task.update!(
+      status: "drafting",
+      draft_ros_json: {
+        "draft_days" => [
+          {
+            "label" => "Production Day",
+            "entries" => [
+              {
+                "time_label" => "All day",
+                "title" => "George Mason University Parking Lot Available for Skyline Staging",
+                "vendor_handling" => "Skyline Tent Co.",
+                "tags" => ["Production"]
+              }
+            ]
+          }
+        ]
+      }
+    )
+
+    login_as_planner
+    page.current_window.resize_to(1400, 900)
+    visit event_ros_agent_task_path(@event, @task)
+
+    metrics = page.evaluate_script(<<~JS)
+      (() => {
+        const body = document.querySelector(".ros-agent-canvas__body")
+        const table = document.querySelector("#draft-ros > table.ros-agent-draft__table")
+        const headers = Array.from(table.querySelectorAll("thead th"))
+        const bodyStyles = getComputedStyle(body)
+        const bodyContentWidth = body.clientWidth - parseFloat(bodyStyles.paddingLeft) - parseFloat(bodyStyles.paddingRight)
+        return {
+          bodyClientWidth: body.clientWidth,
+          bodyContentWidth,
+          bodyScrollWidth: body.scrollWidth,
+          tableWidth: table.getBoundingClientRect().width,
+          titleWidth: headers.find((cell) => cell.textContent.trim() === "title").getBoundingClientRect().width,
+          vendorWidth: headers.find((cell) => cell.textContent.trim() === "vendor_handling").getBoundingClientRect().width,
+          scheduleHeaderPosition: getComputedStyle(headers.find((cell) => cell.textContent.trim() === "Schedule")).position,
+          titleHeaderPosition: getComputedStyle(headers.find((cell) => cell.textContent.trim() === "title")).position
+        }
+      })()
+    JS
+
+    assert_in_delta metrics["bodyContentWidth"], metrics["tableWidth"], 4
+    assert_in_delta metrics["bodyClientWidth"], metrics["bodyScrollWidth"], 4
+    assert_operator metrics["titleWidth"], :>, metrics["vendorWidth"]
+    assert_equal "static", metrics["scheduleHeaderPosition"]
+    assert_equal "static", metrics["titleHeaderPosition"]
   end
 
   test "canvas and status details open separate overlays" do
@@ -173,5 +227,10 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
       assert_text "Task History"
       assert_text "Agent produced draft."
     end
+
+    alignment = page.evaluate_script(<<~JS)
+      getComputedStyle(document.querySelector(".ros-agent-task-details-dialog[open] .ros-agent-details__section")).alignContent
+    JS
+    assert_equal "start", alignment
   end
 end

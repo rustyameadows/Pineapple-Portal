@@ -3,11 +3,11 @@
 <% entries_by_day = ros_agent_draft_entries_grouped_by_day(draft, draft_timezone) %>
 <% all_draft_entries = entries_by_day.flat_map(&:last).map { |entry| ros_agent_draft_display_entry(entry) } %>
 <% preferred_item_keys = %w[title timing duration_minutes notes location vendor_handling staff_handling tags confidence planner_review_needed source_refs] %>
-<% hidden_item_keys = %w[details day_label] %>
+<% hidden_item_keys = %w[details day_label timing duration duration_minutes confidence source_ref source_refs time_label time_caption] %>
 <% all_item_keys = all_draft_entries.flat_map(&:keys).uniq - hidden_item_keys %>
 <% draft_item_keys = preferred_item_keys.select { |key| all_item_keys.include?(key) } + (all_item_keys - preferred_item_keys).sort %>
 <% draft_table_colspan = draft_item_keys.size + 1 %>
-<% draft_table_min_width = 12 + (draft_item_keys.size * 14) %>
+<% draft_table_min_width = 12 + draft_item_keys.sum { |key| key == "title" ? 24 : 14 } %>
 
 <% if entries_by_day.any? %>
   <section class="ros-agent-draft__surface"
@@ -19,7 +19,7 @@
         <tr>
           <th class="event-calendars__schedule-column ros-agent-draft__schedule-column">Schedule</th>
           <% draft_item_keys.each do |key| %>
-            <th><%= key %></th>
+            <th class="ros-agent-draft__table-column ros-agent-draft__table-column--<%= key.dasherize %>"><%= key %></th>
           <% end %>
         </tr>
       </thead>
@@ -35,7 +35,7 @@
             <tr class="event-calendars__row">
               <td class="event-calendars__schedule-column ros-agent-draft__schedule-column"><%= ros_agent_draft_schedule_label(entry, draft_timezone) %></td>
               <% draft_item_keys.each do |key| %>
-                <td><%= ros_agent_draft_item_value(display_entry, key) %></td>
+                <td class="ros-agent-draft__table-column ros-agent-draft__table-column--<%= key.dasherize %>"><%= ros_agent_draft_item_value(display_entry, key) %></td>
               <% end %>
             </tr>
           <% end %>

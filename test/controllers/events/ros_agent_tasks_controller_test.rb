@@ -320,6 +320,11 @@ module Events
               "confidence" => "medium",
               "details" => [
                 {
+                  "field" => "time_caption",
+                  "value" => "All day caption",
+                  "source_refs" => [{ "artifact" => "millar_sample.csv", "locator" => "time caption" }]
+                },
+                {
                   "field" => "notes",
                   "value" => "Confirm source-specific entertainment handoff.",
                   "source_refs" => [{ "artifact" => "millar_sample.csv", "locator" => "notes column" }]
@@ -372,22 +377,28 @@ module Events
       assert_select "#draft-ros", text: /Use Friday for production checks/, count: 0
       assert_select "#draft-ros", text: /Confirm whether a production check is needed/, count: 0
       assert_select "#draft-ros", text: /Planner asked for a cleaner display/, count: 0
-      assert_select "#draft-ros", text: /millar_sample.csv/
-      assert_select "#draft-ros", text: /relative/
-      assert_select "#draft-ros", text: /2027-10-15T18:00:00-04:00/
-      assert_select "#draft-ros", text: /Guest Arrival/
-      assert_select "#draft-ros", text: /-120/
-      assert_select "#draft-ros", text: /120/
       assert_select "#draft-ros .ros-agent-draft__table thead th", text: "notes"
       assert_select "#draft-ros .ros-agent-draft__table thead th", text: "vendor_handling"
       assert_select "#draft-ros .ros-agent-draft__table thead th", text: "tags"
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "timing", count: 0
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "duration", count: 0
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "duration_minutes", count: 0
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "confidence", count: 0
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "source_ref", count: 0
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "source_refs", count: 0
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "time_label", count: 0
+      assert_select "#draft-ros .ros-agent-draft__table thead th", text: "time_caption", count: 0
       assert_select "#draft-ros .ros-agent-draft__table thead th", text: "details", count: 0
       assert_select "#draft-ros .ros-agent-draft__table thead th", text: "location", count: 0
+      assert_select "#draft-ros", text: /millar_sample.csv/, count: 0
+      assert_select "#draft-ros", text: /relative_anchor_title/, count: 0
+      assert_select "#draft-ros", text: /2027-10-15T18:00:00-04:00/, count: 0
+      assert_select "#draft-ros", text: /Guest Arrival/, count: 0
       assert_select "#draft-ros", text: /Confirm source-specific entertainment handoff/
       assert_select "#draft-ros", text: /Coordinate production vendor arrival/
       assert_select "#draft-ros", text: /Production/
       assert_select "#draft-ros", text: /Music/
-      assert_select "#draft-ros", text: /medium/
+      assert_select "#draft-ros", text: /medium/, count: 0
       assert_select "#draft-ros", text: /do not hide me/
     end
 

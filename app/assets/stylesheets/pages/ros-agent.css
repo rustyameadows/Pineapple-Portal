@@ -431,6 +431,8 @@
 
 .ros-agent-details__section {
   display: grid;
+  align-content: start;
+  align-items: start;
   gap: 0.6rem;
   min-width: 0;
   padding: 0.85rem;
@@ -460,14 +462,25 @@
   white-space: pre-wrap;
 }
 
-.ros-agent-draft__surface {
-  width: var(--ros-agent-draft-table-width, 100%);
-  min-width: 100%;
+.ros-agent-canvas #draft-ros.ros-agent-draft__surface {
+  width: 100%;
+  min-width: var(--ros-agent-draft-table-width, 100%);
+  overflow: visible;
 }
 
 .ros-agent-canvas .ros-agent-draft__table {
   width: 100%;
   min-width: 100%;
+}
+
+.ros-agent-canvas .ros-agent-draft__table .ros-agent-draft__table-column--title {
+  min-width: 24rem;
+  max-width: none;
+  width: auto;
+}
+
+.ros-agent-canvas .ros-agent-draft__table thead th {
+  position: static;
 }
 
 .ros-agent-canvas .event-calendars__table {
