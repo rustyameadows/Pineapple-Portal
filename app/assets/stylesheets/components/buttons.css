@@ -107,6 +107,7 @@
 .button--ghost:hover,
 .button--ghost:focus {
   background: color-mix(in srgb, var(--color-sea-foam) 15%, white);
+  color: var(--color-dark-brown);
 }
 
 .button--danger {

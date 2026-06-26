@@ -133,6 +133,98 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
     end
   end
 
+  test "agent assist action buttons share the compact visual system" do
+    @task.update!(
+      status: "drafting",
+      draft_ros_json: {
+        "draft_days" => [
+          {
+            "label" => "Wedding Day",
+            "entries" => [
+              { "time_label" => "4:00 PM", "title" => "Ceremony" }
+            ]
+          }
+        ]
+      }
+    )
+
+    login_as_planner
+    page.current_window.resize_to(1400, 900)
+    visit event_ros_agent_task_path(@event, @task)
+
+    metrics = page.evaluate_script(<<~JS)
+      (() => {
+        const buttons = Array.from(document.querySelectorAll(".ros-agent-app .button")).filter((button) => {
+          const style = getComputedStyle(button)
+          return button.getClientRects().length > 0 && style.visibility !== "hidden"
+        })
+        const topbarStyle = getComputedStyle(document.querySelector(".ros-agent-topbar__actions .button"))
+        const topbarHeight = document.querySelector(".ros-agent-topbar__actions .button").getBoundingClientRect().height
+
+        return {
+          buttonCount: buttons.length,
+          topbarHeight,
+          styles: buttons.map((button) => {
+            const style = getComputedStyle(button)
+            const rect = button.getBoundingClientRect()
+
+            return {
+              borderRadius: style.borderRadius,
+              fontSize: style.fontSize,
+              fontWeight: style.fontWeight,
+              letterSpacing: style.letterSpacing,
+              lineHeight: style.lineHeight,
+              height: rect.height
+            }
+          }),
+          topbarStyle: {
+            borderRadius: topbarStyle.borderRadius,
+            fontSize: topbarStyle.fontSize,
+            fontWeight: topbarStyle.fontWeight,
+            letterSpacing: topbarStyle.letterSpacing,
+            lineHeight: topbarStyle.lineHeight
+          }
+        }
+      })()
+    JS
+
+    assert_operator metrics["buttonCount"], :>=, 5
+    metrics["styles"].each do |style|
+      assert_equal metrics["topbarStyle"]["borderRadius"], style["borderRadius"]
+      assert_equal metrics["topbarStyle"]["fontSize"], style["fontSize"]
+      assert_equal metrics["topbarStyle"]["fontWeight"], style["fontWeight"]
+      assert_equal metrics["topbarStyle"]["letterSpacing"], style["letterSpacing"]
+      assert_equal metrics["topbarStyle"]["lineHeight"], style["lineHeight"]
+      assert_in_delta metrics["topbarHeight"], style["height"], 2
+    end
+  end
+
+  test "ghost buttons keep readable text on hover" do
+    login_as_planner
+    page.current_window.resize_to(1400, 900)
+    visit event_ros_agent_task_path(@event, @task)
+
+    normal_colors = page.evaluate_script(<<~JS)
+      (() => ({
+        details: getComputedStyle(document.querySelector(".ros-agent-details-trigger")).color,
+        topbar: getComputedStyle(document.querySelector(".ros-agent-topbar__actions .button")).color
+      }))()
+    JS
+
+    first(".ros-agent-topbar__actions .button").hover
+    topbar_hover_color = page.evaluate_script(<<~JS)
+      getComputedStyle(document.querySelector(".ros-agent-topbar__actions .button")).color
+    JS
+
+    find(".ros-agent-details-trigger").hover
+    details_hover_color = page.evaluate_script(<<~JS)
+      getComputedStyle(document.querySelector(".ros-agent-details-trigger")).color
+    JS
+
+    assert_equal normal_colors["topbar"], topbar_hover_color
+    assert_equal normal_colors["details"], details_hover_color
+  end
+
   test "agent assist app owns desktop scrolling and falls back on small screens" do
     @task.update!(
       status: "drafting",

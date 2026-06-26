@@ -70,6 +70,16 @@
   font-size: 1.2rem;
 }
 
+.ros-agent-app .button {
+  min-height: 0;
+  padding: 0.34rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.68rem;
+  line-height: 1.1;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
 .ros-agent-topbar__actions {
   display: flex;
   align-items: center;
@@ -81,12 +91,6 @@
 }
 
 .ros-agent-topbar__actions .button {
-  min-height: 0;
-  padding: 0.34rem 0.7rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.68rem;
-  line-height: 1.1;
-  letter-spacing: 0.05em;
   white-space: nowrap;
 }
 
@@ -365,10 +369,6 @@
 
 .ros-agent-bottom-rail__actions:empty {
   display: none;
-}
-
-.ros-agent-bottom-rail .button {
-  white-space: nowrap;
 }
 
 .ros-agent-rail-form {
