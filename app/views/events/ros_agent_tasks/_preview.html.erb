@@ -16,20 +16,8 @@
 
     <% blocking_errors = Array(task.validation_json["blocking_errors"]) %>
     <% warnings = Array(preview["warnings"] || task.validation_json["warnings"]) %>
-    <% if blocking_errors.any? %>
-      <div class="event-section__empty">
-        <% blocking_errors.each do |error| %>
-          <p><%= error %></p>
-        <% end %>
-      </div>
-    <% end %>
-    <% if warnings.any? %>
-      <div class="event-section__note">
-        <% warnings.each do |warning| %>
-          <p><%= warning %></p>
-        <% end %>
-      </div>
-    <% end %>
+
+    <%= render "preview_gate", task: task, blocking_errors: blocking_errors, warnings: warnings, id_suffix: "top" %>
 
     <% if grouped_rows.any? %>
       <table class="event-table event-calendars__table">
@@ -75,18 +63,6 @@
       </table>
     <% end %>
 
-    <% if task.ready_to_apply? %>
-      <%= button_to "Apply Approved Plan", apply_event_ros_agent_task_path(@event, task), method: :post, class: "event-section__cta" %>
-    <% elsif task.approvable? %>
-      <%= form_with url: approve_event_ros_agent_task_path(@event, task), method: :post, local: true, data: { action: "submit->ros-agent-task#confirmHighRisk" } do %>
-        <% if task.high_risk_plan? && !task.high_risk_acknowledged? %>
-          <label class="calendar-item-form__pill">
-            <%= check_box_tag :high_risk_acknowledgement, "1", false, data: { ros_agent_task_target: "highRiskAcknowledgement" } %>
-            <span>Acknowledge high-risk operations</span>
-          </label>
-        <% end %>
-        <%= submit_tag "Approve Plan", class: "event-section__cta" %>
-      <% end %>
-    <% end %>
+    <%= render "preview_gate", task: task, blocking_errors: blocking_errors, warnings: warnings, id_suffix: "bottom" %>
   </section>
 <% end %>

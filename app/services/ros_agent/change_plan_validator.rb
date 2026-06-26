@@ -18,7 +18,7 @@ module RosAgent
     KNOWN_OPERATIONS = %w[create_item update_item delete_item create_tag assign_tags].freeze
     BULK_ITEM_PLACEHOLDER_PATTERNS = [
       /\bbulk\s+(create|creation|add|insert)\b/i,
-      /\bcreate\s+all\b/i,
+      /\bcreate\s+all\s+(draft|reviewed|adapted|event|ros)\s+items?\b/i,
       /\ball\s+(draft|reviewed|adapted|event|ros)\s+items?\b/i,
       /\bdraft_items\b/i,
       /\bdraft item set\b/i,
@@ -85,7 +85,7 @@ module RosAgent
 
       return unless bulk_item_placeholder?(operation)
 
-      blocking_errors << "Operation #{operation_id(operation)} looks like a bulk create placeholder. Return one create_item operation per calendar item instead."
+      warnings << "Operation #{operation_id(operation)} looks like a bulk create placeholder. Confirm this is a real item before applying."
     end
 
     def validate_item_status(operation)

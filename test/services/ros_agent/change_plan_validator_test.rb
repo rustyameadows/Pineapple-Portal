@@ -148,7 +148,7 @@ module RosAgent
       assert_includes result.blocking_errors, "Operation create-1 must provide attributes.title for create_item."
     end
 
-    test "blocks bulk create placeholders that reference the draft instead of item operations" do
+    test "warns about bulk create placeholders that reference the draft instead of item operations" do
       result = ChangePlanValidator.new(
         task: @task,
         calendar: @calendar,
@@ -167,8 +167,32 @@ module RosAgent
         }
       ).call
 
-      assert_not result.valid?
-      assert_includes result.blocking_errors, "Operation op_create_all_draft_items looks like a bulk create placeholder. Return one create_item operation per calendar item instead."
+      assert_predicate result, :valid?
+      assert_empty result.blocking_errors
+      assert_includes result.warnings, "Operation op_create_all_draft_items looks like a bulk create placeholder. Confirm this is a real item before applying."
+    end
+
+    test "does not block real item titles that start with all" do
+      result = ChangePlanValidator.new(
+        task: @task,
+        calendar: @calendar,
+        plan_hash: {
+          "operations" => [
+            {
+              "operation_id" => "create-1",
+              "operation_type" => "create_item",
+              "summary" => "Create All Tents Vendor Ready",
+              "risk_level" => "low",
+              "item_attributes" => {
+                "title" => "All Tents Vendor Ready"
+              }
+            }
+          ]
+        }
+      ).call
+
+      assert_predicate result, :valid?
+      assert_empty result.blocking_errors
     end
 
     test "blocks final plans that cover fewer item operations than draft items" do

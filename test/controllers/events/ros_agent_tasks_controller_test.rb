@@ -393,6 +393,8 @@ module Events
     test "show anchors review plan so polling can reveal it" do
       @task.update!(
         status: "ready_for_review",
+        plan_json: { "operations" => [{ "operation_id" => "create-1", "operation_type" => "create_item" }] },
+        validation_json: { "blocking_errors" => [] },
         preview_json: {
           "summary" => "Create the wedding day ROS.",
           "operations" => [
@@ -411,6 +413,15 @@ module Events
       assert_select "section#review-plan[tabindex='-1']", count: 1
       assert_select "section#review-plan h2", text: "Review Plan"
       assert_select "table", text: /Ceremony/
+      review_plan_html = response.body.match(/<section class="event-section__body" id="review-plan".*?<\/section>/m).to_s
+      approve_path = approve_event_ros_agent_task_path(@event, @task)
+      approve_form_positions = review_plan_html.enum_for(:scan, /<form[^>]+action="#{Regexp.escape(approve_path)}"[^>]*>/).map do
+        Regexp.last_match.begin(0)
+      end
+
+      assert_equal 2, approve_form_positions.count
+      assert_operator approve_form_positions.first, :<, review_plan_html.index("<table")
+      assert_operator approve_form_positions.last, :>, review_plan_html.index("</table>")
     end
 
     test "status marks completed draft as actionable for live polling" do
