@@ -1,7 +1,19 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["recommendedAnswer", "highRiskAcknowledgement"]
+  static targets = ["recommendedAnswer", "highRiskAcknowledgement", "refinementPrompt", "refinementSubmit"]
+
+  connect() {
+    this.updateRefinementSubmit()
+  }
+
+  refinementPromptTargetConnected() {
+    this.updateRefinementSubmit()
+  }
+
+  refinementSubmitTargetConnected() {
+    this.updateRefinementSubmit()
+  }
 
   useRecommendedAnswers() {
     this.recommendedAnswerTargets.forEach((field) => {
@@ -19,6 +31,12 @@ export default class extends Controller {
 
     const radio = document.getElementById(radioId)
     if (radio) radio.checked = true
+  }
+
+  updateRefinementSubmit() {
+    if (!this.hasRefinementPromptTarget || !this.hasRefinementSubmitTarget) return
+
+    this.refinementSubmitTarget.disabled = this.refinementPromptTarget.value.trim().length === 0
   }
 
   confirmHighRisk(event) {

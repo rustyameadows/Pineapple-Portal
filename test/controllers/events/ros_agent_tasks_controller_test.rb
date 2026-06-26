@@ -492,7 +492,7 @@ module Events
       assert_equal "draft", body["canvas_state"]
       assert_includes body["canvas_html"], "id=\"draft-ros\""
       assert_includes body["canvas_html"], "Ceremony"
-      assert_includes body["bottom_rail_html"], "Request Final Plan"
+      assert_includes body["bottom_rail_html"], "Confirm Draft"
       assert_includes body["metadata_html"], "Task History"
       assert_includes body["canvas_metadata_html"], "Draft JSON"
       assert_not_includes body["canvas_metadata_html"], "Task History"

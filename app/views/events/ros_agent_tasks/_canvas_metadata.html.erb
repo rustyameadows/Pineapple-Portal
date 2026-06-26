@@ -20,11 +20,6 @@
            when "plan" then validation["warnings"] || preview["warnings"]
            else nil
            end %>
-<% source_refs = case canvas_state
-                 when "draft" then draft["source_references"]
-                 when "plan" then preview["source_references"] || plan["source_references"]
-                 else nil
-                 end %>
 <% raw_sections = case canvas_state
                   when "draft"
                     { "Draft JSON" => draft }
@@ -53,11 +48,6 @@
   <section class="ros-agent-details__section">
     <h3>Flags</h3>
     <%= ros_agent_draft_array_label(flags) %>
-  </section>
-
-  <section class="ros-agent-details__section">
-    <h3>Source References</h3>
-    <%= ros_agent_draft_source_refs_label(source_refs) %>
   </section>
 </div>
 

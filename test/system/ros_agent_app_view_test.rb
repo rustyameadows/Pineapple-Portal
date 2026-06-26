@@ -199,6 +199,50 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
     end
   end
 
+  test "draft refinement input is padded focused quietly and enables submit only after typing" do
+    @task.update!(
+      status: "drafting",
+      draft_ros_json: {
+        "draft_days" => [
+          {
+            "label" => "Wedding Day",
+            "entries" => [
+              { "time_label" => "4:00 PM", "title" => "Ceremony" }
+            ]
+          }
+        ]
+      }
+    )
+
+    login_as_planner
+    page.current_window.resize_to(1400, 900)
+    visit event_ros_agent_task_path(@event, @task)
+
+    assert_selector "input[type='submit'][value='Refine Draft'][disabled]"
+
+    find("textarea[name='refinement_prompt']").click
+    metrics = page.evaluate_script(<<~JS)
+      (() => {
+        const input = document.querySelector("textarea[name='refinement_prompt']")
+        const style = getComputedStyle(input)
+
+        return {
+          boxShadow: style.boxShadow,
+          outlineStyle: style.outlineStyle,
+          paddingLeft: parseFloat(style.paddingLeft)
+        }
+      })()
+    JS
+
+    assert_operator metrics["paddingLeft"], :>=, 8
+    assert_equal "none", metrics["outlineStyle"]
+    assert_includes metrics["boxShadow"], "inset"
+
+    fill_in "refinement_prompt", with: "Tighten the vendor language."
+
+    assert_no_selector "input[type='submit'][value='Refine Draft'][disabled]"
+  end
+
   test "ghost buttons keep readable text on hover" do
     login_as_planner
     page.current_window.resize_to(1400, 900)
@@ -417,7 +461,10 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
         ],
         "assumptions" => ["Use the ceremony as the anchor."],
         "review_flags" => ["Confirm vendor arrival."],
-        "refinement_notes" => ["Planner requested shorter notes."]
+        "refinement_notes" => ["Planner requested shorter notes."],
+        "source_references" => [
+          { "artifact" => "prior-wedding-ros.csv", "locator" => "rows 1-3" }
+        ]
       }
     )
     @task.append_event!(event_type: "drafted", message: "Agent produced draft.", created_by: users(:one))
@@ -432,8 +479,15 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
       assert_text "Canvas Details"
       assert_text "Use the ceremony as the anchor."
       assert_text "Draft JSON"
+      assert_no_text "Source References"
       assert_no_text "Task History"
+      assert_selector ".ros-agent-details__grid .ros-agent-details__section", count: 3
     end
+
+    canvas_columns = page.evaluate_script(<<~JS)
+      getComputedStyle(document.querySelector(".ros-agent-canvas-details-dialog[open] .ros-agent-details__grid")).gridTemplateColumns.split(" ").length
+    JS
+    assert_equal 3, canvas_columns
 
     within ".ros-agent-canvas-details-dialog[open]" do
       click_button "Close"
@@ -445,11 +499,22 @@ class RosAgentAppViewTest < ApplicationSystemTestCase
       assert_text "Task Details"
       assert_text "Task History"
       assert_text "Agent produced draft."
+      assert_no_text "Source References"
+      assert_selector ".ros-agent-details__grid .ros-agent-details__section", count: 3
     end
 
-    alignment = page.evaluate_script(<<~JS)
-      getComputedStyle(document.querySelector(".ros-agent-task-details-dialog[open] .ros-agent-details__section")).alignContent
+    task_metrics = page.evaluate_script(<<~JS)
+      (() => {
+        const grid = document.querySelector(".ros-agent-task-details-dialog[open] .ros-agent-details__grid")
+        const firstSection = document.querySelector(".ros-agent-task-details-dialog[open] .ros-agent-details__section")
+
+        return {
+          alignment: getComputedStyle(firstSection).alignContent,
+          columns: getComputedStyle(grid).gridTemplateColumns.split(" ").length
+        }
+      })()
     JS
-    assert_equal "start", alignment
+    assert_equal "start", task_metrics["alignment"]
+    assert_equal 3, task_metrics["columns"]
   end
 end

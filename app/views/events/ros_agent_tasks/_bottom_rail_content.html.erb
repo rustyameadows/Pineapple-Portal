@@ -35,10 +35,21 @@
                   local: true,
                   class: "ros-agent-rail-form ros-agent-rail-form--refine" do %>
       <%= label_tag :refinement_prompt, "Refine draft", class: "sr-only" %>
-      <%= text_area_tag :refinement_prompt, nil, rows: 2, class: "event-form__textarea", placeholder: "Refinement notes" %>
-      <%= submit_tag "Refine Draft", class: "button button--ghost" %>
+      <%= text_area_tag :refinement_prompt,
+                        nil,
+                        rows: 2,
+                        class: "event-form__textarea",
+                        placeholder: "Refinement notes",
+                        data: {
+                          action: "input->ros-agent-task#updateRefinementSubmit change->ros-agent-task#updateRefinementSubmit",
+                          ros_agent_task_target: "refinementPrompt"
+                        } %>
+      <%= submit_tag "Refine Draft",
+                     class: "button button--ghost",
+                     disabled: true,
+                     data: { ros_agent_task_target: "refinementSubmit" } %>
     <% end %>
-    <%= button_to "Request Final Plan",
+    <%= button_to "Confirm Draft",
                   request_final_plan_event_ros_agent_task_path(current_event, task),
                   method: :post,
                   class: "button button--primary",
