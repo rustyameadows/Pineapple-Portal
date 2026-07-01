@@ -887,6 +887,177 @@
   color: var(--color-neutral-500);
 }
 
+.ros-agent-draft__summary-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.ros-agent-draft__summary-table th {
+  width: 12rem;
+}
+
+.ros-agent-draft__summary-table th,
+.ros-agent-draft__summary-table td {
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.ros-agent-draft__summary-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.ros-agent-draft__summary-list li {
+  line-height: 1.45;
+}
+
+#draft-ros {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ros-agent-draft__review {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.ros-agent-draft__field-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.ros-agent-draft__field-button {
+  border: 1px solid var(--color-neutral-300);
+  border-radius: var(--radius-pill);
+  background: var(--color-white);
+  color: var(--color-dark-brown);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  padding: 0.45rem 0.8rem;
+  text-transform: uppercase;
+}
+
+.ros-agent-draft__field-button:not(:disabled):hover,
+.ros-agent-draft__field-button:not(:disabled):focus {
+  border-color: var(--color-brown);
+  background: color-mix(in srgb, var(--color-light-cream) 72%, white);
+}
+
+.ros-agent-draft__field-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.ros-agent-draft__table-shell {
+  width: 100%;
+  max-width: 100%;
+  max-height: min(72vh, 44rem);
+  min-width: 0;
+  overflow-x: scroll;
+  overflow-y: auto;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: contain;
+  padding-bottom: 0.35rem;
+  border: 1px solid var(--color-neutral-300);
+  border-radius: 8px;
+  background: var(--color-white);
+  scrollbar-color: var(--color-brown) color-mix(in srgb, var(--color-sea-foam) 45%, white);
+  scrollbar-gutter: stable both-edges;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ros-agent-draft__table-shell::-webkit-scrollbar {
+  height: 0.85rem;
+}
+
+.ros-agent-draft__table-shell::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--color-sea-foam) 45%, white);
+  border-radius: 999px;
+}
+
+.ros-agent-draft__table-shell::-webkit-scrollbar-thumb {
+  background: var(--color-brown);
+  border: 3px solid color-mix(in srgb, var(--color-sea-foam) 45%, white);
+  border-radius: 999px;
+}
+
+.ros-agent-draft__table-shell:focus {
+  outline: 2px solid color-mix(in srgb, var(--color-brown) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.ros-agent-draft__table {
+  width: max-content;
+  min-width: 100%;
+  margin-top: 0;
+  table-layout: fixed;
+}
+
+.ros-agent-draft__table th,
+.ros-agent-draft__table td {
+  width: 14rem;
+  min-width: 14rem;
+  max-width: 14rem;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.ros-agent-draft__table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--color-white);
+}
+
+.ros-agent-draft__table .ros-agent-draft__schedule-column {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  width: 12rem;
+  min-width: 12rem;
+  max-width: 12rem;
+  background: var(--color-white);
+}
+
+.ros-agent-draft__table thead .ros-agent-draft__schedule-column {
+  z-index: 4;
+}
+
+.ros-agent-draft__date-row td {
+  position: static;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  background: var(--color-neutral-100);
+}
+
+.ros-agent-draft__raw-json {
+  max-width: 100%;
+  max-height: 28rem;
+  overflow: auto;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--color-neutral-300);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-light-cream) 75%, white);
+  color: var(--color-dark-brown);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .event-calendars__import-actions .event-section__cta:disabled {
   opacity: 0.55;
   cursor: not-allowed;

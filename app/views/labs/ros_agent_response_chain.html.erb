@@ -1,0 +1,569 @@
+<% content_for :title, "ROS Agent Response Chain Lab" %>
+
+<% source_files = [
+  { filename: "Previous-Wedding-Run-of-Show.csv", size: "42 KB", openai_file: "file_demo_source_01", state: "Uploaded" },
+  { filename: "venue-map-photo.jpg", size: "1.8 MB", openai_file: "file_demo_source_02", state: "Uploaded" }
+] %>
+
+<% llm_calls = [
+  {
+    purpose: "File Upload",
+    status: "Completed",
+    model: "openai-files",
+    duration: "1.2 sec",
+    usage: "-",
+    response_id: "file_demo_source_01"
+  },
+  {
+    purpose: "Source Understanding",
+    status: "Completed",
+    model: "gpt-5.5",
+    duration: "84.6 sec",
+    usage: "4,920 input / 6,140 output / 2,900 reasoning",
+    response_id: "resp_demo_source_understanding"
+  },
+  {
+    purpose: "Draft Refinement",
+    status: "Completed",
+    model: "gpt-5.5",
+    duration: "38.4 sec",
+    usage: "5,180 input / 2,220 output / 1,050 reasoning",
+    response_id: "resp_demo_refine_01"
+  },
+  {
+    purpose: "Final Change Plan",
+    status: "Completed",
+    model: "gpt-5.5",
+    duration: "49.1 sec",
+    usage: "6,430 input / 3,880 output / 1,460 reasoning",
+    response_id: "resp_demo_final_plan"
+  }
+] %>
+
+<% task_events = [
+  ["Source file uploaded", "Uploaded previous wedding CSV as task-only source input.", "9:02 AM", "Rusty Meadows"],
+  ["Model call started", "Started source understanding OpenAI call.", "9:03 AM", "-"],
+  ["Needs input", "Agent asked date mapping and ceremony inclusion questions.", "9:05 AM", "-"],
+  ["Questions answered", "Planner submitted answers and notes.", "9:08 AM", "Rusty Meadows"],
+  ["Draft ready", "Agent produced first ROS scratchpad.", "9:10 AM", "-"],
+  ["Draft refinement requested", "Planner requested fewer notes and no placeholder locations.", "9:14 AM", "Rusty Meadows"],
+  ["Ready for review", "Agent produced final change plan with validation warnings.", "9:18 AM", "-"],
+  ["Approved", "Planner approved plan version 3.", "9:20 AM", "Rusty Meadows"]
+] %>
+
+<% questions = [
+  {
+    label: "Date Mapping",
+    question: "The source ROS has Friday setup and Saturday wedding-day items. Which target dates should those map to?",
+    options: ["Friday, October 15 and Saturday, October 16", "Saturday and Sunday", "Ask me later"],
+    answer: "Friday, October 15 and Saturday, October 16"
+  },
+  {
+    label: "Ceremony Coverage",
+    question: "The source file does not include a ceremony block. Should the draft add one from current event details?",
+    options: ["Yes, add a ceremony block", "No, preserve only source structure", "Leave as review flag"],
+    answer: "Yes, add a ceremony block"
+  },
+  {
+    label: "Production Detail",
+    question: "The source has entertainment-heavy production rows. How much should carry into the new wedding?",
+    options: ["Keep only broadly reusable rows", "Keep all production rows", "Remove entertainment production"],
+    answer: "Keep only broadly reusable rows"
+  }
+] %>
+
+<% draft_days = [
+  {
+    date: "Saturday, October 16",
+    items: [
+      {
+        schedule: "8:30 AM",
+        title: "Planner Arrival",
+        timing: "fixed 2027-10-16 08:30",
+        duration: "30 min",
+        confidence: "high",
+        source: "CSV row 4"
+      },
+      {
+        schedule: "9:00 AM - 10:30 AM",
+        title: "Production Crew Check",
+        timing: "fixed 2027-10-16 09:00",
+        duration: "90 min",
+        confidence: "medium",
+        source: "CSV row 8"
+      },
+      {
+        schedule: "2:30 PM",
+        title: "Wedding Party Arrives",
+        timing: "relative to ceremony",
+        duration: "15 min",
+        confidence: "medium",
+        source: "planner answer"
+      },
+      {
+        schedule: "4:00 PM - 4:30 PM",
+        title: "Ceremony",
+        timing: "fixed 2027-10-16 16:00",
+        duration: "30 min",
+        confidence: "high",
+        source: "event details"
+      },
+      {
+        schedule: "5:00 PM - 6:00 PM",
+        title: "Cocktail Hour",
+        timing: "relative after ceremony",
+        duration: "60 min",
+        confidence: "high",
+        source: "CSV rows 19-21"
+      },
+      {
+        schedule: "6:15 PM",
+        title: "Reception Doors Open",
+        timing: "relative after cocktail hour",
+        duration: "15 min",
+        confidence: "medium",
+        source: "CSV row 23"
+      }
+    ]
+  },
+  {
+    date: "Sunday, October 17",
+    items: [
+      {
+        schedule: "10:00 AM",
+        title: "Rental Pickup Window",
+        timing: "fixed 2027-10-17 10:00",
+        duration: "120 min",
+        confidence: "low",
+        source: "inferred from source strike notes"
+      },
+      {
+        schedule: "11:30 AM",
+        title: "Final Venue Walkthrough",
+        timing: "fixed 2027-10-17 11:30",
+        duration: "30 min",
+        confidence: "medium",
+        source: "planner answer"
+      }
+    ]
+  }
+] %>
+
+<% raw_draft = {
+  "target_event_summary" => "New wedding adapted from a prior production-heavy ROS.",
+  "date_mapping" => [
+    { "source_label" => "Friday setup", "target_date" => "2027-10-15" },
+    { "source_label" => "Saturday main event", "target_date" => "2027-10-16" }
+  ],
+  "assumptions" => [
+    "Source-specific names and vendors were removed.",
+    "Locations are omitted unless supported by current event details.",
+    "Notes are only included when they are planner-facing item copy."
+  ],
+  "review_flags" => [
+    "Confirm entertainment production rows.",
+    "Confirm ceremony start time.",
+    "Confirm Sunday pickup requirement."
+  ],
+  "draft_items" => draft_days.flat_map { |day| day[:items].map { |item| item.merge(day: day[:date]) } }
+} %>
+
+<% operations = [
+  ["Create", "Create Planner Arrival", "Planner Arrival", "Oct 16, 8:30 AM", "low"],
+  ["Create", "Create Production Crew Check", "Production Crew Check", "Oct 16, 9:00 AM", "medium"],
+  ["Create", "Create Ceremony", "Ceremony", "Oct 16, 4:00 PM", "low"],
+  ["Create", "Create Cocktail Hour", "Cocktail Hour", "Oct 16, 5:00 PM", "low"],
+  ["Create", "Create Rental Pickup Window", "Rental Pickup Window", "Oct 17, 10:00 AM", "high"]
+] %>
+
+<% provide :page_shell do %>
+  <div class="event-layout event-layout--grid">
+    <main class="event-layout__main labs-page">
+      <section class="event-section labs-page__section">
+        <header class="event-section__header labs-page__header">
+          <div>
+            <p class="event-section__eyebrow">Labs</p>
+            <h1 class="event-section__title">ROS Agent Response Chain</h1>
+            <p class="event-section__subtitle">
+              Static UI demo for reviewing the Agent Assist task flow, generated artifacts, and planner approval states.
+            </p>
+          </div>
+          <nav class="labs-page__jump-nav" aria-label="Agent demo sections">
+            <a href="#lab-agent-status">Status</a>
+            <a href="#lab-planning-questions">Q&amp;A</a>
+            <a href="#lab-draft-ros">Draft</a>
+            <a href="#lab-final-plan">Plan</a>
+            <a href="#lab-trace-artifacts">Trace</a>
+          </nav>
+        </header>
+
+        <section class="event-section__body labs-panel">
+          <div class="labs-agent-chain" aria-label="Agent response chain">
+            <% ["Task created", "Sources uploaded", "Needs input", "Draft ready", "Refined", "Plan ready", "Approved", "Applied"].each_with_index do |step, index| %>
+              <div class="labs-agent-chain__step">
+                <span class="labs-agent-chain__index"><%= index + 1 %></span>
+                <span><%= step %></span>
+              </div>
+            <% end %>
+          </div>
+        </section>
+
+        <section class="event-section__body labs-panel">
+          <div class="labs-page__two-column">
+            <div>
+              <h2>Request</h2>
+              <p>
+                Adapt this previous wedding run of show for the current event. Use the event date and planner answers,
+                remove source-specific details, ask questions before drafting, then produce an approval-ready plan.
+              </p>
+            </div>
+            <div>
+              <h2>Task Settings</h2>
+              <dl class="labs-meta-grid">
+                <div>
+                  <dt>Model</dt>
+                  <dd>gpt-5.5</dd>
+                </div>
+                <div>
+                  <dt>Reasoning</dt>
+                  <dd>High</dd>
+                </div>
+                <div>
+                  <dt>Mode</dt>
+                  <dd>Build ROS from source</dd>
+                </div>
+                <div>
+                  <dt>Write policy</dt>
+                  <dd>Approval required</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </section>
+
+        <section class="event-section__body labs-panel" id="lab-agent-status" tabindex="-1">
+          <div class="event-section__status labs-status-row">
+            <span class="event-approvals__status-pill event-approvals__status-pill--ready_for_review">Ready for review</span>
+            <p class="event-section__lead">Polling stopped for ready for review. Final plan is waiting for planner approval.</p>
+          </div>
+
+          <div class="labs-page__two-column">
+            <div>
+              <h2>Source Files</h2>
+              <table class="event-table">
+                <thead>
+                  <tr>
+                    <th>File</th>
+                    <th>Size</th>
+                    <th>OpenAI File</th>
+                    <th>State</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% source_files.each do |file| %>
+                    <tr>
+                      <td><%= file[:filename] %></td>
+                      <td><%= file[:size] %></td>
+                      <td><code><%= file[:openai_file] %></code></td>
+                      <td><%= file[:state] %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+
+            <div>
+              <h2>OpenAI Calls</h2>
+              <table class="event-table">
+                <thead>
+                  <tr>
+                    <th>Purpose</th>
+                    <th>Status</th>
+                    <th>Model</th>
+                    <th>Duration</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% llm_calls.each do |call| %>
+                    <tr>
+                      <td><%= call[:purpose] %></td>
+                      <td><%= call[:status] %></td>
+                      <td><%= call[:model] %></td>
+                      <td><%= call[:duration] %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="event-section__body labs-panel" id="lab-planning-questions" tabindex="-1">
+          <h2>Planning Questions</h2>
+          <p>The agent pauses when implementation details change the draft meaningfully.</p>
+
+          <div class="labs-question-list">
+            <% questions.each do |question| %>
+              <article class="labs-question">
+                <div>
+                  <h3><%= question[:label] %></h3>
+                  <p><%= question[:question] %></p>
+                </div>
+                <div class="labs-question__options">
+                  <% question[:options].each do |option| %>
+                    <label class="calendar-item-form__pill">
+                      <input type="radio" disabled <%= "checked" if option == question[:answer] %>>
+                      <span><%= option %></span>
+                    </label>
+                  <% end %>
+                </div>
+                <p class="event-section__note">Selected answer: <%= question[:answer] %></p>
+              </article>
+            <% end %>
+          </div>
+        </section>
+
+        <section class="event-section__body labs-panel" id="lab-draft-ros" tabindex="-1">
+          <div class="labs-section-heading">
+            <div>
+              <h2>Draft ROS</h2>
+              <p class="event-section__note">Draft agent output. These rows are not live calendar records.</p>
+            </div>
+            <div class="labs-button-row">
+              <button type="button" class="event-section__cta event-section__cta--secondary">Previous fields</button>
+              <button type="button" class="event-section__cta event-section__cta--secondary">Next fields</button>
+            </div>
+          </div>
+
+          <table class="event-table labs-summary-table">
+            <tbody>
+              <tr>
+                <th>Target Event Summary</th>
+                <td>New wedding adapted from a prior production-heavy ROS.</td>
+              </tr>
+              <tr>
+                <th>Date Mapping</th>
+                <td>Friday setup -> Friday, October 15. Saturday main event -> Saturday, October 16.</td>
+              </tr>
+              <tr>
+                <th>Review Flags</th>
+                <td>Confirm ceremony start, entertainment production rows, and Sunday pickup window.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="ros-agent-draft__table-shell labs-table-shell" tabindex="0">
+            <table class="event-table event-calendars__table ros-agent-draft__table labs-draft-table">
+              <thead>
+                <tr>
+                  <th class="event-calendars__schedule-column ros-agent-draft__schedule-column">Schedule</th>
+                  <th>Title</th>
+                  <th>Timing</th>
+                  <th>Duration</th>
+                  <th>Confidence</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% draft_days.each do |day| %>
+                  <tr class="event-calendars__date-row ros-agent-draft__date-row">
+                    <td colspan="6">
+                      <span class="event-calendars__date-label"><%= day[:date].upcase %></span>
+                    </td>
+                  </tr>
+                  <% day[:items].each do |item| %>
+                    <tr class="event-calendars__row">
+                      <td class="event-calendars__schedule-column ros-agent-draft__schedule-column"><%= item[:schedule] %></td>
+                      <td><%= item[:title] %></td>
+                      <td><%= item[:timing] %></td>
+                      <td><%= item[:duration] %></td>
+                      <td><span class="labs-confidence labs-confidence--<%= item[:confidence] %>"><%= item[:confidence] %></span></td>
+                      <td><%= item[:source] %></td>
+                    </tr>
+                  <% end %>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="labs-refinement-thread">
+            <article>
+              <p class="event-section__eyebrow">Planner refinement</p>
+              <p>Remove placeholder locations. Keep notes only when they are actual item subcopy.</p>
+            </article>
+            <article>
+              <p class="event-section__eyebrow">Agent response</p>
+              <p>Removed generic TBD locations and cleanup commentary. Preserved timing, titles, confidence, and source references for review.</p>
+            </article>
+          </div>
+
+          <details class="labs-raw-json" open>
+            <summary>Raw Draft JSON</summary>
+            <pre><%= JSON.pretty_generate(raw_draft) %></pre>
+          </details>
+        </section>
+
+        <section class="event-section__body labs-panel" id="lab-final-plan" tabindex="-1">
+          <div class="labs-section-heading">
+            <div>
+              <h2>Final Change Plan</h2>
+              <p class="event-section__note">Validated operation plan. Still no calendar writes until approval and apply.</p>
+            </div>
+            <div class="labs-button-row">
+              <button type="button" class="event-section__cta">Approve Plan</button>
+              <button type="button" class="event-section__cta event-section__cta--secondary">Request Revision</button>
+            </div>
+          </div>
+
+          <dl class="labs-metric-row">
+            <div>
+              <dt>Create</dt>
+              <dd>40</dd>
+            </div>
+            <div>
+              <dt>Update</dt>
+              <dd>0</dd>
+            </div>
+            <div>
+              <dt>Delete</dt>
+              <dd>0</dd>
+            </div>
+            <div>
+              <dt>High risk</dt>
+              <dd>1</dd>
+            </div>
+          </dl>
+
+          <table class="event-table event-calendars__table">
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Summary</th>
+                <th>Title</th>
+                <th>When</th>
+                <th>Risk</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% operations.each do |action, summary, title, when_label, risk| %>
+                <tr>
+                  <td><%= action %></td>
+                  <td><%= summary %></td>
+                  <td><%= title %></td>
+                  <td><%= when_label %></td>
+                  <td><span class="labs-confidence labs-confidence--<%= risk %>"><%= risk %></span></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="event-section__body labs-panel" id="lab-apply-review" tabindex="-1">
+          <div class="labs-section-heading">
+            <div>
+              <h2>Approval and Apply</h2>
+              <p class="event-section__note">Planner approval is separate from the write transaction.</p>
+            </div>
+            <button type="button" class="event-section__cta">Apply Approved Plan</button>
+          </div>
+
+          <div class="labs-apply-grid">
+            <article>
+              <h3>Approval Snapshot</h3>
+              <dl class="labs-meta-grid">
+                <div>
+                  <dt>Approved by</dt>
+                  <dd>Rusty Meadows</dd>
+                </div>
+                <div>
+                  <dt>Plan version</dt>
+                  <dd>3</dd>
+                </div>
+                <div>
+                  <dt>High-risk ack</dt>
+                  <dd>Required and checked</dd>
+                </div>
+                <div>
+                  <dt>Write status</dt>
+                  <dd>Not yet applied</dd>
+                </div>
+              </dl>
+            </article>
+            <article>
+              <h3>Apply Result Preview</h3>
+              <table class="event-table">
+                <tbody>
+                  <tr>
+                    <th>Calendar items</th>
+                    <td>40 create operations</td>
+                  </tr>
+                  <tr>
+                    <th>Tags</th>
+                    <td>No tag writes in this sample</td>
+                  </tr>
+                  <tr>
+                    <th>Scheduler</th>
+                    <td>Cascade scheduler runs after transaction</td>
+                  </tr>
+                  <tr>
+                    <th>Rollback</th>
+                    <td>Any failed operation rolls back the full apply</td>
+                  </tr>
+                </tbody>
+              </table>
+            </article>
+          </div>
+        </section>
+
+        <section class="event-section__body labs-panel" id="lab-trace-artifacts" tabindex="-1">
+          <h2>Trace Artifacts</h2>
+
+          <div class="labs-trace-grid">
+            <% llm_calls.each do |call| %>
+              <article class="labs-trace-card">
+                <p class="event-section__eyebrow"><%= call[:purpose] %></p>
+                <h3><%= call[:status] %></h3>
+                <dl>
+                  <div>
+                    <dt>Model</dt>
+                    <dd><%= call[:model] %></dd>
+                  </div>
+                  <div>
+                    <dt>Usage</dt>
+                    <dd><%= call[:usage] %></dd>
+                  </div>
+                  <div>
+                    <dt>Response ID</dt>
+                    <dd><code><%= call[:response_id] %></code></dd>
+                  </div>
+                </dl>
+              </article>
+            <% end %>
+          </div>
+
+          <h3>Task History</h3>
+          <table class="event-table">
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Message</th>
+                <th>When</th>
+                <th>By</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% task_events.each do |event_type, message, time, user| %>
+                <tr>
+                  <td><%= event_type %></td>
+                  <td><%= message %></td>
+                  <td><%= time %></td>
+                  <td><%= user %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </section>
+      </section>
+    </main>
+  </div>
+<% end %>

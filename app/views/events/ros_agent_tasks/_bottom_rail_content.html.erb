@@ -1,0 +1,93 @@
+<% current_event = local_assigns.fetch(:event, @event) %>
+<% status_snapshot ||= {} %>
+<% status = status_snapshot[:status] || status_snapshot["status"] || task&.status %>
+<% status_label = status_snapshot[:status_label] || status_snapshot["status_label"] || status.to_s.titleize %>
+<% active = status_snapshot[:active].nil? ? status.to_s.in?(%w[draft analyzing drafting planning applying]) : status_snapshot[:active] %>
+<% canvas_state = local_assigns.fetch(:canvas_state, status_snapshot[:canvas_state] || status_snapshot["canvas_state"]).to_s %>
+
+<div class="ros-agent-bottom-rail__status">
+  <span class="ros-agent-bottom-rail__label">Status</span>
+  <% status_pill_class = "event-approvals__status-pill event-approvals__status-pill--#{status}" %>
+  <% if local_assigns[:new_task] %>
+    <span class="<%= status_pill_class %>"
+          data-ros-agent-status-target="statusLabel"><%= status_label %></span>
+  <% else %>
+    <button type="button"
+            class="<%= status_pill_class %> ros-agent-status-trigger"
+            data-action="ros-agent-details#openTask"
+            data-ros-agent-status-target="statusLabel"
+            aria-label="Open task details"><%= status_label %></button>
+  <% end %>
+  <p class="sr-only" data-ros-agent-status-target="statusSummary">
+    <%= active ? "#{status_label}." : "#{status_label}." %>
+  </p>
+</div>
+
+<div class="ros-agent-bottom-rail__actions">
+  <% if local_assigns[:new_task] %>
+    <%= submit_tag "Start Agent Assist", class: "button button--primary", form: "ros-agent-new-form" %>
+    <%= link_to "Cancel", event_calendar_path(current_event), class: "button button--ghost" %>
+  <% elsif canvas_state == "questions" %>
+    <%= submit_tag "Submit Answers", class: "button button--primary", form: "ros-agent-question-form" %>
+  <% elsif canvas_state == "draft" %>
+    <%= form_with url: refine_draft_event_ros_agent_task_path(current_event, task),
+                  method: :post,
+                  local: true,
+                  class: "ros-agent-rail-form ros-agent-rail-form--refine" do %>
+      <%= label_tag :refinement_prompt, "Refine draft", class: "sr-only" %>
+      <%= text_area_tag :refinement_prompt,
+                        nil,
+                        rows: 2,
+                        class: "event-form__textarea",
+                        placeholder: "Refinement notes",
+                        data: {
+                          action: "input->ros-agent-task#updateRefinementSubmit change->ros-agent-task#updateRefinementSubmit",
+                          ros_agent_task_target: "refinementPrompt"
+                        } %>
+      <%= submit_tag "Refine Draft",
+                     class: "button button--ghost",
+                     disabled: true,
+                     data: { ros_agent_task_target: "refinementSubmit" } %>
+    <% end %>
+    <%= button_to "Confirm Draft",
+                  request_final_plan_event_ros_agent_task_path(current_event, task),
+                  method: :post,
+                  class: "button button--primary",
+                  form_class: "ros-agent-rail-button-form" %>
+  <% elsif canvas_state == "plan" %>
+    <% blocking_errors = Array(task.validation_json.to_h["blocking_errors"]) %>
+    <% if blocking_errors.any? %>
+      <div class="ros-agent-bottom-rail__messages ros-agent-bottom-rail__messages--error">
+        <% blocking_errors.each do |error| %>
+          <p><%= error %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if task.ready_to_apply? %>
+      <%= button_to "Apply Approved Plan",
+                    apply_event_ros_agent_task_path(current_event, task),
+                    method: :post,
+                    class: "button button--primary",
+                    form_class: "ros-agent-rail-button-form" %>
+    <% elsif task.approvable? %>
+      <%= form_with url: approve_event_ros_agent_task_path(current_event, task),
+                    method: :post,
+                    local: true,
+                    class: "ros-agent-rail-form ros-agent-rail-form--approve",
+                    data: { action: "submit->ros-agent-task#confirmHighRisk" } do %>
+        <% if task.high_risk_plan? && !task.high_risk_acknowledged? %>
+          <label class="calendar-item-form__pill">
+            <%= check_box_tag :high_risk_acknowledgement,
+                              "1",
+                              false,
+                              id: "high_risk_acknowledgement_bottom",
+                              data: { ros_agent_task_target: "highRiskAcknowledgement" } %>
+            <span>Acknowledge high-risk operations</span>
+          </label>
+        <% end %>
+        <%= submit_tag "Approve Plan", class: "button button--primary" %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

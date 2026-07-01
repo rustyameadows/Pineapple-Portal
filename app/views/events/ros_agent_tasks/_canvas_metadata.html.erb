@@ -1,0 +1,66 @@
+<% canvas_state = canvas_state.to_s.presence || "working" %>
+<% question_batch ||= nil %>
+<% draft = task.draft_ros_json.to_h %>
+<% plan = task.plan_json.to_h %>
+<% preview = task.preview_json.to_h %>
+<% validation = task.validation_json.to_h %>
+
+<% assumptions = case canvas_state
+                 when "draft" then draft["assumptions"]
+                 when "plan" then plan["assumptions"]
+                 else nil
+                 end %>
+<% notes = case canvas_state
+           when "draft" then draft["refinement_notes"]
+           when "plan" then plan["review_notes"] || preview["summary"]
+           else nil
+           end %>
+<% flags = case canvas_state
+           when "draft" then draft["review_flags"]
+           when "plan" then validation["warnings"] || preview["warnings"]
+           else nil
+           end %>
+<% raw_sections = case canvas_state
+                  when "draft"
+                    { "Draft JSON" => draft }
+                  when "plan"
+                    { "Plan JSON" => plan, "Preview JSON" => preview, "Validation JSON" => validation }
+                  when "questions"
+                    {
+                      "Questions JSON" => question_batch&.questions_json || [],
+                      "Answers JSON" => question_batch&.answers_json || {}
+                    }
+                  else
+                    {}
+                  end %>
+
+<div class="ros-agent-details__grid">
+  <section class="ros-agent-details__section">
+    <h3>Assumptions</h3>
+    <%= ros_agent_draft_array_label(assumptions) %>
+  </section>
+
+  <section class="ros-agent-details__section">
+    <h3>Notes</h3>
+    <%= ros_agent_draft_array_label(notes) %>
+  </section>
+
+  <section class="ros-agent-details__section">
+    <h3>Flags</h3>
+    <%= ros_agent_draft_array_label(flags) %>
+  </section>
+</div>
+
+<section class="ros-agent-details__section">
+  <h3>Raw JSON</h3>
+  <% if raw_sections.any? %>
+    <% raw_sections.each do |label, payload| %>
+      <details>
+        <summary><%= label %></summary>
+        <pre class="ros-agent-details__json"><%= JSON.pretty_generate(payload) %></pre>
+      </details>
+    <% end %>
+  <% else %>
+    <p class="event-section__empty">No canvas JSON yet.</p>
+  <% end %>
+</section>

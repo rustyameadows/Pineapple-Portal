@@ -1,0 +1,30 @@
+<section class="event-section__body">
+  <h2>Task History</h2>
+
+  <div data-ros-agent-status-target="taskHistory">
+    <% if task_events.any? %>
+      <table class="event-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Message</th>
+            <th>When</th>
+            <th>By</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% task_events.each do |event| %>
+            <tr>
+              <td><%= (event[:event_type] || event["event_type"]).to_s.humanize %></td>
+              <td><%= event[:message] || event["message"] || "—" %></td>
+              <td><%= event[:created_at_label] || event["created_at_label"] || event[:created_at] || event["created_at"] || "—" %></td>
+              <td><%= event[:created_by] || event["created_by"] || "—" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="event-section__empty">No task history yet.</p>
+    <% end %>
+  </div>
+</section>

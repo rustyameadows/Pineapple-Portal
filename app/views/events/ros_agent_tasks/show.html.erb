@@ -1,0 +1,37 @@
+<% canvas_state = @status_snapshot[:canvas_state] || @status_snapshot["canvas_state"] || "working" %>
+<% source_files = Array(@status_snapshot[:source_files] || @status_snapshot["source_files"]) %>
+
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <main class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <div data-controller="ros-agent-status"
+           data-ros-agent-status-status-url-value="<%= status_event_ros_agent_task_path(@event, @task) %>"
+           data-ros-agent-status-initial-status-value="<%= @status_snapshot[:status] || @status_snapshot["status"] %>"
+           data-ros-agent-status-initial-canvas-state-value="<%= canvas_state %>">
+        <div class="ros-agent-app ros-agent-app--show" data-controller="ros-agent-task ros-agent-details">
+          <%= render "topbar", event: @event %>
+          <%= render "prompt_strip", event: @event, task: @task, source_files: source_files %>
+          <%= render "canvas", event: @event, task: @task, question_batch: @open_question_batch, canvas_state: canvas_state %>
+
+          <footer class="ros-agent-bottom-rail" data-ros-agent-status-target="bottomRail">
+            <%= render "bottom_rail_content",
+                       event: @event,
+                       task: @task,
+                       status_snapshot: @status_snapshot,
+                       canvas_state: canvas_state %>
+          </footer>
+
+          <%= render "details_dialog",
+                     task: @task,
+                     status_snapshot: @status_snapshot,
+                     canvas_state: canvas_state,
+                     question_batch: @open_question_batch %>
+        </div>
+      </div>
+    </main>
+  </div>
+<% end %>

@@ -1,0 +1,60 @@
+<% source_files ||= [] %>
+<% editable = local_assigns[:form].present? %>
+
+<section class="ros-agent-prompt-strip" aria-label="Agent prompt">
+  <div class="ros-agent-prompt-strip__attachments">
+    <h2>Attachments</h2>
+    <% if editable %>
+      <%= label_tag "agent_task_source_files", "Source files", class: "sr-only" %>
+      <%= file_field_tag "agent_task[source_files][]", multiple: true, id: "agent_task_source_files", class: "event-form__input ros-agent-file-input" %>
+    <% elsif source_files.any? %>
+      <ul class="ros-agent-attachment-list">
+        <% source_files.each do |source_file| %>
+          <li>
+            <span><%= source_file[:filename] || source_file["filename"] %></span>
+            <small><%= source_file[:size_label] || source_file["size_label"] %></small>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="ros-agent-muted">No source files yet.</p>
+    <% end %>
+  </div>
+
+  <div class="ros-agent-prompt-strip__prompt">
+    <h2>Prompt</h2>
+    <% if editable %>
+      <%= form.label :prompt, "Request", class: "sr-only" %>
+      <%= form.text_area :prompt, rows: 4, class: "event-form__textarea ros-agent-prompt-input" %>
+    <% else %>
+      <p><%= task.prompt %></p>
+    <% end %>
+  </div>
+
+  <div class="ros-agent-prompt-strip__settings">
+    <h2>Settings</h2>
+    <% if editable %>
+      <div class="ros-agent-settings-grid">
+        <div class="event-form__group">
+          <%= form.label :model, "Model", class: "sr-only" %>
+          <%= form.select :model, AgentTask::MODEL_OPTIONS, {}, class: "event-form__select" %>
+        </div>
+        <div class="event-form__group">
+          <%= form.label :reasoning_effort, "Reasoning", class: "sr-only" %>
+          <%= form.select :reasoning_effort, AgentTask::REASONING_EFFORT_OPTIONS, {}, class: "event-form__select" %>
+        </div>
+      </div>
+    <% else %>
+      <dl class="ros-agent-settings-list">
+        <div>
+          <dt>Model</dt>
+          <dd><%= task.model %></dd>
+        </div>
+        <div>
+          <dt>Reasoning</dt>
+          <dd><%= task.reasoning_effort.to_s.titleize %></dd>
+        </div>
+      </dl>
+    <% end %>
+  </div>
+</section>

@@ -17,6 +17,10 @@ end
 get "decisions", to: "decisions#index", as: :decisions
 patch "decisions/bulk_update", to: "decisions#bulk_update", as: :decisions_bulk_update
 
+get "labs/ros-agent-response-chain",
+    to: "labs#ros_agent_response_chain",
+    as: :labs_ros_agent_response_chain
+
 namespace :settings do
   get "run_of_show_defaults", to: "run_of_show_defaults#show", as: :run_of_show_defaults
   resources :global_vendors, only: %i[index new edit create update destroy]
@@ -56,6 +60,17 @@ post "upload_failures", to: "upload_failures#create"
     end
 
     resources :calendars, only: :index, module: :events, controller: :calendars
+
+    resources :ros_agent_tasks, module: :events, path: "ros-agent", only: %i[index new create show] do
+      member do
+        get :status
+        post :answer_questions
+        post :refine_draft
+        post :request_final_plan
+        post :approve
+        post :apply
+      end
+    end
 
     resource :calendar, only: %i[show update], module: :events do
       get :grid, to: "calendar_grids#show"

@@ -1,0 +1,61 @@
+<% preview = task.preview_json || {} %>
+<% operations = Array(preview["operations"]) %>
+<% grouped_preview_rows = preview["grouped_preview_rows"] || {} %>
+<% grouped_rows = [
+  ["Create", Array(grouped_preview_rows["creates"])],
+  ["Update", Array(grouped_preview_rows["updates"])],
+  ["Delete", Array(grouped_preview_rows["deletes"])]
+].flat_map { |action, rows| rows.map { |row| row.merge("action" => action) } } %>
+
+<% if preview.present? %>
+  <section class="ros-agent-canvas-panel" id="review-plan" tabindex="-1">
+    <h2>Review Plan</h2>
+
+    <% summary_parts = %w[create_count update_count delete_count tag_change_count time_change_count].filter_map { |key| value = preview[key]; "#{key.humanize}: #{value}" if value.present? } %>
+    <p><%= summary_parts.any? ? summary_parts.join(", ") : preview["summary"] %></p>
+
+    <% if grouped_rows.any? %>
+      <table class="event-table event-calendars__table">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Summary</th>
+            <th>Title</th>
+            <th>When</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% grouped_rows.each do |row| %>
+            <% after = row["after"] || {} %>
+            <% before = row["before"] || {} %>
+            <tr>
+              <td><%= row["action"] %></td>
+              <td><%= row["summary"] %></td>
+              <td><%= after["title"] || before["title"] || "—" %></td>
+              <td><%= ros_agent_preview_when_label(task, before, after) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% elsif operations.any? %>
+      <table class="event-table event-calendars__table">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Title</th>
+            <th>When</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% operations.each do |operation| %>
+            <tr>
+              <td><%= operation["action"] || operation["operation_type"] %></td>
+              <td><%= operation["title"] || operation.dig("attributes", "title") || operation.dig("item_attributes", "title") || operation["summary"] %></td>
+              <td><%= operation["when"] || ros_agent_preview_when_label(task, {}, operation["attributes"] || operation["item_attributes"] || {}) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </section>
+<% end %>

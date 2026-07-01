@@ -211,6 +211,174 @@ module CalendarHelper
     item.relative? ? "#{label}*" : label
   end
 
+  def ros_agent_draft_timezone(task)
+    task.event.run_of_show_calendar&.timezone.presence || EventCalendar::DEFAULT_TIMEZONE
+  end
+
+  def ros_agent_draft_day_label(day, entries, timezone)
+    explicit_date = parse_ros_agent_draft_date(day["date"])
+    inferred_date = Array(entries).filter_map { |entry| ros_agent_draft_entry_start_time(entry, timezone) }.first&.to_date
+    date = explicit_date || inferred_date
+
+    return date.strftime("%A, %B %-d") if date
+
+    day["label"].presence || "Needs timing"
+  end
+
+  def ros_agent_draft_schedule_label(entry, timezone)
+    explicit_label = entry["time_label"].presence || entry["time_caption"].presence
+    return explicit_label unless explicit_label.blank? || parseable_ros_agent_draft_datetime?(explicit_label)
+
+    start_time = ros_agent_draft_entry_start_time(entry, timezone) || parse_ros_agent_draft_time(explicit_label, timezone)
+    finish_time = ros_agent_draft_entry_finish_time(entry, start_time, timezone)
+    return effective_time_only_label(start_time, finish_time, timezone) if start_time
+
+    "TBD"
+  end
+
+  def ros_agent_preview_when_label(task, before, after)
+    attrs = (after.presence || before.presence || {}).with_indifferent_access
+    return attrs["time_caption"] if attrs["time_caption"].present?
+
+    timezone = ros_agent_draft_timezone(task)
+    start_time = parse_ros_agent_draft_time(attrs["starts_at"], timezone)
+    finish_time = ros_agent_preview_finish_time(attrs, start_time)
+    if start_time
+      date_label = start_time.in_time_zone(timezone).strftime("%b %-d")
+      time_label = effective_time_only_label(start_time, finish_time, timezone)
+      return [date_label, time_label].compact.join(" • ") if time_label.present?
+    end
+
+    attrs["starts_at"].presence || "—"
+  end
+
+  def ros_agent_draft_entries_for_day(draft, day, timezone)
+    nested_entries = Array(day["entries"])
+    return nested_entries if nested_entries.present?
+
+    entries = Array(draft["draft_items"])
+    draft_days = Array(draft["draft_days"])
+    target_date = parse_ros_agent_draft_date(day["date"])
+    return entries if target_date.blank? && draft_days.one?
+
+    entries.select do |entry|
+      entry_date = ros_agent_draft_entry_start_time(entry, timezone)&.to_date
+      entry_date.present? && target_date.present? && entry_date == target_date
+    end
+  end
+
+  def ros_agent_draft_entries_grouped_by_day(draft, timezone)
+    entries = Array(draft["draft_items"])
+    return ros_agent_draft_legacy_entries_grouped_by_day(draft, timezone) if entries.blank?
+
+    indexed_entries = entries.each_with_index.map do |entry, index|
+      start_time = ros_agent_draft_entry_start_time(entry, timezone)
+      {
+        entry: entry,
+        index: index,
+        start_time: start_time,
+        date: start_time&.to_date
+      }
+    end
+
+    indexed_entries
+      .group_by { |item| item[:date] }
+      .sort_by { |date, _items| [date.nil? ? 1 : 0, date || Date.new(9999, 12, 31)] }
+      .map do |date, items|
+        sorted_entries = items.sort_by { |item| [item[:start_time] || Time.zone.at(0), item[:index]] }.map { |item| item[:entry] }
+        day = date ? { "date" => date.iso8601 } : { "label" => "Needs timing", "date" => nil }
+
+        [day, sorted_entries]
+      end
+  end
+
+  def ros_agent_draft_legacy_entries_grouped_by_day(draft, timezone)
+    Array(draft["draft_days"]).filter_map do |day|
+      entries = ros_agent_draft_entries_for_day(draft, day, timezone)
+      next if entries.blank?
+
+      [day, entries]
+    end
+  end
+
+  def ros_agent_draft_display_entry(entry)
+    return entry unless entry.is_a?(Hash)
+
+    display_entry = entry.except("details", "day_label")
+
+    Array(entry["details"]).each do |detail|
+      next unless detail.is_a?(Hash)
+
+      field = detail["field"].to_s
+      value = detail["value"].presence
+      next if field.blank? || value.blank?
+
+      existing_value = display_entry[field]
+      display_entry[field] = if existing_value.blank?
+                               value
+                             else
+                               Array(existing_value) + [value]
+                             end
+    end
+
+    display_entry
+  end
+
+  def ros_agent_draft_array_label(values)
+    ros_agent_draft_list_label(Array(values).map(&:presence).compact)
+  end
+
+  def ros_agent_draft_source_refs_label(refs)
+    items = Array(refs).map do |ref|
+      if ref.is_a?(Hash)
+        [ref["artifact"], ref["locator"]].compact_blank.join(" — ").presence || ref.to_json
+      else
+        ref.to_s
+      end
+    end.compact_blank
+
+    ros_agent_draft_list_label(items)
+  end
+
+  def ros_agent_draft_date_mapping_label(date_mapping)
+    source_days = Array(date_mapping.to_h["source_days"])
+    return "—" if source_days.blank?
+
+    items = source_days.map do |day|
+      if day.is_a?(Hash)
+        [day["source_label"], day["target_date"]].compact_blank.join(" → ").presence || day.to_json
+      else
+        day.to_s
+      end
+    end.compact_blank
+
+    ros_agent_draft_list_label(items)
+  end
+
+  def ros_agent_draft_list_label(items)
+    return "—" if items.blank?
+
+    content_tag(:ul, class: "ros-agent-draft__summary-list") do
+      safe_join(items.map { |item| content_tag(:li, item) })
+    end
+  end
+
+  def ros_agent_draft_item_value(entry, key)
+    value = entry[key]
+    return "—" if value.nil? || value == ""
+
+    return ros_agent_draft_source_refs_label(value) if key == "source_refs"
+
+    case value
+    when Array
+      value.all? { |item| item.is_a?(String) } ? ros_agent_draft_array_label(value) : value.to_json
+    when Hash
+      value.to_json
+    else
+      value.to_s
+    end
+  end
+
   def calendar_item_relative_label(item)
     return unless item.relative? && item.relative_anchor
 
@@ -562,5 +730,57 @@ module CalendarHelper
     else
       format_clock_time(start_time)
     end
+  end
+
+  def parse_ros_agent_draft_date(value)
+    return if value.blank?
+
+    Date.iso8601(value.to_s)
+  rescue ArgumentError
+    nil
+  end
+
+  def ros_agent_draft_entry_start_time(entry, timezone)
+    return unless entry
+
+    parse_ros_agent_draft_time(entry.dig("timing", "starts_at").presence || entry["starts_at"].presence, timezone)
+  end
+
+  def ros_agent_draft_entry_finish_time(entry, start_time, timezone)
+    return unless entry
+
+    explicit_finish = parse_ros_agent_draft_time(
+      entry.dig("timing", "ends_at").presence || entry["ends_at"].presence,
+      timezone
+    )
+    return explicit_finish if explicit_finish
+    return unless start_time && entry["duration_minutes"].present?
+
+    duration_minutes = Integer(entry["duration_minutes"], exception: false)
+    return unless duration_minutes&.positive?
+
+    start_time + duration_minutes.minutes
+  end
+
+  def ros_agent_preview_finish_time(attrs, start_time)
+    return unless start_time && attrs["duration_minutes"].present?
+
+    duration_minutes = Integer(attrs["duration_minutes"], exception: false)
+    return unless duration_minutes&.positive?
+
+    start_time + duration_minutes.minutes
+  end
+
+  def parse_ros_agent_draft_time(value, timezone)
+    return if value.blank?
+
+    zone = Time.find_zone(timezone) || Time.zone
+    zone.parse(value.to_s)
+  rescue ArgumentError, TypeError
+    nil
+  end
+
+  def parseable_ros_agent_draft_datetime?(value)
+    value.to_s.match?(/\A\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/)
   end
 end

@@ -1,0 +1,30 @@
+<% provide :page_shell do %>
+  <div class="event-layout">
+    <%= render "events/sidebar_navigation", event: @event %>
+
+    <main class="event-layout__main">
+      <%= render "shared/flash" %>
+
+      <%= form_with model: @task,
+                    url: event_ros_agent_tasks_path(@event),
+                    id: "ros-agent-new-form",
+                    class: "ros-agent-app ros-agent-app--new",
+                    local: true,
+                    html: { enctype: "multipart/form-data" } do |form| %>
+        <%= form.hidden_field :mode, value: AgentTask::MODES[:build_ros_from_source] %>
+
+        <%= render "topbar", event: @event %>
+        <%= render "prompt_strip", event: @event, task: @task, form: form, source_files: [] %>
+
+        <footer class="ros-agent-bottom-rail" data-ros-agent-status-target="bottomRail">
+          <%= render "bottom_rail_content",
+                     event: @event,
+                     task: @task,
+                     status_snapshot: { status: "draft", status_label: "Ready", active: false },
+                     canvas_state: "setup",
+                     new_task: true %>
+        </footer>
+      <% end %>
+    </main>
+  </div>
+<% end %>

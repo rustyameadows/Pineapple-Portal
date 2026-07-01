@@ -1,0 +1,7 @@
+draft_logged:
+  agent_task: draft_task
+  event_type: drafted
+  message: Draft task created.
+  payload_json:
+    status: draft
+  created_by: one

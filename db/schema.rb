@@ -10,9 +10,117 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_17_130000) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_22_205000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "agent_task_artifacts", force: :cascade do |t|
+    t.bigint "agent_task_id", null: false
+    t.bigint "document_id"
+    t.uuid "document_logical_id"
+    t.string "filename", null: false
+    t.string "content_type"
+    t.integer "size_bytes"
+    t.string "checksum"
+    t.string "openai_file_id"
+    t.string "source_kind", default: "source_document", null: false
+    t.jsonb "source_metadata_json", default: {}, null: false
+    t.jsonb "source_warnings_json", default: {}, null: false
+    t.integer "position", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agent_task_id", "position"], name: "index_agent_task_artifacts_on_agent_task_id_and_position"
+    t.index ["agent_task_id"], name: "index_agent_task_artifacts_on_agent_task_id"
+    t.index ["document_id"], name: "index_agent_task_artifacts_on_document_id"
+    t.index ["openai_file_id"], name: "index_agent_task_artifacts_on_openai_file_id"
+  end
+
+  create_table "agent_task_events", force: :cascade do |t|
+    t.bigint "agent_task_id", null: false
+    t.string "event_type", null: false
+    t.text "message"
+    t.jsonb "payload_json", default: {}, null: false
+    t.bigint "created_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agent_task_id", "created_at"], name: "index_agent_task_events_on_agent_task_id_and_created_at"
+    t.index ["agent_task_id"], name: "index_agent_task_events_on_agent_task_id"
+    t.index ["created_by_id"], name: "index_agent_task_events_on_created_by_id"
+    t.index ["event_type"], name: "index_agent_task_events_on_event_type"
+  end
+
+  create_table "agent_task_llm_calls", force: :cascade do |t|
+    t.bigint "agent_task_id", null: false
+    t.string "purpose", null: false
+    t.string "provider", default: "openai", null: false
+    t.string "model", null: false
+    t.string "reasoning_effort"
+    t.string "status", default: "pending", null: false
+    t.string "openai_response_id"
+    t.string "openai_request_id"
+    t.string "openai_trace_id"
+    t.string "schema_name"
+    t.string "schema_version"
+    t.integer "attempt", default: 1, null: false
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.integer "duration_ms"
+    t.jsonb "request_json", default: {}, null: false
+    t.jsonb "response_json", default: {}, null: false
+    t.jsonb "usage_json", default: {}, null: false
+    t.jsonb "error_json", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agent_task_id", "created_at"], name: "index_agent_task_llm_calls_on_agent_task_id_and_created_at"
+    t.index ["agent_task_id"], name: "index_agent_task_llm_calls_on_agent_task_id"
+    t.index ["openai_response_id"], name: "index_agent_task_llm_calls_on_openai_response_id"
+    t.index ["openai_trace_id"], name: "index_agent_task_llm_calls_on_openai_trace_id"
+  end
+
+  create_table "agent_task_question_batches", force: :cascade do |t|
+    t.bigint "agent_task_id", null: false
+    t.integer "position", default: 1, null: false
+    t.text "summary"
+    t.jsonb "questions_json", default: [], null: false
+    t.jsonb "answers_json", default: {}, null: false
+    t.string "status", default: "open", null: false
+    t.datetime "answered_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["agent_task_id", "position"], name: "idx_agent_question_batches_on_task_position"
+    t.index ["agent_task_id"], name: "index_agent_task_question_batches_on_agent_task_id"
+  end
+
+  create_table "agent_tasks", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.bigint "created_by_id", null: false
+    t.bigint "approved_by_id"
+    t.text "prompt", null: false
+    t.string "mode", default: "build_ros_from_source", null: false
+    t.string "status", default: "draft", null: false
+    t.integer "current_plan_version", default: 0, null: false
+    t.integer "approved_plan_version"
+    t.datetime "approved_at"
+    t.datetime "applied_at"
+    t.string "latest_openai_trace_id"
+    t.jsonb "latest_source_understanding_json", default: {}, null: false
+    t.jsonb "draft_ros_json", default: {}, null: false
+    t.jsonb "plan_json", default: {}, null: false
+    t.jsonb "validation_json", default: {}, null: false
+    t.jsonb "preview_json", default: {}, null: false
+    t.jsonb "trace_summary_json", default: {}, null: false
+    t.jsonb "usage_summary_json", default: {}, null: false
+    t.jsonb "last_error_json", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "model", default: "gpt-5.5", null: false
+    t.string "reasoning_effort", default: "high", null: false
+    t.index ["approved_by_id"], name: "index_agent_tasks_on_approved_by_id"
+    t.index ["created_by_id"], name: "index_agent_tasks_on_created_by_id"
+    t.index ["event_id", "created_at"], name: "index_agent_tasks_on_event_id_and_created_at"
+    t.index ["event_id", "status"], name: "index_agent_tasks_on_event_id_and_status"
+    t.index ["event_id"], name: "index_agent_tasks_on_event_id"
+  end
 
   create_table "approvals", force: :cascade do |t|
     t.bigint "event_id", null: false
@@ -649,6 +757,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_17_130000) do
     t.index ["role"], name: "index_users_on_role"
   end
 
+  add_foreign_key "agent_task_artifacts", "agent_tasks"
+  add_foreign_key "agent_task_artifacts", "documents"
+  add_foreign_key "agent_task_events", "agent_tasks"
+  add_foreign_key "agent_task_events", "users", column: "created_by_id"
+  add_foreign_key "agent_task_llm_calls", "agent_tasks"
+  add_foreign_key "agent_task_question_batches", "agent_tasks"
+  add_foreign_key "agent_tasks", "events"
+  add_foreign_key "agent_tasks", "users", column: "approved_by_id"
+  add_foreign_key "agent_tasks", "users", column: "created_by_id"
   add_foreign_key "approvals", "events"
   add_foreign_key "attachments", "documents"
   add_foreign_key "calendar_item_tags", "calendar_items", on_delete: :cascade

@@ -1,0 +1,36 @@
+<section class="event-section__body">
+  <h2>OpenAI Calls</h2>
+
+  <div data-ros-agent-status-target="llmCalls">
+    <% if llm_calls.any? %>
+      <table class="event-table">
+        <thead>
+          <tr>
+            <th>Purpose</th>
+            <th>Status</th>
+            <th>Model</th>
+            <th>Duration</th>
+            <th>Usage</th>
+            <th>Error</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% llm_calls.each do |call| %>
+            <% usage = call[:usage] || call["usage"] || {} %>
+            <% error = call[:error] || call["error"] || {} %>
+            <tr>
+              <td><%= (call[:purpose] || call["purpose"]).to_s.humanize %></td>
+              <td><%= (call[:status] || call["status"]).to_s.humanize %></td>
+              <td><%= call[:model] || call["model"] %></td>
+              <td><%= call[:duration_label] || call["duration_label"] || ((call[:duration_ms] || call["duration_ms"]) ? "#{call[:duration_ms] || call["duration_ms"]} ms" : "—") %></td>
+              <td><%= usage.present? ? usage.to_json : "—" %></td>
+              <td><%= error.present? ? error["message"].to_s : "—" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="event-section__empty">No OpenAI calls yet.</p>
+    <% end %>
+  </div>
+</section>
