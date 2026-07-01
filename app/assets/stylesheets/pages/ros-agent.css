@@ -265,6 +265,19 @@
   color: #4b5563;
 }
 
+.ros-agent-working__dots span {
+  animation: ros-agent-working-dot 1.2s ease-in-out infinite;
+  opacity: 0.25;
+}
+
+.ros-agent-working__dots span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.ros-agent-working__dots span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
 @keyframes ros-agent-working-shimmer {
   0% {
     background-position: 0% 50%;
@@ -276,6 +289,18 @@
 
   100% {
     background-position: 0% 50%;
+  }
+}
+
+@keyframes ros-agent-working-dot {
+  0%,
+  70%,
+  100% {
+    opacity: 0.25;
+  }
+
+  35% {
+    opacity: 1;
   }
 }
 
@@ -546,8 +571,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ros-agent-working {
+  .ros-agent-working,
+  .ros-agent-working__dots span {
     animation: none;
+  }
+
+  .ros-agent-working__dots span {
+    opacity: 1;
   }
 }
 
