@@ -37,6 +37,9 @@ export default class extends Controller {
     "searchableText",
     "searchInput",
     "selectionCount",
+    "sameTimeMoveDownButton",
+    "sameTimeMoveUpButton",
+    "sameTimeNeighborInput",
     "statusInput",
     "statusRow",
     "tableShell",
@@ -62,7 +65,9 @@ export default class extends Controller {
       element: row,
       checkbox: row.querySelector("input.event-calendars__bulk-checkbox"),
       groupKey: row.dataset.calendarGroupKey || "",
+      position: Number(row.dataset.calendarItemPosition || 0),
       searchText: row.dataset.calendarSearchText || "",
+      startMinute: row.dataset.calendarItemStartMinute || "",
       filters: this.rowFilters(row, filterFacets)
     }))
 
@@ -317,6 +322,19 @@ export default class extends Controller {
     this.updateReturnArtifacts()
   }
 
+  prepareSameTimeMove(event) {
+    const direction = event.currentTarget.dataset.sameTimeDirection || ""
+    const neighbor = this.sameTimeNeighbor(direction)
+
+    if (!neighbor || !this.hasSameTimeNeighborInputTarget) {
+      event.preventDefault()
+      return
+    }
+
+    this.sameTimeNeighborInputTarget.value = neighbor.id
+    this.updateReturnArtifacts()
+  }
+
   submitConfirmed() {
     this.closeDialog()
     this.prepareSubmit()
@@ -358,6 +376,7 @@ export default class extends Controller {
     this.updateGroupSelectionButtons()
     this.updateVisibleSelectionButtons()
     this.updateTimingActionState()
+    this.updateSameTimeMoveButtons()
     this.updateApplyState()
   }
 
@@ -533,6 +552,7 @@ export default class extends Controller {
     this.syncBrowserUrl()
     this.updateReturnArtifacts()
     this.updateVisibleSelectionButtons()
+    this.updateSameTimeMoveButtons()
   }
 
   applyFiltersFromUrl() {
@@ -715,6 +735,8 @@ export default class extends Controller {
   }
 
   itemDataForCheckbox(checkbox) {
+    if (!checkbox) return null
+
     const row = checkbox.closest("[data-calendar-item-id]")
     if (!row) return null
 
@@ -724,6 +746,8 @@ export default class extends Controller {
       title: row.dataset.calendarItemTitle || "Selected item",
       startAt: row.dataset.calendarItemStartAt || "",
       endAt: row.dataset.calendarItemEndAt || "",
+      startMinute: row.dataset.calendarItemStartMinute || "",
+      position: Number(row.dataset.calendarItemPosition || 0),
       relative: row.dataset.calendarItemRelative === "true"
     }
   }
@@ -1002,6 +1026,42 @@ export default class extends Controller {
       button.textContent = label
       button.disabled = visibleCount === 0
     })
+  }
+
+  updateSameTimeMoveButtons() {
+    const upNeighbor = this.sameTimeNeighbor("up")
+    const downNeighbor = this.sameTimeNeighbor("down")
+
+    if (this.hasSameTimeMoveUpButtonTarget) {
+      this.sameTimeMoveUpButtonTarget.hidden = !upNeighbor
+    }
+
+    if (this.hasSameTimeMoveDownButtonTarget) {
+      this.sameTimeMoveDownButtonTarget.hidden = !downNeighbor
+    }
+
+    if (this.hasSameTimeNeighborInputTarget) {
+      this.sameTimeNeighborInputTarget.value = ""
+    }
+  }
+
+  sameTimeNeighbor(direction) {
+    if (this.hasActiveFilters) return null
+
+    const selectedItems = this.selectedItemData
+    if (selectedItems.length !== 1) return null
+
+    const selectedItem = selectedItems[0]
+    if (!selectedItem.startMinute) return null
+
+    const sameMinuteItems = this.rowStates
+      .map((rowState) => this.itemDataForCheckbox(rowState.checkbox))
+      .filter((item) => item && item.startMinute === selectedItem.startMinute)
+    const itemIndex = sameMinuteItems.findIndex((item) => item.id === selectedItem.id)
+    if (itemIndex < 0) return null
+
+    const neighborIndex = direction === "up" ? itemIndex - 1 : itemIndex + 1
+    return sameMinuteItems[neighborIndex] || null
   }
 
   get hasActiveFilters() {

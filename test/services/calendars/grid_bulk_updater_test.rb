@@ -202,6 +202,122 @@ module Calendars
       assert_equal "Enter other people.", result.message
     end
 
+    test "moves one same-time item up by updating position only" do
+      first = create_item(title: "Load In", starts_at: Time.utc(2025, 10, 1, 12, 0), position: 10)
+      second = create_item(title: "Vendor Arrival", starts_at: Time.utc(2025, 10, 1, 12, 0), position: 20)
+      third = create_item(title: "Room Check", starts_at: Time.utc(2025, 10, 1, 12, 0), position: 30)
+      other_time = create_item(title: "Later Check", starts_at: Time.utc(2025, 10, 1, 13, 0), position: 40)
+      original_starts_at = second.starts_at
+
+      result = CascadeScheduler.stub(:new, ->(_) { raise "scheduler should not run for same-time reorder" }) do
+        GridBulkUpdater.new(
+          calendar: @calendar,
+          item_ids: [second.id],
+          params: {
+            bulk_action: "move_same_time_up",
+            neighbor_item_id: first.id
+          }
+        ).call
+      end
+
+      assert_predicate result, :success?
+      assert_equal "Order updated.", result.message
+      assert_equal ["Vendor Arrival", "Load In", "Room Check"], same_time_titles("2025-10-01 12:00")
+      assert_equal original_starts_at, second.reload.starts_at
+      assert_equal 40, other_time.reload.position
+    end
+
+    test "moves one same-time item down by updating position only" do
+      first = create_item(title: "Load In", starts_at: Time.utc(2025, 10, 1, 12, 0), position: 10)
+      second = create_item(title: "Vendor Arrival", starts_at: Time.utc(2025, 10, 1, 12, 0), position: 20)
+
+      result = GridBulkUpdater.new(
+        calendar: @calendar,
+        item_ids: [first.id],
+        params: {
+          bulk_action: "move_same_time_down",
+          neighbor_item_id: second.id
+        }
+      ).call
+
+      assert_predicate result, :success?
+      assert_equal ["Vendor Arrival", "Load In"], same_time_titles("2025-10-01 12:00")
+    end
+
+    test "rejects same-time reorder when multiple items are selected" do
+      first = create_item(title: "Load In", starts_at: Time.utc(2025, 10, 1, 12, 0), position: 10)
+      second = create_item(title: "Vendor Arrival", starts_at: Time.utc(2025, 10, 1, 12, 0), position: 20)
+
+      result = GridBulkUpdater.new(
+        calendar: @calendar,
+        item_ids: [first.id, second.id],
+        params: {
+          bulk_action: "move_same_time_down",
+          neighbor_item_id: second.id
+        }
+      ).call
+
+      assert_not result.success?
+      assert_equal "Select exactly one item to move.", result.message
+    end
+
+    test "rejects same-time reorder for a different-time neighbor" do
+      first = create_item(title: "Load In", starts_at: Time.utc(2025, 10, 1, 12, 0), position: 10)
+      later = create_item(title: "Later Check", starts_at: Time.utc(2025, 10, 1, 13, 0), position: 20)
+
+      result = GridBulkUpdater.new(
+        calendar: @calendar,
+        item_ids: [first.id],
+        params: {
+          bulk_action: "move_same_time_down",
+          neighbor_item_id: later.id
+        }
+      ).call
+
+      assert_not result.success?
+      assert_equal "Choose a neighboring item at the same time.", result.message
+    end
+
+    test "rejects same-time reorder for missing start times" do
+      first = create_item(title: "Load In", starts_at: nil, position: 10)
+      second = create_item(title: "Vendor Arrival", starts_at: nil, position: 20)
+
+      result = GridBulkUpdater.new(
+        calendar: @calendar,
+        item_ids: [first.id],
+        params: {
+          bulk_action: "move_same_time_down",
+          neighbor_item_id: second.id
+        }
+      ).call
+
+      assert_not result.success?
+      assert_equal "Only scheduled items can be reordered within a time.", result.message
+    end
+
+    test "same-time reorder uses effective start minute for relative items" do
+      anchor = create_item(title: "Anchor", starts_at: Time.utc(2025, 10, 1, 12, 0), duration_minutes: 30, position: 10)
+      relative = create_item(
+        title: "Relative Cue",
+        starts_at: nil,
+        relative_anchor: anchor,
+        relative_offset_minutes: 0,
+        position: 20
+      )
+
+      result = GridBulkUpdater.new(
+        calendar: @calendar,
+        item_ids: [relative.id],
+        params: {
+          bulk_action: "move_same_time_up",
+          neighbor_item_id: anchor.id
+        }
+      ).call
+
+      assert_predicate result, :success?
+      assert_equal ["Relative Cue", "Anchor"], same_time_titles("2025-10-01 12:00")
+    end
+
     test "deletes selected items and reruns scheduler once" do
       scheduler = Minitest::Mock.new
       scheduler.expect(:call, true)
@@ -224,6 +340,27 @@ module Calendars
       scheduler.verify
       assert_predicate result, :success?
       assert_equal "2 items removed.", result.message
+    end
+
+    private
+
+    def create_item(title:, starts_at:, position:, duration_minutes: 30, relative_anchor: nil, relative_offset_minutes: 0)
+      @calendar.calendar_items.create!(
+        title: title,
+        starts_at: starts_at,
+        duration_minutes: duration_minutes,
+        relative_anchor: relative_anchor,
+        relative_offset_minutes: relative_offset_minutes,
+        position: position
+      )
+    end
+
+    def same_time_titles(time)
+      minute = Time.zone.parse(time).utc
+      @calendar.calendar_items.to_a
+               .select { |item| item.effective_starts_at&.utc&.change(sec: 0) == minute }
+               .sort_by { |item| [item.position.to_i, item.title.to_s.downcase, item.id.to_i] }
+               .map(&:title)
     end
   end
 end

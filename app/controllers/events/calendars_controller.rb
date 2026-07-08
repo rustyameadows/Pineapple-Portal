@@ -50,13 +50,14 @@ module Events
     end
 
     def load_collections
-      @items = @calendar.calendar_items
-                         .includes(:relative_anchor, :event_calendar_tags, :team_members)
-                         .ordered
-                         .reject { |item| item.tagged_with?("decisions") }
-      @filter_source_items = @calendar.calendar_items
-                                    .includes(:team_members)
-                                    .ordered
+      all_items = @calendar.calendar_items
+                           .includes(:relative_anchor, :event_calendar_tags, :team_members)
+                           .to_a
+      @items = Calendars::TimelineOrder.sort(
+        all_items.reject { |item| item.tagged_with?("decisions") },
+        timezone: @calendar.timezone
+      )
+      @filter_source_items = Calendars::TimelineOrder.sort(all_items, timezone: @calendar.timezone)
       @tags = @calendar.event_calendar_tags.order(:position)
       @tags_by_id = @tags.index_by(&:id)
       @views = @calendar.event_calendar_views.order(:position)

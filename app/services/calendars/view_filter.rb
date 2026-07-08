@@ -7,13 +7,14 @@ module Calendars
 
     def items
       @items ||= begin
-        scope = calendar.calendar_items.includes(:event_calendar_tags, :relative_anchor, :team_members).ordered
-        scope.select do |item|
+        scope = calendar.calendar_items.includes(:event_calendar_tags, :relative_anchor, :team_members)
+        filtered_items = scope.select do |item|
           next false if view.hide_locked? && item.locked?
           next true if tag_ids.empty?
 
           (item.event_calendar_tag_ids & tag_ids).any?
         end
+        Calendars::TimelineOrder.sort(filtered_items, timezone: calendar.timezone)
       end
     end
 

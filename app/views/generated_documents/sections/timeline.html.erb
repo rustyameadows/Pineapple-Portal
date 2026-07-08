@@ -105,14 +105,13 @@
   <% items = [] %>
   <% total_count = 0 %>
   <% error_message = nil %>
-  <% far_future = Time.zone.parse("9999-12-31") rescue Time.zone.now + 100.years %>
   <% timeline_segment_granularity = EventCalendarView::SEGMENT_GRANULARITIES[:day] %>
 
   <% case @segment.html_view_key %>
   <% when DocumentSegment::RUN_OF_SHOW_VIEW_KEY %>
     <% calendar = @event.run_of_show_calendar %>
     <% if calendar.present? %>
-      <% items_scope = calendar.calendar_items.includes(:team_members).ordered %>
+      <% items_scope = calendar.calendar_items.includes(:team_members, :event_calendar_tags, :relative_anchor) %>
       <% items_scope = items_scope.reject { |item| item.tagged_with?("decisions") } %>
       <% items = items_scope.to_a %>
       <% total_count = items.length %>
@@ -144,10 +143,7 @@
   <% if items.any? %>
     <% monthly_segments = timeline_segment_granularity == EventCalendarView::SEGMENT_GRANULARITIES[:month] %>
     <% columns[0] = { key: :starts, label: "Day" } if monthly_segments %>
-    <% sorted_items = items.sort_by { |item|
-      start_time = item.effective_starts_at&.in_time_zone(timezone)
-      [start_time || far_future, item.position.to_i, item.title.to_s.downcase, item.id.to_i]
-    } %>
+    <% sorted_items = Calendars::TimelineOrder.sort(items, timezone: timezone) %>
     <% grouped_items = sorted_items.group_by { |item|
       calendar_item_segment_key(item, timezone, timeline_segment_granularity)
     } %>

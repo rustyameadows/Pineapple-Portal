@@ -31,6 +31,7 @@ module Events
       assign_offset(@item)
       apply_timing_mode(@item)
       @item.assign_attributes(item_params)
+      assign_next_position(@item)
 
       if @item.save
         run_scheduler
@@ -181,6 +182,7 @@ module Events
     def bulk_params
       params.fetch(:bulk, {}).permit(
         :bulk_action,
+        :neighbor_item_id,
         :vendor_name,
         :location_name,
         :time_caption,
@@ -221,6 +223,11 @@ module Events
       item.relative_offset_display_unit = amount.unit
       item.relative_offset_display_hours = amount.hours
       item.relative_offset_display_minutes = amount.minutes
+    end
+
+    def assign_next_position(item)
+      max_position = @calendar.calendar_items.where.not(id: item.id).maximum(:position)
+      item.position = max_position.present? ? max_position + 1 : 0
     end
 
     def apply_timing_mode(item)

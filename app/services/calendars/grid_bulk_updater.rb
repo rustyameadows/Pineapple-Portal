@@ -44,13 +44,17 @@ module Calendars
                     apply_additional_team_members_clear
                   when "delete_items"
                     apply_deletions
+                  when "move_same_time_up"
+                    apply_same_time_move(:up)
+                  when "move_same_time_down"
+                    apply_same_time_move(:down)
                   else
                     return Result.new(success: false, message: "Choose a bulk action.")
                   end
 
       return Result.new(success: false, message: performed) if performed.is_a?(String)
 
-      Calendars::CascadeScheduler.new(calendar).call
+      Calendars::CascadeScheduler.new(calendar).call unless skip_scheduler?
       Result.new(success: true, message: success_message)
     rescue ActiveRecord::RecordInvalid => e
       Result.new(success: false, message: e.record.errors.full_messages.to_sentence.presence || "Unable to update selected items.")
@@ -191,6 +195,41 @@ module Calendars
       true
     end
 
+    def apply_same_time_move(direction)
+      return "Select exactly one item to move." unless item_ids.one? && items.one?
+
+      item = items.first
+      neighbor = calendar.calendar_items.find_by(id: params[:neighbor_item_id])
+      return "Choose a neighboring item at the same time." unless neighbor
+
+      item_minute = visible_start_minute(item)
+      neighbor_minute = visible_start_minute(neighbor)
+      return "Only scheduled items can be reordered within a time." if item_minute.blank? || neighbor_minute.blank?
+      return "Choose a neighboring item at the same time." unless item_minute == neighbor_minute
+
+      same_time_items = calendar.calendar_items.includes(:relative_anchor).to_a
+                                .select { |candidate| visible_start_minute(candidate) == item_minute }
+                                .sort_by { |candidate| [candidate.position.to_i, candidate.title.to_s.downcase, candidate.id.to_i] }
+      item_index = same_time_items.index { |candidate| candidate.id == item.id }
+      neighbor_index = same_time_items.index { |candidate| candidate.id == neighbor.id }
+      expected_neighbor_index = direction == :up ? item_index.to_i - 1 : item_index.to_i + 1
+
+      return "Choose a neighboring item at the same time." unless neighbor_index == expected_neighbor_index
+
+      reordered_items = same_time_items.dup
+      reordered_items[item_index], reordered_items[neighbor_index] = reordered_items[neighbor_index], reordered_items[item_index]
+
+      ActiveRecord::Base.transaction do
+        reordered_items.each_with_index do |candidate, index|
+          candidate.update_columns(position: index) # rubocop:disable Rails/SkipsModelValidations
+        end
+      end
+
+      @skip_scheduler = true
+      @success_message = "Order updated."
+      true
+    end
+
     def permitted_tag_ids
       available = calendar.event_calendar_tags.pluck(:id)
       Array(params[:tag_ids]).map(&:to_i).select { |id| available.include?(id) }
@@ -203,6 +242,14 @@ module Calendars
 
     def success_message
       @success_message || "Updates applied."
+    end
+
+    def skip_scheduler?
+      @skip_scheduler == true
+    end
+
+    def visible_start_minute(item)
+      Calendars::TimelineOrder.start_minute(item, timezone: calendar.timezone)
     end
   end
 end

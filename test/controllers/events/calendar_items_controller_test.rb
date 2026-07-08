@@ -398,5 +398,23 @@ module Events
       follow_redirect!
       assert_includes response.body, "Select at least one item."
     end
+
+    test "create assigns the next calendar position" do
+      next_position = @calendar.calendar_items.maximum(:position).to_i + 1
+
+      post event_calendar_items_url(@event), params: {
+        calendar_item: {
+          title: "Same-Time Cue",
+          starts_at: "2025-10-01T15:00",
+          duration_display_value: "",
+          duration_display_unit: "days",
+          duration_display_hours: "",
+          duration_display_minutes: ""
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      assert_equal next_position, CalendarItem.order(:id).last.position
+    end
   end
 end
