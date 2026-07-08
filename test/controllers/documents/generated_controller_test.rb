@@ -1139,6 +1139,57 @@ module Documents
       assert_select ".flash-toast--build .flash-toast__text[data-flash-toast-target='buildMessage']", text: "Rendering pages 2/5"
     end
 
+    test "show renders a duplicate packet button before packet settings" do
+      get event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select "form[action='#{duplicate_event_documents_generated_path(@event, @document.logical_id)}'] button[type='submit']", text: "Duplicate packet", count: 1
+      assert_select "a[href='#{edit_event_documents_generated_path(@event, @document.logical_id)}']", text: "Packet settings", count: 1
+      assert_operator @response.body.index("Duplicate packet"), :<, @response.body.index("Packet settings")
+    end
+
+    test "duplicate creates a new packet with copied placements and cloned editable sources" do
+      @document.update!(client_visible: true, financial_portal_visible: true, packets_portal_visible: true)
+      page_source = create_page_source(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Planner Notes",
+        options: { "body_markdown" => "Notes" }
+      )
+      group_document = create_group_document(title: "Design & Decor")
+      group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
+      @document.packet_placements.create!(source: page_source, position: 1)
+      @document.packet_placements.create!(source: group_source, position: 2)
+
+      assert_difference -> { @event.documents.generated.packet_containers.where(storage_uri: nil).count }, 1 do
+        assert_difference -> { GeneratedPacketPlacement.count }, 2 do
+          assert_difference -> { GeneratedPacketSource.count }, 1 do
+            post duplicate_event_documents_generated_url(@event, @document.logical_id)
+          end
+        end
+      end
+
+      duplicated = @event.documents.generated.packet_containers.where(storage_uri: nil, title: "New Generated Packet").order(:created_at).last
+      assert_redirected_to event_documents_generated_url(@event, duplicated.logical_id)
+      assert_not_equal @document.logical_id, duplicated.logical_id
+      assert_equal @document.client_visible, duplicated.client_visible
+      assert_equal @document.financial_portal_visible, duplicated.financial_portal_visible
+      assert_equal @document.packets_portal_visible, duplicated.packets_portal_visible
+      assert_equal @document.packet_schema_version, duplicated.packet_schema_version
+      assert_equal @document.packet_container_kind, duplicated.packet_container_kind
+
+      duplicated_placements = duplicated.packet_placements.includes(:source).ordered.to_a
+      assert_equal [1, 2], duplicated_placements.map(&:position)
+      assert_equal ["Planner Notes", "Design & Decor"], duplicated_placements.map(&:title)
+
+      duplicated_page_source = duplicated_placements.first.source
+      assert_not_equal page_source.id, duplicated_page_source.id
+      assert_equal page_source.source_category, duplicated_page_source.source_category
+      assert_equal page_source.kind, duplicated_page_source.kind
+      assert_equal page_source.source_ref, duplicated_page_source.source_ref
+      assert_equal page_source.spec, duplicated_page_source.spec
+      assert_equal group_source.id, duplicated_placements.second.generated_packet_source_id
+    end
+
     test "show renders uncompiled packet definitions in the sidebar navigation" do
       @event.documents.create!(
         title: "Family Packet",

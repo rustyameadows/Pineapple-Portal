@@ -1,8 +1,8 @@
 module Documents
   class GeneratedController < ApplicationController
     before_action :set_event
-    before_action :set_generated_document, only: %i[show edit update destroy compile rebuild_live working_pdf working_status]
-    before_action :ensure_source_backed_document!, only: %i[show edit update compile rebuild_live working_pdf working_status]
+    before_action :set_generated_document, only: %i[show edit update destroy duplicate compile rebuild_live working_pdf working_status]
+    before_action :ensure_source_backed_document!, only: %i[show edit update duplicate compile rebuild_live working_pdf working_status]
 
     def index
       @manifest_entries = build_manifest_entries
@@ -79,6 +79,31 @@ module Documents
       redirect_to(@document.group_container? ? library_event_documents_generated_index_path(@event) : event_documents_generated_index_path(@event), notice: "#{title} deleted.")
     rescue StandardError => e
       redirect_to edit_event_documents_generated_path(@event, @document.logical_id), alert: "Unable to delete packet: #{e.message}"
+    end
+
+    def duplicate
+      unless @document.packet_container?
+        redirect_to edit_event_documents_generated_path(@event, @document.logical_id), alert: "Only packets can be duplicated from this page."
+        return
+      end
+
+      duplicated_packet = nil
+
+      Document.transaction do
+        duplicated_packet = @event.documents.create!(duplicated_packet_attributes)
+
+        current_segments.each do |placement|
+          duplicated_packet.packet_placements.create!(
+            source: duplicate_packet_source(placement.source),
+            position: placement.position
+          )
+        end
+      end
+
+      enqueue_working_refresh_for_documents(duplicated_packet)
+      redirect_to event_documents_generated_path(@event, duplicated_packet.logical_id), notice: "Packet duplicated."
+    rescue StandardError => e
+      redirect_to event_documents_generated_path(@event, @document.logical_id), alert: "Unable to duplicate packet: #{e.message}"
     end
 
     def working_pdf
@@ -296,6 +321,34 @@ module Documents
       allowed = [:title]
       allowed << :client_visible unless @document&.group_container?
       params.fetch(:document, {}).permit(*allowed)
+    end
+
+    def duplicated_packet_attributes
+      {
+        title: "New #{@document.title}",
+        doc_kind: @document.doc_kind,
+        client_visible: @document.client_visible,
+        financial_portal_visible: @document.financial_portal_visible,
+        packets_portal_visible: @document.packets_portal_visible,
+        is_template: @document.is_template,
+        is_latest: false,
+        source: @document.source,
+        built_by_user: current_user,
+        packet_schema_version: @document.packet_schema_version,
+        packet_container_kind: @document.packet_container_kind
+      }
+    end
+
+    def duplicate_packet_source(source)
+      return source if source.group?
+
+      @event.generated_packet_sources.create!(
+        source_category: source.canonical? ? GeneratedPacketSource::CATEGORIES[:page] : source.source_category,
+        kind: source.kind,
+        title: source.title,
+        source_ref: source.source_ref.deep_dup,
+        spec: source.spec.deep_dup
+      )
     end
 
     def load_document_context
