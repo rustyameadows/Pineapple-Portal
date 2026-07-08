@@ -96,7 +96,11 @@ class DocumentsController < ApplicationController
   private
 
   def authorize_download
-    return if current_user&.planner_or_admin?
+    if current_user&.planner_or_admin?
+      raise ActiveRecord::RecordNotFound unless current_user_can_access_event?(@event)
+
+      return
+    end
 
     if current_client_user && client_can_access_event?(current_client_user, @event)
       return
@@ -107,7 +111,11 @@ class DocumentsController < ApplicationController
   end
 
   def set_event
-    @event = Event.find(params[:event_id])
+    @event = if action_name == "download" && !current_user&.planner_or_admin?
+               Event.find(params[:event_id])
+             else
+               find_accessible_event!(params[:event_id])
+             end
   end
 
   def set_document

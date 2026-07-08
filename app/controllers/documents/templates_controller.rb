@@ -18,7 +18,7 @@ module Documents
     private
 
     def set_event
-      @event = Event.find(params[:event_id])
+      @event = find_accessible_event!(params[:event_id])
     end
 
     def default_document_title

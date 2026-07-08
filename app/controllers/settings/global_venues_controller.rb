@@ -1,5 +1,6 @@
 module Settings
   class GlobalVenuesController < ApplicationController
+    before_action :require_admin!
     before_action :set_global_venue, only: %i[edit update destroy]
 
     def index

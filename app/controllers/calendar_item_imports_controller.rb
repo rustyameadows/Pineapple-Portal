@@ -51,7 +51,7 @@ class CalendarItemImportsController < ApplicationController
   private
 
   def set_event
-    @event = Event.find(params[:event_id])
+    @event = find_accessible_event!(params[:event_id])
   end
 
   def set_destination_calendar
@@ -63,7 +63,7 @@ class CalendarItemImportsController < ApplicationController
   end
 
   def load_source_events
-    @source_events = Event.where.not(id: @event.id).order(:name)
+    @source_events = accessible_events_scope.where.not(id: @event.id).order(:name)
   end
 
   def load_source_context

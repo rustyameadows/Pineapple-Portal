@@ -2,7 +2,7 @@ require "test_helper"
 
 class CalendarItemImportsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    log_in_as(users(:one))
+    log_in_as(users(:two))
     @event = events(:two)
     @source_event = events(:one)
     @source_calendar = event_calendars(:run_of_show)
@@ -17,6 +17,16 @@ class CalendarItemImportsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: "Import timeline items"
     assert_select "select[name='source_event_id']"
     assert_select "select[name='source_timeline_ref']"
+  end
+
+  test "planner source selector excludes unassigned events" do
+    delete logout_url
+    log_in_as(users(:one))
+
+    get event_calendar_item_import_url(events(:one))
+
+    assert_response :success
+    assert_select "select[name='source_event_id'] option[value='#{events(:two).id}']", count: 0
   end
 
   test "loads source timeline options and item list" do

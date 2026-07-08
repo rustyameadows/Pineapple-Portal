@@ -22,7 +22,7 @@
   <div class="event-card__actions">
     <%= link_to "Open Event", event_path(event), class: "event-card__cta" %>
     <%= link_to "Settings", event_settings_path(event), class: "event-card__secondary" %>
-    <% unless event.archived? %>
+    <% if admin_user? && !event.archived? %>
       <%= link_to "Archive",
                   archive_event_path(event, return_to: request.fullpath),
                   data: { turbo_method: :patch, turbo_confirm: "Archive this event? It will move to archived events." },

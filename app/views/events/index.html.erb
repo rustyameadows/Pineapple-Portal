@@ -12,9 +12,11 @@
             <h1 class="event-section__title">All Events</h1>
             <p class="event-section__lead">Review every event with active projects first and archived projects below.</p>
           </div>
-          <div class="event-section__actions">
-            <%= link_to "New Event", new_event_path, class: "event-section__cta" %>
-          </div>
+          <% if admin_user? %>
+            <div class="event-section__actions">
+              <%= link_to "New Event", new_event_path, class: "event-section__cta" %>
+            </div>
+          <% end %>
         </header>
 
         <div class="event-section__body">
@@ -46,10 +48,12 @@
                       <td class="events-all__actions">
                         <%= link_to "Open", event_path(event), class: "events-all__action-link" %>
                         <%= link_to "Settings", event_settings_path(event), class: "events-all__action-link" %>
-                        <%= link_to "Archive",
-                                    archive_event_path(event, return_to: request.fullpath),
-                                    data: { turbo_method: :patch, turbo_confirm: "Archive this event? It will move to archived events." },
-                                    class: "events-all__action-link events-all__action-link--danger" %>
+                        <% if admin_user? %>
+                          <%= link_to "Archive",
+                                      archive_event_path(event, return_to: request.fullpath),
+                                      data: { turbo_method: :patch, turbo_confirm: "Archive this event? It will move to archived events." },
+                                      class: "events-all__action-link events-all__action-link--danger" %>
+                        <% end %>
                       </td>
                     </tr>
                   <% end %>
@@ -73,10 +77,12 @@
                         <td class="events-all__actions">
                           <%= link_to "Open", event_path(event), class: "events-all__action-link" %>
                           <%= link_to "Settings", event_settings_path(event), class: "events-all__action-link" %>
-                          <%= link_to "Restore",
-                                      restore_event_path(event, return_to: request.fullpath),
-                                      data: { turbo_method: :patch, turbo_confirm: "Restore this event to active projects?" },
-                                      class: "events-all__action-link" %>
+                          <% if admin_user? %>
+                            <%= link_to "Restore",
+                                        restore_event_path(event, return_to: request.fullpath),
+                                        data: { turbo_method: :patch, turbo_confirm: "Restore this event to active projects?" },
+                                        class: "events-all__action-link" %>
+                          <% end %>
                         </td>
                       </tr>
                     <% end %>

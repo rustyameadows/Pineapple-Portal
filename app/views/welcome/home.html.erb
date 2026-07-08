@@ -11,10 +11,12 @@
             <p class="event-section__eyebrow">Dashboard</p>
             <h1 class="event-section__title">Your Active Events</h1>
           </div>
-          <div class="event-section__actions event-section__actions--row">
-            <%= link_to "All Events", events_path, class: "event-section__cta" %>
-            <%= link_to "New Event", new_event_path, class: "event-section__cta" %>
-          </div>
+          <% if admin_user? %>
+            <div class="event-section__actions event-section__actions--row">
+              <%= link_to "All Events", events_path, class: "event-section__cta" %>
+              <%= link_to "New Event", new_event_path, class: "event-section__cta" %>
+            </div>
+          <% end %>
         </header>
 
         <div class="event-section__body">
@@ -28,7 +30,9 @@
             <div class="event-section__empty">
               <p>No active events yet.</p>
               <p>
-                <%= link_to "Create your first event", new_event_path, class: "event-section__cta" %>
+                <% if admin_user? %>
+                  <%= link_to "Create your first event", new_event_path, class: "event-section__cta" %>
+                <% end %>
               </p>
             </div>
           <% end %>

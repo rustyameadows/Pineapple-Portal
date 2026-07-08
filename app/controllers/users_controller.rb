@@ -1,5 +1,6 @@
 class UsersController < ApplicationController
   skip_before_action :require_login, only: %i[new create], if: -> { User.none? }
+  before_action :require_admin!, unless: :first_user_signup?
   before_action :set_user, only: %i[edit update]
   before_action :set_user_for_destroy, only: %i[destroy]
 
@@ -72,6 +73,10 @@ class UsersController < ApplicationController
 
   def set_user
     @user = User.find(params[:id])
+  end
+
+  def first_user_signup?
+    User.none? && action_name.in?(%w[new create])
   end
 
   def set_user_for_destroy

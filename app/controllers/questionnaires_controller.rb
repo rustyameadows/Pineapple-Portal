@@ -2,6 +2,7 @@ class QuestionnairesController < ApplicationController
   before_action :set_event
   before_action :set_questionnaire, only: %i[show edit update destroy mark_finished mark_in_progress]
   before_action :load_sections, only: %i[show edit]
+  before_action :require_admin!, only: :templates
 
   def index
     @questionnaires = @event.questionnaires.order(:title)
@@ -63,7 +64,7 @@ class QuestionnairesController < ApplicationController
   private
 
   def set_event
-    @event = Event.find(params[:event_id]) if params[:event_id].present?
+    @event = find_accessible_event!(params[:event_id]) if params[:event_id].present?
   end
 
   def set_questionnaire

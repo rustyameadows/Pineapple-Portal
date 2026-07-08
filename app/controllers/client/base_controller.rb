@@ -25,6 +25,21 @@ module Client
                   alert: "Please sign in to the client portal."
     end
 
+    def authorize_portal_event_access!(event)
+      if current_user&.planner_or_admin?
+        raise ActiveRecord::RecordNotFound unless current_user_can_access_event?(event)
+
+        return
+      end
+
+      if current_client_user.present? && event
+        return if client_can_access_event?(current_client_user, event)
+      end
+
+      redirect_to client_login_path(return_to: request.get? ? request.fullpath : nil),
+                  alert: "Access to this event is unavailable."
+    end
+
     def financial_portal_access?
       user = portal_current_user
       return true unless user&.client?

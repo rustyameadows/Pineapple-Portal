@@ -2,7 +2,7 @@ require "test_helper"
 
 class UsersControllerTest < ActionDispatch::IntegrationTest
   test "signed-in user can create another user" do
-    log_in(users(:one))
+    log_in(users(:two))
 
     assert_difference("User.count") do
       post users_url, params: { user: {
@@ -23,7 +23,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "renders errors when invalid for signed-in user" do
-    log_in(users(:one))
+    log_in(users(:two))
 
     post users_url, params: { user: { name: "", email: "", password: "", password_confirmation: "" } }
 
@@ -76,13 +76,21 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_equal "admin", user.role
   end
 
-  test "planner cannot elevate role" do
+  test "planner cannot access team management" do
+    log_in(users(:one))
+
+    get users_url
+
+    assert_redirected_to root_url
+  end
+
+  test "planner cannot mutate team users" do
     log_in(users(:one))
     user = users(:planner_two)
 
     patch user_url(user), params: { user: { role: "admin" } }
 
-    assert_redirected_to users_url
+    assert_redirected_to root_url
     assert_equal "planner", user.reload.role
   end
 

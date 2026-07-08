@@ -26,6 +26,10 @@ module Events
 
     test "new shows prompt form and task-only source file upload for events with no documents" do
       event = events(:two)
+      event.event_team_members.create!(
+        user: @user,
+        member_role: EventTeamMember::TEAM_ROLES[:planner]
+      )
 
       get new_event_ros_agent_task_path(event)
 

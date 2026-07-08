@@ -10,10 +10,12 @@
     <ul>
       <li><%= link_to "Events", events_path, class: "event-sidebar__link" %></li>
       <li><%= link_to "Decisions", decisions_path, class: "event-sidebar__link" %></li>
-      <li><%= link_to "Vendors", settings_global_vendors_path, class: "event-sidebar__link" %></li>
-      <li><%= link_to "Locations", settings_global_venues_path, class: "event-sidebar__link" %></li>
-      <li><%= link_to "Team", users_path, class: "event-sidebar__link" %></li>
-      <li><%= link_to "Settings", settings_path, class: "event-sidebar__link" %></li>
+      <% if admin_user? %>
+        <li><%= link_to "Vendors", settings_global_vendors_path, class: "event-sidebar__link" %></li>
+        <li><%= link_to "Locations", settings_global_venues_path, class: "event-sidebar__link" %></li>
+        <li><%= link_to "Team", users_path, class: "event-sidebar__link" %></li>
+        <li><%= link_to "Settings", settings_path, class: "event-sidebar__link" %></li>
+      <% end %>
     </ul>
   </nav>
 

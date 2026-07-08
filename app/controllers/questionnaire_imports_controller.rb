@@ -6,7 +6,7 @@ class QuestionnaireImportsController < ApplicationController
   end
 
   def create
-    @source_event = Event.find_by(id: params[:source_event_id])
+    @source_event = accessible_events_scope.find_by(id: params[:source_event_id])
     @source_questionnaire = @source_event&.questionnaires&.find_by(id: params[:source_questionnaire_id])
 
     unless @source_questionnaire
@@ -33,12 +33,12 @@ class QuestionnaireImportsController < ApplicationController
   private
 
   def set_event
-    @event = Event.find(params[:event_id])
+    @event = find_accessible_event!(params[:event_id])
   end
 
   def load_form_collections
-    @events = Event.order(:name)
-    @source_event = Event.find_by(id: params[:source_event_id]) if params[:source_event_id].present?
+    @events = accessible_events_scope.where.not(id: @event.id).order(:name)
+    @source_event = @events.find_by(id: params[:source_event_id]) if params[:source_event_id].present?
     @source_questionnaires = @source_event ? @source_event.questionnaires.order(:title) : []
     @questionnaires = @event.questionnaires.order(:title)
   end
