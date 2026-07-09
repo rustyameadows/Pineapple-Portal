@@ -8,6 +8,8 @@ class UsersController < ApplicationController
     @show_clients = params[:show_clients] == "1"
     @users = User.order(:name)
     @users = @users.where.not(role: User::ROLES[:client]) unless @show_clients
+    @users = @users.to_a
+    @user_roster_groups = user_roster_groups(@users)
   end
 
   def new
@@ -165,5 +167,35 @@ class UsersController < ApplicationController
     else
       [User::ROLES[:planner]]
     end
+  end
+
+  def user_roster_groups(users)
+    groups = [
+      {
+        id: "admin",
+        title: "Admin",
+        users: users.select(&:admin?)
+      },
+      {
+        id: "planner-accounts",
+        title: "Planner Accounts",
+        users: users.select { |user| user.planner? && !user.contact? }
+      },
+      {
+        id: "planner-contacts",
+        title: "Planner Contacts",
+        users: users.select { |user| user.planner? && user.contact? }
+      }
+    ]
+
+    if @show_clients
+      groups << {
+        id: "clients",
+        title: "Clients",
+        users: users.select(&:client?)
+      }
+    end
+
+    groups
   end
 end

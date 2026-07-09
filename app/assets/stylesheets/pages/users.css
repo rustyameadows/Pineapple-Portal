@@ -6,6 +6,47 @@
   align-items: start;
 }
 
+.user-roster-groups {
+  display: grid;
+  gap: 2rem;
+}
+
+.user-roster-group {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.user-roster-group__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--color-sea-foam);
+  padding-bottom: 0.45rem;
+}
+
+.user-roster-group__title {
+  margin: 0;
+  color: var(--color-dark-brown);
+  font-family: var(--font-family-display);
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: var(--font-weight-semibold);
+}
+
+.user-roster-group__count {
+  color: var(--color-brown);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.user-roster-group__table {
+  margin: 0;
+}
+
+.user-roster-group__empty {
+  margin: 0;
+}
+
 .user-avatar-section__heading {
   margin: 0 0 0.75rem;
   font-size: 0.95rem;

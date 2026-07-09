@@ -22,41 +22,59 @@
 
         <div class="event-section__body">
           <% if @users.any? %>
-            <table class="event-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Title</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Account Type</th>
-                  <th>Role</th>
-                  <th>Joined</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <% @users.each do |user| %>
-                  <tr>
-                    <td><%= user.name %></td>
-                    <td><%= user.title.presence || "—" %></td>
-                    <td><%= user.display_email %></td>
-                    <td><%= user.phone_number.presence || "—" %></td>
-                    <td><%= user.account_kind.humanize %></td>
-                    <td><%= user.role.humanize %></td>
-                    <td><%= user.created_at&.strftime('%b %-d, %Y') %></td>
-                    <td class="event-table__actions">
-                      <%= link_to "Edit", edit_user_path(user), class: "event-section__link" %>
-                      <%= button_to "Delete",
-                                    user_path(user),
-                                    method: :delete,
-                                    form: { data: { turbo_confirm: "Delete #{user.name}? This cannot be undone." } },
-                                    class: "event-section__link event-section__link--danger" %>
-                    </td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
+            <div class="user-roster-groups">
+              <% @user_roster_groups.each do |group| %>
+                <% heading_id = "user-roster-#{group[:id]}-heading" %>
+                <section class="user-roster-group" id="user-roster-<%= group[:id] %>" aria-labelledby="<%= heading_id %>">
+                  <header class="user-roster-group__header">
+                    <h2 class="user-roster-group__title" id="<%= heading_id %>"><%= group[:title] %></h2>
+                    <span class="user-roster-group__count"><%= pluralize(group[:users].size, "person") %></span>
+                  </header>
+
+                  <% if group[:users].any? %>
+                    <table class="event-table user-roster-group__table">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Title</th>
+                          <th>Email</th>
+                          <th>Phone</th>
+                          <th>Account Type</th>
+                          <th>Role</th>
+                          <th>Joined</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% group[:users].each do |user| %>
+                          <tr>
+                            <td><%= user.name %></td>
+                            <td><%= user.title.presence || "—" %></td>
+                            <td><%= user.display_email %></td>
+                            <td><%= user.phone_number.presence || "—" %></td>
+                            <td><%= user.account_kind.humanize %></td>
+                            <td><%= user.role.humanize %></td>
+                            <td><%= user.created_at&.strftime('%b %-d, %Y') %></td>
+                            <td class="event-table__actions">
+                              <%= link_to "Edit", edit_user_path(user), class: "event-section__link" %>
+                              <%= button_to "Delete",
+                                            user_path(user),
+                                            method: :delete,
+                                            form: { data: { turbo_confirm: "Delete #{user.name}? This cannot be undone." } },
+                                            class: "event-section__link event-section__link--danger" %>
+                            </td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  <% else %>
+                    <div class="event-section__empty user-roster-group__empty">
+                      No <%= group[:title].downcase %> yet.
+                    </div>
+                  <% end %>
+                </section>
+              <% end %>
+            </div>
           <% else %>
             <div class="event-section__empty">No teammates yet. Be the first to invite someone.</div>
           <% end %>

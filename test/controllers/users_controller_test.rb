@@ -76,6 +76,41 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_equal "admin", user.role
   end
 
+  test "index segments internal users by access category" do
+    log_in(users(:two))
+    contact = User.create!(
+      name: "Chris Contact",
+      role: "planner",
+      account_kind: "contact",
+      title: "Hospitality Lead",
+      phone_number: "555-101-2020"
+    )
+
+    get users_url
+
+    assert_response :success
+    assert_select "section.user-roster-group", count: 3
+    assert_select "section#user-roster-admin" do
+      assert_select "h2", text: "Admin"
+      assert_select "td", text: users(:two).name, count: 1
+      assert_select "td", text: users(:one).name, count: 0
+      assert_select "td", text: contact.name, count: 0
+    end
+    assert_select "section#user-roster-planner-accounts" do
+      assert_select "h2", text: "Planner Accounts"
+      assert_select "td", text: users(:one).name, count: 1
+      assert_select "td", text: users(:planner_two).name, count: 1
+      assert_select "td", text: users(:two).name, count: 0
+      assert_select "td", text: contact.name, count: 0
+    end
+    assert_select "section#user-roster-planner-contacts" do
+      assert_select "h2", text: "Planner Contacts"
+      assert_select "td", text: contact.name, count: 1
+      assert_select "td", text: users(:one).name, count: 0
+      assert_select "td", text: users(:two).name, count: 0
+    end
+  end
+
   test "planner cannot access team management" do
     log_in(users(:one))
 
