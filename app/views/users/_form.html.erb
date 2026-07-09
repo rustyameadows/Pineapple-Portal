@@ -4,30 +4,13 @@
 <% submit_label = local_assigns.fetch(:submit_label, user.new_record? ? (first_account ? "Create Account" : "Invite Teammate") : "Save Changes") %>
 <% require_password = local_assigns.fetch(:require_password, user.new_record?) %>
 <% role_options = Array(local_assigns[:role_options]).presence || User.roles.keys %>
-<% role_option_pairs = role_options.map { |role| [role.to_s.humanize, role.to_s] } %>
-<% account_kind_options = User.account_kinds.keys.map { |kind| [kind.humanize, kind] } %>
-<% show_financial_toggle = user.client? || role_option_pairs.any? { |(_, value)| value == "client" } %>
+<% access_type_options = access_type_options_for_roles(role_options) %>
+<% selected_access_type = access_type_for_user(user) %>
+<% selected_access_type = access_type_options.first&.last unless access_type_options.any? { |(_, value)| value == selected_access_type } %>
+<% show_access_type_selector = allow_role_select && access_type_options.any? %>
+<% show_financial_toggle = user.client? || access_type_options.any? { |(_, value)| value == "client" } %>
 
 <%= form_with model: user, local: true, class: "event-form event-form--stack" do |form| %>
-  <div class="event-form__section">
-    <div class="event-form__grid">
-      <div class="event-form__group">
-        <%= form.label :account_kind, "Account Type" %>
-        <%= form.select :account_kind, account_kind_options, {}, { data: { account_kind_select: true, account_kind_control: true } } %>
-        <p class="event-form__hint">Choose “Contact” for planners who won't need their own login.</p>
-      </div>
-
-      <% if allow_role_select %>
-        <div class="event-form__group">
-          <%= form.label :role %>
-          <%= form.select :role, role_option_pairs, {}, { data: { role_select: true } } %>
-        </div>
-      <% elsif user.role.present? %>
-        <%= form.hidden_field :role, value: user.role %>
-      <% end %>
-    </div>
-  </div>
-
   <div class="event-form__section">
     <div class="event-form__grid">
       <div class="event-form__group">
@@ -49,6 +32,56 @@
         <%= form.label :email %>
         <%= form.email_field :email, required: !user.contact?, data: { email_input: true } %>
         <p class="event-form__hint">Required for portal accounts.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="event-form__section">
+    <% if show_access_type_selector %>
+      <fieldset class="event-form__group user-access-selector">
+        <legend>Access Type</legend>
+        <div class="user-access-selector__options">
+          <% access_type_options.each do |label, value| %>
+            <% field_id = "user_access_type_#{value}" %>
+            <% access_attributes = UsersController::ACCESS_TYPE_ATTRIBUTES.fetch(value) %>
+            <label class="user-access-option" for="<%= field_id %>">
+              <%= radio_button_tag "user[access_type]",
+                                   value,
+                                   value == selected_access_type,
+                                   id: field_id,
+                                   data: {
+                                     access_type_option: true,
+                                     account_kind_value: access_attributes[:account_kind],
+                                     role_value: access_attributes[:role]
+                                   } %>
+              <span class="user-access-option__body"><%= label %></span>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+    <% else %>
+      <%= form.hidden_field :account_kind, value: user.account_kind %>
+      <%= form.hidden_field :role, value: user.role if user.role.present? %>
+    <% end %>
+  </div>
+
+  <div class="event-form__section" data-password-section data-require-password="<%= require_password %>">
+    <div class="event-form__grid">
+      <div class="event-form__group" data-password-fields>
+        <%= form.label :password %>
+        <% password_options = { autocomplete: user.new_record? ? "new-password" : "off" } %>
+        <% password_options[:required] = true if require_password %>
+        <%= form.password_field :password, **password_options %>
+        <% unless require_password %>
+          <p class="event-form__hint">Leave blank to keep the current password.</p>
+        <% end %>
+      </div>
+
+      <div class="event-form__group" data-password-fields>
+        <%= form.label :password_confirmation %>
+        <% confirmation_options = { autocomplete: user.new_record? ? "new-password" : "off" } %>
+        <% confirmation_options[:required] = true if require_password %>
+        <%= form.password_field :password_confirmation, **confirmation_options %>
       </div>
     </div>
   </div>
@@ -77,27 +110,6 @@
       <div class="event-form__group">
         <%= form.label :dietary_restrictions, "Dietary restrictions" %>
         <%= form.text_area :dietary_restrictions, rows: 3, placeholder: "Allergies or dietary needs" %>
-      </div>
-    </div>
-  </div>
-
-  <div class="event-form__section" data-password-section data-require-password="<%= require_password %>">
-    <div class="event-form__grid">
-      <div class="event-form__group" data-password-fields>
-        <%= form.label :password %>
-        <% password_options = { autocomplete: user.new_record? ? "new-password" : "off" } %>
-        <% password_options[:required] = true if require_password %>
-        <%= form.password_field :password, **password_options %>
-        <% unless require_password %>
-          <p class="event-form__hint">Leave blank to keep the current password.</p>
-        <% end %>
-      </div>
-
-      <div class="event-form__group" data-password-fields>
-        <%= form.label :password_confirmation %>
-        <% confirmation_options = { autocomplete: user.new_record? ? "new-password" : "off" } %>
-        <% confirmation_options[:required] = true if require_password %>
-        <%= form.password_field :password_confirmation, **confirmation_options %>
       </div>
     </div>
   </div>
@@ -178,12 +190,12 @@
   (function() {
     var requirePassword = false;
 
-    function toggleFields(selectEl) {
+    function toggleFieldsForAccessType(accessInput) {
       var passwordContainer = document.querySelectorAll("[data-password-fields]");
       var emailInput = document.querySelector("[data-email-input]");
-      if (!selectEl) return;
+      if (!accessInput) return;
 
-      var isContact = selectEl.value === "contact";
+      var isContact = accessInput.dataset.accountKindValue === "contact";
 
       passwordContainer.forEach(function(container) {
         if (!container) return;
@@ -209,13 +221,13 @@
       }
     }
 
-    function toggleFinancialAccess(roleSelect) {
+    function toggleFinancialAccess(accessInput) {
       var financialGroup = document.querySelector("[data-financial-access]");
       if (!financialGroup) return;
 
       var isClient = false;
-      if (roleSelect) {
-        isClient = roleSelect.value === "client";
+      if (accessInput) {
+        isClient = accessInput.dataset.roleValue === "client";
       } else {
         isClient = financialGroup.dataset.clientDefault === "true";
       }
@@ -233,39 +245,20 @@
     }
 
     ready(function() {
-      var selectEl = document.querySelector("[data-account-kind-select]");
+      var accessTypeInputs = document.querySelectorAll("[data-access-type-option]");
+      var selectedAccessTypeInput = document.querySelector("[data-access-type-option]:checked");
       var passwordSection = document.querySelector("[data-password-section]");
       requirePassword = passwordSection && passwordSection.dataset.requirePassword === "true";
-      var roleSelect = document.querySelector("[data-role-select]");
 
-      function setPasswordRequired(enable) {
-        var passwordInputs = document.querySelectorAll("[data-password-fields] input[type='password']");
-        passwordInputs.forEach(function(input) {
-          if (enable) {
-            input.required = true;
-          } else {
-            input.removeAttribute("required");
-          }
-        });
-      }
-
-      toggleFields(selectEl);
-      if (selectEl) {
-        selectEl.addEventListener("change", function(event) {
-          toggleFields(event.target);
-        });
-      }
-
-      if (requirePassword) {
-        setPasswordRequired(true);
-      }
-
-      toggleFinancialAccess(roleSelect);
-      if (roleSelect) {
-        roleSelect.addEventListener("change", function(event) {
+      toggleFieldsForAccessType(selectedAccessTypeInput);
+      accessTypeInputs.forEach(function(input) {
+        input.addEventListener("change", function(event) {
+          toggleFieldsForAccessType(event.target);
           toggleFinancialAccess(event.target);
         });
-      }
+      });
+
+      toggleFinancialAccess(selectedAccessTypeInput);
     });
   })();
 </script>

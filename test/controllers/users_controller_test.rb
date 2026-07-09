@@ -31,6 +31,74 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "div.flash.flash-alert", text: /can't be blank/
   end
 
+  test "new renders one access type selector instead of role and account type selects" do
+    log_in(users(:two))
+
+    get new_user_url
+
+    assert_response :success
+    assert_select ".user-access-selector", count: 1
+    assert_select "select[name='user[account_kind]']", count: 0
+    assert_select "select[name='user[role]']", count: 0
+    assert_select "input[type='radio'][name='user[access_type]'][value='admin']", count: 1
+    assert_select "input[type='radio'][name='user[access_type]'][value='planner'][checked]", count: 1
+    assert_select "input[type='radio'][name='user[access_type]'][value='planner_contact']", count: 1
+    assert_select "input[type='radio'][name='user[access_type]'][value='client']", count: 1
+  end
+
+  test "edit renders form sections in requested order" do
+    log_in(users(:two))
+
+    get edit_user_url(users(:one))
+
+    assert_response :success
+    labels = [
+      "Name",
+      "Access Type",
+      "Password",
+      "Financial access",
+      "General notes"
+    ]
+    positions = labels.to_h { |label| [label, response.body.index(label)] }
+
+    assert positions.values.all?, "Expected all section labels in the response"
+    assert_operator positions["Name"], :<, positions["Access Type"]
+    assert_operator positions["Access Type"], :<, positions["Password"]
+    assert_operator positions["Password"], :<, positions["Financial access"]
+    assert_operator positions["Financial access"], :<, positions["General notes"]
+  end
+
+  test "create maps access type choices to role and account kind" do
+    log_in(users(:two))
+
+    {
+      "admin" => [User::ROLES[:admin], User::ACCOUNT_KINDS[:account]],
+      "planner" => [User::ROLES[:planner], User::ACCOUNT_KINDS[:account]],
+      "planner_contact" => [User::ROLES[:planner], User::ACCOUNT_KINDS[:contact]],
+      "client" => [User::ROLES[:client], User::ACCOUNT_KINDS[:account]]
+    }.each do |access_type, (role, account_kind)|
+      params = {
+        name: "Access #{access_type.humanize}",
+        access_type: access_type
+      }
+
+      unless account_kind == User::ACCOUNT_KINDS[:contact]
+        params[:email] = "access-#{access_type}@example.com"
+        params[:password] = "password123"
+        params[:password_confirmation] = "password123"
+      end
+
+      assert_difference("User.count") do
+        post users_url, params: { user: params }
+      end
+
+      assert_redirected_to users_url
+      user = User.order(:created_at).last
+      assert_equal role, user.role
+      assert_equal account_kind, user.account_kind
+    end
+  end
+
   test "first user can sign up without prior login" do
     AgentTaskEvent.delete_all
     AgentTaskLlmCall.delete_all
