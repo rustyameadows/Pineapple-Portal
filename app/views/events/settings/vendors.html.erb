@@ -111,7 +111,7 @@
                                  support_text: "Supports Markdown for bold, italic, and links." %>
 
                       <div class="event-settings__vendor-contacts">
-                        <%= render "events/settings/contact_fields", form:, entity: vendor %>
+                        <%= render "events/settings/vendor_contact_details", vendor: %>
                       </div>
                     <% end %>
                   </li>
@@ -149,7 +149,11 @@
                   </div>
                 </div>
 
-                <%= render "events/settings/contact_fields", form:, entity: @event_vendor %>
+                <div class="event-settings__vendor-contacts">
+                  <div class="event-settings__contacts">
+                    <p class="event-settings__hint">Contacts come from the selected global vendor and can be viewed after the vendor is added.</p>
+                  </div>
+                </div>
 
                 <%= render "events/settings/markdown_field",
                            form:,

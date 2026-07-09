@@ -75,6 +75,11 @@ module Events
       assert_select "button[data-markdown-format='link']", count: (@event.event_vendors.count + 2) * 2
       assert_select "button[data-markdown-format='headline']", count: 0
       assert_select ".event-settings__hint", text: /Supports Markdown for bold, italic, and links\./, count: @event.event_vendors.count + 2
+      assert_select "input[name*='contacts_attributes']", count: 0
+      assert_select "textarea[name*='contacts_attributes']", count: 0
+      assert_select ".event-settings__vendor-contact-heading", count: @event.event_vendors.count
+      assert_select ".event-settings__hint", text: /Contacts are inherited from the global vendor and are read-only for this event\./, count: @event.event_vendors.count
+      assert_select ".event-settings__contact-title", text: "Maria Cater", count: 1
     end
 
     test "renders locations page" do
