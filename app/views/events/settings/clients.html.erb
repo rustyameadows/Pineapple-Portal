@@ -1,3 +1,5 @@
+<% can_manage_clients = admin_user? %>
+
 <% provide :page_shell do %>
   <div class="event-layout">
     <%= render "events/sidebar_navigation", event: @event %>
@@ -39,8 +41,10 @@
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Access</th>
-                    <th>Password Reset Link</th>
-                    <th></th>
+                    <% if can_manage_clients %>
+                      <th>Password Reset Link</th>
+                      <th></th>
+                    <% end %>
                   </tr>
                 </thead>
                 <tbody>
@@ -54,70 +58,79 @@
                       <td><%= user.email %></td>
                       <td><%= user.phone_number.presence || "—" %></td>
                       <td>
-                        <div class="event-settings__access-actions">
-                          <% portal_access_label = team_member.client_visible? ? "Revoke Portal Access" : "Grant Portal Access" %>
-                          <% portal_access_classes = team_member.client_visible? ? "button button--small" : "button button--small button--ghost" %>
-                          <%= button_to portal_access_label,
-                                        event_team_member_path(@event, team_member),
-                                        method: :patch,
-                                        params: {
-                                          return_to: request.fullpath,
-                                          event_team_member: { client_visible: (!team_member.client_visible?).to_s }
-                                        },
-                                        class: portal_access_classes,
-                                        form: { class: "event-settings__inline-form" } %>
-                          <% financial_access_label = user.can_view_financials? ? "Revoke Financial Access" : "Grant Financial Access" %>
-                          <% financial_access_classes = user.can_view_financials? ? "button button--small" : "button button--small button--ghost" %>
-                          <%= button_to financial_access_label,
-                                        event_client_user_path(@event, user),
-                                        method: :patch,
-                                        params: {
-                                          return_to: request.fullpath,
-                                          user: { can_view_financials: (!user.can_view_financials?).to_s }
-                                        },
-                                        class: financial_access_classes,
-                                        form: { class: "event-settings__inline-form" } %>
-                        </div>
-                      </td>
-                      <td>
-                        <div class="event-settings__reset-column">
-                        <% if reset_token.present? %>
-                          <div class="event-settings__reset-card <%= "event-settings__reset-card--highlight" if highlight_reset %>"
-                               data-reset-card
-                               data-reset-expires-at="<%= reset_token.expires_at.iso8601 %>">
-                            <div class="event-settings__reset-header">
-                              <label for="reset-link-<%= reset_token.id %>" class="event-settings__reset-label">Reset link</label>
-                              <button type="button" class="event-settings__reset-copy" data-reset-copy>Copy</button>
-                            </div>
-                            <input id="reset-link-<%= reset_token.id %>" type="text" class="event-settings__reset-input" value="<%= reset_url %>" readonly data-reset-input>
-                            <div class="event-settings__reset-meta">
-                              <span class="event-settings__reset-countdown" data-reset-countdown aria-live="polite"></span>
-                              <span class="event-settings__reset-expiration">Expires <%= reset_token.expires_at.strftime('%b %-d, %Y %l:%M %p %Z') %></span>
-                            </div>
+                        <% if can_manage_clients %>
+                          <div class="event-settings__access-actions">
+                            <% portal_access_label = team_member.client_visible? ? "Revoke Portal Access" : "Grant Portal Access" %>
+                            <% portal_access_classes = team_member.client_visible? ? "button button--small" : "button button--small button--ghost" %>
+                            <%= button_to portal_access_label,
+                                          event_team_member_path(@event, team_member),
+                                          method: :patch,
+                                          params: {
+                                            return_to: request.fullpath,
+                                            event_team_member: { client_visible: (!team_member.client_visible?).to_s }
+                                          },
+                                          class: portal_access_classes,
+                                          form: { class: "event-settings__inline-form" } %>
+                            <% financial_access_label = user.can_view_financials? ? "Revoke Financial Access" : "Grant Financial Access" %>
+                            <% financial_access_classes = user.can_view_financials? ? "button button--small" : "button button--small button--ghost" %>
+                            <%= button_to financial_access_label,
+                                          event_client_user_path(@event, user),
+                                          method: :patch,
+                                          params: {
+                                            return_to: request.fullpath,
+                                            user: { can_view_financials: (!user.can_view_financials?).to_s }
+                                          },
+                                          class: financial_access_classes,
+                                          form: { class: "event-settings__inline-form" } %>
                           </div>
                         <% else %>
-                          <span class="event-settings__empty">No reset link yet.</span>
+                          <%= team_member.client_visible? ? "Portal access" : "Portal hidden" %>
+                          <% if user.can_view_financials? %>
+                            <span class="event-table__status">Financial access</span>
+                          <% end %>
                         <% end %>
-                          <%= button_to "Generate Reset Link",
-                                        issue_reset_event_team_member_path(@event, team_member),
-                                        method: :post,
+                      </td>
+                      <% if can_manage_clients %>
+                        <td>
+                          <div class="event-settings__reset-column">
+                          <% if reset_token.present? %>
+                            <div class="event-settings__reset-card <%= "event-settings__reset-card--highlight" if highlight_reset %>"
+                                 data-reset-card
+                                 data-reset-expires-at="<%= reset_token.expires_at.iso8601 %>">
+                              <div class="event-settings__reset-header">
+                                <label for="reset-link-<%= reset_token.id %>" class="event-settings__reset-label">Reset link</label>
+                                <button type="button" class="event-settings__reset-copy" data-reset-copy>Copy</button>
+                              </div>
+                              <input id="reset-link-<%= reset_token.id %>" type="text" class="event-settings__reset-input" value="<%= reset_url %>" readonly data-reset-input>
+                              <div class="event-settings__reset-meta">
+                                <span class="event-settings__reset-countdown" data-reset-countdown aria-live="polite"></span>
+                                <span class="event-settings__reset-expiration">Expires <%= reset_token.expires_at.strftime('%b %-d, %Y %l:%M %p %Z') %></span>
+                              </div>
+                            </div>
+                          <% else %>
+                            <span class="event-settings__empty">No reset link yet.</span>
+                          <% end %>
+                            <%= button_to "Generate Reset Link",
+                                          issue_reset_event_team_member_path(@event, team_member),
+                                          method: :post,
+                                          params: { return_to: request.fullpath },
+                                          class: "button button--small button--ghost",
+                                          form: { class: "event-settings__inline-form" } %>
+                          </div>
+                        </td>
+                        <td class="event-table__actions event-table__actions--stack">
+                          <%= link_to "Edit",
+                                      edit_event_client_user_path(@event, user, return_to: request.fullpath),
+                                      class: "button button--small button--ghost" %>
+                          <%= button_to "Remove",
+                                        event_team_member_path(@event, team_member),
+                                        method: :delete,
                                         params: { return_to: request.fullpath },
-                                        class: "button button--small button--ghost",
+                                        data: { turbo_confirm: "Remove #{user.name}'s portal access?" },
+                                        class: "button button--small button--danger",
                                         form: { class: "event-settings__inline-form" } %>
-                        </div>
-                      </td>
-                      <td class="event-table__actions event-table__actions--stack">
-                        <%= link_to "Edit",
-                                    edit_event_client_user_path(@event, user, return_to: request.fullpath),
-                                    class: "button button--small button--ghost" %>
-                        <%= button_to "Remove",
-                                      event_team_member_path(@event, team_member),
-                                      method: :delete,
-                                      params: { return_to: request.fullpath },
-                                      data: { turbo_confirm: "Remove #{user.name}'s portal access?" },
-                                      class: "button button--small button--danger",
-                                      form: { class: "event-settings__inline-form" } %>
-                      </td>
+                        </td>
+                      <% end %>
                     </tr>
                   <% end %>
                 </tbody>
@@ -126,7 +139,8 @@
               <p class="event-settings__empty">No client accounts are linked yet.</p>
             <% end %>
 
-            <div class="event-settings__client-actions">
+            <% if can_manage_clients %>
+              <div class="event-settings__client-actions">
               <div class="event-settings__client-action">
                 <h4>Add Client Account</h4>
                 <%= form_with model: [@event, @client_team_member], url: event_team_members_path(@event), local: true, class: "event-settings__form event-settings__form--stack" do |form| %>
@@ -176,7 +190,8 @@
                   <% end %>
                 </div>
               <% end %>
-            </div>
+              </div>
+            <% end %>
           </div>
         </div>
       </section>

@@ -22,6 +22,21 @@ module Events
       assert_equal "planner", team_member.member_role
     end
 
+    test "planner cannot add team members" do
+      delete logout_url
+      log_in_as(users(:one))
+
+      assert_no_difference("EventTeamMember.count") do
+        post event_team_members_url(@event), params: {
+          event_team_member: {
+            user_id: users(:planner_two).id
+          }
+        }
+      end
+
+      assert_redirected_to root_url
+    end
+
     test "cannot add client as planner" do
       assert_no_difference("EventTeamMember.count") do
         post event_team_members_url(@event), params: {
@@ -120,6 +135,18 @@ module Events
       token = PasswordResetToken.order(:created_at).last
       assert_equal member.user, token.user
       assert token.expires_at > Time.current
+    end
+
+    test "planner cannot generate client reset token" do
+      delete logout_url
+      log_in_as(users(:one))
+      member = event_team_members(:client_one)
+
+      assert_no_difference("PasswordResetToken.count") do
+        post issue_reset_event_team_member_url(@event, member)
+      end
+
+      assert_redirected_to root_url
     end
 
     test "rejects reset generation for planner" do

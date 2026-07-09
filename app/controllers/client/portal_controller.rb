@@ -21,16 +21,7 @@ module Client
     end
 
     def authorize_event_access!
-      return if current_user&.planner_or_admin?
-
-      event = current_event
-
-      if current_client_user.present? && event
-        return if client_can_access_event?(current_client_user, event)
-      end
-
-      redirect_to client_login_path(return_to: request.get? ? request.fullpath : nil),
-                  alert: "Access to this event is unavailable."
+      authorize_portal_event_access!(current_event)
     end
   end
 end

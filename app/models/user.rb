@@ -59,7 +59,7 @@ class User < ApplicationRecord
   scope :clients, -> { where(role: ROLES[:client]) }
 
   def planner_or_admin?
-    planner? || admin?
+    account? && (planner? || admin?)
   end
 
   def latest_active_password_reset_token

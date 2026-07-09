@@ -59,6 +59,7 @@ class DecisionsController < ApplicationController
       .joins(:event_calendar_tags, event_calendar: :event)
       .where(event_calendars: { kind: EventCalendar::KINDS[:master] })
       .where(events: { archived_at: nil })
+      .where(events: { id: accessible_events_scope.select(:id) })
       .where("LOWER(event_calendar_tags.name) = ?", DECISION_TAG_NAME)
       .distinct
   end

@@ -33,7 +33,12 @@ class DocumentUploadsController < ApplicationController
   private
 
   def authorize_presign!
-    return if current_user.present?
+    if current_user&.planner_or_admin?
+      raise ActiveRecord::RecordNotFound unless current_user_can_access_event?(@event)
+
+      return
+    end
+
     return if current_client_user.present? && client_can_access_event?(current_client_user, @event)
 
     reset_client_session if session[:client_user_id].present? && current_client_user.nil?
@@ -44,6 +49,10 @@ class DocumentUploadsController < ApplicationController
   end
 
   def set_event
-    @event = Event.find(params[:event_id])
+    @event = if current_user&.planner_or_admin?
+               find_accessible_event!(params[:event_id])
+             else
+               Event.find(params[:event_id])
+             end
   end
 end

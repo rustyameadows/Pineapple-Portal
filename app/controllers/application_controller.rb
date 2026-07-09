@@ -6,7 +6,11 @@ class ApplicationController < ActionController::Base
 
   before_action :require_login
 
-  helper_method :current_user, :logged_in?
+  helper_method :current_user,
+                :logged_in?,
+                :admin_user?,
+                :accessible_events_scope,
+                :current_user_can_access_event?
 
   private
 
@@ -18,10 +22,46 @@ class ApplicationController < ActionController::Base
     current_user.present?
   end
 
+  def admin_user?
+    current_user&.account? && current_user&.admin?
+  end
+
+  def accessible_events_scope
+    return Event.none unless current_user&.planner_or_admin?
+    return Event.all if admin_user?
+
+    Event.where(
+      id: EventTeamMember.where(
+        user_id: current_user.id,
+        member_role: EventTeamMember::TEAM_ROLES[:planner]
+      ).select(:event_id)
+    )
+  end
+
+  def current_user_can_access_event?(event)
+    return false unless event && current_user&.planner_or_admin?
+    return true if admin_user?
+
+    event.event_team_members.exists?(
+      user_id: current_user.id,
+      member_role: EventTeamMember::TEAM_ROLES[:planner]
+    )
+  end
+
   def require_login
     return if logged_in? || User.none?
 
     redirect_to login_path, alert: "Please log in to continue."
+  end
+
+  def require_admin!
+    return if admin_user?
+
+    redirect_to root_path, alert: "Admin access is required."
+  end
+
+  def find_accessible_event!(id)
+    accessible_events_scope.find(id)
   end
 
   def safe_return_to(fallback: root_path)

@@ -109,7 +109,7 @@ class QuestionsController < ApplicationController
   private
 
   def set_event
-    @event = Event.find(params[:event_id]) if params[:event_id].present?
+    @event = find_accessible_event!(params[:event_id]) if params[:event_id].present?
   end
 
   def set_questionnaire

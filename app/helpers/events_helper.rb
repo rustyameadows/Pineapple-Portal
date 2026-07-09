@@ -179,10 +179,9 @@ module EventsHelper
   end
 
   def event_sidebar_secondary_links
-    [
-      { label: "All Events", path: events_path },
-      { label: "Pineapple Team", path: users_path }
-    ]
+    links = [{ label: "All Events", path: events_path }]
+    links << { label: "Pineapple Team", path: users_path } if admin_user?
+    links
   end
 
   def event_sidebar_section_active?(section, current_path)

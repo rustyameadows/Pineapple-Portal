@@ -16,6 +16,7 @@
 <% bulk_edit = !!local_assigns[:bulk_edit] %>
 <% bulk_status_actions = !!local_assigns[:bulk_status_actions] %>
 <% show_timing_actions = !!local_assigns[:show_timing_actions] %>
+<% show_same_time_ordering = local_assigns.key?(:show_same_time_ordering) ? !!local_assigns[:show_same_time_ordering] : (bulk_edit && !bulk_status_actions) %>
 <% render_actions = local_assigns[:render_actions] %>
 <% actions_header = local_assigns[:actions_header] || "" %>
 <% item_link_proc = local_assigns[:item_link_proc] || ->(item) { [item.title, edit_event_calendar_item_path(calendar.event, item, return_to: request.fullpath)] } %>
@@ -161,6 +162,11 @@
         <%= hidden_field_tag :return_to,
                              bulk_return_to,
                              data: { calendar_bulk_edit_target: "returnToInput" } %>
+        <% if show_same_time_ordering %>
+          <%= hidden_field_tag "bulk[neighbor_item_id]",
+                               "",
+                               data: { calendar_bulk_edit_target: "sameTimeNeighborInput" } %>
+        <% end %>
         <% if bulk_status_actions %>
           <%= hidden_field_tag "bulk[bulk_action]",
                                "",
@@ -187,6 +193,28 @@
                   data-action="calendar-bulk-edit#clearSelection">
             Deselect all
           </button>
+          <% if show_same_time_ordering %>
+            <button type="submit"
+                    name="bulk[bulk_action]"
+                    value="move_same_time_up"
+                    class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
+                    data-action="click->calendar-bulk-edit#prepareSameTimeMove"
+                    data-calendar-bulk-edit-target="sameTimeMoveUpButton"
+                    data-same-time-direction="up"
+                    hidden>
+              Move up
+            </button>
+            <button type="submit"
+                    name="bulk[bulk_action]"
+                    value="move_same_time_down"
+                    class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
+                    data-action="click->calendar-bulk-edit#prepareSameTimeMove"
+                    data-calendar-bulk-edit-target="sameTimeMoveDownButton"
+                    data-same-time-direction="down"
+                    hidden>
+              Move down
+            </button>
+          <% end %>
           <% if show_timing_actions %>
             <button type="button"
                     class="event-calendars__bulk-button event-calendars__bulk-button--secondary"
@@ -532,6 +560,7 @@
         <% title_base_path = title_path.to_s.split("?").first %>
         <% team_label = calendar_item_team_label(item) %>
         <% tooltip = calendar_item_relative_tooltip(item) %>
+        <% item_start_minute = item.effective_starts_at&.in_time_zone(item_timezone)&.strftime("%Y-%m-%dT%H:%M") %>
         <% schedule_label = if schedule_label_proc
                               schedule_label_proc.call(item)
                             elsif monthly_segments
@@ -546,6 +575,8 @@
             data-calendar-item-title="<%= item.title %>"
             data-calendar-item-start-at="<%= item.effective_starts_at&.iso8601 %>"
             data-calendar-item-end-at="<%= item.effective_ends_at&.iso8601 %>"
+            data-calendar-item-start-minute="<%= item_start_minute %>"
+            data-calendar-item-position="<%= item.position %>"
             data-calendar-item-relative="<%= item.relative? %>"
             data-calendar-search-text="<%= search_text_proc.call(item) %>"
             data-calendar-event-values="<%= calendar_item_filter_values_json(item, :event) %>"

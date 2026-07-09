@@ -109,12 +109,12 @@ class WeddingPartyReferenceSectionTest < ActionView::TestCase
   test "keeps same-time wedding party timeline items in calendar position order" do
     create_timeline_item(
       title: "Shuttle to Photo Location",
-      starts_at: "2025-10-01 15:45:00",
+      starts_at: "2025-10-01 15:45:30",
       tag: event_calendar_tags(:wedding_party_side_a)
     )
     create_timeline_item(
       title: "Photos at Garden",
-      starts_at: "2025-10-01 15:45:00",
+      starts_at: "2025-10-01 15:45:15",
       tag: event_calendar_tags(:wedding_party_side_a)
     )
 

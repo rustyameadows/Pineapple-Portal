@@ -1,5 +1,6 @@
 module Settings
   class GlobalVendorsController < ApplicationController
+    before_action :require_admin!
     before_action :set_global_vendor, only: %i[edit update destroy]
 
     def index

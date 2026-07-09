@@ -75,6 +75,17 @@ module Client
       assert_select "#planning-grid"
     end
 
+    test "planner preview can access assigned event only" do
+      delete logout_url
+      log_in_as(users(:one))
+
+      get client_event_url(@event.portal_slug)
+      assert_response :success
+
+      get client_event_url(events(:two).portal_slug)
+      assert_response :not_found
+    end
+
     test "portal layout shows a choose another event link for multi-event clients" do
       delete logout_url
       client = build_client_user(

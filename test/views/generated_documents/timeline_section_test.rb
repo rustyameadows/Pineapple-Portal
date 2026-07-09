@@ -47,12 +47,12 @@ class TimelineSectionTest < ActionView::TestCase
   test "keeps same-time timeline items in calendar position order" do
     create_timeline_item(
       title: "Shuttle to Photo Location",
-      starts_at: "2025-10-01 15:45:00",
+      starts_at: "2025-10-01 15:45:30",
       tag: event_calendar_tags(:vendor)
     )
     create_timeline_item(
       title: "Photos at Garden",
-      starts_at: "2025-10-01 15:45:00",
+      starts_at: "2025-10-01 15:45:15",
       tag: event_calendar_tags(:vendor)
     )
 

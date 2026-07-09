@@ -1,12 +1,29 @@
 class UsersController < ApplicationController
+  ACCESS_TYPE_ATTRIBUTES = {
+    "admin" => { role: User::ROLES[:admin], account_kind: User::ACCOUNT_KINDS[:account] },
+    "planner" => { role: User::ROLES[:planner], account_kind: User::ACCOUNT_KINDS[:account] },
+    "planner_contact" => { role: User::ROLES[:planner], account_kind: User::ACCOUNT_KINDS[:contact] },
+    "client" => { role: User::ROLES[:client], account_kind: User::ACCOUNT_KINDS[:account] }
+  }.freeze
+  ACCESS_TYPE_LABELS = {
+    "admin" => "Admin",
+    "planner" => "Planner",
+    "planner_contact" => "Planner Contact",
+    "client" => "Client"
+  }.freeze
+
   skip_before_action :require_login, only: %i[new create], if: -> { User.none? }
+  before_action :require_admin!, unless: :first_user_signup?
   before_action :set_user, only: %i[edit update]
   before_action :set_user_for_destroy, only: %i[destroy]
+  helper_method :access_type_for_user, :access_type_label_for_user, :access_type_options_for_roles
 
   def index
     @show_clients = params[:show_clients] == "1"
     @users = User.order(:name)
     @users = @users.where.not(role: User::ROLES[:client]) unless @show_clients
+    @users = @users.to_a
+    @user_roster_groups = user_roster_groups(@users)
   end
 
   def new
@@ -74,6 +91,10 @@ class UsersController < ApplicationController
     @user = User.find(params[:id])
   end
 
+  def first_user_signup?
+    User.none? && action_name.in?(%w[new create])
+  end
+
   def set_user_for_destroy
     @user = User.find(params[:id])
   end
@@ -90,9 +111,11 @@ class UsersController < ApplicationController
       general_notes
       dietary_restrictions
       can_view_financials
+      access_type
     ]
     permitted << :role if allow_role_param?
     attributes = params.require(:user).permit(permitted)
+    apply_access_type_param(attributes)
     sanitize_role_param(attributes)
     attributes
   end
@@ -152,6 +175,18 @@ class UsersController < ApplicationController
     attributes[:role] = allowed.include?(value) ? value : allowed.first
   end
 
+  def apply_access_type_param(attributes)
+    return unless attributes.key?(:access_type)
+
+    access_type = attributes.delete(:access_type).to_s
+    access_attributes = ACCESS_TYPE_ATTRIBUTES[access_type]
+    return unless access_attributes
+    return unless allowed_roles_for_current_user.include?(access_attributes[:role])
+
+    attributes[:role] = access_attributes[:role]
+    attributes[:account_kind] = access_attributes[:account_kind]
+  end
+
   def allowed_roles_for_current_user
     if User.none? || current_user&.admin?
       User.roles.values
@@ -159,6 +194,58 @@ class UsersController < ApplicationController
       [User::ROLES[:planner], User::ROLES[:client]]
     else
       [User::ROLES[:planner]]
+    end
+  end
+
+  def user_roster_groups(users)
+    groups = [
+      {
+        id: "admin",
+        title: "Admin",
+        users: users.select(&:admin?)
+      },
+      {
+        id: "planner-accounts",
+        title: "Planner Accounts",
+        users: users.select { |user| user.planner? && !user.contact? }
+      },
+      {
+        id: "planner-contacts",
+        title: "Planner Contacts",
+        users: users.select { |user| user.planner? && user.contact? }
+      }
+    ]
+
+    if @show_clients
+      groups << {
+        id: "clients",
+        title: "Clients",
+        users: users.select(&:client?)
+      }
+    end
+
+    groups
+  end
+
+  def access_type_for_user(user)
+    return "admin" if user.admin?
+    return "client" if user.client?
+    return "planner_contact" if user.planner? && user.contact?
+
+    "planner"
+  end
+
+  def access_type_label_for_user(user)
+    ACCESS_TYPE_LABELS.fetch(access_type_for_user(user))
+  end
+
+  def access_type_options_for_roles(role_options)
+    allowed_roles = Array(role_options).map(&:to_s)
+
+    ACCESS_TYPE_ATTRIBUTES.filter_map do |access_type, attributes|
+      next unless allowed_roles.include?(attributes[:role])
+
+      [ACCESS_TYPE_LABELS.fetch(access_type), access_type]
     end
   end
 end

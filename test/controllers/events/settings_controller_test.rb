@@ -83,5 +83,35 @@ module Events
       assert_select "h1", text: "Locations"
       assert_select "textarea[name='event_venue[address]']", count: @event.event_venues.count + 1
     end
+
+    test "planner sees planners page without team management controls" do
+      delete logout_url
+      log_in_as(users(:one))
+
+      get planners_event_settings_url(@event)
+
+      assert_response :success
+      assert_select "h1", text: "Planning Team"
+      assert_select "a[href*='#{users_path}']", count: 0
+      assert_select "input[name='event_team_member[lead_planner]']", count: 0
+      assert_select "input[name='event_team_member[position]']", count: 0
+      assert_select "form[action='#{event_team_members_path(@event)}']", count: 0
+      assert_select "button", text: "Remove", count: 0
+    end
+
+    test "planner sees clients page without access management controls" do
+      delete logout_url
+      log_in_as(users(:one))
+
+      get clients_event_settings_url(@event)
+
+      assert_response :success
+      assert_select "h1", text: "Client Access"
+      assert_select "button", text: "Revoke Portal Access", count: 0
+      assert_select "button", text: "Generate Reset Link", count: 0
+      assert_select "a", text: "Edit", count: 0
+      assert_select "button", text: "Remove", count: 0
+      assert_select "form[action='#{event_team_members_path(@event)}']", count: 0
+    end
   end
 end

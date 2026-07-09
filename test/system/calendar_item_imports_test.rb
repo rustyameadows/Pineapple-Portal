@@ -5,6 +5,10 @@ class CalendarItemImportsTest < ApplicationSystemTestCase
     @destination_event = events(:two)
     @source_event = events(:one)
     @ceremony = calendar_items(:ceremony)
+    @destination_event.event_team_members.find_or_create_by!(
+      user: users(:one),
+      member_role: EventTeamMember::TEAM_ROLES[:planner]
+    )
   end
 
   test "planner preview updates when the anchor date changes and the dialog mirrors the projection" do

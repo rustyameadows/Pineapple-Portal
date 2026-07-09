@@ -3,6 +3,7 @@ module Client
     QuickLink = Struct.new(:label, :url)
 
     before_action :set_event
+    before_action :authorize_event_access!
 
     def show
       @quick_links = build_quick_links
@@ -24,6 +25,10 @@ module Client
                else
                  Event.find(params[:id])
                end
+    end
+
+    def authorize_event_access!
+      authorize_portal_event_access!(@event)
     end
 
     def build_quick_links

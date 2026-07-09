@@ -76,6 +76,61 @@ class CalendarBulkEditTest < ApplicationSystemTestCase
     end
   end
 
+  test "run of show same-time move buttons only show available directions" do
+    first, second, third = create_same_time_items
+
+    login_as_planner
+    visit event_calendar_path(@event)
+
+    check_bulk_item(first)
+    assert_no_same_time_move_button("up")
+    assert_same_time_move_button("down")
+
+    check_only_bulk_item(second)
+    assert_same_time_move_button("up")
+    assert_same_time_move_button("down")
+
+    check_only_bulk_item(third)
+    assert_same_time_move_button("up")
+    assert_no_same_time_move_button("down")
+
+    check_bulk_item(second)
+    assert_no_same_time_move_button("up")
+    assert_no_same_time_move_button("down")
+
+    within ".event-calendars__bulk-toolbar" do
+      click_button "Deselect all"
+    end
+
+    solo = @event.run_of_show_calendar.calendar_items.create!(
+      title: "Solo Same-Time Item",
+      starts_at: Time.zone.parse("2025-10-01 16:30"),
+      duration_minutes: 30,
+      position: 103
+    )
+
+    check_bulk_item(solo)
+    assert_no_same_time_move_button("up")
+    assert_no_same_time_move_button("down")
+  end
+
+  test "run of show same-time move updates row order after redirect" do
+    first, second = create_same_time_items.first(2)
+
+    login_as_planner
+    visit event_calendar_path(@event)
+
+    assert_row_before(first, second)
+
+    check_bulk_item(second)
+    click_same_time_move_button("up")
+
+    assert_current_path event_calendar_path(@event)
+    assert_text "Order updated."
+    assert_row_before(second, first)
+    assert_equal ["Second Same-Time Item", "First Same-Time Item", "Third Same-Time Item"], same_time_titles
+  end
+
   test "run of show filter bar uses labeled sections and wide desktop alignment" do
     login_as_planner
     page.current_window.resize_to(1800, 1400)
@@ -524,6 +579,61 @@ class CalendarBulkEditTest < ApplicationSystemTestCase
         checkbox.dispatchEvent(new Event("change", { bubbles: true }))
       })()
     JS
+  end
+
+  def check_only_bulk_item(item)
+    page.execute_script(<<~JS)
+      (() => {
+        document.querySelectorAll("input.event-calendars__bulk-checkbox").forEach((checkbox) => {
+          checkbox.checked = false
+        })
+      })()
+    JS
+    check_bulk_item(item)
+  end
+
+  def same_time_move_selector(direction)
+    "button[data-calendar-bulk-edit-target='sameTimeMove#{direction.camelize}Button']"
+  end
+
+  def assert_same_time_move_button(direction)
+    assert_selector same_time_move_selector(direction), text: "Move #{direction}", visible: true
+  end
+
+  def assert_no_same_time_move_button(direction)
+    assert_no_selector same_time_move_selector(direction), text: "Move #{direction}", visible: true
+  end
+
+  def click_same_time_move_button(direction)
+    find(same_time_move_selector(direction), text: "Move #{direction}", visible: true).click
+  end
+
+  def assert_row_before(first, second)
+    first_id = ActionView::RecordIdentifier.dom_id(first, :timeline_row)
+    second_id = ActionView::RecordIdentifier.dom_id(second, :timeline_row)
+
+    assert page.evaluate_script(<<~JS)
+      (() => {
+        const first = document.getElementById("#{first_id}")
+        const second = document.getElementById("#{second_id}")
+        return Boolean(first && second && (first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING))
+      })()
+    JS
+  end
+
+  def create_same_time_items
+    [
+      @event.run_of_show_calendar.calendar_items.create!(title: "First Same-Time Item", starts_at: Time.zone.parse("2025-10-01 16:00:30"), duration_minutes: 30, position: 100),
+      @event.run_of_show_calendar.calendar_items.create!(title: "Second Same-Time Item", starts_at: Time.zone.parse("2025-10-01 16:00:45"), duration_minutes: 30, position: 101),
+      @event.run_of_show_calendar.calendar_items.create!(title: "Third Same-Time Item", starts_at: Time.zone.parse("2025-10-01 16:00:15"), duration_minutes: 30, position: 102)
+    ]
+  end
+
+  def same_time_titles
+    @event.run_of_show_calendar.calendar_items
+          .select { |item| item.effective_starts_at&.utc&.change(sec: 0) == Time.zone.parse("2025-10-01 16:00").utc }
+          .sort_by { |item| [item.position.to_i, item.title.to_s.downcase, item.id.to_i] }
+          .map(&:title)
   end
 
   def assert_highlight_state(expected_present:, minimum_range_count: 1)

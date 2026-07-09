@@ -2,7 +2,7 @@ require "test_helper"
 
 class LabsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    log_in_as(users(:one))
+    log_in_as(users(:two))
   end
 
   test "ros agent response chain demo renders all major sections" do
@@ -19,5 +19,14 @@ class LabsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#lab-trace-artifacts"
     assert_select ".labs-agent-chain__step", minimum: 5
     assert_select "table.event-table", minimum: 5
+  end
+
+  test "planner cannot access labs" do
+    delete logout_url
+    log_in_as(users(:one))
+
+    get labs_ros_agent_response_chain_path
+
+    assert_redirected_to root_url
   end
 end

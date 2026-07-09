@@ -4,7 +4,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @event = events(:one)
     @other_event = events(:two)
-    log_in_as(users(:one))
+    log_in_as(users(:two))
   end
 
   test "lists events table with active rows first and archived rows below" do
@@ -43,6 +43,54 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "a[href='#{restore_event_path(@event, return_to: events_path)}'][data-turbo-method='patch'][data-turbo-confirm='Restore this event to active projects?']", text: "Restore"
+  end
+
+  test "planner lists only assigned events and hides admin event controls" do
+    delete logout_url
+    log_in_as(users(:one))
+
+    get events_url
+
+    assert_response :success
+    assert_select "h1.event-section__title", text: "All Events"
+    assert_match @event.name, response.body
+    assert_no_match @other_event.name, response.body
+    assert_select "a.event-section__cta[href='#{new_event_path}']", count: 0
+    assert_select "a[data-turbo-method='patch']", text: "Archive", count: 0
+    assert_select "a[data-turbo-method='patch']", text: "Restore", count: 0
+  end
+
+  test "planner cannot access unassigned event pages by url" do
+    delete logout_url
+    log_in_as(users(:one))
+
+    get event_url(@other_event)
+    assert_response :not_found
+
+    get event_calendar_url(@other_event)
+    assert_response :not_found
+  end
+
+  test "planner cannot create archive restore or delete events" do
+    delete logout_url
+    log_in_as(users(:one))
+
+    get new_event_url
+    assert_redirected_to root_url
+
+    patch archive_event_url(@event)
+    assert_redirected_to root_url
+    refute @event.reload.archived?
+
+    @event.update!(archived_at: Time.current)
+    patch restore_event_url(@event)
+    assert_redirected_to root_url
+    assert @event.reload.archived?
+
+    assert_no_difference("Event.count") do
+      delete event_url(@event)
+    end
+    assert_redirected_to root_url
   end
 
   test "renders styled new event page" do

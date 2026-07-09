@@ -2,7 +2,7 @@ require "test_helper"
 
 class DecisionsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @user = users(:one)
+    @user = users(:two)
     @event = events(:one)
     @calendar = event_calendars(:run_of_show)
     @decision_tag = @calendar.event_calendar_tags.create!(name: "Decisions")
@@ -177,6 +177,35 @@ class DecisionsControllerTest < ActionDispatch::IntegrationTest
     assert_not_equal "completed", non_decision.reload.status
     assert_not_equal "completed", archived_item.reload.status
     assert_equal "Select at least one decision.", flash[:alert]
+  end
+
+  test "planner sees and updates decisions only for assigned events" do
+    other_event = create_event!(name: "Unassigned Wedding")
+    other_item = create_decision_item_for_event!(
+      event: other_event,
+      title: "Confirm Rentals",
+      starts_at: Time.zone.local(2025, 9, 21, 9, 0)
+    )
+
+    log_in_as(users(:one))
+    get decisions_url
+
+    assert_response :success
+    assert_select "a.event-calendars__title-link", text: @decision_items.first.title, count: 1
+    assert_select "a.event-calendars__title-link", text: other_item.title, count: 0
+
+    patch decisions_bulk_update_url, params: {
+      item_ids: [@decision_items.first.id, other_item.id],
+      return_to: decisions_path,
+      bulk: {
+        bulk_action: "set_status",
+        status: "completed"
+      }
+    }
+
+    assert_redirected_to decisions_path
+    assert_equal "completed", @decision_items.first.reload.status
+    assert_not_equal "completed", other_item.reload.status
   end
 
   test "auto creates missing decision calendar views for represented events" do

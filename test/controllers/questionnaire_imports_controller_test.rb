@@ -2,7 +2,7 @@ require "test_helper"
 
 class QuestionnaireImportsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    log_in_as(users(:one))
+    log_in_as(users(:two))
     @source_event = events(:one)
     @event = events(:two)
     @source_questionnaire = questionnaires(:checklist)
@@ -12,6 +12,16 @@ class QuestionnaireImportsControllerTest < ActionDispatch::IntegrationTest
     get event_questionnaire_import_url(@event)
     assert_response :success
     assert_select "h1", text: "Import a questionnaire"
+  end
+
+  test "planner source selector excludes unassigned events" do
+    delete logout_url
+    log_in_as(users(:one))
+
+    get event_questionnaire_import_url(events(:one))
+
+    assert_response :success
+    assert_select "select[name='source_event_id'] option[value='#{events(:two).id}']", count: 0
   end
 
   test "imports questionnaire as new" do

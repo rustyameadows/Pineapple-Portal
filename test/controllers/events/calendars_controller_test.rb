@@ -53,6 +53,10 @@ module Events
       assert_match(/Select all \d+ item(s)?/, response.body)
       assert_includes response.body, "Deselect all"
       assert_select ".event-calendars__filter-menu label", text: "None", minimum: 4
+      assert_select "input[name='bulk[neighbor_item_id]'][data-calendar-bulk-edit-target='sameTimeNeighborInput']", count: 1
+      assert_select "button[data-calendar-bulk-edit-target='sameTimeMoveUpButton'][hidden]", text: "Move up", count: 1
+      assert_select "button[data-calendar-bulk-edit-target='sameTimeMoveDownButton'][hidden]", text: "Move down", count: 1
+      assert_select "tr[data-calendar-item-start-minute][data-calendar-item-position]", minimum: 1
     end
 
     test "shows timing conversion actions for selected run of show rows" do

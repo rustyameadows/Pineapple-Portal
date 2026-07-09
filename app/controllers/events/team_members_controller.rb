@@ -1,6 +1,7 @@
 module Events
   class TeamMembersController < ApplicationController
     before_action :set_event
+    before_action :require_admin!
     before_action :set_team_member, only: %i[update destroy issue_reset]
 
     def create
@@ -98,7 +99,7 @@ module Events
     private
 
     def set_event
-      @event = Event.find(params[:event_id])
+      @event = find_accessible_event!(params[:event_id])
     end
 
     def set_team_member

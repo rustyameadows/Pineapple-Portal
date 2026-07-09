@@ -2,7 +2,7 @@ require "test_helper"
 
 class UsersControllerTest < ActionDispatch::IntegrationTest
   test "signed-in user can create another user" do
-    log_in(users(:one))
+    log_in(users(:two))
 
     assert_difference("User.count") do
       post users_url, params: { user: {
@@ -23,12 +23,108 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "renders errors when invalid for signed-in user" do
-    log_in(users(:one))
+    log_in(users(:two))
 
     post users_url, params: { user: { name: "", email: "", password: "", password_confirmation: "" } }
 
     assert_response :unprocessable_content
     assert_select "div.flash.flash-alert", text: /can't be blank/
+  end
+
+  test "new renders one access type selector instead of role and account type selects" do
+    log_in(users(:two))
+
+    get new_user_url
+
+    assert_response :success
+    assert_select ".user-access-selector", count: 1
+    assert_select "select[name='user[account_kind]']", count: 0
+    assert_select "select[name='user[role]']", count: 0
+    assert_select "input[type='radio'][name='user[access_type]'][value='admin']", count: 1
+    assert_select "input[type='radio'][name='user[access_type]'][value='planner'][checked]", count: 1
+    assert_select "input[type='radio'][name='user[access_type]'][value='planner_contact']", count: 1
+    assert_select "input[type='radio'][name='user[access_type]'][value='client']", count: 1
+  end
+
+  test "edit renders form sections in requested order" do
+    log_in(users(:two))
+
+    get edit_user_url(users(:one))
+
+    assert_response :success
+    labels = [
+      "Name",
+      "Access Type",
+      "Password",
+      "Financial access",
+      "General notes"
+    ]
+    positions = labels.to_h { |label| [label, response.body.index(label)] }
+
+    assert positions.values.all?, "Expected all section labels in the response"
+    assert_operator positions["Name"], :<, positions["Access Type"]
+    assert_operator positions["Access Type"], :<, positions["Password"]
+    assert_operator positions["Password"], :<, positions["Financial access"]
+    assert_operator positions["Financial access"], :<, positions["General notes"]
+  end
+
+  test "edit renders field hints above their inputs" do
+    log_in(users(:two))
+
+    get edit_user_url(users(:one))
+
+    assert_response :success
+    body = response.body
+    email_label_position = body.index('for="user_email">Email</label>')
+    email_hint_position = body.index("Required for portal accounts.")
+    email_input_position = body.index('id="user_email"')
+    password_label_position = body.index('for="user_password">Password</label>')
+    password_hint_position = body.index("Leave blank to keep the current password.")
+    password_input_position = body.index('id="user_password"')
+
+    assert [
+      email_label_position,
+      email_hint_position,
+      email_input_position,
+      password_label_position,
+      password_hint_position,
+      password_input_position
+    ].all?, "Expected email and password labels, hints, and inputs in the response"
+    assert_operator email_label_position, :<, email_hint_position
+    assert_operator email_hint_position, :<, email_input_position
+    assert_operator password_label_position, :<, password_hint_position
+    assert_operator password_hint_position, :<, password_input_position
+  end
+
+  test "create maps access type choices to role and account kind" do
+    log_in(users(:two))
+
+    {
+      "admin" => [User::ROLES[:admin], User::ACCOUNT_KINDS[:account]],
+      "planner" => [User::ROLES[:planner], User::ACCOUNT_KINDS[:account]],
+      "planner_contact" => [User::ROLES[:planner], User::ACCOUNT_KINDS[:contact]],
+      "client" => [User::ROLES[:client], User::ACCOUNT_KINDS[:account]]
+    }.each do |access_type, (role, account_kind)|
+      params = {
+        name: "Access #{access_type.humanize}",
+        access_type: access_type
+      }
+
+      unless account_kind == User::ACCOUNT_KINDS[:contact]
+        params[:email] = "access-#{access_type}@example.com"
+        params[:password] = "password123"
+        params[:password_confirmation] = "password123"
+      end
+
+      assert_difference("User.count") do
+        post users_url, params: { user: params }
+      end
+
+      assert_redirected_to users_url
+      user = User.order(:created_at).last
+      assert_equal role, user.role
+      assert_equal account_kind, user.account_kind
+    end
   end
 
   test "first user can sign up without prior login" do
@@ -76,13 +172,79 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_equal "admin", user.role
   end
 
-  test "planner cannot elevate role" do
+  test "index segments internal users by access category" do
+    log_in(users(:two))
+    contact = User.create!(
+      name: "Chris Contact",
+      role: "planner",
+      account_kind: "contact",
+      title: "Hospitality Lead",
+      phone_number: "555-101-2020"
+    )
+
+    get users_url
+
+    assert_response :success
+    assert_select "section.user-roster-group", count: 3
+    assert_select "section#user-roster-admin" do
+      assert_select "h2", text: "Admin"
+      assert_select "td", text: users(:two).name, count: 1
+      assert_select "td", text: users(:one).name, count: 0
+      assert_select "td", text: contact.name, count: 0
+    end
+    assert_select "section#user-roster-planner-accounts" do
+      assert_select "h2", text: "Planner Accounts"
+      assert_select "td", text: users(:one).name, count: 1
+      assert_select "td", text: users(:planner_two).name, count: 1
+      assert_select "td", text: users(:two).name, count: 0
+      assert_select "td", text: contact.name, count: 0
+    end
+    assert_select "section#user-roster-planner-contacts" do
+      assert_select "h2", text: "Planner Contacts"
+      assert_select "td", text: contact.name, count: 1
+      assert_select "td", text: users(:one).name, count: 0
+      assert_select "td", text: users(:two).name, count: 0
+    end
+  end
+
+  test "index renders a single access type column" do
+    log_in(users(:two))
+    contact = User.create!(
+      name: "Chris Contact",
+      role: "planner",
+      account_kind: "contact",
+      title: "Hospitality Lead",
+      phone_number: "555-101-2020"
+    )
+
+    get users_url(show_clients: 1)
+
+    assert_response :success
+    assert_select "th", text: "Access Type", count: 4
+    assert_select "th", text: "Account Type", count: 0
+    assert_select "th", text: "Role", count: 0
+    assert_select "section#user-roster-admin td.user-roster-group__access-type", text: "Admin", count: 1
+    assert_select "section#user-roster-planner-accounts td.user-roster-group__access-type", text: "Planner", minimum: 1
+    assert_select "section#user-roster-planner-contacts td.user-roster-group__access-type", text: "Planner Contact", count: 1
+    assert_select "section#user-roster-clients td.user-roster-group__access-type", text: "Client", minimum: 1
+    assert_select "td", text: contact.name, count: 1
+  end
+
+  test "planner cannot access team management" do
+    log_in(users(:one))
+
+    get users_url
+
+    assert_redirected_to root_url
+  end
+
+  test "planner cannot mutate team users" do
     log_in(users(:one))
     user = users(:planner_two)
 
     patch user_url(user), params: { user: { role: "admin" } }
 
-    assert_redirected_to users_url
+    assert_redirected_to root_url
     assert_equal "planner", user.reload.role
   end
 

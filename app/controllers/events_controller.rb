@@ -2,6 +2,7 @@ class EventsController < ApplicationController
   include EventsSettingsPageSupport
 
   before_action :set_event, only: %i[show edit update destroy archive restore]
+  before_action :require_admin!, only: %i[new create destroy archive restore]
 
   def index
     @active_events = active_events_scope
@@ -71,7 +72,7 @@ class EventsController < ApplicationController
   private
 
   def set_event
-    @event = Event.find(params[:id])
+    @event = find_accessible_event!(params[:id])
   end
 
   def event_params
@@ -97,10 +98,10 @@ class EventsController < ApplicationController
   end
 
   def active_events_scope
-    Event.active.order(Arel.sql("COALESCE(events.starts_on, events.updated_at, events.created_at) ASC"))
+    accessible_events_scope.active.order(Arel.sql("COALESCE(events.starts_on, events.updated_at, events.created_at) ASC"))
   end
 
   def archived_events_scope
-    Event.archived.order(Arel.sql("COALESCE(events.archived_at, events.updated_at) DESC"))
+    accessible_events_scope.archived.order(Arel.sql("COALESCE(events.archived_at, events.updated_at) DESC"))
   end
 end

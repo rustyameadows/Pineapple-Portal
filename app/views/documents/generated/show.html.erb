@@ -14,6 +14,11 @@
             <h1 class="event-section__title"><%= @document.title %></h1>
           </div>
           <div class="generated-builder__actions">
+            <%= button_to "Duplicate packet",
+                          duplicate_event_documents_generated_path(@event, @document.logical_id),
+                          method: :post,
+                          class: "button button--ghost",
+                          form: { class: "generated-builder__inline-form" } %>
             <%= link_to "Packet settings", edit_event_documents_generated_path(@event, @document.logical_id), class: "button button--ghost" %>
           </div>
         </header>

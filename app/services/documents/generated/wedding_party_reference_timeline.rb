@@ -113,12 +113,10 @@ module Documents
         @sorted_calendar_items ||= begin
           return [] unless calendar
 
-          far_future = Time.zone.parse("9999-12-31") rescue Time.zone.now + 100.years
-
-          calendar.calendar_items.includes(:event_calendar_tags, :relative_anchor).to_a.sort_by do |item|
-            start_time = item.effective_starts_at&.in_time_zone(timezone)
-            [start_time || far_future, item.position.to_i, item.title.to_s.downcase, item.id.to_i]
-          end
+          Calendars::TimelineOrder.sort(
+            calendar.calendar_items.includes(:event_calendar_tags, :relative_anchor).to_a,
+            timezone: timezone
+          )
         end
       end
 
@@ -183,7 +181,7 @@ module Documents
       end
 
       def alignment_key_for(item)
-        start_time = item.effective_starts_at&.in_time_zone(timezone)
+        start_time = Calendars::TimelineOrder.start_minute(item, timezone: timezone)
         return ["time", start_time.to_i] if start_time
 
         ["item", item.title.to_s.downcase, item.id.to_i]

@@ -15,6 +15,9 @@ class QuestionnairesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "lists templates" do
+    delete logout_url
+    log_in_as(users(:two))
+
     get questionnaire_templates_url
     assert_response :success
     assert_select "h1", text: "Template Questionnaires"
