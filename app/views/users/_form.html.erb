@@ -30,8 +30,8 @@
 
       <div class="event-form__group" data-email-field>
         <%= form.label :email %>
-        <%= form.email_field :email, required: !user.contact?, data: { email_input: true } %>
         <p class="event-form__hint">Required for portal accounts.</p>
+        <%= form.email_field :email, required: !user.contact?, data: { email_input: true } %>
       </div>
     </div>
   </div>
@@ -69,12 +69,12 @@
     <div class="event-form__grid">
       <div class="event-form__group" data-password-fields>
         <%= form.label :password %>
-        <% password_options = { autocomplete: user.new_record? ? "new-password" : "off" } %>
-        <% password_options[:required] = true if require_password %>
-        <%= form.password_field :password, **password_options %>
         <% unless require_password %>
           <p class="event-form__hint">Leave blank to keep the current password.</p>
         <% end %>
+        <% password_options = { autocomplete: user.new_record? ? "new-password" : "off" } %>
+        <% password_options[:required] = true if require_password %>
+        <%= form.password_field :password, **password_options %>
       </div>
 
       <div class="event-form__group" data-password-fields>

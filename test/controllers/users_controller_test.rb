@@ -68,6 +68,34 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_operator positions["Financial access"], :<, positions["General notes"]
   end
 
+  test "edit renders field hints above their inputs" do
+    log_in(users(:two))
+
+    get edit_user_url(users(:one))
+
+    assert_response :success
+    body = response.body
+    email_label_position = body.index('for="user_email">Email</label>')
+    email_hint_position = body.index("Required for portal accounts.")
+    email_input_position = body.index('id="user_email"')
+    password_label_position = body.index('for="user_password">Password</label>')
+    password_hint_position = body.index("Leave blank to keep the current password.")
+    password_input_position = body.index('id="user_password"')
+
+    assert [
+      email_label_position,
+      email_hint_position,
+      email_input_position,
+      password_label_position,
+      password_hint_position,
+      password_input_position
+    ].all?, "Expected email and password labels, hints, and inputs in the response"
+    assert_operator email_label_position, :<, email_hint_position
+    assert_operator email_hint_position, :<, email_input_position
+    assert_operator password_label_position, :<, password_hint_position
+    assert_operator password_hint_position, :<, password_input_position
+  end
+
   test "create maps access type choices to role and account kind" do
     log_in(users(:two))
 
