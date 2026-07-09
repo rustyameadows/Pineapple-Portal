@@ -16,7 +16,7 @@ class UsersController < ApplicationController
   before_action :require_admin!, unless: :first_user_signup?
   before_action :set_user, only: %i[edit update]
   before_action :set_user_for_destroy, only: %i[destroy]
-  helper_method :access_type_for_user, :access_type_options_for_roles
+  helper_method :access_type_for_user, :access_type_label_for_user, :access_type_options_for_roles
 
   def index
     @show_clients = params[:show_clients] == "1"
@@ -233,6 +233,10 @@ class UsersController < ApplicationController
     return "planner_contact" if user.planner? && user.contact?
 
     "planner"
+  end
+
+  def access_type_label_for_user(user)
+    ACCESS_TYPE_LABELS.fetch(access_type_for_user(user))
   end
 
   def access_type_options_for_roles(role_options)

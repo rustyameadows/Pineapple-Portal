@@ -207,6 +207,29 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "index renders a single access type column" do
+    log_in(users(:two))
+    contact = User.create!(
+      name: "Chris Contact",
+      role: "planner",
+      account_kind: "contact",
+      title: "Hospitality Lead",
+      phone_number: "555-101-2020"
+    )
+
+    get users_url(show_clients: 1)
+
+    assert_response :success
+    assert_select "th", text: "Access Type", count: 4
+    assert_select "th", text: "Account Type", count: 0
+    assert_select "th", text: "Role", count: 0
+    assert_select "section#user-roster-admin td.user-roster-group__access-type", text: "Admin", count: 1
+    assert_select "section#user-roster-planner-accounts td.user-roster-group__access-type", text: "Planner", minimum: 1
+    assert_select "section#user-roster-planner-contacts td.user-roster-group__access-type", text: "Planner Contact", count: 1
+    assert_select "section#user-roster-clients td.user-roster-group__access-type", text: "Client", minimum: 1
+    assert_select "td", text: contact.name, count: 1
+  end
+
   test "planner cannot access team management" do
     log_in(users(:one))
 

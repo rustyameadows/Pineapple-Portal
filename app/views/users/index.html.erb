@@ -39,8 +39,7 @@
                           <th>Title</th>
                           <th>Email</th>
                           <th>Phone</th>
-                          <th>Account Type</th>
-                          <th>Role</th>
+                          <th>Access Type</th>
                           <th>Joined</th>
                           <th></th>
                         </tr>
@@ -52,8 +51,7 @@
                             <td><%= user.title.presence || "—" %></td>
                             <td><%= user.display_email %></td>
                             <td><%= user.phone_number.presence || "—" %></td>
-                            <td><%= user.account_kind.humanize %></td>
-                            <td><%= user.role.humanize %></td>
+                            <td class="user-roster-group__access-type"><%= access_type_label_for_user(user) %></td>
                             <td><%= user.created_at&.strftime('%b %-d, %Y') %></td>
                             <td class="event-table__actions">
                               <%= link_to "Edit", edit_user_path(user), class: "event-section__link" %>
