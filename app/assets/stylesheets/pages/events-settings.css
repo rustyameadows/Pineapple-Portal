@@ -789,6 +789,27 @@
   grid-column: 1 / -1;
 }
 
+.event-settings__contact--selectable {
+  cursor: pointer;
+}
+
+.event-settings__contact--selectable:has(input:checked) {
+  border-color: var(--color-brown);
+  background: color-mix(in srgb, var(--color-sea-foam) 22%, white);
+}
+
+.event-settings__contact-selection {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.event-settings__field-label {
+  color: var(--color-brown);
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-semibold);
+}
+
 .event-settings__field--notes {
   grid-column: 1 / -1;
 }

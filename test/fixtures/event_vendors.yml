@@ -1,5 +1,6 @@
 catering:
   event: one
+  global_vendor: sunshine_catering
   name: Sunshine Catering
   vendor_type: Catering
   social_handle: sunshinecatering
@@ -14,6 +15,7 @@ catering:
 
 lighting:
   event: one
+  global_vendor: bright_lights
   name: Bright Lights Production
   vendor_type: Lighting
   social_handle: "@brightlights"

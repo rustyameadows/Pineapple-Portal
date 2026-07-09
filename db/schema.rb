@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_22_205000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_09_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -521,6 +521,19 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_22_205000) do
     t.index ["user_id"], name: "index_event_team_members_on_user_id"
   end
 
+  create_table "event_vendor_contacts", force: :cascade do |t|
+    t.bigint "event_vendor_id", null: false
+    t.bigint "global_vendor_contact_id", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_vendor_id", "global_vendor_contact_id"], name: "index_event_vendor_contacts_on_vendor_and_contact", unique: true
+    t.index ["event_vendor_id", "position", "id"], name: "index_event_vendor_contacts_on_vendor_position"
+    t.index ["event_vendor_id"], name: "index_event_vendor_contacts_on_event_vendor_id"
+    t.index ["global_vendor_contact_id"], name: "index_event_vendor_contacts_on_global_vendor_contact_id"
+    t.check_constraint "\"position\" >= 0", name: "event_vendor_contacts_position_non_negative"
+  end
+
   create_table "event_vendors", force: :cascade do |t|
     t.bigint "event_id", null: false
     t.string "name", null: false
@@ -531,9 +544,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_22_205000) do
     t.datetime "updated_at", null: false
     t.string "vendor_type"
     t.string "social_handle"
-    t.bigint "global_vendor_id"
+    t.bigint "global_vendor_id", null: false
     t.text "team_meals"
     t.index "event_id, lower((name)::text)", name: "index_event_vendors_on_event_id_and_lower_name", unique: true
+    t.index ["event_id", "global_vendor_id"], name: "index_event_vendors_on_event_and_global_vendor", unique: true
     t.index ["event_id", "position"], name: "index_event_vendors_on_event_id_and_position"
     t.index ["event_id"], name: "index_event_vendors_on_event_id"
     t.index ["global_vendor_id"], name: "index_event_vendors_on_global_vendor_id"
@@ -631,6 +645,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_22_205000) do
     t.datetime "updated_at", null: false
     t.index ["storage_uri"], name: "index_global_assets_on_storage_uri", unique: true
     t.index ["uploaded_by_id"], name: "index_global_assets_on_uploaded_by_id"
+  end
+
+  create_table "global_vendor_contacts", force: :cascade do |t|
+    t.bigint "global_vendor_id", null: false
+    t.string "name"
+    t.string "title"
+    t.string "email"
+    t.string "phone"
+    t.text "notes"
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["global_vendor_id", "position", "id"], name: "index_global_vendor_contacts_on_vendor_position"
+    t.index ["global_vendor_id"], name: "index_global_vendor_contacts_on_global_vendor_id"
+    t.check_constraint "\"position\" >= 0", name: "global_vendor_contacts_position_non_negative"
+    t.check_constraint "num_nonnulls(NULLIF(btrim(name::text), ''::text), NULLIF(btrim(title::text), ''::text), NULLIF(btrim(email::text), ''::text), NULLIF(btrim(phone::text), ''::text), NULLIF(btrim(notes), ''::text)) > 0", name: "global_vendor_contacts_not_blank"
   end
 
   create_table "global_vendors", force: :cascade do |t|
@@ -796,6 +826,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_22_205000) do
   add_foreign_key "event_links", "events"
   add_foreign_key "event_team_members", "events"
   add_foreign_key "event_team_members", "users"
+  add_foreign_key "event_vendor_contacts", "event_vendors", on_delete: :cascade
+  add_foreign_key "event_vendor_contacts", "global_vendor_contacts", on_delete: :cascade
   add_foreign_key "event_vendors", "events"
   add_foreign_key "event_vendors", "global_vendors"
   add_foreign_key "event_venues", "events"
@@ -803,6 +835,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_22_205000) do
   add_foreign_key "events", "documents", column: "event_photo_document_id"
   add_foreign_key "generated_packet_placements", "generated_packet_sources"
   add_foreign_key "global_assets", "users", column: "uploaded_by_id"
+  add_foreign_key "global_vendor_contacts", "global_vendors", on_delete: :cascade
   add_foreign_key "password_reset_tokens", "users"
   add_foreign_key "password_reset_tokens", "users", column: "issued_by_id"
   add_foreign_key "payments", "events"

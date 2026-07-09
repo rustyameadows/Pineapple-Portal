@@ -40,11 +40,11 @@ class VendorContactsSectionTest < ActionView::TestCase
       client_visible: false
     )
 
-    @event.event_vendors.create!(
+    create_event_vendor(
       name: "Stationery Studio",
       vendor_type: "Stationery",
       social_handle: "@stationerystudio",
-      contacts_jsonb: [
+      contacts: [
         { name: "Avery Ink", phone: "555-111-2222" },
         { title: "On-Site Contact", phone: "555-222-3333" }
       ],
@@ -53,28 +53,29 @@ class VendorContactsSectionTest < ActionView::TestCase
       client_visible: false
     )
 
-    @event.event_vendors.create!(
+    create_event_vendor(
       name: "Silent Vendor",
       vendor_type: "Lighting",
-      contacts_jsonb: [],
+      contacts: [],
       position: 10,
       client_visible: false
     )
 
     inherited_vendor = GlobalVendor.create!(
       name: "House Band",
-      contacts_jsonb: [
-        { name: "Ivy Sound", phone: "555-333-4444" }
+      contacts_attributes: [
+        { name: "Ivy Sound", phone: "555-333-4444" },
+        { name: "Unselected Band Manager", phone: "555-000-0000" }
       ]
     )
 
-    @event.event_vendors.create!(
+    house_band = @event.event_vendors.create!(
       global_vendor: inherited_vendor,
       vendor_type: "Entertainment",
-      contacts_jsonb: [],
       position: 11,
       client_visible: false
     )
+    house_band.replace_contact_ids!([ inherited_vendor.contacts.first.id ])
 
     render template: "generated_documents/sections/vendor_contacts", locals: { render_base_styles: false }
 
@@ -103,6 +104,7 @@ class VendorContactsSectionTest < ActionView::TestCase
     assert_select "table tbody tr td", text: "Silent Vendor", count: 1
     assert_select "table tbody tr td", text: "House Band", count: 1
     assert_select "table tbody tr td", text: "Ivy Sound", count: 1
+    assert_no_match(/Unselected Band Manager/, rendered)
     assert_equal 9, rows.count
     planning_rows = fragment.css("tbody.generated-template--vendor-contacts__group").first.css("tr")
     planning_rowspan_cells = planning_rows.first.css("[rowspan]")
@@ -131,5 +133,18 @@ class VendorContactsSectionTest < ActionView::TestCase
     unsafe_links = fragment.css(".generated-template--vendor-contacts__team-meals a").select { |link| link.text == "Unsafe" }
     assert_equal 2, unsafe_links.size
     assert unsafe_links.all? { |link| link["href"].nil? }
+  end
+
+  private
+
+  def create_event_vendor(name:, contacts:, social_handle: nil, **attributes)
+    global_vendor = GlobalVendor.create!(
+      name: name,
+      default_social_handle: social_handle,
+      contacts_attributes: contacts
+    )
+    event_vendor = @event.event_vendors.create!(global_vendor: global_vendor, **attributes)
+    event_vendor.replace_contact_ids!(global_vendor.contacts.ids)
+    event_vendor
   end
 end

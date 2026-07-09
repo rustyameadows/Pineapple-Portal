@@ -63,20 +63,17 @@
                       <%= hidden_field_tag :return_to, request.fullpath %>
                       <div class="event-settings__vendor-top-row">
                         <div class="event-settings__vendor-core">
-                          <div class="event-settings__field"
-                               data-controller="remote-options"
-                               data-remote-options-url-value="<%= event_vendor_options_path(@event) %>">
-                            <%= form.hidden_field :global_vendor_id, data: { remote_options_target: "hidden" } %>
-                            <%= form.label :name, "Vendor name" %>
-                            <%= form.text_field :name, required: true, data: { remote_options_target: "input" } %>
+                          <div class="event-settings__field">
+                            <span class="event-settings__field-label">Vendor</span>
+                            <strong><%= vendor.global_vendor.name %></strong>
                           </div>
                           <div class="event-settings__field">
                             <%= form.label :vendor_type, "Vendor type" %>
                             <%= form.text_field :vendor_type, placeholder: "Floral, Lighting, etc." %>
                           </div>
                           <div class="event-settings__field">
-                            <%= form.label :social_handle, "Social handle" %>
-                            <%= form.text_field :social_handle, placeholder: "@vendor" %>
+                            <span class="event-settings__field-label">Social handle</span>
+                            <span><%= vendor.global_vendor.default_social_handle.presence || "—" %></span>
                           </div>
                           <div class="event-settings__field event-settings__field--checkbox">
                             <label class="event-settings__toggle">
@@ -131,15 +128,15 @@
                        data-remote-options-url-value="<%= event_vendor_options_path(@event) %>">
                     <%= form.hidden_field :global_vendor_id, data: { remote_options_target: "hidden" } %>
                     <%= form.label :name, "Vendor name" %>
-                    <%= form.text_field :name, required: true, data: { remote_options_target: "input" } %>
+                    <%= form.text_field :name,
+                                        required: true,
+                                        autocomplete: "off",
+                                        data: { remote_options_target: "input" } %>
+                    <p class="event-settings__hint">Choose a global vendor from the suggestions, or use the explicit create action below.</p>
                   </div>
                   <div class="event-settings__field">
                     <%= form.label :vendor_type, "Vendor type" %>
                     <%= form.text_field :vendor_type, placeholder: "Catering" %>
-                  </div>
-                  <div class="event-settings__field">
-                    <%= form.label :social_handle, "Social handle" %>
-                    <%= form.text_field :social_handle, placeholder: "@vendor" %>
                   </div>
                   <div class="event-settings__field event-settings__field--checkbox">
                     <label class="event-settings__toggle">
@@ -166,7 +163,12 @@
                            support_text: "Supports Markdown for bold, italic, and links." %>
 
                 <div class="event-settings__form-actions">
-                  <%= form.submit "Add vendor" %>
+                  <%= form.submit "Add selected vendor" %>
+                  <%= button_tag "Create globally and add",
+                                 type: "submit",
+                                 name: "event_vendor[create_global_vendor]",
+                                 value: "1",
+                                 data: { turbo_confirm: "Create this vendor in the global library and add it to this event?" } %>
                 </div>
               <% end %>
             </div>

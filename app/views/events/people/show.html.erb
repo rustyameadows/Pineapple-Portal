@@ -308,28 +308,29 @@
           <% if @vendors.any? %>
             <% @vendors.each do |vendor| %>
               <article class="event-directory-card">
-                <h3><%= vendor.name %></h3>
-                <% if vendor.vendor_type.present? %>
-                  <p class="event-directory-card__meta"><%= vendor.vendor_type %></p>
+                <h3><%= vendor.global_vendor.name %></h3>
+                <% vendor_type = vendor.vendor_type.presence || vendor.global_vendor.default_vendor_type.presence %>
+                <% if vendor_type %>
+                  <p class="event-directory-card__meta"><%= vendor_type %></p>
                 <% end %>
-                <% if vendor.contacts.any? %>
+                <% if vendor.selected_contacts.any? %>
                   <ul class="event-directory-list event-directory-list--compact">
-                    <% vendor.contacts.each do |contact| %>
+                    <% vendor.selected_contacts.each do |contact| %>
                       <li>
-                        <strong><%= contact["name"].presence || "Contact" %></strong>
-                        <% if contact["title"].present? %>
-                          <span>· <%= contact["title"] %></span>
+                        <strong><%= contact.name.presence || "Contact" %></strong>
+                        <% if contact.title.present? %>
+                          <span>· <%= contact.title %></span>
                         <% end %>
                         <div class="event-directory-list__meta">
-                          <% if contact["email"].present? %>
-                            <span><%= contact["email"] %></span>
+                          <% if contact.email.present? %>
+                            <span><%= contact.email %></span>
                           <% end %>
-                          <% if contact["phone"].present? %>
-                            <span>· <%= contact["phone"] %></span>
+                          <% if contact.phone.present? %>
+                            <span>· <%= contact.phone %></span>
                           <% end %>
                         </div>
-                        <% if contact["notes"].present? %>
-                          <p class="event-directory-card__notes"><%= contact["notes"] %></p>
+                        <% if contact.notes.present? %>
+                          <p class="event-directory-card__notes"><%= contact.notes %></p>
                         <% end %>
                       </li>
                     <% end %>

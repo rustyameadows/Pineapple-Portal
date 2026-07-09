@@ -127,27 +127,27 @@ module GeneratedDocumentsHelper
           "Please bring a bag (easily identified with your name) for your extra clothes and belongings. We'll ensure that your items are brought to La Caille or returned to your hotel rooms."
         ]
       }
-    ],
+    ]
   }.freeze
 
   def generated_segment_body_markdown(segment)
     options = if segment.respond_to?(:html_options)
                 segment.html_options
-              elsif segment.respond_to?(:source_ref) && segment.source_ref.is_a?(Hash)
+    elsif segment.respond_to?(:source_ref) && segment.source_ref.is_a?(Hash)
                 source_options = segment.source_ref["options"]
                 source_options.is_a?(Hash) ? source_options : {}
-              else
+    else
                 {}
-              end
+    end
 
     body_markdown = options.is_a?(Hash) ? options["body_markdown"].to_s : ""
     return body_markdown if body_markdown.present?
 
     view_key = if segment.respond_to?(:html_view_key)
                  segment.html_view_key
-               elsif segment.respond_to?(:source_ref) && segment.source_ref.is_a?(Hash)
+    elsif segment.respond_to?(:source_ref) && segment.source_ref.is_a?(Hash)
                  segment.source_ref["view_key"]
-               end
+    end
 
     DocumentSegment.default_body_markdown_for(view_key)
   end
@@ -298,7 +298,7 @@ module GeneratedDocumentsHelper
         merge_rows: true,
         rows: generated_vendor_contacts_planner_rows(event)
       }
-    ] + event.event_vendors.includes(:global_vendor).ordered.map do |vendor|
+    ] + event.event_vendors.includes(:global_vendor, event_vendor_contacts: :global_vendor_contact).ordered.map do |vendor|
       {
         category: generated_vendor_contacts_visible_value(generated_event_overview_vendor_type(vendor).presence),
         vendor_name: generated_vendor_contacts_visible_value(generated_event_overview_vendor_name(vendor).presence),
@@ -338,7 +338,7 @@ module GeneratedDocumentsHelper
 
   def generated_wedding_party_reference_key_people(event)
     event.event_key_person_groups.includes(:event_guests).ordered.filter_map do |group|
-      guests = group.event_guests.select(&:key_person?).sort_by { |guest| [guest.position, guest.id] }
+      guests = group.event_guests.select(&:key_person?).sort_by { |guest| [ guest.position, guest.id ] }
       next if guests.empty?
 
       {
@@ -371,7 +371,7 @@ module GeneratedDocumentsHelper
                              .select(&:milestone?)
                              .sort_by do |item|
       start_time = item.effective_starts_at&.in_time_zone(timezone)
-      [start_time&.to_f || Float::INFINITY, item.title.to_s.downcase]
+      [ start_time&.to_f || Float::INFINITY, item.title.to_s.downcase ]
     end
 
     groups = milestone_items
@@ -409,7 +409,7 @@ module GeneratedDocumentsHelper
   end
 
   def generated_event_overview_vendor_name(vendor)
-    vendor.global_vendor&.name.to_s.strip.presence || vendor.name.to_s.strip
+    vendor.global_vendor.name.to_s.strip
   end
 
   def generated_event_overview_vendor_type(vendor)
@@ -417,7 +417,7 @@ module GeneratedDocumentsHelper
   end
 
   def generated_event_overview_vendor_social_handle(vendor)
-    vendor.social_handle.to_s.strip.presence || vendor.global_vendor&.default_social_handle.to_s.strip.presence
+    vendor.global_vendor.default_social_handle.to_s.strip.presence
   end
 
   def generated_event_overview_social_handle(value)
@@ -442,13 +442,12 @@ module GeneratedDocumentsHelper
   end
 
   def generated_vendor_contacts_vendor_rows(vendor)
-    rows = Array(vendor.contacts).map do |contact|
-      contact_hash = contact.to_h.stringify_keys
-      contact_name = contact_hash["name"].to_s.strip.presence || contact_hash["title"].to_s.strip.presence
+    rows = vendor.selected_contacts.map do |contact|
+      contact_name = contact.name.to_s.strip.presence || contact.title.to_s.strip.presence
 
       {
         contact: generated_vendor_contacts_visible_value(contact_name),
-        phone: generated_vendor_contacts_visible_value(contact_hash["phone"].to_s.strip.presence)
+        phone: generated_vendor_contacts_visible_value(contact.phone.to_s.strip.presence)
       }
     end
 

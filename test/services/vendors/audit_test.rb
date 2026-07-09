@@ -38,6 +38,61 @@ module Vendors
       refute_equal audit.send(:canonical_contacts, left), audit.send(:canonical_contacts, right.first(2))
     end
 
+    test "reports first-class contact migration integrity without exposing contact values" do
+      baseline = Audit.new.call.metrics
+      legacy_contact = contact("Missing Directory Contact")
+      global_vendor = GlobalVendor.create!(
+        name: "Missing Directory Vendor",
+        contacts_jsonb: [ legacy_contact ]
+      )
+      events(:two).event_vendors.create!(
+        global_vendor:,
+        contacts_jsonb: [ legacy_contact ]
+      )
+
+      report = Audit.new.call
+      metrics = report.metrics
+
+      assert_equal baseline[:legacy_global_contacts_missing_from_directory] + 1,
+                   metrics[:legacy_global_contacts_missing_from_directory]
+      assert_equal baseline[:legacy_event_contacts_missing_from_directory] + 1,
+                   metrics[:legacy_event_contacts_missing_from_directory]
+      assert_equal baseline[:expected_event_contact_selections_missing] + 1,
+                   metrics[:expected_event_contact_selections_missing]
+      assert_equal baseline[:global_vendors_without_directory_contacts] + 1,
+                   metrics[:global_vendors_without_directory_contacts]
+      assert_equal baseline[:event_vendors_without_contact_selections] + 1,
+                   metrics[:event_vendors_without_contact_selections]
+      assert_equal GlobalVendorContact.count, metrics[:global_vendor_contacts_total]
+      assert_equal EventVendorContact.count, metrics[:event_vendor_contact_selections_total]
+      assert_equal 0, metrics[:cross_global_event_contact_selections]
+      assert_equal 0, metrics[:duplicate_event_contact_selection_pairs]
+      refute_includes report.to_s, "Missing Directory Contact"
+      refute_includes report.to_s, "audit@example.test"
+    end
+
+    test "detects a cross-global selection inserted outside model validation" do
+      baseline = Audit.new.call.metrics
+      global_vendor = GlobalVendor.create!(name: "Cross Selection Owner")
+      event_vendor = events(:two).event_vendors.create!(global_vendor:)
+      foreign_contact = global_vendor_contacts(:maria_cater)
+
+      EventVendorContact.insert_all!([
+        {
+          event_vendor_id: event_vendor.id,
+          global_vendor_contact_id: foreign_contact.id,
+          position: 0,
+          created_at: Time.current,
+          updated_at: Time.current
+        }
+      ])
+
+      metrics = Audit.new.call.metrics
+
+      assert_equal baseline[:cross_global_event_contact_selections] + 1,
+                   metrics[:cross_global_event_contact_selections]
+    end
+
     test "classifies ROS values only against the current event roster" do
       baseline = Audit.new.call.metrics
       event = Event.create!(name: "Vendor Audit Event")
@@ -47,8 +102,10 @@ module Vendors
       add_event_vendor(event, "Acme & Sons")
       renamed = add_event_vendor(event, "Renamed Global")
       renamed.update_column(:name, "Old Event Name") # rubocop:disable Rails/SkipsModelValidations
-      event.event_vendors.create!(name: "Ambiguous Vendor")
-      event.event_vendors.create!(name: "Ambiguous  Vendor")
+      ambiguous_one = add_event_vendor(event, "Ambiguous Vendor One")
+      ambiguous_two = add_event_vendor(event, "Ambiguous Vendor Two")
+      ambiguous_one.update_column(:name, "Ambiguous Vendor") # rubocop:disable Rails/SkipsModelValidations
+      ambiguous_two.update_column(:name, "Ambiguous  Vendor") # rubocop:disable Rails/SkipsModelValidations
 
       create_item(master, "Acme & Sons")
       create_item(master, "Renamed Global")
@@ -83,7 +140,7 @@ module Vendors
 
     test "reports inventory and malformed contact shapes without changing records" do
       global_vendor = GlobalVendor.create!(name: "Malformed Global")
-      event_vendor = events(:two).event_vendors.create!(name: "Malformed Event Vendor")
+      event_vendor = events(:two).event_vendors.create!(global_vendor:)
       global_vendor.update_column(:contacts_jsonb, [ "bad", { "legacy" => "value" } ]) # rubocop:disable Rails/SkipsModelValidations
       event_vendor.update_column(:contacts_jsonb, [ "bad", { "legacy" => "value" } ]) # rubocop:disable Rails/SkipsModelValidations
       timestamps = [ global_vendor.reload.updated_at, event_vendor.reload.updated_at ]
@@ -92,7 +149,7 @@ module Vendors
 
       assert_operator metrics[:global_vendors_total], :>=, 1
       assert_operator metrics[:event_vendors_total], :>=, 1
-      assert_operator metrics[:event_vendors_unlinked], :>=, 1
+      assert_operator metrics[:event_vendors_linked], :>=, 1
       assert_operator metrics[:global_vendors_with_malformed_contact_entries], :>=, 1
       assert_operator metrics[:event_vendors_with_malformed_contact_entries], :>=, 1
       assert_operator metrics[:global_vendors_with_unknown_contact_keys], :>=, 1

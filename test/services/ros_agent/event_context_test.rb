@@ -19,13 +19,15 @@ module RosAgent
           id: event_vendors(:catering).id,
           global_vendor_id: event_vendors(:catering).global_vendor_id,
           name: "Sunshine Catering",
-          vendor_type: "Catering"
+          vendor_type: "Catering",
+          social_handle: "@sunshinecatering"
         },
         {
           id: event_vendors(:lighting).id,
           global_vendor_id: event_vendors(:lighting).global_vendor_id,
           name: "Bright Lights Production",
-          vendor_type: "Lighting"
+          vendor_type: "Lighting",
+          social_handle: "@brightlights"
         }
       ], payload.fetch(:vendors)
       assert_includes payload.dig(:tags).map { |tag| tag[:name] }, "Vendor"
@@ -41,6 +43,26 @@ module RosAgent
       assert_equal false, reception_payload.dig(:relative_timing, :to_anchor_end)
       assert_includes payload.fetch(:current_calendar_items).map { |item| item[:title] }, "Afterparty"
       refute_includes payload.inspect, "Awards Night"
+    end
+
+    test "serializes global vendor identity and the event type override" do
+      vendor = event_vendors(:catering)
+      vendor.update_columns(
+        name: "Legacy Event Name",
+        social_handle: "@legacy-event-handle",
+        vendor_type: "Reception Catering"
+      )
+      vendor.global_vendor.update!(
+        name: "Sunshine Hospitality",
+        default_social_handle: "sunshinehospitality"
+      )
+
+      payload = EventContext.new(events(:one)).as_json
+      serialized = payload.fetch(:vendors).find { |entry| entry[:id] == vendor.id }
+
+      assert_equal "Sunshine Hospitality", serialized[:name]
+      assert_equal "@sunshinehospitality", serialized[:social_handle]
+      assert_equal "Reception Catering", serialized[:vendor_type]
     end
   end
 end

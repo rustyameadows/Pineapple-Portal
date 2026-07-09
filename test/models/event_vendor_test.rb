@@ -5,61 +5,82 @@ class EventVendorTest < ActiveSupport::TestCase
     @event = events(:one)
   end
 
-  test "requires a name" do
-    vendor = @event.event_vendors.new(name: " ")
+  test "requires a global vendor" do
+    vendor = @event.event_vendors.new
 
     assert_not vendor.valid?
-    assert_includes vendor.errors[:name], "can't be blank"
+    assert_includes vendor.errors[:global_vendor], "must exist"
   end
 
-  test "enforces case insensitive uniqueness per event" do
-    existing = event_vendors(:catering)
+  test "enforces one association to a global vendor per event" do
+    global_vendor = GlobalVendor.create!(name: "One Per Event Vendor")
+    @event.event_vendors.create!(global_vendor:)
 
-    vendor = @event.event_vendors.new(name: existing.name.upcase)
+    vendor = @event.event_vendors.new(global_vendor:)
 
     assert_not vendor.valid?
-    assert_includes vendor.errors[:name], "has already been taken"
+    assert_includes vendor.errors[:global_vendor_id], "has already been taken"
   end
 
   test "assigns sequential position" do
     existing_position = @event.event_vendors.maximum(:position)
+    global_vendor = GlobalVendor.create!(name: "Florist Global")
 
-    vendor = @event.event_vendors.create!(name: "Florist Co")
+    vendor = @event.event_vendors.create!(global_vendor:)
 
     assert_equal existing_position + 1, vendor.position
   end
 
-  test "sanitizes contact attributes and removes blanks" do
-    vendor = @event.event_vendors.new(name: "AV Crew")
-    vendor.contacts_attributes = {
-      "0" => { name: "  Alice  ", email: "  alice@example.com  ", title: "", phone: "", notes: "  Arrives early  " },
-      "1" => { name: " ", email: " ", phone: "" }
-    }
+  test "returns only selected contacts in selection order" do
+    global_vendor = GlobalVendor.create!(
+      name: "AV Global",
+      contacts_attributes: {
+        "0" => { name: "First Contact" },
+        "1" => { name: "Second Contact" },
+        "2" => { name: "Third Contact" }
+      }
+    )
+    vendor = @event.event_vendors.create!(global_vendor:)
+    vendor.replace_contact_ids!([ global_vendor.contacts.third.id, global_vendor.contacts.first.id ])
 
-    assert vendor.valid?
-
-    expected = [{
-      "name" => "Alice",
-      "title" => nil,
-      "email" => "alice@example.com",
-      "phone" => nil,
-      "notes" => "Arrives early"
-    }]
-
-    assert_equal expected, vendor.contacts
+    assert_equal [ "Third Contact", "First Contact" ], vendor.selected_contacts.map(&:name)
+    assert_equal [ global_vendor.contacts.third.id, global_vendor.contacts.first.id ], vendor.selected_contact_ids
   end
 
-  test "rejects malformed contacts payload" do
-    vendor = @event.event_vendors.new(name: "Photo Booth")
-    vendor.contacts_jsonb = "not-an-array"
+  test "replaces and clears contact selections without accepting another vendor's contacts" do
+    global_vendor = GlobalVendor.create!(name: "Selection Global", contacts_attributes: { "0" => { name: "Selected" } })
+    other_global_vendor = GlobalVendor.create!(name: "Other Selection Global", contacts_attributes: { "0" => { name: "Wrong" } })
+    vendor = @event.event_vendors.create!(global_vendor:)
+    selected_contact = global_vendor.contacts.first
+
+    vendor.replace_contact_ids!([ selected_contact.id ])
+    assert_equal [ selected_contact.id ], vendor.selected_contact_ids
+
+    assert_raises(ActiveRecord::RecordNotFound) do
+      vendor.replace_contact_ids!([ other_global_vendor.contacts.first.id ])
+    end
+    assert_equal [ selected_contact.id ], vendor.selected_contact_ids
+
+    vendor.replace_contact_ids!([])
+    assert_empty vendor.selected_contacts
+  end
+
+  test "cannot switch global vendors while old vendor contacts remain selected" do
+    original = GlobalVendor.create!(name: "Original Selection", contacts_attributes: { "0" => { name: "Original Contact" } })
+    replacement = GlobalVendor.create!(name: "Replacement Selection")
+    vendor = @event.event_vendors.create!(global_vendor: original)
+    vendor.replace_contact_ids!([ original.contacts.first.id ])
+
+    vendor.global_vendor = replacement
 
     assert_not vendor.valid?
-    assert_includes vendor.errors[:contacts_jsonb], "must be an array of contact hashes"
+    assert_includes vendor.errors[:selected_contacts], "must belong to the selected global vendor"
   end
 
   test "normalizes vendor type and social handle" do
+    global_vendor = GlobalVendor.create!(name: "DJ Collective")
     vendor = @event.event_vendors.create!(
-      name: "DJ Collective",
+      global_vendor:,
       vendor_type: "  Entertainment  ",
       social_handle: "  @djcollective  "
     )
@@ -69,8 +90,9 @@ class EventVendorTest < ActiveSupport::TestCase
   end
 
   test "normalizes team meals while preserving markdown and newlines" do
+    global_vendor = GlobalVendor.create!(name: "Meal Partner")
     vendor = @event.event_vendors.create!(
-      name: "Meal Partner",
+      global_vendor:,
       team_meals: "  **Vendor meals**\n\nPickup from [kitchen](https://example.com/kitchen).  "
     )
 

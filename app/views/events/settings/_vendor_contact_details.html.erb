@@ -1,8 +1,8 @@
 <div class="event-settings__contacts">
   <div class="event-settings__vendor-contact-heading">
     <div>
-      <h4 class="event-settings__contact-title">Contacts</h4>
-      <p class="event-settings__hint">Contacts are inherited from the global vendor and are read-only for this event.</p>
+      <h4 class="event-settings__contact-title">Event contacts</h4>
+      <p class="event-settings__hint">Choose the people from this vendor who are contacts for this event.</p>
     </div>
     <% if vendor.global_vendor && admin_user? %>
       <%= link_to "Edit global contacts",
@@ -11,40 +11,47 @@
     <% end %>
   </div>
 
-  <% if vendor.contacts.any? %>
-    <% vendor.contacts.each do |contact| %>
-      <% contact = contact.to_h.stringify_keys %>
-      <div class="event-settings__contact">
-        <h5 class="event-settings__contact-title"><%= contact["name"].presence || contact["title"].presence || "Contact" %></h5>
+  <% if vendor.global_vendor.contacts.any? %>
+    <%= hidden_field_tag "event_vendor[global_vendor_contact_ids][]", "" %>
+    <% selected_contact_ids = vendor.event_vendor_contacts.map(&:global_vendor_contact_id) %>
+    <% vendor.global_vendor.contacts.each do |contact| %>
+      <label class="event-settings__contact event-settings__contact--selectable">
+        <span class="event-settings__contact-selection">
+          <%= check_box_tag "event_vendor[global_vendor_contact_ids][]",
+                            contact.id,
+                            selected_contact_ids.include?(contact.id),
+                            id: "event_vendor_#{vendor.id}_global_vendor_contact_#{contact.id}" %>
+          <strong><%= contact.name.presence || contact.title.presence || "Contact" %></strong>
+        </span>
         <dl class="event-settings__contact-details">
-          <% if contact["title"].present? && contact["title"] != contact["name"] %>
+          <% if contact.title.present? && contact.title != contact.name %>
             <div>
               <dt>Title</dt>
-              <dd><%= contact["title"] %></dd>
+              <dd><%= contact.title %></dd>
             </div>
           <% end %>
-          <% if contact["email"].present? %>
+          <% if contact.email.present? %>
             <div>
               <dt>Email</dt>
-              <dd><%= contact["email"] %></dd>
+              <dd><%= contact.email %></dd>
             </div>
           <% end %>
-          <% if contact["phone"].present? %>
+          <% if contact.phone.present? %>
             <div>
               <dt>Phone</dt>
-              <dd><%= contact["phone"] %></dd>
+              <dd><%= contact.phone %></dd>
             </div>
           <% end %>
-          <% if contact["notes"].present? %>
+          <% if contact.notes.present? %>
             <div class="event-settings__contact-details-notes">
               <dt>Notes</dt>
-              <dd><%= contact["notes"] %></dd>
+              <dd><%= contact.notes %></dd>
             </div>
           <% end %>
         </dl>
-      </div>
+      </label>
     <% end %>
   <% else %>
-    <p class="event-settings__empty">No contacts are recorded on this vendor's global profile.</p>
+    <p class="event-settings__empty">No contacts are recorded on this vendor's global profile. Add contacts globally before selecting them for this event.</p>
   <% end %>
 </div>

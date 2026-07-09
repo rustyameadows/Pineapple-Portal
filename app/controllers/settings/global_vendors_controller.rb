@@ -5,6 +5,7 @@ module Settings
 
     def index
       @global_vendors = GlobalVendor
+                        .includes(:contacts)
                         .left_joins(:event_vendors)
                         .select("global_vendors.*, COUNT(event_vendors.id) AS usage_count")
                         .group("global_vendors.id")
@@ -13,9 +14,12 @@ module Settings
 
     def new
       @global_vendor = GlobalVendor.new
+      prepare_contact_slot
     end
 
-    def edit; end
+    def edit
+      prepare_contact_slot
+    end
 
     def create
       @global_vendor = GlobalVendor.new(global_vendor_params)
@@ -23,6 +27,7 @@ module Settings
       if @global_vendor.save
         redirect_to settings_global_vendors_path, notice: "Global vendor created."
       else
+        prepare_contact_slot
         flash.now[:alert] = @global_vendor.errors.full_messages.to_sentence
         render :new, status: :unprocessable_entity
       end
@@ -32,6 +37,7 @@ module Settings
       if @global_vendor.update(global_vendor_params)
         redirect_to settings_global_vendors_path, notice: "Global vendor updated."
       else
+        prepare_contact_slot
         flash.now[:alert] = @global_vendor.errors.full_messages.to_sentence
         render :edit, status: :unprocessable_entity
       end
@@ -58,8 +64,12 @@ module Settings
         :name,
         :default_vendor_type,
         :default_social_handle,
-        contacts_attributes: %i[id name title email phone notes _destroy]
+        contacts_attributes: %i[id name title email phone notes position _destroy]
       )
+    end
+
+    def prepare_contact_slot
+      @global_vendor.contacts.build unless @global_vendor.contacts.any?(&:new_record?)
     end
   end
 end

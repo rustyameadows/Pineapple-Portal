@@ -82,23 +82,23 @@ module Documents
 
       def html_view_payload
         payload = case segment.html_view_key
-                  when "cover_sheet"
+        when "cover_sheet"
                     cover_payload
-                  when "planning_team"
+        when "planning_team"
                     planning_team_payload
-                  when DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
+        when DocumentSegment::EVENT_OVERVIEW_VIEW_KEY
                     event_overview_payload
-                  when DocumentSegment::VENDOR_CONTACTS_VIEW_KEY
+        when DocumentSegment::VENDOR_CONTACTS_VIEW_KEY
                     vendor_contacts_payload
-                  when DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY
+        when DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY
                     wedding_party_reference_payload
-                  when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
+        when DocumentSegment::RUN_OF_SHOW_VIEW_KEY
                     timeline_payload(run_of_show: true)
-                  when DocumentSegment::TIMELINE_VIEW_KEY
+        when DocumentSegment::TIMELINE_VIEW_KEY
                     timeline_payload(run_of_show: false)
-                  else
+        else
                     {}
-                  end
+        end
 
         with_shared_template_version(payload)
       end
@@ -243,7 +243,7 @@ module Documents
               user_updated_at: user.updated_at&.utc&.iso8601
             }
           end,
-          vendors: segment.event.event_vendors.includes(:global_vendor).ordered.map do |vendor|
+          vendors: segment.event.event_vendors.includes(:global_vendor, event_vendor_contacts: :global_vendor_contact).ordered.map do |vendor|
             {
               vendor_id: vendor.id,
               position: vendor.position,
@@ -251,10 +251,18 @@ module Documents
               vendor_type: resolved_vendor_type(vendor),
               name: resolved_vendor_name(vendor),
               team_meals: vendor.team_meals.to_s.strip.presence,
-              contacts: Array(vendor.contacts).map do |contact|
-                contact.to_h.stringify_keys.slice("name", "title", "email", "phone", "notes").transform_values do |value|
-                  value.to_s.strip.presence
-                end
+              contacts: vendor.event_vendor_contacts.sort_by { |selection| [ selection.position, selection.id ] }.map do |selection|
+                contact = selection.global_vendor_contact
+                {
+                  selection_id: selection.id,
+                  selection_position: selection.position,
+                  contact_id: contact.id,
+                  name: contact.name.to_s.strip.presence,
+                  title: contact.title.to_s.strip.presence,
+                  email: contact.email.to_s.strip.presence,
+                  phone: contact.phone.to_s.strip.presence,
+                  notes: contact.notes.to_s.strip.presence
+                }
               end
             }
           end
@@ -308,7 +316,7 @@ module Documents
                                  .select(&:milestone?)
                                  .sort_by do |item|
           start_time = item.effective_starts_at&.in_time_zone(timezone)
-          [start_time&.to_f || Float::INFINITY, item.title.to_s.downcase]
+          [ start_time&.to_f || Float::INFINITY, item.title.to_s.downcase ]
         end
 
         milestone_items
@@ -401,7 +409,7 @@ module Documents
                         .select(&:milestone?)
                         .sort_by do |item|
           start_time = item.effective_starts_at&.in_time_zone(timezone)
-          [start_time&.to_f || Float::INFINITY, item.title.to_s.downcase]
+          [ start_time&.to_f || Float::INFINITY, item.title.to_s.downcase ]
         end
 
         {
@@ -436,7 +444,7 @@ module Documents
         view = nil
         items = if run_of_show
                   calendar.calendar_items.includes(:team_members).ordered.reject { |item| item.tagged_with?("decisions") }
-                else
+        else
                   view_ref = segment.html_options["view_ref"].presence
                   view = calendar.event_calendar_views.find_by(id: view_ref)
                   return { error: "view_missing", view_ref: view_ref } unless view
@@ -445,7 +453,7 @@ module Documents
                   filtered = filter.items
                   filtered = filtered.reject { |item| item.tagged_with?("decisions") } unless view.slug == "decision-calendar"
                   filtered
-                end
+        end
 
         {
           run_of_show: run_of_show,
@@ -495,7 +503,7 @@ module Documents
       end
 
       def resolved_vendor_name(vendor)
-        vendor.global_vendor&.name.to_s.strip.presence || vendor.name.to_s.strip
+        vendor.global_vendor.name.to_s.strip
       end
 
       def resolved_vendor_type(vendor)
@@ -503,7 +511,7 @@ module Documents
       end
 
       def resolved_vendor_social_handle(vendor)
-        vendor.social_handle.to_s.strip.presence || vendor.global_vendor&.default_social_handle.to_s.strip.presence
+        vendor.global_vendor.default_social_handle.to_s.strip.presence
       end
 
       def normalized_social_handle(value)

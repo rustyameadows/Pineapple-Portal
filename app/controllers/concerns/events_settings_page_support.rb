@@ -45,7 +45,9 @@ module EventsSettingsPageSupport
 
   def prepare_vendors
     @event_vendor = @event.event_vendors.new(client_visible: true)
-    @event_vendors = @event.event_vendors.ordered
+    @event_vendors = @event.event_vendors
+                           .includes(:event_vendor_contacts, global_vendor: :contacts)
+                           .ordered
   end
 
   def prepare_locations

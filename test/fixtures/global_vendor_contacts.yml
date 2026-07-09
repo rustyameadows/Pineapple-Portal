@@ -1,0 +1,14 @@
+maria_cater:
+  global_vendor: sunshine_catering
+  name: Maria Cater
+  title: Account Manager
+  email: maria@sunshine.test
+  phone: 555-123-4567
+  notes: Gluten-free specialist
+  position: 0
+
+leo_light:
+  global_vendor: bright_lights
+  name: Leo Light
+  email: leo@bright.test
+  position: 0

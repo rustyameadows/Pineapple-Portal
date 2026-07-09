@@ -78,8 +78,12 @@ module Events
       assert_select "input[name*='contacts_attributes']", count: 0
       assert_select "textarea[name*='contacts_attributes']", count: 0
       assert_select ".event-settings__vendor-contact-heading", count: @event.event_vendors.count
-      assert_select ".event-settings__hint", text: /Contacts are inherited from the global vendor and are read-only for this event\./, count: @event.event_vendors.count
-      assert_select ".event-settings__contact-title", text: "Maria Cater", count: 1
+      assert_select ".event-settings__hint", text: /Choose the people from this vendor who are contacts for this event\./, count: @event.event_vendors.count
+      assert_select "input[type='checkbox'][name='event_vendor[global_vendor_contact_ids][]']", count: 2
+      assert_select "input[type='checkbox'][name='event_vendor[global_vendor_contact_ids][]'][checked='checked']", count: 2
+      assert_select "input[name='event_vendor[name]']", count: 1
+      assert_select "input[name='event_vendor[social_handle]']", count: 0
+      assert_select "button[name='event_vendor[create_global_vendor]'][value='1']", text: "Create globally and add", count: 1
     end
 
     test "renders locations page" do
