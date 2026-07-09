@@ -15,7 +15,6 @@ module Events
       end
 
       if @event_vendor.save
-        sync_global_vendor_from_event(@event_vendor)
         redirect_to safe_return_to(fallback: vendors_event_settings_path(@event)), notice: "Vendor saved."
       else
         redirect_to safe_return_to(fallback: vendors_event_settings_path(@event)), alert: @event_vendor.errors.full_messages.to_sentence
@@ -33,7 +32,6 @@ module Events
       end
 
       if @event_vendor.update(attrs)
-        sync_global_vendor_from_event(@event_vendor)
         redirect_to safe_return_to(fallback: vendors_event_settings_path(@event)), notice: "Vendor updated."
       else
         redirect_to safe_return_to(fallback: vendors_event_settings_path(@event)), alert: @event_vendor.errors.full_messages.to_sentence
@@ -71,8 +69,7 @@ module Events
         :team_meals,
         :client_visible,
         :position,
-        :global_vendor_id,
-        contacts_attributes: %i[id name title email phone notes _destroy]
+        :global_vendor_id
       )
     end
 
@@ -100,17 +97,6 @@ module Events
       GlobalVendor.find_by(normalized_name: normalized_name) || GlobalVendor.create!(name: name)
     rescue ActiveRecord::RecordNotUnique
       GlobalVendor.find_by(normalized_name: normalized_name)
-    end
-
-    def sync_global_vendor_from_event(record)
-      return unless record.global_vendor
-
-      updates = {}
-      updates[:default_vendor_type] = record.vendor_type if record.vendor_type.present?
-      updates[:default_social_handle] = record.social_handle if record.social_handle.present?
-      updates[:contacts_attributes] = record.contacts_attributes
-
-      record.global_vendor.update(updates) if updates.any?
     end
 
     def move_record(direction)

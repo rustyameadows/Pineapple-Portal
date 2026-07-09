@@ -726,6 +726,17 @@
   gap: 1rem;
 }
 
+.event-settings__vendor-contact-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.event-settings__vendor-contact-heading .event-settings__hint {
+  margin: 0.35rem 0 0;
+}
+
 .event-settings__contact {
   border: 1px solid color-mix(in srgb, var(--color-sea-foam) 42%, white);
   border-radius: var(--radius-md);
@@ -747,6 +758,35 @@
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.event-settings__contact-details {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin: 0;
+}
+
+.event-settings__contact-details div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.event-settings__contact-details dt {
+  color: var(--color-brown);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.event-settings__contact-details dd {
+  margin: 0;
+  color: var(--color-dark-brown);
+}
+
+.event-settings__contact-details .event-settings__contact-details-notes {
+  grid-column: 1 / -1;
 }
 
 .event-settings__field--notes {
