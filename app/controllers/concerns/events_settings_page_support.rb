@@ -46,6 +46,10 @@ module EventsSettingsPageSupport
   def prepare_vendors
     @event_vendor = @event.event_vendors.new(client_visible: true)
     @planning_company_global_vendor = Vendors::PlanningCompany.global_vendor_for(@event)
+    @planning_company_event_vendor = Vendors::PlanningCompany.event_vendor_for(@event)
+    @planner_team_members = @event.planner_team_members
+                                  .includes(:user)
+                                  .ordered_for_display
     @event_vendors = Vendors::PlanningCompany
                      .excluding(@event.event_vendors)
                      .includes(:event_vendor_contacts, global_vendor: :contacts)

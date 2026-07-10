@@ -1,0 +1,87 @@
+<dialog id="event-vendor-<%= vendor.id %>-dialog"
+        class="event-settings__vendor-dialog"
+        aria-labelledby="event-vendor-<%= vendor.id %>-dialog-title"
+        data-event-vendor-dialog-target="dialog"
+        data-action="cancel->event-vendor-dialog#handleCancel click->event-vendor-dialog#handleBackdropClose">
+  <div class="event-settings__vendor-dialog-panel">
+    <%= form_with model: [event, vendor], local: true, html: { class: "event-settings__form event-settings__vendor-dialog-form" } do |form| %>
+      <%= hidden_field_tag :return_to, request.fullpath %>
+
+      <header class="event-settings__vendor-dialog-header">
+        <div>
+          <p class="event-section__eyebrow">Event Vendor</p>
+          <h3 id="event-vendor-<%= vendor.id %>-dialog-title">Edit <%= vendor.global_vendor.name %></h3>
+        </div>
+        <button type="button"
+                class="button button--small button--ghost"
+                data-action="event-vendor-dialog#close">
+          Close
+        </button>
+      </header>
+
+      <div class="event-settings__vendor-dialog-body">
+        <div class="event-settings__vendor-dialog-identity">
+          <div>
+            <span class="event-settings__field-label">Global vendor</span>
+            <strong><%= vendor.global_vendor.name %></strong>
+          </div>
+          <div>
+            <span class="event-settings__field-label">Social handle</span>
+            <span><%= vendor.global_vendor.default_social_handle.presence || "—" %></span>
+          </div>
+        </div>
+
+        <div class="event-settings__vendor-dialog-grid">
+          <div class="event-settings__field">
+            <%= form.label :vendor_type, "Event type" %>
+            <%= form.text_field :vendor_type, placeholder: vendor.global_vendor.default_vendor_type.presence || "Floral, Lighting, etc." %>
+          </div>
+          <div class="event-settings__field event-settings__field--checkbox">
+            <label class="event-settings__toggle">
+              <%= form.check_box :client_visible %>
+              <span>Visible to clients</span>
+            </label>
+          </div>
+          <div class="event-settings__field event-settings__field--notes">
+            <%= form.label :team_meals, "Meal notes" %>
+            <%= form.text_area :team_meals,
+                               rows: 4,
+                               class: "event-settings__textarea event-settings__vendor-dialog-meals",
+                               placeholder: "Meal counts, timing, pickup details, or links." %>
+          </div>
+        </div>
+
+        <%= render "events/settings/vendor_contact_selection", vendor: %>
+      </div>
+
+      <footer class="event-settings__vendor-dialog-footer">
+        <div class="event-settings__vendor-dialog-secondary-actions">
+          <% if index.positive? %>
+            <%= link_to "Move up",
+                        move_up_event_event_vendor_path(event, vendor, return_to: request.fullpath),
+                        data: { turbo_method: :patch },
+                        class: "event-settings__control" %>
+          <% end %>
+          <% if index < vendors.length - 1 %>
+            <%= link_to "Move down",
+                        move_down_event_event_vendor_path(event, vendor, return_to: request.fullpath),
+                        data: { turbo_method: :patch },
+                        class: "event-settings__control" %>
+          <% end %>
+          <%= link_to "Remove vendor",
+                      event_event_vendor_path(event, vendor, return_to: request.fullpath),
+                      data: { turbo_method: :delete, turbo_confirm: "Remove this vendor?" },
+                      class: "event-settings__control event-settings__control--danger" %>
+        </div>
+        <div class="event-settings__vendor-dialog-primary-actions">
+          <button type="button"
+                  class="button button--small button--ghost"
+                  data-action="event-vendor-dialog#close">
+            Cancel
+          </button>
+          <%= form.submit "Save vendor", class: "button button--small" %>
+        </div>
+      </footer>
+    <% end %>
+  </div>
+</dialog>

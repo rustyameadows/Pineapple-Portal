@@ -1,0 +1,44 @@
+<section class="event-settings__vendor-dialog-contacts" aria-labelledby="event-vendor-<%= vendor.id %>-contacts-heading">
+  <div class="event-settings__vendor-contact-heading">
+    <div>
+      <h4 id="event-vendor-<%= vendor.id %>-contacts-heading" class="event-settings__contact-title">Contacts for this event</h4>
+      <p class="event-settings__hint">Select the contacts to include on this event.</p>
+    </div>
+    <% if admin_user? %>
+      <%= link_to "Manage vendor contacts",
+                  edit_settings_global_vendor_path(vendor.global_vendor),
+                  class: "event-section__link" %>
+    <% end %>
+  </div>
+
+  <% if vendor.global_vendor.contacts.any? %>
+    <%= hidden_field_tag "event_vendor[global_vendor_contact_ids][]", "" %>
+    <% selected_contact_ids = vendor.event_vendor_contacts.map(&:global_vendor_contact_id) %>
+    <div class="event-settings__vendor-dialog-contact-list">
+      <% vendor.global_vendor.contacts.each do |contact| %>
+        <% contact_label = contact.name.presence || contact.title.presence || "Contact" %>
+        <label class="event-settings__vendor-dialog-contact-item">
+          <span class="event-settings__vendor-dialog-contact-summary">
+            <%= check_box_tag "event_vendor[global_vendor_contact_ids][]",
+                              contact.id,
+                              selected_contact_ids.include?(contact.id),
+                              id: "event_vendor_#{vendor.id}_global_vendor_contact_#{contact.id}" %>
+            <span>
+              <strong><%= contact_label %></strong>
+              <% if contact.title.present? && contact.title != contact.name %>
+                <small><%= contact.title %></small>
+              <% end %>
+            </span>
+          </span>
+          <span class="event-settings__vendor-dialog-contact-details">
+            <% if contact.email.present? %><span><%= contact.email %></span><% end %>
+            <% if contact.phone.present? %><span><%= contact.phone %></span><% end %>
+            <% if contact.notes.present? %><span><%= contact.notes %></span><% end %>
+          </span>
+        </label>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="event-settings__empty">No contacts are recorded on this vendor's global profile.</p>
+  <% end %>
+</section>

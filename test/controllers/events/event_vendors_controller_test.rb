@@ -205,6 +205,38 @@ module Events
       assert_equal 1, planning_vendor.reload.position
     end
 
+    test "reorders vendors with move_down without moving the planning company" do
+      higher_vendor = event_vendors(:catering)
+      lower_vendor = event_vendors(:lighting)
+      planning_vendor = event_vendors(:pineapple_one)
+      higher_vendor.update!(position: 0)
+      planning_vendor.update!(position: 1)
+      lower_vendor.update!(position: 2)
+
+      patch move_down_event_event_vendor_url(@event, higher_vendor)
+
+      assert_redirected_to vendors_event_settings_url(@event)
+      assert higher_vendor.reload.position > lower_vendor.reload.position
+      assert_equal 1, planning_vendor.reload.position
+    end
+
+    test "does not move the planning company directly" do
+      planning_vendor = event_vendors(:pineapple_one)
+      original_positions = @event.event_vendors.order(:id).pluck(:id, :position)
+
+      patch move_up_event_event_vendor_url(@event, planning_vendor)
+
+      assert_redirected_to vendors_event_settings_url(@event)
+      assert_match(/managed by the Pineapple planning section/i, flash[:alert])
+      assert_equal original_positions, @event.event_vendors.reload.order(:id).pluck(:id, :position)
+
+      patch move_down_event_event_vendor_url(@event, planning_vendor)
+
+      assert_redirected_to vendors_event_settings_url(@event)
+      assert_match(/managed by the Pineapple planning section/i, flash[:alert])
+      assert_equal original_positions, @event.event_vendors.reload.order(:id).pluck(:id, :position)
+    end
+
     test "does not expose the planning company event profile to direct updates" do
       planning_vendor = event_vendors(:pineapple_one)
       original_type = planning_vendor.vendor_type
