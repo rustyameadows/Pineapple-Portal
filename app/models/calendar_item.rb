@@ -93,7 +93,7 @@ class CalendarItem < ApplicationRecord
   end
 
   def effective_ends_at(visited = Set.new)
-    return unless duration_minutes.present?
+    return unless duration_minutes&.positive?
 
     start_time = effective_starts_at(visited)
     return unless start_time

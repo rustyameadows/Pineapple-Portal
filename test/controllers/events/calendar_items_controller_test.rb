@@ -137,6 +137,27 @@ module Events
       assert_equal "**Guests** leave from the [front drive](https://example.com/map) at 2:15 PM.", item.reload.transportation_note
     end
 
+    test "update from a positive duration to zero renders only the start time" do
+      item = calendar_items(:ceremony)
+      row_id = ActionView::RecordIdentifier.dom_id(item, :timeline_row)
+
+      patch event_calendar_item_url(@event, item), params: {
+        calendar_item: {
+          title: item.title,
+          starts_at: "2025-10-01T15:00",
+          duration_display_value: "0",
+          duration_display_unit: "days",
+          duration_display_hours: "0",
+          duration_display_minutes: "0"
+        }
+      }
+
+      assert_redirected_to event_calendar_path(@event)
+      assert_equal 0, item.reload.duration_minutes
+      follow_redirect!
+      assert_select "##{row_id} td.event-calendars__schedule-column", text: "3:00 PM", count: 1
+    end
+
     test "update converts relative timing intent fields to canonical and display values" do
       item = calendar_items(:reception)
       anchor = calendar_items(:ceremony)

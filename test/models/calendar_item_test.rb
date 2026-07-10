@@ -41,6 +41,12 @@ class CalendarItemTest < ActiveSupport::TestCase
                     1
   end
 
+  test "effective ends at is nil for zero duration" do
+    @ceremony.duration_minutes = 0
+
+    assert_nil @ceremony.effective_ends_at
+  end
+
   test "relative to anchor end uses anchor duration" do
     cleanup = @calendar.calendar_items.create!(
       title: "Cleanup",
