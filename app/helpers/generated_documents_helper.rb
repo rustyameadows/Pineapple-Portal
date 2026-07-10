@@ -300,7 +300,6 @@ module GeneratedDocumentsHelper
         category: "Planning",
         vendor_name: planning_company.name.to_s.strip,
         team_meals: event.pineapple_team_meals.to_s.strip.presence,
-        merge_rows: true,
         rows: generated_vendor_contacts_planner_rows(event)
       }
     ] + Vendors::PlanningCompany
@@ -440,10 +439,11 @@ module GeneratedDocumentsHelper
     rows = event.planner_team_members.includes(:user).ordered_for_display.filter_map do |member|
       user = member.user
       next unless user
+      contact_name = user.name.to_s.strip
 
       {
-        contact: generated_vendor_contacts_visible_value(user.name.to_s.strip.presence),
-        phone: generated_vendor_contacts_visible_value(user.phone_number.to_s.strip.presence)
+        contact: contact_name,
+        phone: generated_vendor_contacts_phone_value(contact_name, user.phone_number)
       }
     end
 
@@ -455,8 +455,8 @@ module GeneratedDocumentsHelper
       contact_name = contact.name.to_s.strip.presence || contact.title.to_s.strip.presence
 
       {
-        contact: generated_vendor_contacts_visible_value(contact_name),
-        phone: generated_vendor_contacts_visible_value(contact.phone.to_s.strip.presence)
+        contact: contact_name.to_s,
+        phone: generated_vendor_contacts_phone_value(contact_name, contact.phone)
       }
     end
 
@@ -465,9 +465,16 @@ module GeneratedDocumentsHelper
 
   def generated_vendor_contacts_blank_row
     {
-      contact: "—",
-      phone: "—"
+      contact: "",
+      phone: ""
     }
+  end
+
+  def generated_vendor_contacts_phone_value(contact_name, phone)
+    phone_value = phone.to_s.strip
+    return phone_value if phone_value.present?
+
+    contact_name.to_s.strip.present? ? "—" : ""
   end
 
   def generated_vendor_contacts_visible_value(value)

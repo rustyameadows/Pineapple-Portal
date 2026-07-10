@@ -27,7 +27,7 @@ class VendorContactsSectionTest < ActionView::TestCase
     view.define_singleton_method(:inline_font_asset_data_uri) { |_path| "data:font/woff2;base64,stub" }
   end
 
-  test "renders a grouped vendor contacts table and merges Pineapple cells" do
+  test "renders a grouped vendor contacts table and merges every vendor group" do
     @event.update!(
       pineapple_team_meals: "**Pineapple meals** available for *four planners*.\n\n[Meal order](https://example.com/pineapple-meals)\n\n[Unsafe](javascript:alert(1))"
     )
@@ -80,7 +80,7 @@ class VendorContactsSectionTest < ActionView::TestCase
     render template: "generated_documents/sections/vendor_contacts", locals: { render_base_styles: false }
 
     fragment = Nokogiri::HTML.fragment(rendered)
-    rows = fragment.css("table tbody tr")
+    rows = fragment.css("table.generated-template--vendor-contacts__table > tbody.generated-template--vendor-contacts__group > tr")
 
     assert_select ".generated-template--vendor-contacts", count: 1
     assert_select ".generated-template__page-header-title", text: "Vendor Contacts"
@@ -95,33 +95,50 @@ class VendorContactsSectionTest < ActionView::TestCase
     assert_select "table tbody tr td", text: "Lighting", count: 2
     assert_select "table tbody tr td", text: "Stationery", count: 1
     assert_select "table tbody tr td", text: "Pineapple Productions", count: 1
-    assert_select "table tbody tr td", text: "Ada Fixture", count: 1
-    assert_select "table tbody tr td", text: "Grace Fixture", count: 1
-    assert_select "table tbody tr td", text: "Brooke Planner", count: 1
+    assert_select ".generated-template--vendor-contacts__contact", text: "Ada Fixture", count: 1
+    assert_select ".generated-template--vendor-contacts__contact", text: "Grace Fixture", count: 1
+    assert_select ".generated-template--vendor-contacts__contact", text: "Brooke Planner", count: 1
     assert_select "table tbody tr td", text: "Sunshine Catering", count: 1
     assert_select "table tbody tr td", text: "Bright Lights Production", count: 1
     assert_select "table tbody tr td", text: "Stationery Studio", count: 1
     assert_select "table tbody tr td", text: "Silent Vendor", count: 1
     assert_select "table tbody tr td", text: "House Band", count: 1
-    assert_select "table tbody tr td", text: "Ivy Sound", count: 1
+    assert_select ".generated-template--vendor-contacts__contact", text: "Ivy Sound", count: 1
     assert_no_match(/Unselected Band Manager/, rendered)
-    assert_equal 9, rows.count
-    planning_rows = fragment.css("tbody.generated-template--vendor-contacts__group").first.css("tr")
-    planning_rowspan_cells = planning_rows.first.css("[rowspan]")
+    assert_equal 6, rows.count
+    vendor_groups = fragment.css("table.generated-template--vendor-contacts__table > tbody.generated-template--vendor-contacts__group")
 
-    assert_equal 3, fragment.css("[rowspan]").size
-    assert_equal 3, planning_rowspan_cells.size
-    assert planning_rowspan_cells.all? { |cell| cell["rowspan"] == planning_rows.size.to_s }
-    assert_equal 2, planning_rows[1].css("td").size
-    assert_equal 6, fragment.css("tbody.generated-template--vendor-contacts__group").size
-    assert fragment.css(".generated-template--vendor-contacts__category--continued").any?
-    assert fragment.css(".generated-template--vendor-contacts__vendor--continued").any?
-    assert fragment.css(".generated-template--vendor-contacts__team-meals--continued").any?
+    assert_equal 6, vendor_groups.size
+    vendor_groups.each do |vendor_group|
+      assert_equal 1, vendor_group.xpath("./tr").size
+      assert_equal 1, vendor_group.css("td.generated-template--vendor-contacts__contacts-cell[colspan='2']").size
+      assert_empty vendor_group.css("table.generated-template--vendor-contacts__contacts-table")
+      contact_rows = vendor_group.css(".generated-template--vendor-contacts__contacts-list > .generated-template--vendor-contacts__contact-row")
+      assert contact_rows.any?
+      assert contact_rows.all? { |contact_row| contact_row.xpath("./div").size == 2 }
+    end
+    stationery_group = vendor_groups.find { |vendor_group| vendor_group.text.include?("Stationery Studio") }
+    assert_not_nil stationery_group
+    assert_equal 2, stationery_group.css(".generated-template--vendor-contacts__contact-row").size
+    assert_includes stationery_group.text.squish,
+                    "Stationery Stationery Studio Avery Ink 555-111-2222 On-Site Contact 555-222-3333 Vendor meals available for two staff."
+    silent_vendor_group = vendor_groups.find { |vendor_group| vendor_group.text.include?("Silent Vendor") }
+    assert_not_nil silent_vendor_group
+    silent_contact_cells = silent_vendor_group.css(".generated-template--vendor-contacts__contact-row > div")
+    assert_equal [ "", "" ], silent_contact_cells.map { |cell| cell.text.strip }
+    named_contact_rows = vendor_groups.flat_map { |vendor_group| vendor_group.css(".generated-template--vendor-contacts__contact-row") }
+    named_contact_without_phone = named_contact_rows.find do |contact_row|
+      cells = contact_row.xpath("./div")
+      cells.first.text.strip.present? && cells.last.text.strip == "—"
+    end
+    assert_not_nil named_contact_without_phone
+    assert_empty fragment.css("[rowspan]")
     assert_match(/Planning Pineapple Productions Ada Fixture 555-111-2222/, rows.first.text.squish)
     assert_includes rows.first.text.squish, "Pineapple meals available for four planners."
     assert rows.map { |row| row.text.squish }.any? { |text| text.include?("Catering Sunshine Catering Maria Cater 555-123-4567") }
-    assert rows.map { |row| row.text.squish }.any? { |text| text.include?("Stationery Stationery Studio Avery Ink 555-111-2222 Vendor meals available for two staff.") }
-    assert fragment.css(".generated-template--vendor-contacts__team-meals").any? { |cell| cell.text.strip == "\u2014" }
+    team_meal_cells = fragment.css(".generated-template--vendor-contacts__team-meals")
+    assert team_meal_cells.any? { |cell| cell.text.strip.empty? }
+    assert team_meal_cells.none? { |cell| cell.text.strip == "\u2014" }
     assert_select ".generated-template--vendor-contacts__team-meals strong", text: "Vendor meals"
     assert_select ".generated-template--vendor-contacts__team-meals strong", text: "Pineapple meals"
     assert_select ".generated-template--vendor-contacts__team-meals em", text: "two staff"

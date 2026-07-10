@@ -45,12 +45,34 @@
     font-weight: 600;
   }
 
-  .generated-template--vendor-contacts__contact {
-    width: 24%;
+  .generated-template--vendor-contacts__contacts-cell {
+    width: 40%;
+    padding: 0 !important;
+  }
+
+  .generated-template--vendor-contacts__contacts-list {
+    display: grid;
+    align-content: start;
+    width: 100%;
+  }
+
+  .generated-template--vendor-contacts__contact-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .generated-template--vendor-contacts__contact-row + .generated-template--vendor-contacts__contact-row {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .generated-template--vendor-contacts__contact,
+  .generated-template--vendor-contacts__phone {
+    min-width: 0;
+    padding: 0.04in 0.06in;
   }
 
   .generated-template--vendor-contacts__phone {
-    width: 16%;
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
     white-space: nowrap;
   }
 
@@ -68,15 +90,6 @@
     margin: 0;
   }
 
-  .generated-template--vendor-contacts__category--continued,
-  .generated-template--vendor-contacts__vendor--continued,
-  .generated-template--vendor-contacts__team-meals--continued {
-    border-top-color: transparent;
-  }
-
-  .generated-template--vendor-contacts__continued-value {
-    visibility: hidden;
-  }
 </style>
 
 <section class="generated-template generated-template--packet-sheet generated-template--vendor-contacts">
@@ -94,44 +107,29 @@
     </thead>
       <% vendor_groups.each do |group| %>
         <tbody class="generated-template--vendor-contacts__group">
-          <% merge_rows = group[:merge_rows] %>
-          <% row_span = group[:rows].size %>
-          <% group[:rows].each_with_index do |row, index| %>
-            <% continued = index.positive? %>
-            <tr>
-              <% if !merge_rows || !continued %>
-                <td class="generated-template--vendor-contacts__category <%= "generated-template--vendor-contacts__category--continued" if continued %>" <%= "rowspan=#{row_span}" if merge_rows %>>
-                  <% if continued %>
-                    <span class="generated-template--vendor-contacts__continued-value" aria-hidden="true">&nbsp;</span>
-                  <% else %>
-                    <%= group[:category] %>
-                  <% end %>
-                </td>
-                <td class="generated-template--vendor-contacts__vendor <%= "generated-template--vendor-contacts__vendor--continued" if continued %>" <%= "rowspan=#{row_span}" if merge_rows %>>
-                  <% if continued %>
-                    <span class="generated-template--vendor-contacts__continued-value" aria-hidden="true">&nbsp;</span>
-                  <% else %>
-                    <%= group[:vendor_name] %>
-                  <% end %>
-                </td>
+          <tr>
+            <td class="generated-template--vendor-contacts__category"><%= group[:category] %></td>
+            <td class="generated-template--vendor-contacts__vendor"><%= group[:vendor_name] %></td>
+            <td class="generated-template--vendor-contacts__contacts-cell" colspan="2">
+              <div class="generated-template--vendor-contacts__contacts-list"
+                   role="table"
+                   aria-label="<%= "#{group[:vendor_name]} contacts" %>">
+                <% group[:rows].each do |row| %>
+                  <div class="generated-template--vendor-contacts__contact-row" role="row">
+                    <div class="generated-template--vendor-contacts__contact" role="cell"><%= row[:contact] %></div>
+                    <div class="generated-template--vendor-contacts__phone" role="cell"><%= row[:phone] %></div>
+                  </div>
+                <% end %>
+              </div>
+            </td>
+            <td class="generated-template--vendor-contacts__team-meals">
+              <% if generated_packet_rich_text_present?(group[:team_meals]) %>
+                <div class="generated-template--packet-sheet__rich-text">
+                  <%= render_generated_packet_rich_text_content(group[:team_meals]) %>
+                </div>
               <% end %>
-              <td class="generated-template--vendor-contacts__contact"><%= row[:contact] %></td>
-              <td class="generated-template--vendor-contacts__phone"><%= row[:phone] %></td>
-              <% if !merge_rows || !continued %>
-                <td class="generated-template--vendor-contacts__team-meals <%= "generated-template--vendor-contacts__team-meals--continued" if continued %>" <%= "rowspan=#{row_span}" if merge_rows %>>
-                  <% if continued %>
-                    <span class="generated-template--vendor-contacts__continued-value" aria-hidden="true">&nbsp;</span>
-                  <% elsif generated_packet_rich_text_present?(group[:team_meals]) %>
-                    <div class="generated-template--packet-sheet__rich-text">
-                      <%= render_generated_packet_rich_text_content(group[:team_meals]) %>
-                    </div>
-                  <% else %>
-                    &#8212;
-                  <% end %>
-                </td>
-              <% end %>
-            </tr>
-          <% end %>
+            </td>
+          </tr>
         </tbody>
       <% end %>
   </table>
