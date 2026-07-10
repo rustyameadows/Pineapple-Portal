@@ -66,6 +66,38 @@ module Events
       move_record(:down)
     end
 
+    def reorder
+      submitted_values = Array(params[:event_vendor_ids])
+      ordered_ids = submitted_reorder_ids
+      vendors = Vendors::PlanningCompany.excluding(@event.event_vendors).order(:position, :id).to_a
+      vendor_ids = vendors.map(&:id)
+
+      unless ordered_ids.length == submitted_values.length &&
+             ordered_ids.length == vendor_ids.length &&
+             ordered_ids.uniq.length == ordered_ids.length &&
+             ordered_ids.sort == vendor_ids.sort
+        head :unprocessable_entity
+        return
+      end
+
+      planning_position = Vendors::PlanningCompany.event_vendor_for(@event)&.position
+      available_positions = reorder_positions(vendors.length, excluding: planning_position)
+      temporary_position = @event.event_vendors.maximum(:position).to_i + vendors.length + 5
+
+      EventVendor.transaction do
+        ordered_ids.each do |vendor_id|
+          @event.event_vendors.where(id: vendor_id).update_all(position: temporary_position)
+          temporary_position += 1
+        end
+
+        ordered_ids.each_with_index do |vendor_id, index|
+          @event.event_vendors.where(id: vendor_id).update_all(position: available_positions.fetch(index))
+        end
+      end
+
+      head :ok
+    end
+
     private
 
     def set_event
@@ -172,6 +204,26 @@ module Events
       end
 
       redirect_to safe_return_to(fallback: vendors_event_settings_path(@event))
+    end
+
+    def submitted_reorder_ids
+      Array(params[:event_vendor_ids]).filter_map do |value|
+        Integer(value.to_s, 10)
+      rescue ArgumentError
+        nil
+      end
+    end
+
+    def reorder_positions(count, excluding:)
+      positions = []
+      candidate = 0
+
+      while positions.length < count
+        positions << candidate unless candidate == excluding
+        candidate += 1
+      end
+
+      positions
     end
   end
 end

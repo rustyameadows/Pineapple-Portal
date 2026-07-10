@@ -36,22 +36,35 @@
 
         <div class="event-section__body">
           <div class="event-settings__vendor-roster">
-            <div class="event-settings__vendor-roster-shell" role="region" aria-label="Event vendor roster" tabindex="0">
+            <div class="event-settings__vendor-roster-shell"
+                 role="region"
+                 aria-label="Event vendor roster"
+                 tabindex="0"
+                 data-controller="vendor-sortable"
+                 data-vendor-sortable-reorder-url-value="<%= reorder_event_event_vendors_path(@event) %>"
+                 data-vendor-sortable-csrf-token-value="<%= form_authenticity_token %>">
               <table class="event-settings__vendor-roster-table"
                      data-vendor-roster
+                     data-vendor-sortable-target="list"
                      aria-label="Vendors and selected contacts for this event">
                 <thead>
                   <tr>
-                    <th scope="col">Vendor</th>
+                    <th scope="col" colspan="2">Vendor</th>
                     <th scope="col">Edit</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <% if planning_company && planning_vendor %>
+                <% if planning_company && planning_vendor %>
+                  <tbody class="event-settings__vendor-roster-group event-settings__vendor-roster-group--planning"
+                         data-pinned-vendor-group>
                     <% planning_meals = @event.pineapple_team_meals.to_s.strip.presence %>
                     <tr class="event-settings__vendor-roster-row event-settings__vendor-roster-row--planning"
                         data-vendor-row
                         data-event-vendor-id="<%= planning_vendor.id %>">
+                      <td class="event-settings__vendor-roster-cell event-settings__vendor-roster-cell--drag">
+                        <span class="event-settings__vendor-pinned-marker"
+                              aria-label="Pinned vendor"
+                              title="Pinned vendor">★</span>
+                      </td>
                       <th scope="row" class="event-settings__vendor-roster-cell event-settings__vendor-roster-cell--identity">
                         <div class="event-settings__vendor-roster-primary">
                           <strong><%= planning_company.name %></strong>
@@ -84,7 +97,7 @@
                       <tr class="event-settings__vendor-roster-row event-settings__vendor-roster-row--child event-settings__vendor-roster-row--meals"
                           data-vendor-meals-row
                           data-parent-event-vendor-id="<%= planning_vendor.id %>">
-                        <td colspan="2" class="event-settings__vendor-roster-contact-cell">
+                        <td colspan="3" class="event-settings__vendor-roster-contact-cell">
                           <div class="event-settings__vendor-roster-contact event-settings__vendor-roster-meals">
                             <span class="event-settings__vendor-roster-meals-label">Meals</span>
                             <span class="event-settings__vendor-roster-meals-copy" title="<%= planning_meals %>"><%= event_vendor_meal_notes_preview(planning_meals) %></span>
@@ -99,7 +112,7 @@
                       <tr class="event-settings__vendor-roster-row event-settings__vendor-roster-row--child event-settings__vendor-roster-row--contact"
                           data-vendor-contact-row
                           data-parent-event-vendor-id="<%= planning_vendor.id %>">
-                        <td colspan="2" class="event-settings__vendor-roster-contact-cell">
+                        <td colspan="3" class="event-settings__vendor-roster-contact-cell">
                           <div class="event-settings__vendor-roster-contact">
                             <span class="event-settings__vendor-contact-name"><%= user.name %></span>
                             <% if user.title.present? %><span class="event-settings__vendor-contact-meta"><%= user.title %></span><% end %>
@@ -109,16 +122,29 @@
                         </td>
                       </tr>
                     <% end %>
-                  <% end %>
+                  </tbody>
+                <% end %>
 
-                  <% @event_vendors.each_with_index do |vendor, index| %>
-                    <% selections = vendor.event_vendor_contacts.sort_by { |selection| [selection.position, selection.id] } %>
-                    <% selected_contacts = selections.map(&:global_vendor_contact).compact %>
-                    <% vendor_type = vendor.vendor_type.presence || vendor.global_vendor.default_vendor_type.presence || "—" %>
-                    <% team_meals = vendor.team_meals.to_s.strip.presence %>
+                <% @event_vendors.each_with_index do |vendor, index| %>
+                  <% selections = vendor.event_vendor_contacts.sort_by { |selection| [selection.position, selection.id] } %>
+                  <% selected_contacts = selections.map(&:global_vendor_contact).compact %>
+                  <% vendor_type = vendor.vendor_type.presence || vendor.global_vendor.default_vendor_type.presence || "—" %>
+                  <% team_meals = vendor.team_meals.to_s.strip.presence %>
+                  <tbody class="event-settings__vendor-roster-group event-settings__vendor-roster-group--sortable"
+                         data-vendor-sortable-target="item"
+                         data-event-vendor-id="<%= vendor.id %>">
                     <tr class="event-settings__vendor-roster-row event-settings__vendor-roster-row--vendor"
                         data-vendor-row
                         data-event-vendor-id="<%= vendor.id %>">
+                      <td class="event-settings__vendor-roster-cell event-settings__vendor-roster-cell--drag">
+                        <button type="button"
+                                class="event-settings__vendor-drag-handle"
+                                data-vendor-sortable-target="handle"
+                                draggable="true"
+                                aria-label="Drag to reorder <%= vendor.global_vendor.name %>">
+                          <span aria-hidden="true">⋮⋮</span>
+                        </button>
+                      </td>
                       <th scope="row" class="event-settings__vendor-roster-cell event-settings__vendor-roster-cell--identity">
                         <div class="event-settings__vendor-roster-primary">
                           <strong><%= vendor.global_vendor.name %></strong>
@@ -153,7 +179,7 @@
                       <tr class="event-settings__vendor-roster-row event-settings__vendor-roster-row--child event-settings__vendor-roster-row--meals"
                           data-vendor-meals-row
                           data-parent-event-vendor-id="<%= vendor.id %>">
-                        <td colspan="2" class="event-settings__vendor-roster-contact-cell">
+                        <td colspan="3" class="event-settings__vendor-roster-contact-cell">
                           <div class="event-settings__vendor-roster-contact event-settings__vendor-roster-meals">
                             <span class="event-settings__vendor-roster-meals-label">Meals</span>
                             <span class="event-settings__vendor-roster-meals-copy" title="<%= team_meals %>"><%= event_vendor_meal_notes_preview(team_meals) %></span>
@@ -166,7 +192,7 @@
                       <tr class="event-settings__vendor-roster-row event-settings__vendor-roster-row--child event-settings__vendor-roster-row--contact"
                           data-vendor-contact-row
                           data-parent-event-vendor-id="<%= vendor.id %>">
-                        <td colspan="2" class="event-settings__vendor-roster-contact-cell">
+                        <td colspan="3" class="event-settings__vendor-roster-contact-cell">
                           <div class="event-settings__vendor-roster-contact">
                             <span class="event-settings__vendor-contact-name"><%= contact.name.presence || contact.title.presence || "Contact" %></span>
                             <% if contact.title.present? && contact.title != contact.name %><span class="event-settings__vendor-contact-meta"><%= contact.title %></span><% end %>
@@ -176,8 +202,8 @@
                         </td>
                       </tr>
                     <% end %>
-                  <% end %>
-                </tbody>
+                  </tbody>
+                <% end %>
               </table>
             </div>
 

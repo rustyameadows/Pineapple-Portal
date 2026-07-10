@@ -132,6 +132,9 @@ post "upload_failures", to: "upload_failures#create"
     end
 
     resources :event_vendors, only: %i[create update destroy], module: :events do
+      collection do
+        patch :reorder
+      end
       member do
         patch :move_up
         patch :move_down

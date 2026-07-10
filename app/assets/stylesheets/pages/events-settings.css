@@ -1464,15 +1464,74 @@
 
 .event-settings__vendor-roster-cell--identity {
   min-width: 0;
+  padding-left: 0.25rem;
   font-weight: var(--font-weight-normal);
   letter-spacing: normal;
   text-transform: none;
+}
+
+.event-settings__vendor-roster-cell--drag {
+  width: 2rem;
+  padding-right: 0.1rem;
+  padding-left: 0.1rem;
+  text-align: center;
 }
 
 .event-settings__vendor-roster-cell--actions {
   width: 5.5rem;
   text-align: right;
   white-space: nowrap;
+}
+
+.event-settings__vendor-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: color-mix(in srgb, var(--color-brown) 78%, white);
+  font-size: 0.82rem;
+  line-height: 1;
+  cursor: grab;
+}
+
+.event-settings__vendor-drag-handle:hover {
+  border-color: color-mix(in srgb, var(--color-sea-foam) 62%, white);
+  background: color-mix(in srgb, var(--color-sea-foam) 16%, white);
+  color: var(--color-dark-brown);
+}
+
+.event-settings__vendor-drag-handle:focus-visible {
+  outline: 2px solid var(--color-sea-foam);
+  outline-offset: 2px;
+}
+
+.event-settings__vendor-drag-handle:active {
+  cursor: grabbing;
+}
+
+.event-settings__vendor-pinned-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  color: color-mix(in srgb, var(--color-gold) 72%, var(--color-dark-brown));
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.event-settings__vendor-roster-group--dragging .event-settings__vendor-roster-row {
+  opacity: 0.62;
+}
+
+.event-settings__vendor-roster-group--dragging .event-settings__vendor-roster-cell,
+.event-settings__vendor-roster-group--dragging .event-settings__vendor-roster-contact-cell {
+  background: color-mix(in srgb, var(--color-sea-foam) 16%, white);
 }
 
 .event-settings__vendor-roster-primary {
@@ -1537,7 +1596,7 @@
   flex-wrap: wrap;
   gap: 0.25rem 0.75rem;
   min-height: 1.9rem;
-  margin-left: 2.3rem;
+  margin-left: 4.15rem;
   padding: 0.22rem 0.7rem;
   border-left: 2px solid color-mix(in srgb, var(--color-sea-foam) 84%, white);
 }

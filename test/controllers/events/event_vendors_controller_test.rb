@@ -262,6 +262,52 @@ module Events
       assert_equal original_positions, @event.event_vendors.reload.order(:id).pluck(:id, :position)
     end
 
+    test "reorders the complete ordinary vendor set while preserving the planning company position" do
+      catering_vendor = event_vendors(:catering)
+      lighting_vendor = event_vendors(:lighting)
+      planning_vendor = event_vendors(:pineapple_one)
+      catering_vendor.update!(position: 0)
+      planning_vendor.update!(position: 1)
+      lighting_vendor.update!(position: 2)
+
+      patch reorder_event_event_vendors_url(@event), params: {
+        event_vendor_ids: [ lighting_vendor.id, catering_vendor.id ]
+      }
+
+      assert_response :success
+      ordinary_ids = Vendors::PlanningCompany
+                     .excluding(@event.event_vendors.reload)
+                     .order(:position, :id)
+                     .pluck(:id)
+      assert_equal [ lighting_vendor.id, catering_vendor.id ], ordinary_ids
+      assert_equal 1, planning_vendor.reload.position
+      assert_equal [ 0, 2 ], [ lighting_vendor.reload.position, catering_vendor.reload.position ]
+    end
+
+    test "rejects incomplete duplicate foreign and planning-company reorder payloads" do
+      catering_vendor = event_vendors(:catering)
+      lighting_vendor = event_vendors(:lighting)
+      planning_vendor = event_vendors(:pineapple_one)
+      foreign_global_vendor = GlobalVendor.create!(name: "Foreign Reorder Vendor")
+      foreign_vendor = events(:two).event_vendors.create!(global_vendor: foreign_global_vendor)
+      original_positions = @event.event_vendors.order(:id).pluck(:id, :position)
+
+      invalid_orders = [
+        [ catering_vendor.id ],
+        [ catering_vendor.id, catering_vendor.id ],
+        [ catering_vendor.id, foreign_vendor.id ],
+        [ catering_vendor.id, lighting_vendor.id, "not-an-id" ],
+        [ planning_vendor.id, catering_vendor.id, lighting_vendor.id ]
+      ]
+
+      invalid_orders.each do |event_vendor_ids|
+        patch reorder_event_event_vendors_url(@event), params: { event_vendor_ids: }
+
+        assert_response :unprocessable_entity
+        assert_equal original_positions, @event.event_vendors.reload.order(:id).pluck(:id, :position)
+      end
+    end
+
     test "does not expose the planning company event profile to direct updates" do
       planning_vendor = event_vendors(:pineapple_one)
       original_type = planning_vendor.vendor_type

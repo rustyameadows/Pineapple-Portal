@@ -83,9 +83,16 @@ module Events
       assert_response :success
       assert_select "h1", text: "Vendors"
       assert_select "table[data-vendor-roster][aria-label='Vendors and selected contacts for this event']", count: 1 do
-        assert_select "th[scope='col']", text: "Vendor"
+        assert_select "th[scope='col'][colspan='2']", text: "Vendor"
         assert_select "th[scope='col']", text: "Edit"
         assert_select "th[scope='col']", count: 2
+        assert_select "tbody[data-pinned-vendor-group]", count: 1
+        assert_select "tbody[data-vendor-sortable-target='item']", count: generic_vendor_count
+        assert_select "button.event-settings__vendor-drag-handle[data-vendor-sortable-target='handle'][draggable='true']", count: generic_vendor_count
+        assert_select "tbody[data-pinned-vendor-group] .event-settings__vendor-pinned-marker[aria-label='Pinned vendor']", text: "★", count: 1
+        assert_select "tbody[data-pinned-vendor-group] button.event-settings__vendor-drag-handle", count: 0
+        assert_select "tr[data-vendor-contact-row] button.event-settings__vendor-drag-handle", count: 0
+        assert_select "tr[data-vendor-contact-row][draggable='true']", count: 0
         assert_select "tr[data-vendor-row][data-event-vendor-id]", count: @event.event_vendors.count
         assert_select "tr[data-vendor-contact-row]", count: 4
         assert_select "tr[data-vendor-contact-row]", text: /Maria Cater/, count: 1

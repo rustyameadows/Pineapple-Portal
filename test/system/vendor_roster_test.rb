@@ -18,6 +18,12 @@ class VendorRosterTest < ApplicationSystemTestCase
     visit vendors_event_settings_path(@event)
 
     assert_selector "table[data-vendor-roster]"
+    ordinary_vendor_count = Vendors::PlanningCompany.excluding(@event.event_vendors).count
+    assert_selector "tbody[data-vendor-sortable-target='item']", count: ordinary_vendor_count
+    assert_selector "button.event-settings__vendor-drag-handle[draggable='true']", count: ordinary_vendor_count
+    assert_selector "tbody[data-pinned-vendor-group] .event-settings__vendor-pinned-marker", text: "★", count: 1
+    assert_no_selector "tbody[data-pinned-vendor-group] button.event-settings__vendor-drag-handle"
+    assert_no_selector "tr[data-vendor-contact-row] button.event-settings__vendor-drag-handle"
     assert_selector "tr[data-vendor-row][data-event-vendor-id='#{@vendor.id}']",
                     text: /#{Regexp.escape(@vendor.global_vendor.name)}/i
     assert_selector "tr[data-vendor-meals-row][data-parent-event-vendor-id='#{@vendor.id}']",
