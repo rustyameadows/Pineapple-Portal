@@ -150,6 +150,24 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_no_match(/Legacy Event Vendor Name|legacy-event-handle/, rendered)
   end
 
+  test "does not duplicate the real planning company in social media rows" do
+    planning_company = global_vendors(:pineapple_productions)
+    planning_company.update!(
+      name: "Pineapple Planning Company",
+      default_social_handle: "@canonical-pineapple"
+    )
+
+    render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--event-overview__social-media-company",
+                  text: "Pineapple Planning Company",
+                  count: 1
+    assert_select ".generated-template--event-overview__social-media-company",
+                  text: "Pineapple Productions",
+                  count: 0
+    assert_select ".generated-template--event-overview__social-media-handle", text: "@canonical-pineapple", count: 1
+  end
+
   test "includes vendors without contact data" do
     silent_vendor = GlobalVendor.create!(
       name: "Silent Vendor",

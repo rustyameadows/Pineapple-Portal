@@ -11,6 +11,9 @@ module Vendors
     METRIC_KEYS = %i[
       global_vendors_total
       global_vendors_unused
+      planning_company_global_vendors
+      planning_company_event_vendors
+      events_missing_planning_company_vendor
       event_vendors_total
       event_vendors_linked
       event_vendors_unlinked
@@ -100,6 +103,18 @@ module Vendors
       metrics[:global_vendors_unused] = GlobalVendor
                                         .where.not(id: EventVendor.where.not(global_vendor_id: nil).select(:global_vendor_id))
                                         .count
+      planning_company_ids = GlobalVendor
+                             .where(system_role: GlobalVendor::SYSTEM_ROLES.fetch(:planning_company))
+                             .select(:id)
+      metrics[:planning_company_global_vendors] = planning_company_ids.count
+      metrics[:planning_company_event_vendors] = EventVendor.where(global_vendor_id: planning_company_ids).count
+      metrics[:events_missing_planning_company_vendor] = Event
+                                                         .where.not(
+                                                           id: EventVendor
+                                                             .where(global_vendor_id: planning_company_ids)
+                                                             .select(:event_id)
+                                                         )
+                                                         .count
       metrics[:event_vendors_total] = EventVendor.count
       metrics[:event_vendors_linked] = EventVendor.where.not(global_vendor_id: nil).count
       metrics[:event_vendors_unlinked] = EventVendor.where(global_vendor_id: nil).count

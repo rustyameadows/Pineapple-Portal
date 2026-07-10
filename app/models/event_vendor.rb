@@ -16,6 +16,7 @@ class EventVendor < ApplicationRecord
   before_validation :normalize_social_handle
   before_validation :normalize_team_meals
   before_validation :assign_position, on: :create
+  before_destroy :prevent_planning_company_removal
   validates :name, presence: true, uniqueness: { scope: :event_id, case_sensitive: false }
   validates :global_vendor_id, uniqueness: { scope: :event_id }
   validates :position, numericality: { greater_than_or_equal_to: 0, allow_nil: false }
@@ -57,6 +58,14 @@ class EventVendor < ApplicationRecord
   end
 
   private
+
+  def prevent_planning_company_removal
+    return unless global_vendor&.planning_company?
+    return if destroyed_by_association&.name == :event_vendors
+
+    errors.add(:base, "The planning company must remain associated with every event")
+    throw :abort
+  end
 
   def sync_name_from_global_vendor
     return unless global_vendor

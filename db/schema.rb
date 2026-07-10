@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_09_150000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_09_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -671,9 +671,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_09_150000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "contacts_jsonb", default: [], null: false
+    t.string "system_role"
     t.index ["name"], name: "index_global_vendors_on_name"
     t.index ["normalized_name"], name: "index_global_vendors_on_normalized_name", unique: true
+    t.index ["system_role"], name: "index_global_vendors_on_unique_system_role", unique: true, where: "(system_role IS NOT NULL)"
     t.check_constraint "jsonb_typeof(contacts_jsonb) = 'array'::text", name: "global_vendors_contacts_jsonb_array"
+    t.check_constraint "system_role IS NULL OR system_role::text = 'planning_company'::text", name: "global_vendors_system_role_known"
   end
 
   create_table "global_venues", force: :cascade do |t|

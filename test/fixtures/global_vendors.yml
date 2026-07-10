@@ -18,3 +18,11 @@ bright_lights:
   contacts_jsonb:
     - name: Leo Light
       email: leo@bright.test
+
+pineapple_productions:
+  name: Pineapple Productions
+  normalized_name: pineapple productions
+  default_vendor_type: Planning
+  default_social_handle: "@pineappleprodc"
+  system_role: planning_company
+  contacts_jsonb: []

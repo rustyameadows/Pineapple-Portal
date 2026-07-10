@@ -154,6 +154,27 @@ module Documents
         refute_equal after_create_hash, SegmentHasher.call(@source)
       end
 
+      test "generated hashes ignore the hidden event profile and track the canonical planning company profile" do
+        overview_hash = SegmentHasher.call(@source)
+        contacts_hash = SegmentHasher.call(@vendor_contacts_source)
+        planning_company = global_vendors(:pineapple_productions)
+        contact = planning_company.contacts.create!(name: "Duplicate Planning Contact", phone: "555-777-1212")
+        planning_event_vendor = event_vendors(:pineapple_one)
+        planning_event_vendor.update!(team_meals: "Duplicate planning meals")
+        planning_event_vendor.replace_contact_ids!([ contact.id ])
+
+        assert_equal overview_hash, SegmentHasher.call(@source)
+        assert_equal contacts_hash, SegmentHasher.call(@vendor_contacts_source)
+
+        planning_company.update!(
+          name: "Pineapple Planning Company",
+          default_social_handle: "@canonical-pineapple"
+        )
+
+        refute_equal overview_hash, SegmentHasher.call(@source)
+        refute_equal contacts_hash, SegmentHasher.call(@vendor_contacts_source)
+      end
+
       test "wedding party reference hash changes when getting ready details changes" do
         original_hash = SegmentHasher.call(@wedding_party_source)
 

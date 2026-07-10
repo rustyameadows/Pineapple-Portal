@@ -158,6 +158,19 @@ module Vendors
       assert_report_invariants(metrics)
     end
 
+    test "reports planning company coverage without changing records" do
+      baseline = Audit.new.call.metrics
+      event_vendors(:pineapple_two).delete
+
+      metrics = Audit.new.call.metrics
+
+      assert_equal 1, metrics[:planning_company_global_vendors]
+      assert_equal baseline[:planning_company_event_vendors] - 1,
+                   metrics[:planning_company_event_vendors]
+      assert_equal baseline[:events_missing_planning_company_vendor] + 1,
+                   metrics[:events_missing_planning_company_vendor]
+    end
+
     private
 
     def contact(name)

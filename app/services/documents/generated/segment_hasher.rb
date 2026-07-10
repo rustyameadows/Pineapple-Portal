@@ -183,6 +183,7 @@ module Documents
               updated_at: guest.updated_at&.utc&.iso8601
             }
           end,
+          planning_company: planning_company_profile_payload,
           planners: segment.event.planner_team_members.includes(:user).ordered_for_display.filter_map do |member|
             user = member.user
             next unless user
@@ -210,7 +211,11 @@ module Documents
               address: address
             }
           end,
-          vendors: segment.event.event_vendors.includes(:global_vendor).ordered.filter_map do |vendor|
+          vendors: Vendors::PlanningCompany
+                   .excluding(segment.event.event_vendors)
+                   .includes(:global_vendor)
+                   .ordered
+                   .filter_map do |vendor|
             {
               vendor_id: vendor.id,
               position: vendor.position,
@@ -227,6 +232,7 @@ module Documents
         {
           template_version: DocumentSegment::VENDOR_CONTACTS_TEMPLATE_VERSION,
           pineapple_team_meals: segment.event.pineapple_team_meals.to_s.strip.presence,
+          planning_company: planning_company_profile_payload,
           planners: segment.event.planner_team_members.includes(:user).ordered_for_display.filter_map do |member|
             user = member.user
             next unless user
@@ -243,7 +249,11 @@ module Documents
               user_updated_at: user.updated_at&.utc&.iso8601
             }
           end,
-          vendors: segment.event.event_vendors.includes(:global_vendor, event_vendor_contacts: :global_vendor_contact).ordered.map do |vendor|
+          vendors: Vendors::PlanningCompany
+                   .excluding(segment.event.event_vendors)
+                   .includes(:global_vendor, event_vendor_contacts: :global_vendor_contact)
+                   .ordered
+                   .map do |vendor|
             {
               vendor_id: vendor.id,
               position: vendor.position,
@@ -504,6 +514,19 @@ module Documents
 
       def resolved_vendor_name(vendor)
         vendor.global_vendor.name.to_s.strip
+      end
+
+      def planning_company_profile_payload
+        event_vendor = Vendors::PlanningCompany.event_vendor_for(segment.event)
+        global_vendor = event_vendor&.global_vendor
+        return unless global_vendor
+
+        {
+          event_vendor_id: event_vendor.id,
+          global_vendor_id: global_vendor.id,
+          name: global_vendor.name.to_s.strip,
+          social_handle: normalized_social_handle(global_vendor.default_social_handle)
+        }
       end
 
       def resolved_vendor_type(vendor)

@@ -152,6 +152,18 @@ These rules automatically handle the audited states:
 - Derive linked event vendor name/social display from `GlobalVendor`.
 - Keep legacy contact JSON columns during the verification window; stop using them as the active source after backfill.
 
+### Planning Company Addendum
+
+Treat Pineapple Productions as a real vendor without changing the planner-facing team workflow:
+
+- Mark the existing canonical global vendor with the unique system role `planning_company`; runtime identity must use this stable role rather than its name or database ID.
+- Create one event-vendor association to the planning company for every existing event and transactionally create it with every future event.
+- Keep individual Pineapple planner assignments on `EventTeamMember` and keep `Event#pineapple_team_meals` as the planner-facing meal field.
+- Keep the existing special planning block on event settings, but derive its company name and social profile from the canonical global vendor.
+- Exclude the underlying planning-company event vendor from generic vendor settings, People vendor cards, and duplicate generated-document rows while retaining it in vendor assignment options and ROS Agent vendor context.
+- Protect the required event-vendor link from ordinary update, movement, or deletion.
+- Audit the system role and event coverage explicitly after migration.
+
 ### Consumers to Convert
 
 - Global vendor index and editor.
@@ -179,6 +191,8 @@ Local implementation verification recorded July 9, 2026:
 - The full Rails suite passed with 734 tests and 3,914 assertions.
 - RuboCop passed for every Phase 1 Ruby change.
 - The expanded local audit reported zero legacy global contacts missing from the directory, zero legacy event contacts missing from the directory, zero expected selections missing, zero cross-global selections, and zero duplicate selection pairs.
+- The planning-company addendum migration adopted one canonical global vendor, associated it with all seven local events, and reported zero events missing the planning-company vendor.
+- After the planning-company addendum, the full Rails suite passed with 752 tests and 4,004 assertions.
 - Production deployment, production migration, and production audit verification remain required before Phase 1 is marked complete.
 
 ## Phase 2 — ROS Transition

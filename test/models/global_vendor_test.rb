@@ -1,6 +1,35 @@
 require "test_helper"
 
 class GlobalVendorTest < ActiveSupport::TestCase
+  test "finds the planning company by stable system role rather than name" do
+    planning_company = GlobalVendor.planning_company
+
+    assert planning_company.planning_company?
+
+    planning_company.update!(name: "Renamed Planning Company")
+
+    assert_equal planning_company, GlobalVendor.planning_company
+  end
+
+  test "allows only one vendor to hold a supported system role" do
+    duplicate = GlobalVendor.new(name: "Duplicate Planning Company", system_role: "planning_company")
+
+    assert_not duplicate.valid?
+    assert_includes duplicate.errors[:system_role], "has already been taken"
+
+    unsupported = GlobalVendor.new(name: "Unsupported Role Vendor", system_role: "other")
+
+    assert_not unsupported.valid?
+    assert_includes unsupported.errors[:system_role], "is not included in the list"
+  end
+
+  test "normalizes a blank system role to nil" do
+    vendor = GlobalVendor.create!(name: "Ordinary Vendor", system_role: "  ")
+
+    assert_nil vendor.system_role
+    refute vendor.planning_company?
+  end
+
   test "creates, updates, and removes first-class contacts through nested attributes" do
     global_vendor = GlobalVendor.create!(
       name: "Nested Contacts Vendor",

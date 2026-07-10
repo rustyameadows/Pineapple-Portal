@@ -216,7 +216,7 @@ module GeneratedDocumentsHelper
   end
 
   def generated_event_overview_vendors(event)
-    event.event_vendors.includes(:global_vendor).ordered.map do |vendor|
+    Vendors::PlanningCompany.excluding(event.event_vendors).includes(:global_vendor).ordered.map do |vendor|
       {
         name: generated_event_overview_vendor_name(vendor),
         vendor_type: generated_event_overview_vendor_type(vendor),
@@ -228,12 +228,15 @@ module GeneratedDocumentsHelper
   def generated_event_overview_social_media_rows(event)
     rows = []
     lead_planner = generated_event_overview_planners(event).find { |planner| planner[:lead] }
+    planning_company = Vendors::PlanningCompany.global_vendor_for(event)
 
     if lead_planner
       rows << {
         label: "Planning, Design & Coordination",
-        company_name: "Pineapple Productions",
-        social_handle: "@pineappleprodc"
+        company_name: planning_company.name.to_s.strip,
+        social_handle: generated_event_overview_social_handle(
+          planning_company.default_social_handle
+        )
       }
     end
 
@@ -290,15 +293,21 @@ module GeneratedDocumentsHelper
   end
 
   def generated_vendor_contacts_groups(event)
+    planning_company = Vendors::PlanningCompany.global_vendor_for(event)
+
     [
       {
         category: "Planning",
-        vendor_name: "Pineapple Productions",
+        vendor_name: planning_company.name.to_s.strip,
         team_meals: event.pineapple_team_meals.to_s.strip.presence,
         merge_rows: true,
         rows: generated_vendor_contacts_planner_rows(event)
       }
-    ] + event.event_vendors.includes(:global_vendor, event_vendor_contacts: :global_vendor_contact).ordered.map do |vendor|
+    ] + Vendors::PlanningCompany
+         .excluding(event.event_vendors)
+         .includes(:global_vendor, event_vendor_contacts: :global_vendor_contact)
+         .ordered
+         .map do |vendor|
       {
         category: generated_vendor_contacts_visible_value(generated_event_overview_vendor_type(vendor).presence),
         vendor_name: generated_vendor_contacts_visible_value(generated_event_overview_vendor_name(vendor).presence),

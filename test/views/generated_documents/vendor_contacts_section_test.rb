@@ -135,6 +135,21 @@ class VendorContactsSectionTest < ActionView::TestCase
     assert unsafe_links.all? { |link| link["href"].nil? }
   end
 
+  test "does not duplicate a real planning company event vendor" do
+    planning_company = global_vendors(:pineapple_productions)
+    contact = planning_company.contacts.create!(name: "Duplicate Planning Contact", phone: "555-777-1212")
+    planning_company.update!(name: "Pineapple Planning Company")
+    planning_event_vendor = event_vendors(:pineapple_one)
+    planning_event_vendor.update!(team_meals: "Duplicate planning meals")
+    planning_event_vendor.replace_contact_ids!([ contact.id ])
+
+    render template: "generated_documents/sections/vendor_contacts", locals: { render_base_styles: false }
+
+    assert_select "table tbody tr td", text: "Pineapple Planning Company", count: 1
+    assert_select "table tbody tr td", text: "Pineapple Productions", count: 0
+    assert_no_match(/Duplicate Planning Contact|555-777-1212|Duplicate planning meals/, rendered)
+  end
+
   private
 
   def create_event_vendor(name:, contacts:, social_handle: nil, **attributes)

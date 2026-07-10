@@ -9,7 +9,10 @@ module Events
       @new_event_guest = @event.event_guests.new(kind: EventGuest::KINDS[:key_person], vip: false)
       @planner_team_members = @event.planner_team_members.includes(:user).order(:position)
       @client_team_members = @event.client_team_members.includes(:user).order(:position)
-      @vendors = @event.event_vendors.includes(:global_vendor, event_vendor_contacts: :global_vendor_contact).ordered
+      @vendors = Vendors::PlanningCompany
+                 .excluding(@event.event_vendors)
+                 .includes(:global_vendor, event_vendor_contacts: :global_vendor_contact)
+                 .ordered
       @venues = @event.event_venues.includes(:event).ordered
     end
 

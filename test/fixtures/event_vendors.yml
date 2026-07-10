@@ -24,3 +24,23 @@ lighting:
       email: leo@bright.test
   position: 1
   client_visible: false
+
+pineapple_one:
+  event: one
+  global_vendor: pineapple_productions
+  name: Pineapple Productions
+  vendor_type: Planning
+  social_handle: "@pineappleprodc"
+  contacts_jsonb: []
+  position: 2
+  client_visible: false
+
+pineapple_two:
+  event: two
+  global_vendor: pineapple_productions
+  name: Pineapple Productions
+  vendor_type: Planning
+  social_handle: "@pineappleprodc"
+  contacts_jsonb: []
+  position: 0
+  client_visible: false

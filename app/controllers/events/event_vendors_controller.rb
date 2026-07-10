@@ -2,6 +2,7 @@ module Events
   class EventVendorsController < ApplicationController
     before_action :set_event
     before_action :set_event_vendor, only: %i[update destroy move_up move_down]
+    before_action :protect_planning_company, only: %i[update move_up move_down]
 
     def create
       duplicate_vendor = false
@@ -49,8 +50,12 @@ module Events
     end
 
     def destroy
-      @event_vendor.destroy
-      redirect_to safe_return_to(fallback: vendors_event_settings_path(@event)), notice: "Vendor removed."
+      if @event_vendor.destroy
+        redirect_to safe_return_to(fallback: vendors_event_settings_path(@event)), notice: "Vendor removed."
+      else
+        redirect_to safe_return_to(fallback: vendors_event_settings_path(@event)),
+                    alert: @event_vendor.errors.full_messages.to_sentence
+      end
     end
 
     def move_up
@@ -143,8 +148,15 @@ module Events
       error.message
     end
 
+    def protect_planning_company
+      return unless Vendors::PlanningCompany.event_vendor?(@event_vendor)
+
+      redirect_to safe_return_to(fallback: vendors_event_settings_path(@event)),
+                  alert: "The planning company is managed by the Pineapple planning section."
+    end
+
     def move_record(direction)
-      ordered = @event.event_vendors.order(:position, :id).to_a
+      ordered = Vendors::PlanningCompany.excluding(@event.event_vendors).order(:position, :id).to_a
       current_index = ordered.index(@event_vendor)
       return unless current_index
 

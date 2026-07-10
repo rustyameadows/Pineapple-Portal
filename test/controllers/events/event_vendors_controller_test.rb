@@ -192,12 +192,30 @@ module Events
     test "reorders vendors with move_up" do
       lower_vendor = event_vendors(:lighting)
       higher_vendor = event_vendors(:catering)
+      planning_vendor = event_vendors(:pineapple_one)
+      higher_vendor.update!(position: 0)
+      planning_vendor.update!(position: 1)
+      lower_vendor.update!(position: 2)
       assert higher_vendor.position < lower_vendor.position
 
       patch move_up_event_event_vendor_url(@event, lower_vendor)
 
       assert_redirected_to vendors_event_settings_url(@event)
       assert lower_vendor.reload.position < higher_vendor.reload.position
+      assert_equal 1, planning_vendor.reload.position
+    end
+
+    test "does not expose the planning company event profile to direct updates" do
+      planning_vendor = event_vendors(:pineapple_one)
+      original_type = planning_vendor.vendor_type
+
+      patch event_event_vendor_url(@event, planning_vendor), params: {
+        event_vendor: { vendor_type: "Hidden override" }
+      }
+
+      assert_redirected_to vendors_event_settings_url(@event)
+      assert_equal original_type, planning_vendor.reload.vendor_type
+      assert_match(/managed by the Pineapple planning section/i, flash[:alert])
     end
 
     test "destroys vendor and its contact selections" do
@@ -211,6 +229,18 @@ module Events
       end
 
       assert_redirected_to vendors_event_settings_url(@event)
+    end
+
+    test "does not remove the planning company from an event" do
+      planning_vendor = event_vendors(:pineapple_one)
+
+      assert_no_difference("EventVendor.count") do
+        delete event_event_vendor_url(@event, planning_vendor)
+      end
+
+      assert_redirected_to vendors_event_settings_url(@event)
+      assert planning_vendor.reload.persisted?
+      assert_match(/planning company must remain associated/i, flash[:alert])
     end
   end
 end

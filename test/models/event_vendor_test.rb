@@ -5,6 +5,18 @@ class EventVendorTest < ActiveSupport::TestCase
     @event = events(:one)
   end
 
+  test "planning company link cannot be removed directly but is removed with its event" do
+    event = Event.create!(name: "Protected Planning Company Event")
+    planning_vendor = event.event_vendors.find_by!(global_vendor: GlobalVendor.planning_company)
+
+    assert_not planning_vendor.destroy
+    assert_includes planning_vendor.errors[:base], "The planning company must remain associated with every event"
+
+    assert_difference("EventVendor.count", -1) do
+      event.destroy!
+    end
+  end
+
   test "requires a global vendor" do
     vendor = @event.event_vendors.new
 

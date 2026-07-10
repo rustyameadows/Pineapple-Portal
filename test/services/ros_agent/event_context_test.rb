@@ -28,8 +28,16 @@ module RosAgent
           name: "Bright Lights Production",
           vendor_type: "Lighting",
           social_handle: "@brightlights"
+        },
+        {
+          id: event_vendors(:pineapple_one).id,
+          global_vendor_id: event_vendors(:pineapple_one).global_vendor_id,
+          name: "Pineapple Productions",
+          vendor_type: "Planning",
+          social_handle: "@pineappleprodc"
         }
       ], payload.fetch(:vendors)
+      assert_equal users(:one).id, payload.dig(:team, :planners, 0, :id)
       assert_includes payload.dig(:tags).map { |tag| tag[:name] }, "Vendor"
       assert_includes payload.dig(:defaults, :tags).map { |tag| tag[:name] }, "Day Of"
       assert_includes payload.dig(:defaults, :views).map { |view| view[:name] }, "Decision Calendar"
