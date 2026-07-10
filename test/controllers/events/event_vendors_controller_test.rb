@@ -81,6 +81,31 @@ module Events
       assert_equal original_profile, global_vendor.reload.attributes.slice(*original_profile.keys)
     end
 
+    test "picker adds an existing global vendor using global defaults" do
+      global_vendor = GlobalVendor.create!(
+        name: "Picker Production Studio",
+        default_vendor_type: "Production",
+        default_social_handle: "@pickerproduction",
+        contacts_attributes: {
+          "0" => { name: "Parker Producer", email: "parker@picker.test" }
+        }
+      )
+
+      assert_difference("EventVendor.count", 1) do
+        post event_event_vendors_url(@event), params: {
+          event_vendor: { global_vendor_id: global_vendor.id }
+        }
+      end
+
+      assert_redirected_to vendors_event_settings_url(@event)
+      event_vendor = @event.event_vendors.find_by!(global_vendor:)
+      assert_equal "Picker Production Studio", event_vendor.name
+      assert_equal "Production", event_vendor.vendor_type
+      assert_equal "@pickerproduction", event_vendor.social_handle
+      assert event_vendor.client_visible?
+      assert_equal global_vendor.contact_ids, event_vendor.selected_contact_ids
+    end
+
     test "updates event metadata and selected contacts without changing canonical profile data" do
       vendor = event_vendors(:lighting)
       selected = vendor.global_vendor.contacts.first

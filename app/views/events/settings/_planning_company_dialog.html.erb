@@ -1,5 +1,5 @@
 <dialog id="event-vendor-planning-dialog"
-        class="event-settings__vendor-dialog"
+        class="event-settings__vendor-dialog event-settings__vendor-dialog--planning event-settings__vendor-dialog--sectioned"
         aria-labelledby="event-vendor-planning-dialog-title"
         <%= 'aria-describedby="event-vendor-planning-errors"'.html_safe if event.errors.any? %>
         data-event-vendor-dialog-target="dialog"
@@ -9,12 +9,19 @@
       <%= hidden_field_tag :return_to, request.fullpath %>
 
       <header class="event-settings__vendor-dialog-header">
-        <div>
+        <div class="event-settings__vendor-dialog-heading">
           <p class="event-section__eyebrow">Planning Company</p>
-          <h3 id="event-vendor-planning-dialog-title">Edit <%= planning_company_global_vendor.name %></h3>
+          <h3 id="event-vendor-planning-dialog-title"><%= planning_company_global_vendor.name %></h3>
+          <div class="event-settings__vendor-dialog-header-meta">
+            <span>Settings for this event</span>
+            <% if planning_company_global_vendor.default_social_handle.present? %>
+              <span><%= planning_company_global_vendor.default_social_handle %></span>
+            <% end %>
+          </div>
         </div>
         <button type="button"
-                class="button button--small button--ghost"
+                class="event-settings__vendor-dialog-close"
+                aria-label="Close planning company editor"
                 data-action="event-vendor-dialog#close">
           Close
         </button>
@@ -23,7 +30,7 @@
       <div class="event-settings__vendor-dialog-body">
         <% if event.errors.any? %>
           <div id="event-vendor-planning-errors"
-               class="event-settings__form-errors"
+               class="event-settings__form-errors event-settings__vendor-dialog-errors"
                tabindex="-1"
                autofocus>
             <h4><%= pluralize(event.errors.count, "error") %> prevented saving:</h4>
@@ -34,30 +41,27 @@
             </ul>
           </div>
         <% end %>
-        <div class="event-settings__vendor-dialog-identity">
-          <div>
-            <span class="event-settings__field-label">Global vendor</span>
-            <strong><%= planning_company_global_vendor.name %></strong>
-          </div>
-          <div>
-            <span class="event-settings__field-label">Social handle</span>
-            <span><%= planning_company_global_vendor.default_social_handle.presence || "—" %></span>
-          </div>
-        </div>
-
-        <div class="event-settings__field event-settings__field--notes">
-          <%= form.label :pineapple_team_meals, "Pineapple meal notes" %>
-          <%= form.text_area :pineapple_team_meals,
-                             rows: 4,
-                             class: "event-settings__textarea event-settings__vendor-dialog-meals",
-                             placeholder: "Meal counts, timing, pickup details, or links." %>
-        </div>
-
-        <section class="event-settings__vendor-dialog-contacts" aria-labelledby="planning-company-contacts-heading">
-          <div class="event-settings__vendor-contact-heading">
+        <section class="event-settings__vendor-dialog-section" aria-labelledby="planning-company-meals-heading">
+          <div class="event-settings__vendor-dialog-section-header">
             <div>
-              <h4 id="planning-company-contacts-heading" class="event-settings__contact-title">Event planners</h4>
-              <p class="event-settings__hint">Managed from the event planning team.</p>
+              <h4 id="planning-company-meals-heading" class="event-settings__vendor-dialog-section-title">Meal notes</h4>
+            </div>
+          </div>
+
+          <div class="event-settings__field event-settings__field--notes">
+            <%= form.label :pineapple_team_meals, "Pineapple meal notes", class: "visually-hidden" %>
+            <%= form.text_area :pineapple_team_meals,
+                               rows: 4,
+                               class: "event-settings__textarea event-settings__vendor-dialog-meals",
+                               placeholder: "Meal counts, timing, pickup details, or links." %>
+          </div>
+        </section>
+
+        <section class="event-settings__vendor-dialog-section event-settings__vendor-dialog-contacts" aria-labelledby="planning-company-contacts-heading">
+          <div class="event-settings__vendor-dialog-section-header">
+            <div>
+              <h4 id="planning-company-contacts-heading" class="event-settings__vendor-dialog-section-title">Event planners</h4>
+              <p>Managed from the event planning team.</p>
             </div>
             <%= link_to "Manage event planners", planners_event_settings_path(event), class: "event-section__link" %>
           </div>
@@ -73,7 +77,7 @@
                   </span>
                 </span>
                 <span class="event-settings__vendor-dialog-contact-details">
-                  <% if user.display_email.present? %><span><%= user.display_email %></span><% end %>
+                  <% if (email = event_vendor_contact_email(user)) %><span><%= email %></span><% end %>
                   <% if user.phone_number.present? %><span><%= user.phone_number %></span><% end %>
                 </span>
               </div>
@@ -90,7 +94,7 @@
                   data-action="event-vendor-dialog#close">
             Cancel
           </button>
-          <%= form.submit "Save Pineapple meals", class: "button button--small" %>
+          <%= form.submit "Save changes", class: "button button--small" %>
         </div>
       </footer>
     <% end %>

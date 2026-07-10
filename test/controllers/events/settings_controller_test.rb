@@ -65,6 +65,12 @@ module Events
 
     test "renders vendors page" do
       generic_vendor_count = Vendors::PlanningCompany.excluding(@event.event_vendors).count
+      available_global_vendor = GlobalVendor.create!(
+        name: "Picker Floral Studio",
+        default_vendor_type: "Floral",
+        default_social_handle: "@pickerfloral",
+        contacts_attributes: { "0" => { name: "Fern Picker", email: "fern@picker.test" } }
+      )
       @event.update!(pineapple_team_meals: "**Eight planner meals** at 5:00 PM.")
       event_vendors(:catering).update!(team_meals: "**Three vendor meals** at 6:00 PM.")
       unselected_contact = global_vendors(:sunshine_catering).contacts.create!(
@@ -100,18 +106,26 @@ module Events
       assert_select "button[aria-haspopup='dialog'][aria-controls]", count: @event.event_vendors.count + 1
       assert_select "dialog.event-settings__vendor-dialog[aria-labelledby]", count: @event.event_vendors.count + 1
       assert_select "textarea[name='event[pineapple_team_meals]']", count: 1
-      assert_select "textarea[name='event_vendor[team_meals]']", count: generic_vendor_count + 1
+      assert_select "textarea[name='event_vendor[team_meals]']", count: generic_vendor_count
       assert_select "[data-controller='generated-markdown-editor']", count: 0
       assert_select "input[name*='contacts_attributes']", count: 0
       assert_select "textarea[name*='contacts_attributes']", count: 0
-      assert_select ".event-settings__contact-title", text: "Contacts for this event", count: generic_vendor_count
+      assert_select "dialog.event-settings__vendor-dialog--association", count: generic_vendor_count
+      assert_select "dialog.event-settings__vendor-dialog--association .event-settings__vendor-dialog-header-meta", text: /Settings for this event/, count: generic_vendor_count
+      assert_select "dialog.event-settings__vendor-dialog--association .event-settings__vendor-dialog-section-title", text: "Event details", count: generic_vendor_count
+      assert_select "dialog.event-settings__vendor-dialog--association .event-settings__vendor-dialog-section-title", text: "Meal notes", count: generic_vendor_count
+      assert_select "dialog.event-settings__vendor-dialog--association .event-settings__vendor-dialog-section-title", text: "Contacts for this event", count: generic_vendor_count
       assert_select "a", text: "Manage vendor contacts", count: generic_vendor_count
       assert_select "input[type='checkbox'][name='event_vendor[global_vendor_contact_ids][]']", count: 3
       assert_select "input[type='checkbox'][name='event_vendor[global_vendor_contact_ids][]'][checked='checked']", count: 2
       assert_select ".event-settings__vendor-dialog-contact-item", text: /#{Regexp.escape(unselected_contact.name)}/, count: 1
-      assert_select "input[name='event_vendor[name]']", count: 1
+      assert_select "input[name='event_vendor[name]']", count: 0
       assert_select "input[name='event_vendor[social_handle]']", count: 0
-      assert_select "button[name='event_vendor[create_global_vendor]'][value='1']", text: "Create globally and add", count: 1
+      assert_select "input[type='search'][data-vendor-picker-target='query']", count: 1
+      assert_select "input[type='radio'][name='event_vendor[global_vendor_id]'][value='#{available_global_vendor.id}']", count: 1
+      assert_select "tr[data-global-vendor-id='#{available_global_vendor.id}']", text: /Picker Floral Studio/, count: 1
+      assert_select "button[name='event_vendor[create_global_vendor]']", count: 0
+      assert_select "a[href='#{new_settings_global_vendor_path}']", text: "Create new vendor", count: 1
     end
 
     test "renders the special planning company block without a duplicate generic vendor form" do
@@ -129,7 +143,10 @@ module Events
       assert_select "form[action='#{event_event_vendor_path(@event, planning_event_vendor)}']", count: 0
       assert_select "tr[data-parent-event-vendor-id='#{planning_event_vendor.id}']", count: 2
       assert_select "dialog#event-vendor-planning-dialog" do
-        assert_select "h3", text: "Edit Pineapple Planning Company"
+        assert_select "h3", text: "Pineapple Planning Company"
+        assert_select ".event-settings__vendor-dialog-header-meta", text: /Settings for this event/
+        assert_select ".event-settings__vendor-dialog-section-title", text: "Meal notes"
+        assert_select ".event-settings__vendor-dialog-section-title", text: "Event planners"
         assert_select "textarea[name='event[pineapple_team_meals]']", count: 1
         assert_select "input[name^='event_vendor']", count: 0
         assert_select "a", text: "Manage event planners", count: 1

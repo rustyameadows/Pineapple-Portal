@@ -54,6 +54,10 @@ module EventsSettingsPageSupport
                      .excluding(@event.event_vendors)
                      .includes(:event_vendor_contacts, global_vendor: :contacts)
                      .ordered
+    @available_global_vendors = GlobalVendor
+                                .where.not(id: @event.event_vendors.select(:global_vendor_id))
+                                .includes(:contacts)
+                                .ordered
   end
 
   def prepare_locations

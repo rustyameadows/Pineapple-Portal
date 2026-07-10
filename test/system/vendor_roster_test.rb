@@ -4,6 +4,11 @@ class VendorRosterTest < ApplicationSystemTestCase
   setup do
     @event = events(:one)
     @vendor = event_vendors(:catering)
+    @available_global_vendor = GlobalVendor.create!(
+      name: "Picker Floral Studio",
+      default_vendor_type: "Floral",
+      default_social_handle: "@pickerfloral"
+    )
     @event.update!(pineapple_team_meals: "**Eight planner meals** at 5:00 PM.")
     @vendor.update!(team_meals: "**Three vendor meals** at 6:00 PM.")
   end
@@ -26,7 +31,11 @@ class VendorRosterTest < ApplicationSystemTestCase
     dialog_id = "event-vendor-#{@vendor.id}-dialog"
     assert_selector "dialog##{dialog_id}[open]"
     within "dialog##{dialog_id}" do
-      assert_field "Event type", with: @vendor.vendor_type
+      assert_text "Settings for this event"
+      assert_selector ".event-settings__vendor-dialog-section-title", text: "Event details"
+      assert_selector ".event-settings__vendor-dialog-section-title", text: "Meal notes"
+      assert_selector ".event-settings__vendor-dialog-section-title", text: "Contacts for this event"
+      assert_field "Vendor services", with: @vendor.vendor_type
       assert_field "Meal notes"
       assert_text(/Contacts for this event/i)
       assert_checked_field "Maria Cater"
@@ -38,8 +47,12 @@ class VendorRosterTest < ApplicationSystemTestCase
     click_button "Add Vendor"
     assert_selector "dialog#event-vendor-new-dialog[open]"
     within "dialog#event-vendor-new-dialog" do
-      assert_field "Vendor name"
-      assert_field "Meal notes"
+      assert_field "Search global vendors"
+      assert_button "Add selected vendor", disabled: true
+      fill_in "Search global vendors", with: "Picker Floral"
+      assert_selector "tr[data-global-vendor-id='#{@available_global_vendor.id}']", visible: true
+      find("#event_vendor_global_vendor_id_#{@available_global_vendor.id}", visible: :all).choose
+      assert_button "Add selected vendor", disabled: false
       click_button "Cancel"
     end
 
@@ -52,7 +65,7 @@ class VendorRosterTest < ApplicationSystemTestCase
       assert_field "Pineapple meal notes"
       assert_selector "h4", text: /Event planners/i
       assert_link "Manage event planners"
-      assert_no_field "Event type"
+      assert_no_field "Vendor services"
       click_button "Cancel"
     end
   end

@@ -27,7 +27,10 @@
                     aria-controls="event-vendor-new-dialog">
               Add Vendor
             </button>
-            <%= render "events/settings/add_vendor_dialog", event: @event, event_vendor: @event_vendor %>
+            <%= render "events/settings/add_vendor_dialog",
+                       event: @event,
+                       event_vendor: @event_vendor,
+                       available_global_vendors: @available_global_vendors %>
           </div>
         </header>
 

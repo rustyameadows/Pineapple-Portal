@@ -1,8 +1,8 @@
-<section class="event-settings__vendor-dialog-contacts" aria-labelledby="event-vendor-<%= vendor.id %>-contacts-heading">
-  <div class="event-settings__vendor-contact-heading">
+<section class="event-settings__vendor-dialog-section event-settings__vendor-dialog-contacts" aria-labelledby="event-vendor-<%= vendor.id %>-contacts-heading">
+  <div class="event-settings__vendor-dialog-section-header">
     <div>
-      <h4 id="event-vendor-<%= vendor.id %>-contacts-heading" class="event-settings__contact-title">Contacts for this event</h4>
-      <p class="event-settings__hint">Select the contacts to include on this event.</p>
+      <h4 id="event-vendor-<%= vendor.id %>-contacts-heading" class="event-settings__vendor-dialog-section-title">Contacts for this event</h4>
+      <p>Choose the people who should appear as contacts for this event.</p>
     </div>
     <% if admin_user? %>
       <%= link_to "Manage vendor contacts",

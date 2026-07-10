@@ -1,62 +1,111 @@
 <dialog id="event-vendor-new-dialog"
-        class="event-settings__vendor-dialog"
+        class="event-settings__vendor-dialog event-settings__vendor-dialog--picker event-settings__vendor-dialog--sectioned"
         aria-labelledby="event-vendor-new-dialog-title"
         data-event-vendor-dialog-target="dialog"
         data-action="cancel->event-vendor-dialog#handleCancel click->event-vendor-dialog#handleBackdropClose">
   <div class="event-settings__vendor-dialog-panel">
-    <%= form_with model: [event, event_vendor], local: true, html: { class: "event-settings__form event-settings__vendor-dialog-form" } do |form| %>
+    <%= form_with model: [event, event_vendor],
+                  local: true,
+                  html: {
+                    class: "event-settings__form event-settings__vendor-dialog-form",
+                    data: { controller: "vendor-picker" }
+                  } do |form| %>
       <%= hidden_field_tag :return_to, request.fullpath %>
 
       <header class="event-settings__vendor-dialog-header">
-        <div>
+        <div class="event-settings__vendor-dialog-heading">
           <p class="event-section__eyebrow">Event Vendor</p>
           <h3 id="event-vendor-new-dialog-title">Add Vendor</h3>
+          <div class="event-settings__vendor-dialog-header-meta">
+            <span>Choose from the global vendor library</span>
+          </div>
         </div>
         <button type="button"
-                class="button button--small button--ghost"
+                class="event-settings__vendor-dialog-close"
+                aria-label="Close vendor picker"
                 data-action="event-vendor-dialog#close">
           Close
         </button>
       </header>
 
       <div class="event-settings__vendor-dialog-body">
-        <div class="event-settings__vendor-dialog-grid">
-          <div class="event-settings__field"
-               data-controller="remote-options"
-               data-remote-options-url-value="<%= event_vendor_options_path(event) %>">
-            <%= form.hidden_field :global_vendor_id, data: { remote_options_target: "hidden" } %>
-            <%= form.label :name, "Vendor name" %>
-            <%= form.text_field :name,
-                                required: true,
-                                autocomplete: "off",
-                                data: { remote_options_target: "input" } %>
-            <p class="event-settings__hint">Choose a global vendor from the suggestions.</p>
+        <section class="event-settings__vendor-dialog-section event-settings__vendor-picker" aria-labelledby="event-vendor-picker-heading">
+          <div class="event-settings__vendor-picker-toolbar">
+            <div class="event-settings__field">
+              <label for="event-vendor-picker-search">Search global vendors</label>
+              <input id="event-vendor-picker-search"
+                     type="search"
+                     autocomplete="off"
+                     placeholder="Search by vendor, service, social handle, or contact"
+                     data-vendor-picker-target="query"
+                     data-action="input->vendor-picker#filter">
+            </div>
+            <% if available_global_vendors.any? %>
+              <span class="event-settings__vendor-picker-count" data-vendor-picker-target="count"></span>
+            <% end %>
           </div>
-          <div class="event-settings__field">
-            <%= form.label :vendor_type, "Event type" %>
-            <%= form.text_field :vendor_type, placeholder: "Catering, Floral, Lighting, etc." %>
-          </div>
-          <div class="event-settings__field event-settings__field--checkbox">
-            <label class="event-settings__toggle">
-              <%= form.check_box :client_visible %>
-              <span>Visible to clients</span>
-            </label>
-          </div>
-          <div class="event-settings__field event-settings__field--notes">
-            <%= form.label :team_meals, "Meal notes" %>
-            <%= form.text_area :team_meals,
-                               rows: 4,
-                               class: "event-settings__textarea event-settings__vendor-dialog-meals",
-                               placeholder: "Meal counts, timing, pickup details, or links." %>
-            <p class="event-settings__hint">All vendor contacts are selected initially and can be adjusted after adding.</p>
-          </div>
-        </div>
+
+          <% if available_global_vendors.any? %>
+            <div class="event-settings__vendor-picker-shell" role="region" aria-labelledby="event-vendor-picker-heading" tabindex="0">
+              <table class="event-settings__vendor-picker-table">
+                <thead>
+                  <tr>
+                    <th id="event-vendor-picker-heading" scope="col">Global vendor</th>
+                    <th scope="col">Select</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% available_global_vendors.each do |global_vendor| %>
+                    <% radio_id = "event_vendor_global_vendor_id_#{global_vendor.id}" %>
+                    <% search_text = [
+                      global_vendor.name,
+                      global_vendor.default_vendor_type,
+                      global_vendor.default_social_handle,
+                      global_vendor.contacts.flat_map { |contact| [contact.name, contact.title, contact.email, contact.phone] }
+                    ].flatten.compact.join(" ").downcase %>
+                    <tr data-vendor-picker-target="row"
+                        data-search-text="<%= search_text %>"
+                        data-global-vendor-id="<%= global_vendor.id %>">
+                      <th scope="row">
+                        <label for="<%= radio_id %>" class="event-settings__vendor-picker-identity">
+                          <strong><%= global_vendor.name %></strong>
+                          <span class="event-settings__vendor-picker-meta">
+                            <% if global_vendor.default_vendor_type.present? %><span><%= global_vendor.default_vendor_type %></span><% end %>
+                            <% if global_vendor.default_social_handle.present? %><span><%= global_vendor.default_social_handle %></span><% end %>
+                            <span><%= pluralize(global_vendor.contacts.size, "contact") %></span>
+                          </span>
+                        </label>
+                      </th>
+                      <td class="event-settings__vendor-picker-select">
+                        <%= radio_button_tag "event_vendor[global_vendor_id]",
+                                             global_vendor.id,
+                                             false,
+                                             id: radio_id,
+                                             required: true,
+                                             aria: { label: "Select #{global_vendor.name}" },
+                                             data: {
+                                               vendor_picker_target: "radio",
+                                               action: "change->vendor-picker#syncSelection"
+                                             } %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+            <p class="event-settings__vendor-picker-empty" data-vendor-picker-target="empty" hidden>
+              No available global vendors match this search.
+            </p>
+          <% else %>
+            <p class="event-settings__empty">Every global vendor is already associated with this event.</p>
+          <% end %>
+        </section>
       </div>
 
       <footer class="event-settings__vendor-dialog-footer">
         <div class="event-settings__vendor-dialog-secondary-actions">
           <% if admin_user? %>
-            <%= link_to "Manage global vendors", settings_global_vendors_path, class: "event-section__link" %>
+            <%= link_to "Create new vendor", new_settings_global_vendor_path, class: "button button--small button--ghost" %>
           <% end %>
         </div>
         <div class="event-settings__vendor-dialog-primary-actions">
@@ -65,13 +114,12 @@
                   data-action="event-vendor-dialog#close">
             Cancel
           </button>
-          <%= form.submit "Add selected vendor", class: "button button--small" %>
-          <%= button_tag "Create globally and add",
-                         type: "submit",
-                         name: "event_vendor[create_global_vendor]",
-                         value: "1",
-                         class: "button button--small button--ghost",
-                         data: { turbo_confirm: "Create this vendor in the global library and add it to this event?" } %>
+          <% if available_global_vendors.any? %>
+            <%= form.submit "Add selected vendor",
+                            class: "button button--small",
+                            disabled: true,
+                            data: { vendor_picker_target: "submit" } %>
+          <% end %>
         </div>
       </footer>
     <% end %>
