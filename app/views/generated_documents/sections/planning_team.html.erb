@@ -22,6 +22,10 @@
     row-gap: var(--planning-team-grid-row-gap);
   }
 
+  .generated-template--planning-team__grid--four-up {
+    --planning-team-card-width: 1.6in;
+  }
+
   .generated-template--planning-team__card {
     width: var(--planning-team-card-width);
     flex: 0 0 var(--planning-team-card-width);
@@ -108,7 +112,7 @@
   <%= render "generated_documents/sections/page_header", segment: @segment %>
   <% planners = @event.planner_team_members.includes(:user).ordered_for_display %>
   <% if planners.any? %>
-    <div class="generated-template--planning-team__grid">
+    <div class="generated-template--planning-team__grid<%= " generated-template--planning-team__grid--four-up" if planners.size > 9 %>">
       <% planners.each do |member| %>
         <% user = member.user %>
         <% avatar_uri = inline_global_asset_data_uri(user.avatar_global_asset) %>
