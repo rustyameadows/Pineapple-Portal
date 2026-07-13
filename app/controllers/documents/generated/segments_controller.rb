@@ -4,7 +4,8 @@ module Documents
       before_action :set_event
       before_action :set_document
       before_action :ensure_source_backed_document!
-      before_action :set_placement, only: %i[update destroy preview cached_pdf duplicate move_to_group move_out_of_group]
+      before_action :set_placement, only: %i[update destroy preview cached_pdf duplicate force_build move_to_group move_out_of_group]
+      before_action :set_relocation_placement, only: :relocate
 
       def create
         source = build_source_from_params(segment_params)
@@ -53,6 +54,17 @@ module Documents
         refresh_after_structure_change!
 
         redirect_to safe_return_to(fallback: builder_path), notice: "#{source.group? ? 'Group' : 'Page'} duplicated."
+      end
+
+      def force_build
+        result = Documents::Generated::ForceSourceRebuild.new(source: @placement.source).call
+        packet_label = ActionController::Base.helpers.pluralize(result.consumer_count, "packet")
+
+        redirect_to safe_return_to(fallback: builder_path), notice: "Force build queued for #{packet_label}."
+      rescue Documents::Generated::ForceSourceRebuild::Error => e
+        redirect_to safe_return_to(fallback: builder_path), alert: e.message
+      rescue StandardError => e
+        redirect_to safe_return_to(fallback: builder_path), alert: "Unable to force build this page: #{e.message}"
       end
 
       def reorder
@@ -137,6 +149,33 @@ module Documents
         redirect_to safe_return_to(fallback: builder_path), notice: "Page moved out of #{@document.title}."
       end
 
+      def relocate
+        packet = relocation_packet
+        target_document = relocation_target_document(packet)
+        relocation_error = relocation_validation_error(packet, target_document)
+
+        if relocation_error.present?
+          render plain: relocation_error, status: :unprocessable_entity
+          return
+        end
+
+        target_position = relocation_target_position(target_document)
+
+        GeneratedPacketPlacement.transaction do
+          lock_relocation_documents!(@document, target_document)
+          make_room_for_placement!(target_document, target_position)
+          target_document.packet_placements.create!(source: @placement.source, position: target_position)
+          @placement.destroy!
+          resequence_placements_for!(@document)
+          resequence_placements_for!(target_document)
+        end
+
+        refresh_after_move!(target_document)
+        head :ok
+      rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => e
+        render plain: e.message, status: :unprocessable_entity
+      end
+
       def preview
         source = @placement.source
 
@@ -150,7 +189,7 @@ module Documents
           else
             head :not_found
           end
-        elsif source.pdf_asset? && (document = find_pdf_document(source.pdf_document_id || source.pdf_logical_id))
+        elsif source.pdf_asset? && (document = Documents::Generated::UploadedDocumentResolver.new(source).call)
           redirect_to download_event_document_path(@event, document)
         else
           head :not_found
@@ -183,7 +222,12 @@ module Documents
       end
 
       def set_document
-        logical_id = params[:logical_id] || params[:generated_id] || params[:generated_logical_id]
+        logical_id =
+          if action_name == "relocate"
+            params[:source_container_logical_id]
+          else
+            params[:logical_id] || params[:generated_id] || params[:generated_logical_id]
+          end
         scope = @event.documents.where(doc_kind: Document::DOC_KINDS[:generated])
         @document = scope.find_by(logical_id: logical_id, storage_uri: nil)
         @document ||= scope.where(logical_id: logical_id).order(version: :asc).first
@@ -199,6 +243,10 @@ module Documents
 
       def set_placement
         @placement = placements_scope.find(params[:id])
+      end
+
+      def set_relocation_placement
+        @placement = placements_scope.find(params[:segment_id])
       end
 
       def placements_scope
@@ -596,6 +644,60 @@ module Documents
 
         @event.documents.generated.packet_containers.where(storage_uri: nil).find_by(logical_id: logical_id) ||
           @event.documents.generated.packet_containers.where(logical_id: logical_id).order(version: :asc).first
+      end
+
+      def relocation_packet
+        route_logical_id = (params[:logical_id] || params[:generated_id] || params[:generated_logical_id]).to_s
+        logical_id = params[:packet_logical_id].presence || route_logical_id
+        return if logical_id.blank? || logical_id != route_logical_id
+        return @document if @document.packet_container? && logical_id == @document.logical_id
+
+        @event.documents.generated.packet_containers.where(storage_uri: nil).find_by(logical_id: logical_id)
+      end
+
+      def relocation_target_document(packet)
+        return unless packet
+
+        logical_id = params[:target_container_logical_id].to_s
+        return packet if logical_id == packet.logical_id
+
+        packet.packet_placements.includes(:source).filter_map do |placement|
+          placement.source.group_document if placement.source.group?
+        end.find { |document| document.logical_id == logical_id }
+      end
+
+      def relocation_validation_error(packet, target_document)
+        return "Choose a valid packet." unless packet&.packet_container?
+        return "Choose a valid packet or group destination." unless target_document
+        return "The destination does not support packet pages." unless target_document.packet_source_backed?
+        return "Reorder pages within the same section instead." if target_document.logical_id == @document.logical_id
+        return "Groups cannot be placed inside other groups." if @placement.source.group?
+
+        allowed_logical_ids = [ packet.logical_id ] + packet.packet_placements.includes(:source).filter_map do |placement|
+          placement.source.group_document_logical_id if placement.source.group?
+        end
+
+        unless allowed_logical_ids.include?(@document.logical_id) && allowed_logical_ids.include?(target_document.logical_id)
+          return "This page and destination must belong to the packet being edited."
+        end
+
+        nil
+      end
+
+      def relocation_target_position(target_document)
+        requested = params[:target_position].to_i
+        maximum = target_document.packet_placements.count + 1
+        requested.clamp(1, maximum)
+      end
+
+      def lock_relocation_documents!(*documents)
+        documents.uniq.sort_by(&:logical_id).each(&:lock!)
+      end
+
+      def make_room_for_placement!(document, position)
+        document.packet_placements.where("position >= ?", position).reorder(position: :desc, id: :desc).each do |placement|
+          placement.update_column(:position, placement.position + 1)
+        end
       end
 
       def packet_consumer_resolver

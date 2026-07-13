@@ -220,10 +220,12 @@ post "upload_failures", to: "upload_failures#create"
                   only: %i[create update destroy] do
           collection do
             patch :reorder
+            patch :relocate
           end
 
           member do
             post :duplicate
+            post :force_build
             patch :move_to_group
             patch :move_out_of_group
             get :preview

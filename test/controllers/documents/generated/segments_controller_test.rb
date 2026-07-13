@@ -399,6 +399,53 @@ module Documents
         assert_equal "Decor Vision", group_source.reload.display_title
       end
 
+      test "queues a force build for a cached system page and returns to packet settings" do
+        @placement.source.update!(
+          render_hash: "cached-hash",
+          cached_pdf_key: "segments/cached.pdf",
+          cached_pdf_generated_at: Time.current,
+          cached_page_count: 1,
+          cached_file_size: 128
+        )
+        return_to = edit_event_documents_generated_path(@event, @document.logical_id)
+        result = Struct.new(:consumer_count).new(2)
+        service = Struct.new(:result) do
+          def call
+            result
+          end
+        end.new(result)
+        seen_sources = []
+
+        Documents::Generated::ForceSourceRebuild.stub :new, ->(source:) {
+          seen_sources << source
+          service
+        } do
+          post force_build_event_documents_generated_segment_url(@event, @document.logical_id, @placement), params: {
+            return_to: return_to
+          }
+        end
+
+        assert_redirected_to return_to
+        assert_equal [ @placement.source ], seen_sources
+        assert_equal "Force build queued for 2 packets.", flash[:notice]
+      end
+
+      test "reports an ineligible force build without mutating the placement" do
+        Documents::Generated::ForceSourceRebuild.stub :new, ->(source:) {
+          Struct.new(:source) do
+            def call
+              raise Documents::Generated::ForceSourceRebuild::Error, "Only cached pages can be force built."
+            end
+          end.new(source)
+        } do
+          post force_build_event_documents_generated_segment_url(@event, @document.logical_id, @placement)
+        end
+
+        assert_redirected_to event_documents_generated_url(@event, @document.logical_id)
+        assert_equal "Only cached pages can be force built.", flash[:alert]
+        assert GeneratedPacketPlacement.exists?(@placement.id)
+      end
+
       test "moves a packet page into an existing group" do
         group_document = create_group_document(title: "Design & Decor")
         group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
@@ -465,6 +512,134 @@ module Documents
         assert_equal [@document.logical_id], enqueued_logical_ids.uniq
       end
 
+      test "relocates a packet page into an exact group position" do
+        group_document = create_group_document(title: "Design & Decor")
+        trailing_source = create_page_source(
+          view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+          title: "Trailing Group Page",
+          options: { "body_markdown" => "Trailing" }
+        )
+        group_document.packet_placements.create!(source: trailing_source, position: 2)
+        group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
+        @document.packet_placements.create!(source: group_source, position: 2)
+        moved_source = @placement.source
+        enqueued_logical_ids = []
+
+        Documents::Generated::WorkingCopyRefresh.stub :enqueue, ->(document) {
+          enqueued_logical_ids << document.logical_id
+          true
+        } do
+          patch relocate_event_documents_generated_segments_url(@event, @document.logical_id), params: {
+            segment_id: @placement.id,
+            source_container_logical_id: @document.logical_id,
+            target_container_logical_id: group_document.logical_id,
+            target_position: 2,
+            packet_logical_id: @document.logical_id
+          }
+        end
+
+        assert_response :success
+        assert_nil GeneratedPacketPlacement.find_by(id: @placement.id)
+        assert_equal [ "Design & Decor", "Text Page", "Trailing Group Page" ], group_document.packet_placements.ordered.map(&:title)
+        assert_equal moved_source, group_document.packet_placements.ordered.second.source
+        assert_equal [ 1, 2, 3 ], group_document.packet_placements.ordered.pluck(:position)
+        assert_equal [ @document.logical_id ], enqueued_logical_ids.uniq
+      end
+
+      test "relocates a group page to an exact packet position" do
+        group_document = create_group_document(title: "Design & Decor")
+        moved_source = create_page_source(
+          view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+          title: "Floral Proposal",
+          options: { "body_markdown" => "Flowers" }
+        )
+        child_placement = group_document.packet_placements.create!(source: moved_source, position: 2)
+        group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
+        @document.packet_placements.create!(source: group_source, position: 2)
+        tail_source = create_page_source(
+          view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+          title: "Packet Tail",
+          options: { "body_markdown" => "Tail" }
+        )
+        @document.packet_placements.create!(source: tail_source, position: 3)
+
+        Documents::Generated::WorkingCopyRefresh.stub :enqueue, true do
+          patch relocate_event_documents_generated_segments_url(@event, @document.logical_id), params: {
+            segment_id: child_placement.id,
+            source_container_logical_id: group_document.logical_id,
+            target_container_logical_id: @document.logical_id,
+            target_position: 2,
+            packet_logical_id: @document.logical_id
+          }
+        end
+
+        assert_response :success
+        assert_nil GeneratedPacketPlacement.find_by(id: child_placement.id)
+        assert_equal [ "Text Page", "Floral Proposal", "Design & Decor", "Packet Tail" ], @document.packet_placements.ordered.map(&:title)
+        assert_equal [ 1, 2, 3, 4 ], @document.packet_placements.ordered.pluck(:position)
+        assert_equal [ "Design & Decor" ], group_document.packet_placements.ordered.map(&:title)
+      end
+
+      test "relocates a page directly between groups in the same packet" do
+        source_group = create_group_document(title: "Event Information")
+        moved_source = create_page_source(
+          view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+          title: "Contacts",
+          options: { "body_markdown" => "Contacts" }
+        )
+        child_placement = source_group.packet_placements.create!(source: moved_source, position: 2)
+        target_group = create_group_document(title: "Design & Decor")
+        target_tail = create_page_source(
+          view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+          title: "Floral Proposal",
+          options: { "body_markdown" => "Flowers" }
+        )
+        target_group.packet_placements.create!(source: target_tail, position: 2)
+        @document.packet_placements.create!(
+          source: GeneratedPacketSource.find_or_create_group_source!(@event, source_group),
+          position: 2
+        )
+        @document.packet_placements.create!(
+          source: GeneratedPacketSource.find_or_create_group_source!(@event, target_group),
+          position: 3
+        )
+
+        Documents::Generated::WorkingCopyRefresh.stub :enqueue, true do
+          patch relocate_event_documents_generated_segments_url(@event, @document.logical_id), params: {
+            segment_id: child_placement.id,
+            source_container_logical_id: source_group.logical_id,
+            target_container_logical_id: target_group.logical_id,
+            target_position: 2,
+            packet_logical_id: @document.logical_id
+          }
+        end
+
+        assert_response :success
+        assert_equal [ "Event Information" ], source_group.packet_placements.ordered.map(&:title)
+        assert_equal [ "Design & Decor", "Contacts", "Floral Proposal" ], target_group.packet_placements.ordered.map(&:title)
+        assert_equal [ 1, 2, 3 ], target_group.packet_placements.ordered.pluck(:position)
+      end
+
+      test "rejects relocating a group into another group" do
+        group_document = create_group_document(title: "Design & Decor")
+        group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
+        group_placement = @document.packet_placements.create!(source: group_source, position: 2)
+
+        assert_no_difference("GeneratedPacketPlacement.count") do
+          patch relocate_event_documents_generated_segments_url(@event, @document.logical_id), params: {
+            segment_id: group_placement.id,
+            source_container_logical_id: @document.logical_id,
+            target_container_logical_id: group_document.logical_id,
+            target_position: 1,
+            packet_logical_id: @document.logical_id
+          }
+        end
+
+        assert_response :unprocessable_entity
+        assert_equal group_source, group_placement.reload.source
+        assert_equal @document.logical_id, group_placement.document_logical_id
+      end
+
       test "previewing a group keeps the generated pdf unnumbered" do
         group_document = create_group_document(title: "Design & Decor")
         group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
@@ -492,6 +667,21 @@ module Documents
         assert_response :success
         assert_equal group_document, seen_kwargs[:definition_document]
         assert_equal false, seen_kwargs[:page_numbers]
+      end
+
+      test "previewing an uploaded pdf opens its latest version" do
+        original = create_uploaded_pdf(title: "Ceremony Insert")
+        upload_source = GeneratedPacketSource.find_or_create_upload_source!(@event, original)
+        upload_placement = @document.packet_placements.create!(source: upload_source, position: 2)
+        replacement = create_uploaded_pdf(
+          title: "Ceremony Insert",
+          logical_id: original.logical_id,
+          version: 2
+        )
+
+        get preview_event_documents_generated_segment_url(@event, @document.logical_id, upload_placement)
+
+        assert_redirected_to download_event_document_url(@event, replacement)
       end
 
     private
@@ -523,6 +713,23 @@ module Documents
         position: 1
       )
       document
+    end
+
+    def create_uploaded_pdf(title:, logical_id: SecureRandom.uuid, version: 1)
+      @event.documents.create!(
+        title: title,
+        doc_kind: Document::DOC_KINDS[:uploaded],
+        logical_id: logical_id,
+        version: version,
+        is_latest: true,
+        source: "staff_upload",
+        storage_uri: "documents/#{title.parameterize}-v#{version}.pdf",
+        checksum: "#{title.parameterize}-v#{version}-checksum",
+        checksum_sha256: SecureRandom.hex(32),
+        size_bytes: 1024,
+        content_type: "application/pdf",
+        built_by_user: @user
+      )
     end
   end
 end

@@ -11,6 +11,12 @@
   can_move_out_of_group = nested && parent_packet_document.present? && parent_group_placement.present? && !segment.group?
   group_document = segment.group_document if segment.group?
   nested_return_to = generated_builder_return_to(return_to.presence || request.fullpath, open_group_source_id: segment.source.id) if segment.group?
+  force_build_available = segment.html_view? && segment.cached? && shared_packets.any?
+  force_build_confirmation = if shared_packets.size > 1
+                               "Force build this shared page and refresh #{pluralize(shared_packets.size, 'packet')}?"
+                             else
+                               "Force build this page and refresh its packet?"
+                             end
   item_classes = ["generated-builder__toc-item"]
   item_classes << "generated-builder__toc-item--group" if segment.group?
   item_classes << "generated-builder__toc-item--child" if nested
@@ -19,6 +25,7 @@
 <div class="<%= item_classes.join(' ') %>"
      data-generated-segments-target="item"
      data-segment-id="<%= segment.id %>"
+     data-segment-kind="<%= segment.group? ? 'group' : 'page' %>"
      draggable="true">
   <div class="generated-builder__toc-entry"
        data-controller="generated-segment-dialog"
@@ -57,6 +64,19 @@
               </span>
             <% end %>
           </div>
+        <% end %>
+      </div>
+
+      <div class="generated-builder__toc-cell generated-builder__toc-cell--action generated-builder__toc-cell--build">
+        <% if force_build_available %>
+          <%= button_to "Force build",
+                        force_build_event_documents_generated_segment_path(event, document.logical_id, segment, return_to: return_to),
+                        method: :post,
+                        class: "generated-builder__toc-action generated-builder__toc-action--button",
+                        form: {
+                          class: "generated-builder__toc-action-form",
+                          data: { turbo_confirm: force_build_confirmation }
+                        } %>
         <% end %>
       </div>
 

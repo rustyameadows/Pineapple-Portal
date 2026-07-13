@@ -161,6 +161,110 @@ module Documents
       assert_select ".generated-builder__toc-children form.generated-builder__move-form[action^='#{move_out_of_group_event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", count: 1
       assert_select ".generated-builder__toc-children form.generated-builder__move-form input[name='packet_logical_id'][value='#{@document.logical_id}']", count: 2
       assert_select ".generated-builder__toc-children form.generated-builder__move-form input[name='group_placement_id'][value='#{group_placement.id}']", count: 2
+      assert_select ".generated-builder__toc-body[data-container-logical-id='#{@document.logical_id}'][data-container-kind='packet'][data-packet-logical-id='#{@document.logical_id}']", count: 1
+      assert_select ".generated-builder__toc-children .generated-builder__toc-body[data-container-logical-id='#{group_document.logical_id}'][data-container-kind='group'][data-group-placement-id='#{group_placement.id}']", count: 1
+    end
+
+    test "edit shows force build only for cached system-generated pages" do
+      cached_placement = create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Cached Notes",
+        position: 1,
+        options: { "body_markdown" => "Cached" }
+      )
+      cached_placement.source.update!(
+        render_hash: "cached-hash",
+        cached_pdf_key: "segments/cached.pdf",
+        cached_pdf_generated_at: Time.current,
+        cached_page_count: 1,
+        cached_file_size: 128
+      )
+      create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Uncached Notes",
+        position: 2,
+        options: { "body_markdown" => "Uncached" }
+      )
+      uploaded_source = GeneratedPacketSource.find_or_create_upload_source!(@event, create_uploaded_pdf(title: "Uploaded Packet Page"))
+      uploaded_source.update!(
+        render_hash: "upload-hash",
+        cached_pdf_key: "segments/uploaded.pdf",
+        cached_pdf_generated_at: Time.current,
+        cached_page_count: 1,
+        cached_file_size: 128
+      )
+      @document.packet_placements.create!(source: uploaded_source, position: 3)
+
+      get edit_event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      force_path = force_build_event_documents_generated_segment_path(@event, @document.logical_id, cached_placement)
+      assert_select "form[action^='#{force_path}'] button", text: "Force build", count: 1
+      assert_select "button", text: "Force build", count: 1
+      assert_select ".generated-builder__toc-head span", text: "Build", count: 1
+      assert_select "a", text: "Manage pages", count: 0
+    end
+
+    test "edit shows an uploaded pdf as preparing before its packet copy is ready" do
+      uploaded_at = Time.utc(2026, 7, 13, 18, 42)
+      uploaded_document = create_uploaded_pdf(title: "Ceremony Insert", created_at: uploaded_at)
+      upload_source = GeneratedPacketSource.find_or_create_upload_source!(@event, uploaded_document)
+      @document.packet_placements.create!(source: upload_source, position: 1)
+
+      get edit_event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select ".generated-builder__status-tag", text: /PREPARING · LATEST V1/, count: 1
+      assert_select "time[data-controller='local-time'][datetime='#{uploaded_at.iso8601}']", count: 1
+      assert_select ".generated-builder__status-tag", text: /Not rendered/, count: 0
+    end
+
+    test "edit shows an uploaded pdf as ready with its latest version and upload time" do
+      uploaded_at = Time.utc(2026, 7, 13, 18, 42)
+      uploaded_document = create_uploaded_pdf(title: "Ceremony Insert", created_at: uploaded_at)
+      upload_source = GeneratedPacketSource.find_or_create_upload_source!(@event, uploaded_document)
+      upload_source.update!(
+        render_hash: Documents::Generated::SegmentHasher.call(upload_source),
+        cached_pdf_key: "segments/ceremony-insert.pdf",
+        cached_pdf_generated_at: uploaded_at + 1.minute,
+        cached_page_count: 2,
+        cached_file_size: 1024
+      )
+      @document.packet_placements.create!(source: upload_source, position: 1)
+
+      get edit_event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select ".generated-builder__status-tag--link", text: /READY · LATEST V1.*UPLOADED.*2 PAGES/m, count: 1
+      assert_select "time[data-controller='local-time'][datetime='#{uploaded_at.iso8601}']", count: 1
+      assert_select ".generated-builder__status-tag--link", text: /CACHED/, count: 0
+    end
+
+    test "edit shows when a newer uploaded pdf version is available" do
+      original = create_uploaded_pdf(title: "Ceremony Insert", created_at: Time.utc(2026, 7, 12, 18, 42))
+      upload_source = GeneratedPacketSource.find_or_create_upload_source!(@event, original)
+      upload_source.update!(
+        render_hash: Documents::Generated::SegmentHasher.call(upload_source),
+        cached_pdf_key: "segments/ceremony-insert-v1.pdf",
+        cached_pdf_generated_at: Time.utc(2026, 7, 12, 18, 43),
+        cached_page_count: 2,
+        cached_file_size: 1024
+      )
+      @document.packet_placements.create!(source: upload_source, position: 1)
+      replacement_uploaded_at = Time.utc(2026, 7, 13, 19, 5)
+      create_uploaded_pdf(
+        title: "Ceremony Insert",
+        logical_id: original.logical_id,
+        version: 2,
+        created_at: replacement_uploaded_at
+      )
+
+      get edit_event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select ".generated-builder__status-tag--warning", text: /NEW VERSION · V2.*UPLOADED/m, count: 1
+      assert_select "time[data-controller='local-time'][datetime='#{replacement_uploaded_at.iso8601}']", count: 1
+      assert_select ".generated-builder__status-tag", text: /READY/, count: 0
     end
 
     test "edit keeps dense row metadata to render status and shared packet tooltip" do
@@ -1256,20 +1360,22 @@ module Documents
       ).tap(&:save!)
     end
 
-    def create_uploaded_pdf(title:)
+    def create_uploaded_pdf(title:, logical_id: SecureRandom.uuid, version: 1, created_at: Time.current)
       @event.documents.create!(
         title: title,
         doc_kind: Document::DOC_KINDS[:uploaded],
-        logical_id: SecureRandom.uuid,
-        version: 1,
+        logical_id: logical_id,
+        version: version,
         is_latest: true,
         source: "staff_upload",
-        storage_uri: "documents/#{title.parameterize}.pdf",
-        checksum: "#{title.parameterize}-checksum",
+        storage_uri: "documents/#{title.parameterize}-v#{version}.pdf",
+        checksum: "#{title.parameterize}-v#{version}-checksum",
         checksum_sha256: SecureRandom.hex(32),
         size_bytes: 1024,
         content_type: "application/pdf",
-        built_by_user: @user
+        built_by_user: @user,
+        created_at: created_at,
+        updated_at: created_at
       )
     end
 
