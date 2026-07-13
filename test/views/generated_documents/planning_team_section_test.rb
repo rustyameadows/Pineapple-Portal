@@ -50,6 +50,22 @@ class PlanningTeamSectionTest < ActionView::TestCase
     assert_no_match(/border-radius:/, rendered)
   end
 
+  test "renders the lead planner first and remaining planners by position" do
+    event_team_members(:one).update!(position: 10)
+    event_team_members(:two).update!(position: 5)
+    supporting_member = @event.event_team_members.create!(
+      user: users(:planner_two),
+      member_role: EventTeamMember::TEAM_ROLES[:planner],
+      lead_planner: false
+    )
+    supporting_member.update!(position: 0)
+
+    render template: "generated_documents/sections/planning_team", locals: { render_base_styles: false }
+
+    planner_names = css_select(".generated-template--planning-team__name").map { |node| node.text.strip }
+    assert_equal [ "Ada Fixture", "Brooke Planner", "Grace Fixture" ], planner_names
+  end
+
   test "renders empty state when no planners are linked" do
     empty_event = events(:one)
     empty_event.planner_team_members.destroy_all

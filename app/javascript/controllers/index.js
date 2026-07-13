@@ -12,6 +12,9 @@ import DocumentBuildStatusController from "controllers/document_build_status_con
 import LocalTimeController from "controllers/local_time_controller"
 import EventSidebarController from "controllers/event_sidebar_controller"
 import EventGroupSelectController from "controllers/event_group_select_controller"
+import EventVendorDialogController from "controllers/event_vendor_dialog_controller"
+import VendorPickerController from "controllers/vendor_picker_controller"
+import VendorSortableController from "controllers/vendor_sortable_controller"
 import CalendarBulkEditController from "controllers/calendar_bulk_edit_controller"
 import CalendarItemImportController from "controllers/calendar_item_import_controller"
 import AnchorScrollController from "controllers/anchor_scroll_controller"
@@ -37,6 +40,9 @@ application.register("document-build-status", DocumentBuildStatusController)
 application.register("local-time", LocalTimeController)
 application.register("event-sidebar", EventSidebarController)
 application.register("event-group-select", EventGroupSelectController)
+application.register("event-vendor-dialog", EventVendorDialogController)
+application.register("vendor-picker", VendorPickerController)
+application.register("vendor-sortable", VendorSortableController)
 application.register("calendar-bulk-edit", CalendarBulkEditController)
 application.register("calendar-item-import", CalendarItemImportController)
 application.register("anchor-scroll", AnchorScrollController)

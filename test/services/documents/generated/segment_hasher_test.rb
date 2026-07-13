@@ -84,21 +84,19 @@ module Documents
           name: "Northlight Films",
           default_vendor_type: "Photo + Video",
           default_social_handle: "northlightfilms",
-          contacts_jsonb: [
+          contacts_attributes: [
             {
-              "name" => "Chris Lane",
-              "title" => "Producer",
-              "email" => "chris@northlight.test",
-              "phone" => "555-331-4400",
-              "notes" => "Primary contact"
+              name: "Chris Lane",
+              title: "Producer",
+              email: "chris@northlight.test",
+              phone: "555-331-4400",
+              notes: "Primary contact"
             }
           ]
         )
 
         @event.event_vendors.create!(
-          name: "Northlight Films",
           global_vendor: global_vendor,
-          contacts_jsonb: [],
           position: 8,
           client_visible: false
         )
@@ -107,16 +105,7 @@ module Documents
 
         global_vendor.update!(
           name: "Northlight Studio",
-          default_social_handle: "northlightstudio",
-          contacts_jsonb: [
-            {
-              "name" => "Chris Lane",
-              "title" => "Executive Producer",
-              "email" => "hello@northlight.test",
-              "phone" => "555-888-4400",
-              "notes" => "Updated contact"
-            }
-          ]
+          default_social_handle: "northlightstudio"
         )
 
         refute_equal original_hash, SegmentHasher.call(@source)
@@ -125,16 +114,12 @@ module Documents
       test "event overview hash ignores vendor contact changes" do
         original_hash = SegmentHasher.call(@source)
 
-        event_vendors(:catering).update!(
-          contacts_jsonb: [
-            {
-              name: "Maria Updated",
-              title: "Senior Account Manager",
-              email: "maria.updated@sunshine.test",
-              phone: "555-999-0000",
-              notes: "Still hidden from event overview"
-            }
-          ]
+        global_vendor_contacts(:maria_cater).update!(
+          name: "Maria Updated",
+          title: "Senior Account Manager",
+          email: "maria.updated@sunshine.test",
+          phone: "555-999-0000",
+          notes: "Still hidden from event overview"
         )
 
         assert_equal original_hash, SegmentHasher.call(@source)
@@ -154,9 +139,9 @@ module Documents
       test "event overview hash changes when a no-contact vendor is added or renamed" do
         original_hash = SegmentHasher.call(@source)
 
-        vendor = @event.event_vendors.create!(
-          name: "No Contact Vendor",
-          contacts_jsonb: [],
+        global_vendor = GlobalVendor.create!(name: "No Contact Vendor")
+        @event.event_vendors.create!(
+          global_vendor: global_vendor,
           position: 9,
           client_visible: false
         )
@@ -164,9 +149,30 @@ module Documents
         after_create_hash = SegmentHasher.call(@source)
         refute_equal original_hash, after_create_hash
 
-        vendor.update!(name: "No Contact Vendor Updated")
+        global_vendor.update!(name: "No Contact Vendor Updated")
 
         refute_equal after_create_hash, SegmentHasher.call(@source)
+      end
+
+      test "generated hashes ignore the hidden event profile and track the canonical planning company profile" do
+        overview_hash = SegmentHasher.call(@source)
+        contacts_hash = SegmentHasher.call(@vendor_contacts_source)
+        planning_company = global_vendors(:pineapple_productions)
+        contact = planning_company.contacts.create!(name: "Duplicate Planning Contact", phone: "555-777-1212")
+        planning_event_vendor = event_vendors(:pineapple_one)
+        planning_event_vendor.update!(team_meals: "Duplicate planning meals")
+        planning_event_vendor.replace_contact_ids!([ contact.id ])
+
+        assert_equal overview_hash, SegmentHasher.call(@source)
+        assert_equal contacts_hash, SegmentHasher.call(@vendor_contacts_source)
+
+        planning_company.update!(
+          name: "Pineapple Planning Company",
+          default_social_handle: "@canonical-pineapple"
+        )
+
+        refute_equal overview_hash, SegmentHasher.call(@source)
+        refute_equal contacts_hash, SegmentHasher.call(@vendor_contacts_source)
       end
 
       test "wedding party reference hash changes when getting ready details changes" do
@@ -226,7 +232,7 @@ module Documents
           DocumentSegment::WEDDING_PARTY_REFERENCE_VIEW_KEY,
           options: {
             "timeline_mode" => "manual",
-            "timeline_tag_ids" => [event_calendar_tags(:vendor).id]
+            "timeline_tag_ids" => [ event_calendar_tags(:vendor).id ]
           }
         )
         @wedding_party_source.save!
@@ -299,17 +305,22 @@ module Documents
       test "vendor contacts hash changes when vendor contact fields change" do
         original_hash = SegmentHasher.call(@vendor_contacts_source)
 
-        event_vendors(:catering).update!(
-          contacts_jsonb: [
-            {
-              name: "Maria Cater",
-              title: "Account Manager",
-              email: "maria@sunshine.test",
-              phone: "555-999-0000",
-              notes: "Updated contact"
-            }
-          ]
+        global_vendor_contacts(:maria_cater).update!(
+          phone: "555-999-0000",
+          notes: "Updated contact"
         )
+
+        refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
+      end
+
+      test "vendor contacts hash changes only when a global contact is selected for the event" do
+        vendor = event_vendors(:catering)
+        original_hash = SegmentHasher.call(@vendor_contacts_source)
+        contact = vendor.global_vendor.contacts.create!(name: "Sunshine Backup", phone: "555-222-7777")
+
+        assert_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
+
+        vendor.event_vendor_contacts.create!(global_vendor_contact: contact)
 
         refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)
       end
@@ -352,39 +363,35 @@ module Documents
           name: "Northlight Films",
           default_vendor_type: "Photo + Video",
           default_social_handle: "northlightfilms",
-          contacts_jsonb: [
+          contacts_attributes: [
             {
-              "name" => "Chris Lane",
-              "title" => "Producer",
-              "email" => "chris@northlight.test",
-              "phone" => "555-331-4400",
-              "notes" => "Primary contact"
+              name: "Chris Lane",
+              title: "Producer",
+              email: "chris@northlight.test",
+              phone: "555-331-4400",
+              notes: "Primary contact"
             }
           ]
         )
 
-        @event.event_vendors.create!(
-          name: "Northlight Films",
+        event_vendor = @event.event_vendors.create!(
           global_vendor: global_vendor,
-          contacts_jsonb: [],
           position: 8,
           client_visible: false
         )
+        event_vendor.replace_contact_ids!(global_vendor.contacts.ids)
 
         original_hash = SegmentHasher.call(@vendor_contacts_source)
 
         global_vendor.update!(
           name: "Northlight Studio",
-          default_social_handle: "northlightstudio",
-          contacts_jsonb: [
-            {
-              "name" => "Chris Lane",
-              "title" => "Executive Producer",
-              "email" => "hello@northlight.test",
-              "phone" => "555-888-4400",
-              "notes" => "Updated contact"
-            }
-          ]
+          default_social_handle: "northlightstudio"
+        )
+        global_vendor.contacts.first.update!(
+          title: "Executive Producer",
+          email: "hello@northlight.test",
+          phone: "555-888-4400",
+          notes: "Updated contact"
         )
 
         refute_equal original_hash, SegmentHasher.call(@vendor_contacts_source)

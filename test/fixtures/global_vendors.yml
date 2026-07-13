@@ -1,0 +1,28 @@
+sunshine_catering:
+  name: Sunshine Catering
+  normalized_name: sunshine catering
+  default_vendor_type: Catering
+  default_social_handle: sunshinecatering
+  contacts_jsonb:
+    - name: Maria Cater
+      title: Account Manager
+      email: maria@sunshine.test
+      phone: 555-123-4567
+      notes: Gluten-free specialist
+
+bright_lights:
+  name: Bright Lights Production
+  normalized_name: bright lights production
+  default_vendor_type: Lighting
+  default_social_handle: "@brightlights"
+  contacts_jsonb:
+    - name: Leo Light
+      email: leo@bright.test
+
+pineapple_productions:
+  name: Pineapple Productions
+  normalized_name: pineapple productions
+  default_vendor_type: Planning
+  default_social_handle: "@pineappleprodc"
+  system_role: planning_company
+  contacts_jsonb: []

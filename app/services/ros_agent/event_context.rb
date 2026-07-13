@@ -109,10 +109,18 @@ module RosAgent
         {
           id: vendor.id,
           global_vendor_id: vendor.global_vendor_id,
-          name: vendor.name,
-          vendor_type: vendor.vendor_type.presence || vendor.global_vendor&.default_vendor_type
+          name: vendor.global_vendor.name,
+          vendor_type: vendor.vendor_type.presence || vendor.global_vendor.default_vendor_type,
+          social_handle: normalized_social_handle(vendor.global_vendor.default_social_handle)
         }
       end
+    end
+
+    def normalized_social_handle(value)
+      handle = value.to_s.strip
+      return if handle.blank?
+
+      handle.start_with?("@") ? handle : "@#{handle}"
     end
 
     def views_payload

@@ -184,6 +184,18 @@ module EventsHelper
     links
   end
 
+  def event_vendor_meal_notes_preview(value, length: 140)
+    html = Commonmarker.to_html(value.to_s.encode(Encoding::UTF_8, invalid: :replace, undef: :replace))
+    truncate(strip_tags(html).squish, length:, separator: " ")
+  end
+
+  def event_vendor_contact_email(user)
+    email = user.display_email.to_s.strip
+    return if email.blank? || email.casecmp("n/a").zero? || email.ends_with?("@placeholder.invalid")
+
+    email
+  end
+
   def event_sidebar_section_active?(section, current_path)
     paths = Array(section[:match_paths])
     paths += section.fetch(:sub_links, []).map { |link| link[:path] unless link[:stub] }.compact

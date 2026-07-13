@@ -130,22 +130,63 @@ class EventOverviewSectionTest < ActionView::TestCase
     assert_no_match(/Custom Heading|Custom body copy|generated-text-columns/, rendered)
   end
 
+  test "renders canonical global vendor identity with the event type override" do
+    vendor = event_vendors(:catering)
+    vendor.update_columns(
+      name: "Legacy Event Vendor Name",
+      social_handle: "@legacy-event-handle",
+      vendor_type: "Reception Catering"
+    )
+    vendor.global_vendor.update!(
+      name: "Sunshine Hospitality",
+      default_social_handle: "sunshinehospitality"
+    )
+
+    render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--event-overview__social-media-category", text: "Reception Catering"
+    assert_select ".generated-template--event-overview__social-media-company", text: "Sunshine Hospitality"
+    assert_select ".generated-template--event-overview__social-media-handle", text: "@sunshinehospitality"
+    assert_no_match(/Legacy Event Vendor Name|legacy-event-handle/, rendered)
+  end
+
+  test "does not duplicate the real planning company in social media rows" do
+    planning_company = global_vendors(:pineapple_productions)
+    planning_company.update!(
+      name: "Pineapple Planning Company",
+      default_social_handle: "@canonical-pineapple"
+    )
+
+    render template: "generated_documents/sections/event_overview", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--event-overview__social-media-company",
+                  text: "Pineapple Planning Company",
+                  count: 1
+    assert_select ".generated-template--event-overview__social-media-company",
+                  text: "Pineapple Productions",
+                  count: 0
+    assert_select ".generated-template--event-overview__social-media-handle", text: "@canonical-pineapple", count: 1
+  end
+
   test "includes vendors without contact data" do
-    @event.event_vendors.create!(
+    silent_vendor = GlobalVendor.create!(
       name: "Silent Vendor",
+      default_social_handle: "silentvendor"
+    )
+    @event.event_vendors.create!(
+      global_vendor: silent_vendor,
       vendor_type: "Décor",
-      social_handle: "silentvendor",
-      contacts_jsonb: [],
       position: 9,
       client_visible: false
     )
-    @event.event_vendors.create!(
+    type_free_vendor = GlobalVendor.create!(
       name: "Type Free Vendor",
+      default_social_handle: "typefree",
+      contacts_attributes: [ { name: "No Type Contact" } ]
+    )
+    @event.event_vendors.create!(
+      global_vendor: type_free_vendor,
       vendor_type: nil,
-      social_handle: "typefree",
-      contacts_jsonb: [
-        { name: "No Type Contact" }
-      ],
       position: 10,
       client_visible: false
     )

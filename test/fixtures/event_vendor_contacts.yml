@@ -1,0 +1,9 @@
+catering_maria:
+  event_vendor: catering
+  global_vendor_contact: maria_cater
+  position: 0
+
+lighting_leo:
+  event_vendor: lighting
+  global_vendor_contact: leo_light
+  position: 0

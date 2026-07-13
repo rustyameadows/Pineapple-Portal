@@ -1,10 +1,14 @@
 class EventVendor < ApplicationRecord
-  CONTACT_ATTRIBUTE_KEYS = %w[name title email phone notes].freeze
-
   belongs_to :event
-  belongs_to :global_vendor, optional: true
+  belongs_to :global_vendor
 
-  attr_writer :contacts_attributes
+  has_many :event_vendor_contacts,
+           -> { ordered },
+           inverse_of: :event_vendor,
+           dependent: :destroy
+  has_many :contacts,
+           through: :event_vendor_contacts,
+           source: :global_vendor_contact
 
   before_validation :strip_name
   before_validation :sync_name_from_global_vendor
@@ -12,29 +16,56 @@ class EventVendor < ApplicationRecord
   before_validation :normalize_social_handle
   before_validation :normalize_team_meals
   before_validation :assign_position, on: :create
-  before_validation :apply_contacts_attributes
-  before_validation :ensure_contacts_default
+  before_destroy :prevent_planning_company_removal
   validates :name, presence: true, uniqueness: { scope: :event_id, case_sensitive: false }
+  validates :global_vendor_id, uniqueness: { scope: :event_id }
   validates :position, numericality: { greater_than_or_equal_to: 0, allow_nil: false }
-  validates :client_visible, inclusion: { in: [true, false] }
+  validates :client_visible, inclusion: { in: [ true, false ] }
   validates :vendor_type, length: { maximum: 150 }, allow_blank: true
   validates :social_handle, length: { maximum: 150 }, allow_blank: true
-  validate :contacts_jsonb_must_be_array_of_hashes
+  validate :selected_contacts_belong_to_global_vendor
 
   scope :ordered, -> { order(:position, :id) }
   scope :client_visible, -> { where(client_visible: true) }
 
-  def contacts
-    return global_vendor.contacts if global_vendor
-
-    contacts_jsonb || []
+  def selected_contacts
+    event_vendor_contacts
+      .includes(:global_vendor_contact)
+      .ordered
+      .map(&:global_vendor_contact)
   end
 
-  def contacts_attributes
-    @contacts_attributes || contacts
+  def selected_contact_ids
+    event_vendor_contacts.ordered.pluck(:global_vendor_contact_id)
+  end
+
+  def replace_contact_ids!(ids)
+    requested_ids = Array(ids).reject(&:blank?).map { |id| Integer(id.to_s, 10) }.uniq
+    available_contacts = global_vendor.contacts.where(id: requested_ids).index_by(&:id)
+    missing_ids = requested_ids - available_contacts.keys
+    raise ActiveRecord::RecordNotFound, "Contacts do not belong to this vendor: #{missing_ids.join(', ')}" if missing_ids.any?
+    return selected_contacts if selected_contact_ids == requested_ids
+
+    transaction do
+      event_vendor_contacts.delete_all
+      requested_ids.each_with_index do |contact_id, position|
+        event_vendor_contacts.create!(global_vendor_contact_id: contact_id, position: position)
+      end
+    end
+
+    event_vendor_contacts.reload
+    selected_contacts
   end
 
   private
+
+  def prevent_planning_company_removal
+    return unless global_vendor&.planning_company?
+    return if destroyed_by_association&.name == :event_vendors
+
+    errors.add(:base, "The planning company must remain associated with every event")
+    throw :abort
+  end
 
   def sync_name_from_global_vendor
     return unless global_vendor
@@ -69,45 +100,10 @@ class EventVendor < ApplicationRecord
     self.position = max_position.to_i + 1
   end
 
-  def apply_contacts_attributes
-    return unless defined?(@contacts_attributes)
+  def selected_contacts_belong_to_global_vendor
+    return if global_vendor_id.blank?
+    return unless contacts.where.not(global_vendor_id: global_vendor_id).exists?
 
-    raw_contacts = case @contacts_attributes
-                   when Hash
-                     @contacts_attributes.values
-                   when Array
-                     @contacts_attributes
-                   else
-                     []
-                   end
-
-    sanitized_contacts = raw_contacts.filter_map do |contact|
-      contact_hash = contact.to_h.transform_keys(&:to_s).slice(*CONTACT_ATTRIBUTE_KEYS)
-      contact_hash.transform_values! do |value|
-        if value.is_a?(String)
-          stripped = value.strip
-          stripped.presence
-        else
-          value
-        end
-      end
-
-      next if CONTACT_ATTRIBUTE_KEYS.all? { |key| contact_hash[key].blank? }
-
-      CONTACT_ATTRIBUTE_KEYS.index_with { |key| contact_hash[key] }
-    end
-
-    self.contacts_jsonb = sanitized_contacts
+    errors.add(:selected_contacts, "must belong to the selected global vendor")
   end
-
-  def ensure_contacts_default
-    self.contacts_jsonb ||= []
-  end
-
-  def contacts_jsonb_must_be_array_of_hashes
-    return if contacts_jsonb.is_a?(Array) && contacts_jsonb.all? { |item| item.is_a?(Hash) }
-
-    errors.add(:contacts_jsonb, "must be an array of contact hashes")
-  end
-
 end

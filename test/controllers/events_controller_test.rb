@@ -230,7 +230,12 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
     assert_select "h1", text: "Vendors"
     assert_select "div.event-settings__form-errors li", text: "Name can't be blank"
-    assert_select "textarea[name='event[pineapple_team_meals]'][data-generated-markdown-editor-target='source']", text: "**Planner meals**"
+    assert_select "[data-controller='event-vendor-dialog'][data-event-vendor-dialog-vendor-id-value='planning'][data-event-vendor-dialog-auto-open-value='true']",
+                  count: 1
+    assert_select "dialog#event-vendor-planning-dialog[aria-describedby='event-vendor-planning-errors']" do
+      assert_select "#event-vendor-planning-errors[autofocus] li", text: "Name can't be blank"
+      assert_select "textarea[name='event[pineapple_team_meals]']", text: "**Planner meals**"
+    end
   end
 
   test "updates key people label from people page" do

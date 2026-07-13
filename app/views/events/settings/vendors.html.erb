@@ -1,5 +1,9 @@
+<% planning_company = @planning_company_global_vendor %>
+<% planning_vendor = @planning_company_event_vendor %>
+<% planners = Array(@planner_team_members) %>
+
 <% provide :page_shell do %>
-  <div class="event-layout">
+  <div class="event-layout event-layout--vendor-settings">
     <%= render "events/sidebar_navigation", event: @event %>
 
     <div class="event-layout__main">
@@ -10,166 +14,202 @@
           <div>
             <p class="event-section__eyebrow">Event Partners</p>
             <h1 class="event-section__title">Vendors</h1>
-            <p class="event-section__lead">Track vendor details, manage visibility, and keep contact info handy for your team.</p>
+          </div>
+          <div class="event-section__actions"
+               data-controller="event-vendor-dialog"
+               data-event-vendor-dialog-vendor-id-value="new"
+               data-event-vendor-dialog-auto-open-value="<%= params[:event_vendor_id].to_s == 'new' %>">
+            <button type="button"
+                    class="event-section__cta"
+                    data-event-vendor-dialog-target="trigger"
+                    data-action="event-vendor-dialog#open"
+                    aria-haspopup="dialog"
+                    aria-controls="event-vendor-new-dialog">
+              Add Vendor
+            </button>
+            <%= render "events/settings/add_vendor_dialog",
+                       event: @event,
+                       event_vendor: @event_vendor,
+                       available_global_vendors: @available_global_vendors %>
           </div>
         </header>
 
         <div class="event-section__body">
-          <div class="event-settings__contacts-section">
-            <div class="event-settings__contact-item">
-              <%= form_with model: @event, local: true, html: { class: "event-settings__form" } do |form| %>
-                <%= hidden_field_tag :return_to, request.fullpath %>
-                <% if @event.errors.any? %>
-                  <div class="event-settings__form-errors">
-                    <h3><%= pluralize(@event.errors.count, "error") %> prevented saving:</h3>
-                    <ul>
-                      <% @event.errors.full_messages.each do |message| %>
-                        <li><%= message %></li>
-                      <% end %>
-                    </ul>
-                  </div>
-                <% end %>
-
-                <div class="event-settings__vendor-top-row">
-                  <div>
-                    <p class="event-section__eyebrow">Planning</p>
-                    <h3 class="event-settings__subheading">Pineapple Productions</h3>
-                  </div>
-
-                  <div class="event-settings__vendor-actions">
-                    <div class="event-settings__controls event-settings__controls--vendor-top">
-                      <%= button_tag "Save Pineapple meals", type: "submit", class: "event-settings__control" %>
-                    </div>
-                  </div>
-                </div>
-
-                <%= render "events/settings/markdown_field",
-                           form:,
-                           field_name: :pineapple_team_meals,
-                           label_text: "Pineapple Team Meals",
-                           rows: 3,
-                           placeholder: "Note Pineapple meal counts, timing, pickup details, or links.",
-                           hint_text: "Use this for Pineapple Productions meal notes on this event.",
-                           tools: %i[bold italic link],
-                           support_text: "Supports Markdown for bold, italic, and links." %>
-              <% end %>
-            </div>
-
-            <% if @event_vendors.any? %>
-              <ul class="event-settings__contact-list">
-                <% @event_vendors.each_with_index do |vendor, index| %>
-                  <li class="event-settings__contact-item">
-                    <%= form_with model: [@event, vendor], local: true, html: { class: "event-settings__form" } do |form| %>
-                      <%= hidden_field_tag :return_to, request.fullpath %>
-                      <div class="event-settings__vendor-top-row">
-                        <div class="event-settings__vendor-core">
-                          <div class="event-settings__field"
-                               data-controller="remote-options"
-                               data-remote-options-url-value="<%= event_vendor_options_path(@event) %>">
-                            <%= form.hidden_field :global_vendor_id, data: { remote_options_target: "hidden" } %>
-                            <%= form.label :name, "Vendor name" %>
-                            <%= form.text_field :name, required: true, data: { remote_options_target: "input" } %>
-                          </div>
-                          <div class="event-settings__field">
-                            <%= form.label :vendor_type, "Vendor type" %>
-                            <%= form.text_field :vendor_type, placeholder: "Floral, Lighting, etc." %>
-                          </div>
-                          <div class="event-settings__field">
-                            <%= form.label :social_handle, "Social handle" %>
-                            <%= form.text_field :social_handle, placeholder: "@vendor" %>
-                          </div>
-                          <div class="event-settings__field event-settings__field--checkbox">
-                            <label class="event-settings__toggle">
-                              <%= form.check_box :client_visible %>
-                              <span>Visible to clients</span>
-                            </label>
+          <div class="event-settings__vendor-roster">
+            <div class="event-settings__vendor-roster-shell"
+                 role="region"
+                 aria-label="Event vendor roster"
+                 tabindex="0"
+                 data-controller="vendor-sortable"
+                 data-vendor-sortable-reorder-url-value="<%= reorder_event_event_vendors_path(@event) %>"
+                 data-vendor-sortable-csrf-token-value="<%= form_authenticity_token %>">
+              <table class="event-settings__vendor-roster-table"
+                     data-vendor-roster
+                     data-vendor-sortable-target="list"
+                     aria-label="Vendors and selected contacts for this event">
+                <thead>
+                  <tr>
+                    <th scope="col" colspan="2">Vendor</th>
+                    <th scope="col">Edit</th>
+                  </tr>
+                </thead>
+                <% if planning_company && planning_vendor %>
+                  <tbody class="event-settings__vendor-roster-group event-settings__vendor-roster-group--planning"
+                         data-pinned-vendor-group>
+                    <% planning_meals = @event.pineapple_team_meals.to_s.strip.presence %>
+                    <tr class="event-settings__vendor-roster-row event-settings__vendor-roster-row--planning"
+                        data-vendor-row
+                        data-event-vendor-id="<%= planning_vendor.id %>">
+                      <td class="event-settings__vendor-roster-cell event-settings__vendor-roster-cell--drag">
+                        <span class="event-settings__vendor-pinned-marker"
+                              aria-label="Pinned vendor"
+                              title="Pinned vendor">★</span>
+                      </td>
+                      <th scope="row" class="event-settings__vendor-roster-cell event-settings__vendor-roster-cell--identity">
+                        <div class="event-settings__vendor-roster-primary">
+                          <strong><%= planning_company.name %></strong>
+                          <div class="event-settings__vendor-roster-meta-line">
+                            <span class="event-settings__vendor-roster-detail"><%= planning_vendor.vendor_type.presence || planning_company.default_vendor_type.presence || "Planning" %></span>
+                            <% if planning_company.default_social_handle.present? %><span class="event-settings__vendor-roster-detail"><%= planning_company.default_social_handle %></span><% end %>
                           </div>
                         </div>
+                      </th>
+                      <td class="event-settings__vendor-roster-cell event-settings__vendor-roster-cell--actions"
+                          data-controller="event-vendor-dialog"
+                          data-event-vendor-dialog-vendor-id-value="planning"
+                          data-event-vendor-dialog-auto-open-value="<%= @event.errors.any? || params[:event_vendor_id].to_s == 'planning' %>">
+                        <button type="button"
+                                class="event-settings__vendor-roster-action"
+                                data-event-vendor-dialog-target="trigger"
+                                data-action="event-vendor-dialog#open"
+                                aria-haspopup="dialog"
+                                aria-controls="event-vendor-planning-dialog">
+                          Edit
+                        </button>
+                        <%= render "events/settings/planning_company_dialog",
+                                   event: @event,
+                                   planning_company_global_vendor: planning_company,
+                                   planner_team_members: planners %>
+                      </td>
+                    </tr>
 
-                        <div class="event-settings__vendor-actions">
-                          <div class="event-settings__controls event-settings__controls--vendor-top">
-                            <%= button_tag "Save vendor", type: "submit", class: "event-settings__control" %>
-                            <% if index.positive? %>
-                              <%= link_to "Move up", move_up_event_event_vendor_path(@event, vendor, return_to: request.fullpath), data: { turbo_method: :patch }, class: "event-settings__control" %>
-                            <% end %>
-                            <% if index < @event_vendors.length - 1 %>
-                              <%= link_to "Move down", move_down_event_event_vendor_path(@event, vendor, return_to: request.fullpath), data: { turbo_method: :patch }, class: "event-settings__control" %>
-                            <% end %>
-                            <%= link_to "Remove", event_event_vendor_path(@event, vendor, return_to: request.fullpath), data: { turbo_method: :delete, turbo_confirm: "Remove this vendor?" }, class: "event-settings__control event-settings__control--danger" %>
+                    <% if planning_meals %>
+                      <tr class="event-settings__vendor-roster-row event-settings__vendor-roster-row--child event-settings__vendor-roster-row--meals"
+                          data-vendor-meals-row
+                          data-parent-event-vendor-id="<%= planning_vendor.id %>">
+                        <td colspan="3" class="event-settings__vendor-roster-contact-cell">
+                          <div class="event-settings__vendor-roster-contact event-settings__vendor-roster-meals">
+                            <span class="event-settings__vendor-roster-meals-label">Meals</span>
+                            <span class="event-settings__vendor-roster-meals-copy" title="<%= planning_meals %>"><%= event_vendor_meal_notes_preview(planning_meals) %></span>
                           </div>
-                        </div>
-                      </div>
-
-                      <%= render "events/settings/markdown_field",
-                                 form:,
-                                 field_name: :team_meals,
-                                 label_text: "Team Meals",
-                                 rows: 3,
-                                 placeholder: "Note vendor-provided meals, counts, timing, pickup details, or links.",
-                                 hint_text: "Use this for event-specific team meal notes.",
-                                 tools: %i[bold italic link],
-                                 support_text: "Supports Markdown for bold, italic, and links." %>
-
-                      <div class="event-settings__vendor-contacts">
-                        <%= render "events/settings/vendor_contact_details", vendor: %>
-                      </div>
+                        </td>
+                      </tr>
                     <% end %>
-                  </li>
+
+                    <% planners.each do |member| %>
+                      <% user = member.user %>
+                      <% next unless user %>
+                      <tr class="event-settings__vendor-roster-row event-settings__vendor-roster-row--child event-settings__vendor-roster-row--contact"
+                          data-vendor-contact-row
+                          data-parent-event-vendor-id="<%= planning_vendor.id %>">
+                        <td colspan="3" class="event-settings__vendor-roster-contact-cell">
+                          <div class="event-settings__vendor-roster-contact">
+                            <span class="event-settings__vendor-contact-name"><%= user.name %></span>
+                            <% if user.title.present? %><span class="event-settings__vendor-contact-meta"><%= user.title %></span><% end %>
+                            <% if (email = event_vendor_contact_email(user)) %><span class="event-settings__vendor-contact-meta"><%= email %></span><% end %>
+                            <% if user.phone_number.present? %><span class="event-settings__vendor-contact-meta"><%= user.phone_number %></span><% end %>
+                          </div>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
                 <% end %>
-              </ul>
-            <% else %>
-              <p class="event-settings__empty">No vendors yet. Use the form below to add your first partner.</p>
-            <% end %>
 
-            <div class="event-settings__new-link">
-              <h3>Add Vendor</h3>
-              <%= form_with model: [@event, @event_vendor], local: true, html: { class: "event-settings__form" } do |form| %>
-                <%= hidden_field_tag :return_to, request.fullpath %>
-                <div class="event-settings__field-group">
-                  <div class="event-settings__field"
-                       data-controller="remote-options"
-                       data-remote-options-url-value="<%= event_vendor_options_path(@event) %>">
-                    <%= form.hidden_field :global_vendor_id, data: { remote_options_target: "hidden" } %>
-                    <%= form.label :name, "Vendor name" %>
-                    <%= form.text_field :name, required: true, data: { remote_options_target: "input" } %>
-                  </div>
-                  <div class="event-settings__field">
-                    <%= form.label :vendor_type, "Vendor type" %>
-                    <%= form.text_field :vendor_type, placeholder: "Catering" %>
-                  </div>
-                  <div class="event-settings__field">
-                    <%= form.label :social_handle, "Social handle" %>
-                    <%= form.text_field :social_handle, placeholder: "@vendor" %>
-                  </div>
-                  <div class="event-settings__field event-settings__field--checkbox">
-                    <label class="event-settings__toggle">
-                      <%= form.check_box :client_visible %>
-                      <span>Visible to clients</span>
-                    </label>
-                  </div>
-                </div>
+                <% @event_vendors.each_with_index do |vendor, index| %>
+                  <% selections = vendor.event_vendor_contacts.sort_by { |selection| [selection.position, selection.id] } %>
+                  <% selected_contacts = selections.map(&:global_vendor_contact).compact %>
+                  <% vendor_type = vendor.vendor_type.presence || vendor.global_vendor.default_vendor_type.presence || "—" %>
+                  <% team_meals = vendor.team_meals.to_s.strip.presence %>
+                  <tbody class="event-settings__vendor-roster-group event-settings__vendor-roster-group--sortable"
+                         data-vendor-sortable-target="item"
+                         data-event-vendor-id="<%= vendor.id %>">
+                    <tr class="event-settings__vendor-roster-row event-settings__vendor-roster-row--vendor"
+                        data-vendor-row
+                        data-event-vendor-id="<%= vendor.id %>">
+                      <td class="event-settings__vendor-roster-cell event-settings__vendor-roster-cell--drag">
+                        <button type="button"
+                                class="event-settings__vendor-drag-handle"
+                                data-vendor-sortable-target="handle"
+                                draggable="true"
+                                aria-label="Drag to reorder <%= vendor.global_vendor.name %>">
+                          <span aria-hidden="true">⋮⋮</span>
+                        </button>
+                      </td>
+                      <th scope="row" class="event-settings__vendor-roster-cell event-settings__vendor-roster-cell--identity">
+                        <div class="event-settings__vendor-roster-primary">
+                          <strong><%= vendor.global_vendor.name %></strong>
+                          <div class="event-settings__vendor-roster-meta-line">
+                            <% unless vendor_type == "—" %><span class="event-settings__vendor-roster-detail"><%= vendor_type %></span><% end %>
+                            <% if vendor.global_vendor.default_social_handle.present? %><span class="event-settings__vendor-roster-detail"><%= vendor.global_vendor.default_social_handle %></span><% end %>
+                            <% unless vendor.client_visible? %><span class="event-settings__badge event-settings__badge--internal">Hidden</span><% end %>
+                          </div>
+                        </div>
+                      </th>
+                      <td class="event-settings__vendor-roster-cell event-settings__vendor-roster-cell--actions"
+                          data-controller="event-vendor-dialog"
+                          data-event-vendor-dialog-vendor-id-value="<%= vendor.id %>"
+                          data-event-vendor-dialog-auto-open-value="<%= params[:event_vendor_id].to_s == vendor.id.to_s %>">
+                        <button type="button"
+                                class="event-settings__vendor-roster-action"
+                                data-event-vendor-dialog-target="trigger"
+                                data-action="event-vendor-dialog#open"
+                                aria-haspopup="dialog"
+                                aria-controls="event-vendor-<%= vendor.id %>-dialog">
+                          Edit
+                        </button>
+                        <%= render "events/settings/vendor_edit_dialog",
+                                   event: @event,
+                                   vendor:,
+                                   vendors: @event_vendors,
+                                   index: %>
+                      </td>
+                    </tr>
 
-                <div class="event-settings__vendor-contacts">
-                  <div class="event-settings__contacts">
-                    <p class="event-settings__hint">Contacts come from the selected global vendor and can be viewed after the vendor is added.</p>
-                  </div>
-                </div>
+                    <% if team_meals %>
+                      <tr class="event-settings__vendor-roster-row event-settings__vendor-roster-row--child event-settings__vendor-roster-row--meals"
+                          data-vendor-meals-row
+                          data-parent-event-vendor-id="<%= vendor.id %>">
+                        <td colspan="3" class="event-settings__vendor-roster-contact-cell">
+                          <div class="event-settings__vendor-roster-contact event-settings__vendor-roster-meals">
+                            <span class="event-settings__vendor-roster-meals-label">Meals</span>
+                            <span class="event-settings__vendor-roster-meals-copy" title="<%= team_meals %>"><%= event_vendor_meal_notes_preview(team_meals) %></span>
+                          </div>
+                        </td>
+                      </tr>
+                    <% end %>
 
-                <%= render "events/settings/markdown_field",
-                           form:,
-                           field_name: :team_meals,
-                           label_text: "Team Meals",
-                           rows: 3,
-                           placeholder: "Note vendor-provided meals, counts, timing, pickup details, or links.",
-                           hint_text: "Use this for event-specific team meal notes.",
-                           tools: %i[bold italic link],
-                           support_text: "Supports Markdown for bold, italic, and links." %>
-
-                <div class="event-settings__form-actions">
-                  <%= form.submit "Add vendor" %>
-                </div>
-              <% end %>
+                    <% selected_contacts.each do |contact| %>
+                      <tr class="event-settings__vendor-roster-row event-settings__vendor-roster-row--child event-settings__vendor-roster-row--contact"
+                          data-vendor-contact-row
+                          data-parent-event-vendor-id="<%= vendor.id %>">
+                        <td colspan="3" class="event-settings__vendor-roster-contact-cell">
+                          <div class="event-settings__vendor-roster-contact">
+                            <span class="event-settings__vendor-contact-name"><%= contact.name.presence || contact.title.presence || "Contact" %></span>
+                            <% if contact.title.present? && contact.title != contact.name %><span class="event-settings__vendor-contact-meta"><%= contact.title %></span><% end %>
+                            <% if contact.email.present? %><span class="event-settings__vendor-contact-meta"><%= contact.email %></span><% end %>
+                            <% if contact.phone.present? %><span class="event-settings__vendor-contact-meta"><%= contact.phone %></span><% end %>
+                          </div>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                <% end %>
+              </table>
             </div>
+
+            <% if @event_vendors.empty? %>
+              <p class="event-settings__empty">No outside vendors have been added to this event yet.</p>
+            <% end %>
           </div>
         </div>
       </section>

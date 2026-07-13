@@ -1,6 +1,37 @@
 require "test_helper"
 
 class EventTest < ActiveSupport::TestCase
+  test "creates the planning company event vendor without changing planner or meal behavior" do
+    planning_company = GlobalVendor.planning_company
+    planning_company.contacts.create!(name: "Global Planning Contact")
+
+    event = Event.create!(
+      name: "Planning Company Event",
+      pineapple_team_meals: "  Two planner meals  "
+    )
+
+    planning_vendor = event.event_vendors.find_by!(global_vendor: planning_company)
+    assert_empty planning_vendor.selected_contacts
+    assert_not planning_vendor.client_visible?
+    assert_nil planning_vendor.team_meals
+    assert_equal "Two planner meals", event.pineapple_team_meals
+    assert_empty event.planner_team_members
+  end
+
+  test "does not create an event when the planning company role is not configured" do
+    planning_company = GlobalVendor.planning_company
+    planning_company.update_column(:system_role, nil)
+
+    assert_no_difference("Event.count") do
+      error = assert_raises(ActiveRecord::RecordInvalid) do
+        Event.create!(name: "Missing Planning Company Event")
+      end
+      assert_includes error.record.errors[:base], "Planning company global vendor is not configured"
+    end
+  ensure
+    planning_company&.update_column(:system_role, GlobalVendor::SYSTEM_ROLES.fetch(:planning_company))
+  end
+
   test "requires a name" do
     event = Event.new
     assert_not event.valid?
@@ -101,7 +132,7 @@ class EventTest < ActiveSupport::TestCase
 
     entries = event.ordered_planning_link_entries
 
-    assert_equal [:event_link, :built_in], entries.map(&:kind)
+    assert_equal [ :event_link, :built_in ], entries.map(&:kind)
     assert_equal planning_link, entries.first.record
   end
 

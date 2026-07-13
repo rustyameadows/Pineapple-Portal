@@ -64,22 +64,105 @@ module Events
     end
 
     test "renders vendors page" do
+      generic_vendor_count = Vendors::PlanningCompany.excluding(@event.event_vendors).count
+      available_global_vendor = GlobalVendor.create!(
+        name: "Picker Floral Studio",
+        default_vendor_type: "Floral",
+        default_social_handle: "@pickerfloral",
+        contacts_attributes: { "0" => { name: "Fern Picker", email: "fern@picker.test" } }
+      )
+      @event.update!(pineapple_team_meals: "**Eight planner meals** at 5:00 PM.")
+      event_vendors(:catering).update!(team_meals: "**Three vendor meals** at 6:00 PM.")
+      unselected_contact = global_vendors(:sunshine_catering).contacts.create!(
+        name: "Unselected Roster Contact",
+        email: "unselected@example.test"
+      )
+
       get vendors_event_settings_url(@event)
+
       assert_response :success
       assert_select "h1", text: "Vendors"
-      assert_select "h3", text: "Pineapple Productions"
-      assert_select "textarea[name='event[pineapple_team_meals]'][data-generated-markdown-editor-target='source']", count: 1
-      assert_select "textarea[name='event_vendor[team_meals]'][data-generated-markdown-editor-target='source']", count: @event.event_vendors.count + 1
-      assert_select "button[data-markdown-format='bold']", count: (@event.event_vendors.count + 2) * 2
-      assert_select "button[data-markdown-format='italic']", count: (@event.event_vendors.count + 2) * 2
-      assert_select "button[data-markdown-format='link']", count: (@event.event_vendors.count + 2) * 2
-      assert_select "button[data-markdown-format='headline']", count: 0
-      assert_select ".event-settings__hint", text: /Supports Markdown for bold, italic, and links\./, count: @event.event_vendors.count + 2
+      assert_select "table[data-vendor-roster][aria-label='Vendors and selected contacts for this event']", count: 1 do
+        assert_select "th[scope='col'][colspan='2']", text: "Vendor"
+        assert_select "th[scope='col']", text: "Edit"
+        assert_select "th[scope='col']", count: 2
+        assert_select "tbody[data-pinned-vendor-group]", count: 1
+        assert_select "tbody[data-vendor-sortable-target='item']", count: generic_vendor_count
+        assert_select "button.event-settings__vendor-drag-handle[data-vendor-sortable-target='handle'][draggable='true']", count: generic_vendor_count
+        assert_select "tbody[data-pinned-vendor-group] .event-settings__vendor-pinned-marker[aria-label='Pinned vendor']", text: "★", count: 1
+        assert_select "tbody[data-pinned-vendor-group] button.event-settings__vendor-drag-handle", count: 0
+        assert_select "tr[data-vendor-contact-row] button.event-settings__vendor-drag-handle", count: 0
+        assert_select "tr[data-vendor-contact-row][draggable='true']", count: 0
+        assert_select "tr[data-vendor-row][data-event-vendor-id]", count: @event.event_vendors.count
+        assert_select "tr[data-vendor-contact-row]", count: 4
+        assert_select "tr[data-vendor-contact-row]", text: /Maria Cater/, count: 1
+        assert_select "tr[data-vendor-contact-row]", text: /Leo Light/, count: 1
+        assert_select "tr[data-vendor-contact-row]", text: /Ada Fixture/, count: 1
+        assert_select "tr[data-vendor-contact-row]", text: /Grace Fixture/, count: 1
+        assert_select "tr[data-vendor-contact-row]", text: /#{Regexp.escape(unselected_contact.name)}/, count: 0
+        assert_select "tr[data-vendor-meals-row]", count: 2
+        assert_select "tr[data-event-vendor-id='#{event_vendors(:pineapple_one).id}'] + tr[data-vendor-meals-row][data-parent-event-vendor-id='#{event_vendors(:pineapple_one).id}']", count: 1
+        assert_select "tr[data-event-vendor-id='#{event_vendors(:catering).id}'] + tr[data-vendor-meals-row][data-parent-event-vendor-id='#{event_vendors(:catering).id}']", count: 1
+        assert_select ".event-settings__badge", text: "Hidden", count: 1
+        assert_select ".event-settings__badge", text: "Client visible", count: 0
+        assert_select ".event-settings__badge", text: "Planning company", count: 0
+        assert_select ".event-settings__vendor-roster-meals", text: /Eight planner meals at 5:00 PM\./, count: 1
+        assert_select ".event-settings__vendor-roster-meals", text: /Three vendor meals at 6:00 PM\./, count: 1
+        assert_select ".event-settings__vendor-roster-meals", text: /\*\*/, count: 0
+      end
+      assert_select "button[aria-haspopup='dialog'][aria-controls]", count: @event.event_vendors.count + 1
+      assert_select "dialog.event-settings__vendor-dialog[aria-labelledby]", count: @event.event_vendors.count + 1
+      assert_select "textarea[name='event[pineapple_team_meals]']", count: 1
+      assert_select "textarea[name='event_vendor[team_meals]']", count: generic_vendor_count
+      assert_select "[data-controller='generated-markdown-editor']", count: 0
       assert_select "input[name*='contacts_attributes']", count: 0
       assert_select "textarea[name*='contacts_attributes']", count: 0
-      assert_select ".event-settings__vendor-contact-heading", count: @event.event_vendors.count
-      assert_select ".event-settings__hint", text: /Contacts are inherited from the global vendor and are read-only for this event\./, count: @event.event_vendors.count
-      assert_select ".event-settings__contact-title", text: "Maria Cater", count: 1
+      assert_select "dialog.event-settings__vendor-dialog--association", count: generic_vendor_count
+      assert_select "dialog.event-settings__vendor-dialog--association .event-settings__vendor-dialog-header-meta", text: /Settings for this event/, count: generic_vendor_count
+      assert_select "dialog.event-settings__vendor-dialog--association .event-settings__vendor-dialog-section-title", text: "Event details", count: generic_vendor_count
+      assert_select "dialog.event-settings__vendor-dialog--association .event-settings__vendor-dialog-section-title", text: "Meal notes", count: generic_vendor_count
+      assert_select "dialog.event-settings__vendor-dialog--association .event-settings__vendor-dialog-section-title", text: "Contacts for this event", count: generic_vendor_count
+      assert_select "a", text: "Manage vendor contacts", count: generic_vendor_count
+      assert_select "input[type='checkbox'][name='event_vendor[global_vendor_contact_ids][]']", count: 3
+      assert_select "input[type='checkbox'][name='event_vendor[global_vendor_contact_ids][]'][checked='checked']", count: 2
+      assert_select ".event-settings__vendor-dialog-contact-item", text: /#{Regexp.escape(unselected_contact.name)}/, count: 1
+      assert_select "input[name='event_vendor[name]']", count: 0
+      assert_select "input[name='event_vendor[social_handle]']", count: 0
+      assert_select "input[type='search'][data-vendor-picker-target='query']", count: 1
+      assert_select "input[type='radio'][name='event_vendor[global_vendor_id]'][value='#{available_global_vendor.id}']", count: 1
+      assert_select "tr[data-global-vendor-id='#{available_global_vendor.id}']", text: /Picker Floral Studio/, count: 1
+      assert_select "button[name='event_vendor[create_global_vendor]']", count: 0
+      assert_select "a[href='#{new_settings_global_vendor_path}']", text: "Create new vendor", count: 1
+    end
+
+    test "renders the special planning company block without a duplicate generic vendor form" do
+      planning_event_vendor = event_vendors(:pineapple_one)
+      planning_event_vendor.update!(team_meals: "This generic meal field should stay hidden.")
+      planning_event_vendor.global_vendor.update!(name: "Pineapple Planning Company")
+      planning_event_vendor.global_vendor.contacts.create!(name: "Hidden Global Planning Contact")
+
+      get vendors_event_settings_url(@event)
+
+      assert_response :success
+      assert_select "tr.event-settings__vendor-roster-row--planning[data-event-vendor-id='#{planning_event_vendor.id}']",
+                    text: /Pineapple Planning Company/, count: 1
+      assert_select "tr.event-settings__vendor-roster-row--vendor", text: /Pineapple Planning Company/, count: 0
+      assert_select "form[action='#{event_event_vendor_path(@event, planning_event_vendor)}']", count: 0
+      assert_select "tr[data-parent-event-vendor-id='#{planning_event_vendor.id}']", count: 2
+      assert_select "dialog#event-vendor-planning-dialog" do
+        assert_select "h3", text: "Pineapple Planning Company"
+        assert_select ".event-settings__vendor-dialog-header-meta", text: /Settings for this event/
+        assert_select ".event-settings__vendor-dialog-section-title", text: "Meal notes"
+        assert_select ".event-settings__vendor-dialog-section-title", text: "Event planners"
+        assert_select "textarea[name='event[pineapple_team_meals]']", count: 1
+        assert_select "input[name^='event_vendor']", count: 0
+        assert_select "a", text: "Manage event planners", count: 1
+        assert_select ".event-settings__vendor-dialog-contact-item", text: /Ada Fixture/, count: 1
+        assert_select ".event-settings__vendor-dialog-contact-item", text: /Grace Fixture/, count: 1
+      end
+      assert_select "textarea[name='event[pineapple_team_meals]']", count: 1
+      assert_no_match(/This generic meal field should stay hidden/, response.body)
+      assert_no_match(/Hidden Global Planning Contact/, response.body)
     end
 
     test "renders locations page" do

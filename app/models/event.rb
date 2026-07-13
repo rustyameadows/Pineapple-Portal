@@ -47,8 +47,10 @@ class Event < ApplicationRecord
              optional: true
 
   validate :event_photo_document_must_be_image
+  validate :planning_company_must_be_configured, on: :create
   before_validation :sanitize_planning_link_tokens
   before_save :normalize_metadata_fields
+  after_create :create_planning_company_event_vendor!
   validate :planning_link_keys_must_be_known
   PlanningLinkEntry = Struct.new(:token, :kind, :record, keyword_init: true)
 
@@ -182,6 +184,17 @@ class Event < ApplicationRecord
 
   private
 
+  def planning_company_must_be_configured
+    return if GlobalVendor.planning_company
+
+    errors.add(:base, "Planning company global vendor is not configured")
+  end
+
+  def create_planning_company_event_vendor!
+    planning_company = GlobalVendor.planning_company
+    event_vendors.create!(global_vendor: planning_company, client_visible: false)
+  end
+
   def event_photo_document_must_be_image
     return if event_photo_document_id.blank?
 
@@ -283,7 +296,7 @@ class Event < ApplicationRecord
   def planning_link_token_mapping
     built_in_links = ClientPortal::PlanningLinks.built_in_links_for(self)
     mapping = built_in_links.to_h do |link|
-      [PlanningLinkToken.built_in(link.key), link]
+      [ PlanningLinkToken.built_in(link.key), link ]
     end
 
     event_links.planning.ordered.each do |link|
@@ -305,5 +318,4 @@ class Event < ApplicationRecord
 
     PlanningLinkToken.built_in(token)
   end
-
 end

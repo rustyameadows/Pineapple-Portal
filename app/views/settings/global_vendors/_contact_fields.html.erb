@@ -1,0 +1,47 @@
+<div class="event-settings__contacts">
+  <div>
+    <h3 class="event-settings__subheading">Vendor contacts</h3>
+    <p class="event-settings__hint">These contacts are shared globally. Events choose the contacts relevant to their vendor roster.</p>
+  </div>
+
+  <%= form.fields_for :contacts do |contact_fields| %>
+    <% contact = contact_fields.object %>
+    <div class="event-settings__contact">
+      <%= contact_fields.hidden_field :id if contact.persisted? %>
+      <%= contact_fields.hidden_field :position, value: contact.position || contact_fields.index %>
+
+      <div class="event-settings__vendor-contact-heading">
+        <h4 class="event-settings__contact-title"><%= contact.persisted? ? (contact.name.presence || contact.title.presence || "Contact") : "Add contact" %></h4>
+        <% if contact.persisted? %>
+          <label class="event-settings__toggle">
+            <%= contact_fields.check_box :_destroy %>
+            <span>Remove contact</span>
+          </label>
+        <% end %>
+      </div>
+
+      <div class="event-settings__contact-fields">
+        <div class="event-settings__field">
+          <%= contact_fields.label :name, "Name" %>
+          <%= contact_fields.text_field :name, class: "event-settings__input" %>
+        </div>
+        <div class="event-settings__field">
+          <%= contact_fields.label :title, "Title" %>
+          <%= contact_fields.text_field :title, class: "event-settings__input" %>
+        </div>
+        <div class="event-settings__field">
+          <%= contact_fields.label :email, "Email" %>
+          <%= contact_fields.email_field :email, class: "event-settings__input" %>
+        </div>
+        <div class="event-settings__field">
+          <%= contact_fields.label :phone, "Phone" %>
+          <%= contact_fields.telephone_field :phone, class: "event-settings__input" %>
+        </div>
+        <div class="event-settings__field event-settings__field--notes">
+          <%= contact_fields.label :notes, "Notes" %>
+          <%= contact_fields.text_area :notes, rows: 2, class: "event-settings__textarea" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -1,4 +1,5 @@
 require "json"
+require "set"
 
 module Vendors
   class Audit
@@ -10,6 +11,9 @@ module Vendors
     METRIC_KEYS = %i[
       global_vendors_total
       global_vendors_unused
+      planning_company_global_vendors
+      planning_company_event_vendors
+      events_missing_planning_company_vendor
       event_vendors_total
       event_vendors_linked
       event_vendors_unlinked
@@ -29,6 +33,15 @@ module Vendors
       global_vendors_with_malformed_contact_entries
       event_vendors_with_unknown_contact_keys
       global_vendors_with_unknown_contact_keys
+      global_vendor_contacts_total
+      event_vendor_contact_selections_total
+      legacy_global_contacts_missing_from_directory
+      legacy_event_contacts_missing_from_directory
+      expected_event_contact_selections_missing
+      cross_global_event_contact_selections
+      duplicate_event_contact_selection_pairs
+      global_vendors_without_directory_contacts
+      event_vendors_without_contact_selections
       calendar_items_with_vendor_value
       calendar_items_with_blank_vendor_value
       ros_items_with_vendor_value
@@ -76,6 +89,7 @@ module Vendors
       collect_inventory
       collect_event_vendor_details
       collect_global_contact_shape
+      collect_normalized_contact_details
       collect_calendar_vendor_values
       Report.new(metrics)
     end
@@ -89,6 +103,18 @@ module Vendors
       metrics[:global_vendors_unused] = GlobalVendor
                                         .where.not(id: EventVendor.where.not(global_vendor_id: nil).select(:global_vendor_id))
                                         .count
+      planning_company_ids = GlobalVendor
+                             .where(system_role: GlobalVendor::SYSTEM_ROLES.fetch(:planning_company))
+                             .select(:id)
+      metrics[:planning_company_global_vendors] = planning_company_ids.count
+      metrics[:planning_company_event_vendors] = EventVendor.where(global_vendor_id: planning_company_ids).count
+      metrics[:events_missing_planning_company_vendor] = Event
+                                                         .where.not(
+                                                           id: EventVendor
+                                                             .where(global_vendor_id: planning_company_ids)
+                                                             .select(:event_id)
+                                                         )
+                                                         .count
       metrics[:event_vendors_total] = EventVendor.count
       metrics[:event_vendors_linked] = EventVendor.where.not(global_vendor_id: nil).count
       metrics[:event_vendors_unlinked] = EventVendor.where(global_vendor_id: nil).count
@@ -225,6 +251,158 @@ module Vendors
 
     def contact_list_present?(contacts)
       canonical_contacts(contacts).any?
+    end
+
+    def collect_normalized_contact_details
+      metrics[:global_vendor_contacts_total] = table_count("global_vendor_contacts")
+      metrics[:event_vendor_contact_selections_total] = table_count("event_vendor_contacts")
+      metrics[:global_vendors_without_directory_contacts] = GlobalVendor
+                                                            .where(<<~SQL.squish)
+                                                              NOT EXISTS (
+                                                                SELECT 1
+                                                                FROM global_vendor_contacts contacts
+                                                                WHERE contacts.global_vendor_id = global_vendors.id
+                                                              )
+                                                            SQL
+                                                            .count
+      metrics[:event_vendors_without_contact_selections] = EventVendor
+                                                           .where(<<~SQL.squish)
+                                                             NOT EXISTS (
+                                                               SELECT 1
+                                                               FROM event_vendor_contacts selections
+                                                               WHERE selections.event_vendor_id = event_vendors.id
+                                                             )
+                                                           SQL
+                                                           .count
+      metrics[:cross_global_event_contact_selections] = cross_global_event_contact_selection_count
+      metrics[:duplicate_event_contact_selection_pairs] = duplicate_event_contact_selection_pair_count
+
+      collect_missing_global_directory_contacts
+      collect_missing_event_directory_contacts_and_selections
+    end
+
+    def table_count(table_name)
+      ActiveRecord::Base.connection.select_value("SELECT COUNT(*) FROM #{table_name}").to_i
+    end
+
+    def cross_global_event_contact_selection_count
+      ActiveRecord::Base.connection.select_value(<<~SQL.squish).to_i
+        SELECT COUNT(*)
+        FROM event_vendor_contacts selections
+        INNER JOIN event_vendors
+          ON event_vendors.id = selections.event_vendor_id
+        INNER JOIN global_vendor_contacts contacts
+          ON contacts.id = selections.global_vendor_contact_id
+        WHERE event_vendors.global_vendor_id IS DISTINCT FROM contacts.global_vendor_id
+      SQL
+    end
+
+    def duplicate_event_contact_selection_pair_count
+      ActiveRecord::Base.connection.select_value(<<~SQL.squish).to_i
+        SELECT COUNT(*)
+        FROM (
+          SELECT event_vendor_id, global_vendor_contact_id
+          FROM event_vendor_contacts
+          GROUP BY event_vendor_id, global_vendor_contact_id
+          HAVING COUNT(*) > 1
+        ) duplicate_pairs
+      SQL
+    end
+
+    def collect_missing_global_directory_contacts
+      GlobalVendor.in_batches(of: BATCH_SIZE) do |batch|
+        rows = batch.pluck(:id, :contacts_jsonb)
+        directory = directory_contact_fingerprints_for(rows.map(&:first))
+
+        rows.each do |global_vendor_id, legacy_contacts|
+          expected = unique_contact_fingerprints(legacy_contacts)
+          metrics[:legacy_global_contacts_missing_from_directory] +=
+            (expected - directory.fetch(global_vendor_id, Set.new)).length
+        end
+      end
+    end
+
+    def collect_missing_event_directory_contacts_and_selections
+      EventVendor.in_batches(of: BATCH_SIZE) do |batch|
+        rows = batch.pluck(:id, :global_vendor_id, :contacts_jsonb)
+        global_ids = rows.filter_map { |(_event_vendor_id, global_vendor_id, _contacts)| global_vendor_id }.uniq
+        global_legacy_contacts = GlobalVendor.where(id: global_ids).pluck(:id, :contacts_jsonb).to_h
+        directory = directory_contact_fingerprints_for(global_ids)
+        selected = selected_contact_fingerprints_for(rows.map(&:first))
+
+        rows.each do |event_vendor_id, global_vendor_id, legacy_event_contacts|
+          local = unique_contact_fingerprints(legacy_event_contacts)
+          global = unique_contact_fingerprints(global_legacy_contacts[global_vendor_id])
+          directory_contacts = directory.fetch(global_vendor_id, Set.new)
+
+          metrics[:legacy_event_contacts_missing_from_directory] +=
+            (local - directory_contacts).length
+
+          expected_selections = local.any? ? local : global
+          metrics[:expected_event_contact_selections_missing] +=
+            (expected_selections - selected.fetch(event_vendor_id, Set.new)).length
+        end
+      end
+    end
+
+    def directory_contact_fingerprints_for(global_vendor_ids)
+      contacts = Hash.new { |hash, key| hash[key] = Set.new }
+      return contacts if global_vendor_ids.empty?
+
+      rows = ActiveRecord::Base.connection.select_rows(<<~SQL.squish)
+        SELECT global_vendor_id, name, title, email, phone, notes
+        FROM global_vendor_contacts
+        WHERE global_vendor_id IN (#{global_vendor_ids.map { |id| Integer(id) }.join(', ')})
+      SQL
+      rows.each do |global_vendor_id, name, title, email, phone, notes|
+        contacts[global_vendor_id.to_i] << contact_fingerprint(name:, title:, email:, phone:, notes:)
+      end
+      contacts
+    end
+
+    def selected_contact_fingerprints_for(event_vendor_ids)
+      contacts = Hash.new { |hash, key| hash[key] = Set.new }
+      return contacts if event_vendor_ids.empty?
+
+      rows = ActiveRecord::Base.connection.select_rows(<<~SQL.squish)
+        SELECT
+          selections.event_vendor_id,
+          event_vendors.global_vendor_id,
+          contacts.global_vendor_id,
+          contacts.name,
+          contacts.title,
+          contacts.email,
+          contacts.phone,
+          contacts.notes
+        FROM event_vendor_contacts selections
+        INNER JOIN event_vendors
+          ON event_vendors.id = selections.event_vendor_id
+        INNER JOIN global_vendor_contacts contacts
+          ON contacts.id = selections.global_vendor_contact_id
+        WHERE selections.event_vendor_id IN (#{event_vendor_ids.map { |id| Integer(id) }.join(', ')})
+      SQL
+      rows.each do |event_vendor_id, event_global_id, contact_global_id, name, title, email, phone, notes|
+        next unless event_global_id.to_i == contact_global_id.to_i
+
+        contacts[event_vendor_id.to_i] << contact_fingerprint(name:, title:, email:, phone:, notes:)
+      end
+      contacts
+    end
+
+    def unique_contact_fingerprints(raw_contacts)
+      canonical_contacts(raw_contacts).to_set
+    end
+
+    def contact_fingerprint(name:, title:, email:, phone:, notes:)
+      canonical_contacts([
+        {
+          "name" => name,
+          "title" => title,
+          "email" => email,
+          "phone" => phone,
+          "notes" => notes
+        }
+      ]).first
     end
 
     def collect_calendar_vendor_values

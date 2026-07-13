@@ -8,6 +8,10 @@ module Events
     end
 
     test "shows people directory" do
+      vendor = event_vendors(:catering)
+      vendor.update_columns(name: "Legacy Sunshine Name", social_handle: "@legacy-sunshine")
+      vendor.global_vendor.contacts.create!(name: "Unselected Sunshine Contact", email: "unselected@sunshine.test")
+
       get event_people_url(@event)
       assert_response :success
       assert_select "h1", text: "People"
@@ -26,6 +30,24 @@ module Events
       assert_select "input[type='checkbox'][name='event_guest[vip]']", minimum: 1
       assert_select ".event-directory-card__meta", text: /Timeline tag:\s*Wedding Party Side A/
       assert_select ".event-directory-card__meta", text: /Timeline tag:\s*Wedding Party Side B/
+      assert_select ".event-directory-card h3", text: "Sunshine Catering", count: 1
+      assert_select ".event-directory-card__meta", text: "Catering", count: 1
+      assert_select ".event-directory-list strong", text: "Maria Cater", count: 1
+      assert_select ".event-directory-list__meta", text: /maria@sunshine\.test/
+      assert_no_match(/Legacy Sunshine Name|Unselected Sunshine Contact/, response.body)
+    end
+
+    test "does not duplicate the planning company in the vendor directory" do
+      planning_company = global_vendors(:pineapple_productions)
+      planning_company.contacts.create!(name: "Duplicate Planning Contact")
+      planning_event_vendor = event_vendors(:pineapple_one)
+      planning_event_vendor.replace_contact_ids!(planning_company.contact_ids)
+
+      get event_people_url(@event)
+
+      assert_response :success
+      assert_select ".event-directory-card h3", text: planning_company.name, count: 0
+      assert_no_match(/Duplicate Planning Contact/, response.body)
     end
   end
 end

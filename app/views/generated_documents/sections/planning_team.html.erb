@@ -106,7 +106,7 @@
 
 <div class="generated-template generated-template--packet-sheet generated-template--planning-team">
   <%= render "generated_documents/sections/page_header", segment: @segment %>
-  <% planners = @event.planner_team_members.includes(:user) %>
+  <% planners = @event.planner_team_members.includes(:user).ordered_for_display %>
   <% if planners.any? %>
     <div class="generated-template--planning-team__grid">
       <% planners.each do |member| %>

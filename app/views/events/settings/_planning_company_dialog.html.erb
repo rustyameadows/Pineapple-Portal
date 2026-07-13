@@ -1,0 +1,102 @@
+<dialog id="event-vendor-planning-dialog"
+        class="event-settings__vendor-dialog event-settings__vendor-dialog--planning event-settings__vendor-dialog--sectioned"
+        aria-labelledby="event-vendor-planning-dialog-title"
+        <%= 'aria-describedby="event-vendor-planning-errors"'.html_safe if event.errors.any? %>
+        data-event-vendor-dialog-target="dialog"
+        data-action="cancel->event-vendor-dialog#handleCancel click->event-vendor-dialog#handleBackdropClose">
+  <div class="event-settings__vendor-dialog-panel">
+    <%= form_with model: event, local: true, html: { class: "event-settings__form event-settings__vendor-dialog-form" } do |form| %>
+      <%= hidden_field_tag :return_to, request.fullpath %>
+
+      <header class="event-settings__vendor-dialog-header">
+        <div class="event-settings__vendor-dialog-heading">
+          <p class="event-section__eyebrow">Planning Company</p>
+          <h3 id="event-vendor-planning-dialog-title"><%= planning_company_global_vendor.name %></h3>
+          <div class="event-settings__vendor-dialog-header-meta">
+            <span>Settings for this event</span>
+            <% if planning_company_global_vendor.default_social_handle.present? %>
+              <span><%= planning_company_global_vendor.default_social_handle %></span>
+            <% end %>
+          </div>
+        </div>
+        <button type="button"
+                class="event-settings__vendor-dialog-close"
+                aria-label="Close planning company editor"
+                data-action="event-vendor-dialog#close">
+          Close
+        </button>
+      </header>
+
+      <div class="event-settings__vendor-dialog-body">
+        <% if event.errors.any? %>
+          <div id="event-vendor-planning-errors"
+               class="event-settings__form-errors event-settings__vendor-dialog-errors"
+               tabindex="-1"
+               autofocus>
+            <h4><%= pluralize(event.errors.count, "error") %> prevented saving:</h4>
+            <ul>
+              <% event.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+        <section class="event-settings__vendor-dialog-section" aria-labelledby="planning-company-meals-heading">
+          <div class="event-settings__vendor-dialog-section-header">
+            <div>
+              <h4 id="planning-company-meals-heading" class="event-settings__vendor-dialog-section-title">Meal notes</h4>
+            </div>
+          </div>
+
+          <div class="event-settings__field event-settings__field--notes">
+            <%= form.label :pineapple_team_meals, "Pineapple meal notes", class: "visually-hidden" %>
+            <%= form.text_area :pineapple_team_meals,
+                               rows: 4,
+                               class: "event-settings__textarea event-settings__vendor-dialog-meals",
+                               placeholder: "Meal counts, timing, pickup details, or links." %>
+          </div>
+        </section>
+
+        <section class="event-settings__vendor-dialog-section event-settings__vendor-dialog-contacts" aria-labelledby="planning-company-contacts-heading">
+          <div class="event-settings__vendor-dialog-section-header">
+            <div>
+              <h4 id="planning-company-contacts-heading" class="event-settings__vendor-dialog-section-title">Event planners</h4>
+              <p>Managed from the event planning team.</p>
+            </div>
+            <%= link_to "Manage event planners", planners_event_settings_path(event), class: "event-section__link" %>
+          </div>
+          <div class="event-settings__vendor-dialog-contact-list">
+            <% planner_team_members.each do |member| %>
+              <% user = member.user %>
+              <% next unless user %>
+              <div class="event-settings__vendor-dialog-contact-item event-settings__vendor-dialog-contact-item--readonly">
+                <span class="event-settings__vendor-dialog-contact-summary">
+                  <span>
+                    <strong><%= user.name %></strong>
+                    <% if user.title.present? %><small><%= user.title %></small><% end %>
+                  </span>
+                </span>
+                <span class="event-settings__vendor-dialog-contact-details">
+                  <% if (email = event_vendor_contact_email(user)) %><span><%= email %></span><% end %>
+                  <% if user.phone_number.present? %><span><%= user.phone_number %></span><% end %>
+                </span>
+              </div>
+            <% end %>
+          </div>
+        </section>
+      </div>
+
+      <footer class="event-settings__vendor-dialog-footer">
+        <div></div>
+        <div class="event-settings__vendor-dialog-primary-actions">
+          <button type="button"
+                  class="button button--small button--ghost"
+                  data-action="event-vendor-dialog#close">
+            Cancel
+          </button>
+          <%= form.submit "Save changes", class: "button button--small" %>
+        </div>
+      </footer>
+    <% end %>
+  </div>
+</dialog>
