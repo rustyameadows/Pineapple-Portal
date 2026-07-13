@@ -39,8 +39,7 @@
                      segment_warnings: @segment_warnings,
                      reorder_url: reorder_event_documents_generated_segments_path(@event, @document.logical_id),
                      csrf_token: form_authenticity_token,
-                     return_to: request.fullpath,
-                     open_group_source_id: params[:open_group_source_id] %>
+                     return_to: request.path %>
 
           <section class="generated-doc__compact-settings" aria-labelledby="generated-doc-settings-title">
             <h2 class="documents-form__heading" id="generated-doc-settings-title">

@@ -4,7 +4,6 @@
 <% available_timeline_views ||= [] %>
 <% available_group_sources ||= [] %>
 <% return_to ||= nil %>
-<% open_group_source_id ||= local_assigns.fetch(:open_group_source_id, params[:open_group_source_id]) %>
 <% allow_group_actions = local_assigns.fetch(:allow_group_actions, document.packet_container?) %>
 <% nested = local_assigns.fetch(:nested, false) %>
 <% show_header = local_assigns.fetch(:show_header, true) %>
@@ -110,7 +109,6 @@
                      parent_group_placement: parent_group_placement,
                      csrf_token: csrf_token,
                      return_to: return_to,
-                     open_group_source_id: open_group_source_id,
                      allow_group_actions: allow_group_actions,
                      nested: nested %>
         <% end %>
