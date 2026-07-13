@@ -669,6 +669,21 @@ module Documents
         assert_equal false, seen_kwargs[:page_numbers]
       end
 
+      test "previewing an uploaded pdf opens its latest version" do
+        original = create_uploaded_pdf(title: "Ceremony Insert")
+        upload_source = GeneratedPacketSource.find_or_create_upload_source!(@event, original)
+        upload_placement = @document.packet_placements.create!(source: upload_source, position: 2)
+        replacement = create_uploaded_pdf(
+          title: "Ceremony Insert",
+          logical_id: original.logical_id,
+          version: 2
+        )
+
+        get preview_event_documents_generated_segment_url(@event, @document.logical_id, upload_placement)
+
+        assert_redirected_to download_event_document_url(@event, replacement)
+      end
+
     private
 
     def create_page_source(view_key:, title:, options: {})
@@ -698,6 +713,23 @@ module Documents
         position: 1
       )
       document
+    end
+
+    def create_uploaded_pdf(title:, logical_id: SecureRandom.uuid, version: 1)
+      @event.documents.create!(
+        title: title,
+        doc_kind: Document::DOC_KINDS[:uploaded],
+        logical_id: logical_id,
+        version: version,
+        is_latest: true,
+        source: "staff_upload",
+        storage_uri: "documents/#{title.parameterize}-v#{version}.pdf",
+        checksum: "#{title.parameterize}-v#{version}-checksum",
+        checksum_sha256: SecureRandom.hex(32),
+        size_bytes: 1024,
+        content_type: "application/pdf",
+        built_by_user: @user
+      )
     end
   end
 end

@@ -5,7 +5,61 @@
                    cached_pdf_event_documents_generated_segment_path(event, document.logical_id, segment)
                  end %>
 
-<% if segment.cached? %>
+<% if segment.pdf_asset? %>
+  <% pdf_status = generated_uploaded_pdf_status(segment) %>
+  <% uploaded_document = pdf_status[:document] %>
+  <% uploaded_at = if uploaded_document&.created_at.present?
+                     content_tag(
+                       :time,
+                       uploaded_document.created_at.in_time_zone(Time.zone).strftime("%d %b %H:%M").upcase,
+                       data: {
+                         controller: "local-time",
+                         local_time_iso_value: uploaded_document.created_at.utc.iso8601,
+                         local_time_format_value: "compact"
+                       },
+                       datetime: uploaded_document.created_at.utc.iso8601
+                     )
+                   end %>
+  <% version_label = "V#{uploaded_document.version}" if uploaded_document %>
+  <% page_count = segment.cached_page_count.present? ? pluralize(segment.cached_page_count, "page").upcase : nil %>
+
+  <% case pdf_status[:state] %>
+  <% when :ready %>
+    <% status_content = safe_join([
+         content_tag(:span, "READY · LATEST #{version_label}", class: "generated-builder__status-emphasis"),
+         content_tag(:span, safe_join([uploaded_at.present? ? safe_join(["· UPLOADED ", uploaded_at]) : nil, page_count].compact, " · "), class: "generated-builder__status-copy")
+       ]) %>
+    <%= link_to status_content,
+                status_path,
+                class: "generated-builder__status-tag generated-builder__status-tag--link",
+                title: "Ready with the latest uploaded PDF, version #{uploaded_document.version}.",
+                target: "_blank",
+                rel: "noopener" %>
+  <% when :new_version %>
+    <span class="generated-builder__status-tag generated-builder__status-tag--warning generated-builder__status-tag--detail"
+          title="A newer PDF has been uploaded. The packet copy will refresh when the live packet is opened.">
+      <span class="generated-builder__status-emphasis">NEW VERSION · <%= version_label %></span>
+      <% if uploaded_at.present? %>
+        <span class="generated-builder__status-copy">· UPLOADED <%= uploaded_at %></span>
+      <% end %>
+    </span>
+  <% when :failed %>
+    <span class="generated-builder__status-tag generated-builder__status-tag--error"
+          title="<%= segment.last_render_error %>">
+      PDF preparation failed<%= " · #{version_label}" if version_label %>
+    </span>
+  <% when :missing %>
+    <span class="generated-builder__status-tag generated-builder__status-tag--error">PDF missing</span>
+  <% else %>
+    <span class="generated-builder__status-tag generated-builder__status-tag--detail"
+          title="The latest uploaded PDF is being prepared for this packet.">
+      <span class="generated-builder__status-emphasis">PREPARING · LATEST <%= version_label %></span>
+      <% if uploaded_at.present? %>
+        <span class="generated-builder__status-copy">· UPLOADED <%= uploaded_at %></span>
+      <% end %>
+    </span>
+  <% end %>
+<% elsif segment.cached? %>
   <% page_count = segment.cached_page_count.present? ? pluralize(segment.cached_page_count, "page").upcase : nil %>
   <% cached_label = if segment.cached_pdf_generated_at.present?
                       content_tag(

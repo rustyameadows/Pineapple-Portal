@@ -1190,6 +1190,10 @@ button.generated-builder__live-pill {
   gap: 0.35rem;
 }
 
+.generated-builder__status-tag--detail {
+  gap: 0.35rem;
+}
+
 .generated-builder__status-tag--link:hover,
 .generated-builder__status-tag--link:focus-visible {
   background: color-mix(in srgb, var(--color-sea-foam) 26%, white);

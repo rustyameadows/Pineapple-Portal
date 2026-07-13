@@ -189,7 +189,7 @@ module Documents
           else
             head :not_found
           end
-        elsif source.pdf_asset? && (document = find_pdf_document(source.pdf_document_id || source.pdf_logical_id))
+        elsif source.pdf_asset? && (document = Documents::Generated::UploadedDocumentResolver.new(source).call)
           redirect_to download_event_document_path(@event, document)
         else
           head :not_found

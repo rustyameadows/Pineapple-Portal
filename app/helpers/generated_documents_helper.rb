@@ -130,6 +130,27 @@ module GeneratedDocumentsHelper
     ]
   }.freeze
 
+  def generated_uploaded_pdf_status(segment)
+    return unless segment.pdf_asset?
+
+    source = segment.respond_to?(:source) ? segment.source : segment
+    uploaded_document = Documents::Generated::UploadedDocumentResolver.new(source).call
+    return { state: :missing } unless uploaded_document
+
+    current_hash = Documents::Generated::SegmentHasher.call(source)
+    state = if segment.last_render_error.present?
+              :failed
+    elsif !segment.cached?
+              :preparing
+    elsif source.cache_stale?(current_hash)
+              :new_version
+    else
+              :ready
+    end
+
+    { state: state, document: uploaded_document }
+  end
+
   def generated_segment_body_markdown(segment)
     options = if segment.respond_to?(:html_options)
                 segment.html_options
