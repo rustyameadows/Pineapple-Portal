@@ -40,6 +40,7 @@ class PlanningTeamSectionTest < ActionView::TestCase
     assert_select ".generated-template--planning-team__name", text: "Ada Fixture"
     assert_select ".generated-template--planning-team__title", text: "Lead Planner"
     assert_match(/--planning-team-card-width:\s*1\.9in/m, rendered)
+    assert_match(/\.generated-template--planning-team__grid--four-up\s*\{[^}]*--planning-team-card-width:\s*1\.6in/m, rendered)
     assert_match(/display:\s*flex/m, rendered)
     assert_match(/flex-wrap:\s*wrap/m, rendered)
     assert_match(/aspect-ratio:\s*1 \/ 1/m, rendered)
@@ -48,6 +49,24 @@ class PlanningTeamSectionTest < ActionView::TestCase
     assert_match(/min-height:\s*var\(--planning-team-details-min-height\)/m, rendered)
     assert_match(/align-content:\s*center/m, rendered)
     assert_no_match(/border-radius:/, rendered)
+  end
+
+  test "keeps the standard grid for nine planners" do
+    add_planners(7)
+
+    render template: "generated_documents/sections/planning_team", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--planning-team__card", count: 9
+    assert_select ".generated-template--planning-team__grid--four-up", count: 0
+  end
+
+  test "uses the four-up grid for more than nine planners" do
+    add_planners(8)
+
+    render template: "generated_documents/sections/planning_team", locals: { render_base_styles: false }
+
+    assert_select ".generated-template--planning-team__card", count: 10
+    assert_select ".generated-template--planning-team__grid--four-up", count: 1
   end
 
   test "renders the lead planner first and remaining planners by position" do
@@ -74,5 +93,21 @@ class PlanningTeamSectionTest < ActionView::TestCase
     render template: "generated_documents/sections/planning_team", locals: { render_base_styles: false }
 
     assert_select ".generated-template--planning-team__empty", text: "No planners have been linked to this event yet."
+  end
+
+  private
+
+  def add_planners(count)
+    count.times do |index|
+      user = User.create!(
+        name: "Additional Planner #{index + 1}",
+        role: User::ROLES[:planner],
+        account_kind: User::ACCOUNT_KINDS[:contact]
+      )
+      @event.event_team_members.create!(
+        user: user,
+        member_role: EventTeamMember::TEAM_ROLES[:planner]
+      )
+    end
   end
 end
