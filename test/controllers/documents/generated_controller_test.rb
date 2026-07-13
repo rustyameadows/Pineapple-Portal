@@ -161,6 +161,48 @@ module Documents
       assert_select ".generated-builder__toc-children form.generated-builder__move-form[action^='#{move_out_of_group_event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", count: 1
       assert_select ".generated-builder__toc-children form.generated-builder__move-form input[name='packet_logical_id'][value='#{@document.logical_id}']", count: 2
       assert_select ".generated-builder__toc-children form.generated-builder__move-form input[name='group_placement_id'][value='#{group_placement.id}']", count: 2
+      assert_select ".generated-builder__toc-body[data-container-logical-id='#{@document.logical_id}'][data-container-kind='packet'][data-packet-logical-id='#{@document.logical_id}']", count: 1
+      assert_select ".generated-builder__toc-children .generated-builder__toc-body[data-container-logical-id='#{group_document.logical_id}'][data-container-kind='group'][data-group-placement-id='#{group_placement.id}']", count: 1
+    end
+
+    test "edit shows force build only for cached system-generated pages" do
+      cached_placement = create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Cached Notes",
+        position: 1,
+        options: { "body_markdown" => "Cached" }
+      )
+      cached_placement.source.update!(
+        render_hash: "cached-hash",
+        cached_pdf_key: "segments/cached.pdf",
+        cached_pdf_generated_at: Time.current,
+        cached_page_count: 1,
+        cached_file_size: 128
+      )
+      create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Uncached Notes",
+        position: 2,
+        options: { "body_markdown" => "Uncached" }
+      )
+      uploaded_source = GeneratedPacketSource.find_or_create_upload_source!(@event, create_uploaded_pdf(title: "Uploaded Packet Page"))
+      uploaded_source.update!(
+        render_hash: "upload-hash",
+        cached_pdf_key: "segments/uploaded.pdf",
+        cached_pdf_generated_at: Time.current,
+        cached_page_count: 1,
+        cached_file_size: 128
+      )
+      @document.packet_placements.create!(source: uploaded_source, position: 3)
+
+      get edit_event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      force_path = force_build_event_documents_generated_segment_path(@event, @document.logical_id, cached_placement)
+      assert_select "form[action^='#{force_path}'] button", text: "Force build", count: 1
+      assert_select "button", text: "Force build", count: 1
+      assert_select ".generated-builder__toc-head span", text: "Build", count: 1
+      assert_select "a", text: "Manage pages", count: 0
     end
 
     test "edit keeps dense row metadata to render status and shared packet tooltip" do

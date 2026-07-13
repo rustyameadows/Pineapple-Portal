@@ -11,6 +11,13 @@
 <% show_insert_panels = local_assigns.fetch(:show_insert_panels, true) %>
 <% parent_packet_document = local_assigns.fetch(:parent_packet_document, nil) %>
 <% parent_group_placement = local_assigns.fetch(:parent_group_placement, nil) %>
+<% packet_document = parent_packet_document || (document.packet_container? ? document : nil) %>
+<% relocate_url = packet_document ? relocate_event_documents_generated_segments_path(event, packet_document.logical_id) : nil %>
+<% shared_container_packets = if document.group_container? && parent_group_placement.present?
+                                Array(source_usage_labels[parent_group_placement.source.id])
+                              else
+                                []
+                              end %>
 <% container_label = document.group_container? ? "Group" : "Packet" %>
 <% container_item_label = document.group_container? ? "group page" : "packet page" %>
 <% empty_message = if document.group_container?
@@ -41,6 +48,7 @@
      data-controller="generated-segments"
      data-generated-segments-root="true"
      data-generated-segments-reorder-url-value="<%= reorder_url %>"
+     data-generated-segments-relocate-url-value="<%= relocate_url %>"
      data-generated-segments-csrf-token-value="<%= csrf_token %>">
   <% if show_header %>
     <div class="generated-builder__sidebar-header">
@@ -57,12 +65,13 @@
     </div>
   <% end %>
 
-  <% if segments.any? %>
+  <% if segments.any? || nested %>
     <div class="generated-builder__toc <%= 'generated-builder__toc--nested' if nested %>">
       <% unless nested %>
         <div class="generated-builder__toc-head" aria-hidden="true">
           <span></span>
           <span>Segment</span>
+          <span>Build</span>
           <span>Preview</span>
           <span>Settings</span>
           <span>Remove</span>
@@ -70,7 +79,15 @@
       <% end %>
 
       <div class="generated-builder__toc-body"
-           data-generated-segments-target="list">
+           data-generated-segments-target="list"
+           data-container-logical-id="<%= document.logical_id %>"
+           data-container-kind="<%= document.group_container? ? 'group' : 'packet' %>"
+           data-container-label="<%= document.title %>"
+           data-packet-logical-id="<%= packet_document&.logical_id %>"
+           data-group-placement-id="<%= parent_group_placement&.id %>"
+           data-shared-packet-count="<%= shared_container_packets.size %>"
+           data-reorder-url="<%= reorder_url %>"
+           data-relocate-url="<%= relocate_url %>">
         <% segments.each do |segment| %>
           <%= render "documents/generated/segment_row",
                      event: event,
@@ -96,6 +113,9 @@
                      open_group_source_id: open_group_source_id,
                      allow_group_actions: allow_group_actions,
                      nested: nested %>
+        <% end %>
+        <% if segments.empty? %>
+          <p class="generated-builder__empty generated-builder__drop-placeholder">Drop a page here or use the group editor to add one.</p>
         <% end %>
       </div>
     </div>

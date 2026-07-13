@@ -94,5 +94,30 @@ module Documents
         id: "12"
       )
     end
+
+    test "force build and relocation routes resolve to generated segments" do
+      assert_routing(
+        {
+          method: "post",
+          path: force_build_event_documents_generated_segment_path(@event, @logical_id, 42)
+        },
+        controller: "documents/generated/segments",
+        action: "force_build",
+        event_id: @event.id.to_s,
+        generated_logical_id: @logical_id,
+        id: "42"
+      )
+
+      assert_routing(
+        {
+          method: "patch",
+          path: relocate_event_documents_generated_segments_path(@event, @logical_id)
+        },
+        controller: "documents/generated/segments",
+        action: "relocate",
+        event_id: @event.id.to_s,
+        generated_logical_id: @logical_id
+      )
+    end
   end
 end
