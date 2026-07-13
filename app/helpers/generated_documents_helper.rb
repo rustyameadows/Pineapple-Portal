@@ -270,18 +270,6 @@ module GeneratedDocumentsHelper
     end
   end
 
-  def generated_builder_return_to(path, open_group_source_id: nil)
-    return path if path.blank? || open_group_source_id.blank?
-
-    uri = URI.parse(path)
-    params = Rack::Utils.parse_nested_query(uri.query)
-    params["open_group_source_id"] = open_group_source_id.to_s
-    uri.query = params.to_query.presence
-    uri.to_s
-  rescue URI::InvalidURIError
-    path
-  end
-
   def generated_event_overview_primary_rows(event)
     rows = [
       [ "Date", generated_event_overview_date_range(event) ],

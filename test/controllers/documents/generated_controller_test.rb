@@ -131,6 +131,13 @@ module Documents
         ),
         position: 2
       )
+      child_placement.source.update!(
+        render_hash: "floral-proposal-hash",
+        cached_pdf_key: "segments/floral-proposal.pdf",
+        cached_pdf_generated_at: Time.current,
+        cached_page_count: 1,
+        cached_file_size: 128
+      )
       group_source = GeneratedPacketSource.find_or_create_group_source!(@event, group_document)
       group_placement = @document.packet_placements.create!(source: group_source, position: 1)
       top_level_placement = @document.packet_placements.create!(
@@ -142,7 +149,11 @@ module Documents
         position: 2
       )
 
-      get edit_event_documents_generated_url(@event, @document.logical_id)
+      get edit_event_documents_generated_url(
+        @event,
+        @document.logical_id,
+        open_group_source_id: group_source.id
+      )
 
       assert_response :success
       assert_select ".generated-builder__toc-item--group .generated-builder__toc-title", text: "Design & Decor", count: 1
@@ -156,13 +167,19 @@ module Documents
       assert_select "form.generated-builder__toc-action-form[action^='#{event_documents_generated_segment_path(@event, @document.logical_id, group_placement)}']", count: 1
       assert_select ".generated-builder__toc-children a[href='#{preview_event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", text: "Preview", count: 1
       assert_select ".generated-builder__toc-children form.generated-builder__segment-dialog-form[action^='#{event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", count: 1
-      assert_select ".generated-builder__toc-children form.generated-builder__toc-action-form[action^='#{event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", count: 1
+      assert_select ".generated-builder__toc-children form.generated-builder__toc-action-form[action^='#{event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}'] button", text: "Remove", count: 1
       assert_select "form.generated-builder__move-form[action^='#{move_to_group_event_documents_generated_segment_path(@event, @document.logical_id, top_level_placement)}'] select[name='target_group_placement_id'] option[value='#{group_placement.id}']", text: "Design & Decor", count: 1
       assert_select ".generated-builder__toc-children form.generated-builder__move-form[action^='#{move_out_of_group_event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)}']", count: 1
       assert_select ".generated-builder__toc-children form.generated-builder__move-form input[name='packet_logical_id'][value='#{@document.logical_id}']", count: 2
       assert_select ".generated-builder__toc-children form.generated-builder__move-form input[name='group_placement_id'][value='#{group_placement.id}']", count: 2
       assert_select ".generated-builder__toc-body[data-container-logical-id='#{@document.logical_id}'][data-container-kind='packet'][data-packet-logical-id='#{@document.logical_id}']", count: 1
       assert_select ".generated-builder__toc-children .generated-builder__toc-body[data-container-logical-id='#{group_document.logical_id}'][data-container-kind='group'][data-group-placement-id='#{group_placement.id}']", count: 1
+      assert_select "[data-generated-segment-dialog-auto-open-value]", count: 0
+
+      force_path = force_build_event_documents_generated_segment_path(@event, group_document.logical_id, child_placement)
+      force_forms = css_select(".generated-builder__toc-children form[action^='#{force_path}']")
+      assert_equal 1, force_forms.size
+      refute_includes CGI.unescape(force_forms.first["action"]), "open_group_source_id"
     end
 
     test "edit shows force build only for cached system-generated pages" do
