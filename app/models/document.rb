@@ -231,8 +231,7 @@ class Document < ApplicationRecord
 
   def working_refresh_locked?
     active_build = active_working_build
-    return true if active_build.present? && (active_build.started_at || active_build.created_at).present? &&
-                   (active_build.started_at || active_build.created_at) >= WORKING_REFRESH_TIMEOUT.ago
+    return true if active_build.present? && !active_build.stale?(timeout: WORKING_REFRESH_TIMEOUT)
 
     return false unless working_refreshing?
 
@@ -302,7 +301,28 @@ class Document < ApplicationRecord
   end
 
   def active_working_build
-    working_builds.in_progress.recent_first.first
+    working_builds.in_progress.recent_first.detect do |build|
+      !build.stale?(timeout: WORKING_REFRESH_TIMEOUT)
+    end
+  end
+
+  def stale_working_build
+    build = working_builds.in_progress.recent_first.first
+    return unless build&.stale?(timeout: WORKING_REFRESH_TIMEOUT)
+
+    build
+  end
+
+  def recover_stale_working_build!
+    with_lock do
+      reload
+
+      build = working_builds.in_progress.recent_first.first
+      next unless build&.stale?(timeout: WORKING_REFRESH_TIMEOUT)
+
+      build.mark_failed!(build.stale_error_message(timeout: WORKING_REFRESH_TIMEOUT))
+      build
+    end
   end
 
   def latest_working_build

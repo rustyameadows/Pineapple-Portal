@@ -2,14 +2,15 @@ module Documents
   module Generated
     class WorkingCopyRefresh
       class << self
-        def enqueue(definition_document, manifest: nil)
-          new(definition_document, manifest: manifest).enqueue
+        def enqueue(definition_document, manifest: nil, retrying: false)
+          new(definition_document, manifest: manifest, retrying: retrying).enqueue
         end
       end
 
-      def initialize(definition_document, manifest: nil)
+      def initialize(definition_document, manifest: nil, retrying: false)
         @definition_document = definition_document
         @manifest = manifest
+        @retrying = retrying
       end
 
       def enqueue
@@ -19,10 +20,18 @@ module Documents
         return false if definition_document.packet_placements.none?
 
         created_build = false
+        retrying_build = retrying
         build = definition_document.with_lock do
           definition_document.reload
 
           active_build = definition_document.working_builds.in_progress.recent_first.first
+          if active_build&.stale?(timeout: Document::WORKING_REFRESH_TIMEOUT)
+            active_build.mark_failed!(active_build.stale_error_message(timeout: Document::WORKING_REFRESH_TIMEOUT))
+            retrying_build = true
+          end
+
+          active_build = definition_document.active_working_build
+
           next active_build if active_build.present?
 
           definition_document.update_columns( # rubocop:disable Rails/SkipsModelValidations
@@ -44,14 +53,15 @@ module Documents
 
         return build unless created_build
 
-        build.report_progress!(stage: :queued)
+        queue_message = retrying_build ? "Retrying live PDF after a stalled render" : nil
+        build.report_progress!(stage: :queued, message: queue_message)
         RunDocumentBuildJob.perform_later(build.id)
         build
       end
 
       private
 
-      attr_reader :definition_document, :manifest
+      attr_reader :definition_document, :manifest, :retrying
     end
   end
 end

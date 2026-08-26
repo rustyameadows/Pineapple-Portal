@@ -1,4 +1,6 @@
 class DocumentBuild < ApplicationRecord
+  STALE_TIMEOUT = 10.minutes
+
   belongs_to :document
   belongs_to :built_by_user, class_name: "User", optional: true
 
@@ -99,6 +101,23 @@ class DocumentBuild < ApplicationRecord
 
   def artifact_available?
     storage_uri.present? && succeeded?
+  end
+
+  def stale?(timeout: STALE_TIMEOUT)
+    return false unless active?
+
+    reference_time = last_progress_at || started_at || created_at
+    reference_time.present? && reference_time < timeout.ago
+  end
+
+  def stale_error_message(timeout: STALE_TIMEOUT)
+    timeout_minutes = (timeout / 60).to_i
+    detail = display_progress_message.to_s.strip
+    base = working? ? "Live PDF render stalled" : "Snapshot stalled"
+
+    return "#{base} after #{timeout_minutes} minutes with no progress." if detail.blank?
+
+    "#{base} after #{timeout_minutes} minutes with no progress. Last update: #{detail}."
   end
 
   def report_progress!(stage:, message: nil, current: nil, total: nil)

@@ -105,6 +105,32 @@ module Documents
         assert_equal 1, queued_build_ids.count
         assert_equal build_ids.first, queued_build_ids.first
       end
+
+      test "stale active working builds are failed and replaced with a retry build" do
+        stale_build = @document.builds.create!(
+          status: DocumentBuild::STATUSES[:running],
+          build_kind: DocumentBuild::BUILD_KINDS[:working],
+          page_numbers: true,
+          progress_stage: DocumentBuild::PROGRESS_STAGES[:rendering_entries],
+          progress_message: "Rendering pages 1/1: Notes",
+          progress_current: 1,
+          progress_total: 1,
+          last_progress_at: 11.minutes.ago,
+          started_at: 11.minutes.ago
+        )
+
+        enqueued_build_ids = []
+
+        RunDocumentBuildJob.stub :perform_later, ->(build_id) { enqueued_build_ids << build_id } do
+          result = WorkingCopyRefresh.enqueue(@document)
+
+          assert_equal DocumentBuild::STATUSES[:pending], result.status
+          assert_equal "Retrying live PDF after a stalled render", result.reload.progress_message
+          assert_equal [result.id], enqueued_build_ids
+          assert_equal DocumentBuild::STATUSES[:failed], stale_build.reload.status
+          assert_match(/stalled after 10 minutes/, stale_build.error_message)
+        end
+      end
     end
   end
 end

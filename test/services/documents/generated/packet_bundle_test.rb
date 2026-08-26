@@ -73,8 +73,8 @@ module Documents
         end
 
         assert_equal [
-          { stage: :rendering_entries, current: 1, total: 2 },
-          { stage: :rendering_entries, current: 2, total: 2 },
+          { stage: :rendering_entries, message: "Rendering pages 1/2: Segment One", current: 1, total: 2 },
+          { stage: :rendering_entries, message: "Rendering pages 2/2: Segment Two", current: 2, total: 2 },
           { stage: :assembling_pdf },
           { stage: :adding_page_numbers }
         ], @progress_calls

@@ -228,6 +228,60 @@ module Documents
         end
       end
 
+      test "recovers a stale live build and immediately retries it" do
+        current_hash = "hash-6"
+        manifest_hash = placement_manifest_hash(@placement, current_hash)
+
+        @source.update!(
+          render_hash: current_hash,
+          cached_pdf_key: "segments/current.pdf",
+          cached_pdf_generated_at: Time.current,
+          cached_page_count: 1,
+          cached_file_size: 64
+        )
+
+        successful_build = @document.builds.create!(
+          build_kind: DocumentBuild::BUILD_KINDS[:working],
+          status: DocumentBuild::STATUSES[:succeeded],
+          storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/current.pdf",
+          manifest_hash: manifest_hash,
+          checksum_sha256: "working-sha",
+          compiled_page_count: 1,
+          file_size: 64,
+          page_numbers: true,
+          finished_at: 20.minutes.ago
+        )
+
+        stale_build = @document.builds.create!(
+          build_kind: DocumentBuild::BUILD_KINDS[:working],
+          status: DocumentBuild::STATUSES[:running],
+          manifest_hash: manifest_hash,
+          page_numbers: true,
+          progress_stage: DocumentBuild::PROGRESS_STAGES[:rendering_entries],
+          progress_message: "Rendering pages 1/1: Notes",
+          progress_current: 1,
+          progress_total: 1,
+          last_progress_at: 11.minutes.ago,
+          started_at: 11.minutes.ago
+        )
+
+        refresh_calls = []
+
+        SegmentHasher.stub :call, ->(_source) { current_hash } do
+          RunDocumentBuildJob.stub :perform_later, ->(build_id) { refresh_calls << build_id } do
+            result = WorkingCopyAccess.new(definition_document: @document).call
+
+            assert result.refreshing?
+            assert_equal true, result.working_available
+            assert_equal successful_build.viewer_token, result.viewer_token
+            assert_equal "Retrying live PDF after a stalled render", result.progress_message
+            assert_equal 1, refresh_calls.length
+            assert_equal DocumentBuild::STATUSES[:failed], stale_build.reload.status
+            assert_match(/stalled after 10 minutes/, stale_build.error_message)
+          end
+        end
+      end
+
       private
 
       def create_uploaded_pdf(version:, logical_id:, title:)

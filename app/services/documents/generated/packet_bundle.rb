@@ -56,12 +56,14 @@ module Documents
 
         rendered_entries = entries.each_with_index.map do |entry, index|
           check_cancelled!
-          rendered_entry = ensure_cached(entry)
+          entry_title = source_for(entry).display_title.to_s.strip
           report_progress(
             stage: :rendering_entries,
+            message: entry_title.present? ? "Rendering pages #{index + 1}/#{entries.length}: #{entry_title}" : nil,
             current: index + 1,
             total: entries.length
           )
+          rendered_entry = ensure_cached(entry)
           rendered_entry
         end
 

@@ -10,7 +10,8 @@ module Documents
       GROVER_DEFAULTS = {
         format: "Letter",
         margin: { top: "0.25in", bottom: "0.25in", left: "0", right: "0" },
-        print_background: true
+        print_background: true,
+        timeout: 30_000
       }.freeze
 
       def initialize(segment, storage: default_storage, force: false)

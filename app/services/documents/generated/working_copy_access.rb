@@ -90,9 +90,10 @@ module Documents
         end
 
         manifest = PacketManifest.new(definition_document: definition_document).call
+        stale_build_recovered = recover_stale_build!
 
-        if refresh_needed?(manifest)
-          WorkingCopyRefresh.enqueue(definition_document, manifest: manifest) if enqueue
+        if refresh_needed?(manifest, stale_build_recovered:)
+          WorkingCopyRefresh.enqueue(definition_document, manifest: manifest, retrying: stale_build_recovered) if enqueue
           definition_document.reload if enqueue
         end
 
@@ -103,17 +104,27 @@ module Documents
 
       attr_reader :definition_document
 
-      def refresh_needed?(manifest)
+      def refresh_needed?(manifest, stale_build_recovered:)
         return false if definition_document.active_working_build.present?
 
         latest_build = definition_document.latest_working_build
         if latest_build&.failed? && latest_build.manifest_hash == manifest.manifest_hash
+          return true if stale_build_recovered
+
           return failed_build_retry_due?(latest_build)
         end
 
         !definition_document.working_available? ||
           manifest.stale_sources.any? ||
           definition_document.working_manifest_hash != manifest.manifest_hash
+      end
+
+      def recover_stale_build!
+        stale_build = definition_document.recover_stale_working_build!
+        return false unless stale_build.present?
+
+        definition_document.reload
+        true
       end
 
       def failed_build_retry_due?(build)

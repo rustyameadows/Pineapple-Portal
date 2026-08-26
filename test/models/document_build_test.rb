@@ -58,6 +58,21 @@ class DocumentBuildTest < ActiveSupport::TestCase
     assert_not succeeded_build.active?
   end
 
+  test "stale? becomes true after the timeout without progress" do
+    build = @document.builds.create!(
+      status: DocumentBuild::STATUSES[:running],
+      build_kind: DocumentBuild::BUILD_KINDS[:working],
+      build_id: SecureRandom.uuid,
+      progress_stage: DocumentBuild::PROGRESS_STAGES[:rendering_entries],
+      progress_message: "Rendering pages 4/10: Vendor Contacts",
+      last_progress_at: 11.minutes.ago,
+      started_at: 11.minutes.ago
+    )
+
+    assert build.stale?
+    assert_equal "Live PDF render stalled after 10 minutes with no progress. Last update: Rendering pages 4/10: Vendor Contacts.", build.stale_error_message
+  end
+
   test "builds default to snapshot and can be scoped by kind" do
     snapshot_build = @document.builds.create!(status: DocumentBuild::STATUSES[:pending])
     working_build = @document.builds.create!(

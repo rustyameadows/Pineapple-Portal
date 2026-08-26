@@ -32,6 +32,7 @@
                 working_pdf_event_documents_generated_path(@event, @document.logical_id)
               end
             live_pdf_open_path = "#{working_pdf_event_documents_generated_path(@event, @document.logical_id)}#view=Fit"
+            live_pdf_retrying = @working_copy&.progress_message.to_s.start_with?("Retrying live PDF")
 
             live_pdf_banner_visible = @working_copy.present? && !@working_copy.empty? && (
               @working_copy.failed? || @working_copy.active? || !@working_copy.working_available
@@ -57,6 +58,10 @@
                 else
                   @working_copy.refresh_error.presence || "Try again in a moment."
                 end
+              elsif live_pdf_retrying && @working_copy&.working_available
+                "Showing the last live version while we retry the render automatically."
+              elsif live_pdf_retrying
+                "The last live render stalled, so we started a fresh retry automatically."
               elsif @working_copy&.active? && @working_copy&.working_available
                 "Showing the last live version until the refreshed packet is ready."
               elsif @working_copy&.rendered_at.present?
@@ -120,6 +125,9 @@
                     <% if @working_copy&.failed? && !@working_copy&.working_available %>
                       <strong data-generated-pdf-frame-target="message"><%= @working_copy.progress_message.presence || "Unable to prepare live PDF." %></strong>
                       <p data-generated-pdf-frame-target="detail"><%= @working_copy.refresh_error.presence || "Try again in a moment." %></p>
+                    <% elsif live_pdf_retrying %>
+                      <strong data-generated-pdf-frame-target="message"><%= @working_copy.progress_message.presence || "Retrying live PDF after a stalled render" %></strong>
+                      <p data-generated-pdf-frame-target="detail">The last live render stalled, so we started a fresh retry automatically.</p>
                     <% elsif @working_copy&.rendered_at.present? && !@working_copy&.working_available %>
                       <strong data-generated-pdf-frame-target="message"><%= @working_copy.progress_message.presence || "Refreshing live PDF..." %></strong>
                       <p data-generated-pdf-frame-target="detail">We’re rebuilding the working preview with the latest packet content.</p>

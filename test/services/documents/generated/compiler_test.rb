@@ -209,7 +209,7 @@ module Documents
 
         assert_equal [
           { stage: :preparing_pdf },
-          { stage: :rendering_entries, current: 1, total: 1 },
+          { stage: :rendering_entries, message: "Rendering pages 1/1: Segment", current: 1, total: 1 },
           { stage: :assembling_pdf },
           { stage: :adding_page_numbers },
           { stage: :uploading_pdf },

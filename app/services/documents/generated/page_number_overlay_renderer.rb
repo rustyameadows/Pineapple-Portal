@@ -8,7 +8,8 @@ module Documents
         prefer_css_page_size: true,
         margin: { top: "0", bottom: "0", left: "0", right: "0" },
         print_background: true,
-        omit_background: true
+        omit_background: true,
+        timeout: 30_000
       }.freeze
 
       def initialize(page_label:, page_width_points:, page_height_points:, page_text_color: "#000000")

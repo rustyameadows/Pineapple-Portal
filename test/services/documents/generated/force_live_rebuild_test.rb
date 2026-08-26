@@ -74,20 +74,10 @@ module Documents
         ).tap(&:save!)
       end
 
-      test "clears working state and leaf source caches before enqueueing a fresh rebuild" do
+      test "preserves the last live pdf while clearing working builds and leaf source caches before enqueueing a fresh rebuild" do
         stamp_cached_render!(@direct_source, "segments/direct.pdf")
         stamp_cached_render!(@group_child_source, "segments/group-child.pdf")
         stamp_cached_render!(@unrelated_source, "segments/unrelated.pdf")
-
-        @document.update!(
-          working_storage_uri: "documents/#{@event.id}/#{@document.logical_id}/working/live.pdf",
-          working_manifest_hash: "working-manifest",
-          working_checksum_sha256: "working-sha",
-          working_page_count: 4,
-          working_file_size: 2048,
-          working_rendered_at: Time.current,
-          working_status: Document::WORKING_STATUSES[:fresh]
-        )
 
         @document.builds.create!(
           build_kind: DocumentBuild::BUILD_KINDS[:working],
@@ -104,6 +94,15 @@ module Documents
           compiled_page_count: 3,
           file_size: 1024,
           finished_at: Time.current
+        )
+        @document.update_columns(
+          working_storage_uri: nil,
+          working_manifest_hash: nil,
+          working_checksum_sha256: nil,
+          working_page_count: nil,
+          working_file_size: nil,
+          working_rendered_at: nil,
+          working_status: Document::WORKING_STATUSES[:fresh]
         )
         snapshot_build = @document.builds.create!(
           build_kind: DocumentBuild::BUILD_KINDS[:snapshot],
@@ -138,9 +137,12 @@ module Documents
         assert_equal "rendered-hash", @unrelated_source.render_hash
         assert_equal "segments/unrelated.pdf", @unrelated_source.cached_pdf_key
 
-        assert_nil @document.working_storage_uri
-        assert_nil @document.working_manifest_hash
-        assert_equal Document::WORKING_STATUSES[:missing], @document.working_status
+        assert_equal "documents/#{@event.id}/#{@document.logical_id}/working/old-live.pdf", @document.working_storage_uri
+        assert_equal "old-manifest", @document.working_manifest_hash
+        assert_equal "old-sha", @document.working_checksum_sha256
+        assert_equal 3, @document.working_page_count
+        assert_equal 1024, @document.working_file_size
+        assert_equal Document::WORKING_STATUSES[:fresh], @document.working_status
         assert_equal 0, @document.working_builds.count
         assert_equal [snapshot_build.id], @document.snapshot_builds.pluck(:id)
       end

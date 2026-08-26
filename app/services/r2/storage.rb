@@ -61,7 +61,10 @@ module R2
           ENV.fetch("R2_ACCESS_KEY_ID"),
           ENV.fetch("R2_SECRET_ACCESS_KEY")
         ),
-        force_path_style: false
+        force_path_style: false,
+        http_open_timeout: ENV.fetch("R2_HTTP_OPEN_TIMEOUT", 5).to_i,
+        http_read_timeout: ENV.fetch("R2_HTTP_READ_TIMEOUT", 20).to_i,
+        retry_limit: ENV.fetch("R2_HTTP_RETRY_LIMIT", 2).to_i
       )
     end
 

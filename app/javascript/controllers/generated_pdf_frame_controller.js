@@ -78,6 +78,7 @@ export default class extends Controller {
     const nextError = data.refresh_error || null
     const nextRenderedAt = data.rendered_at || null
     const nextProgressMessage = data.progress_message || null
+    const retrying = !!(nextProgressMessage && nextProgressMessage.startsWith("Retrying live PDF"))
     const viewerTokenChanged = !!(nextWorkingAvailable && nextViewerToken && nextViewerToken !== this.currentViewerToken)
 
     this.currentStatus = nextStatus
@@ -105,13 +106,17 @@ export default class extends Controller {
       } else {
         this.showBanner(
           "A newer live PDF is being prepared.",
-          "Showing the last live version until the refreshed packet is ready."
+          retrying
+            ? "Showing the last live version while we retry the render automatically."
+            : "Showing the last live version until the refreshed packet is ready."
         )
       }
     } else if (activeBuild) {
       this.showBanner(
-        nextRenderedAt ? "Refreshing live PDF..." : "Preparing live PDF...",
-        nextRenderedAt
+        retrying ? "Retrying live PDF after a stalled render" : (nextRenderedAt ? "Refreshing live PDF..." : "Preparing live PDF..."),
+        retrying
+          ? "The last live render stalled, so we started a fresh retry automatically."
+          : nextRenderedAt
           ? "We’re rebuilding the working preview with the latest packet content."
           : "This packet is building its live preview. It will appear here automatically."
       )
@@ -129,7 +134,7 @@ export default class extends Controller {
     }
 
     if (!nextWorkingAvailable) {
-      this.showLoading(nextStatus, nextError, nextProgressMessage)
+      this.showLoading(nextStatus, nextError, nextProgressMessage, retrying)
     } else if (this.blockingLoad === false) {
       this.hideLoading()
     }
@@ -160,7 +165,7 @@ export default class extends Controller {
     this.frameTarget.src = url
   }
 
-  showLoading(status, errorMessage, progressMessage = null) {
+  showLoading(status, errorMessage, progressMessage = null, retrying = false) {
     if (!this.hasLoadingTarget) return
 
     if (this.hasMessageTarget) {
@@ -170,6 +175,8 @@ export default class extends Controller {
     if (this.hasDetailTarget) {
       if (status === "failed") {
         this.detailTarget.textContent = errorMessage || "Try again in a moment."
+      } else if (retrying) {
+        this.detailTarget.textContent = "The last live render stalled, so we started a fresh retry automatically."
       } else {
         this.detailTarget.textContent = "This packet is building its live preview. It will appear automatically as soon as the working PDF is ready."
       }
