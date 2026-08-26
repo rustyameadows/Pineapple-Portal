@@ -121,6 +121,7 @@ module Documents
         report_progress(stage: :uploading_pdf)
         storage_key = persist_working_pdf(bundle.pdf_data)
         report_progress(stage: :finalizing_pdf)
+        check_cancelled!
 
         mirror_working_copy!(
           storage_uri: storage_key,
@@ -205,7 +206,8 @@ module Documents
           build.reload
         end
 
-        raise CancelledError, "Compile cancelled" if build.destroyed? || build.cancelled?
+        inactive = build.respond_to?(:active?) ? !build.active? : build.cancelled?
+        raise CancelledError, "Compile cancelled" if build.destroyed? || inactive
       end
 
       def packet_bundle

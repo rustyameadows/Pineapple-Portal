@@ -102,6 +102,14 @@
                             class: "button button--ghost button--small",
                             target: "_blank",
                             rel: "noopener" %>
+                <% if live_rebuild_available %>
+                  <button type="button"
+                          class="button button--ghost button--small"
+                          data-action="generated-segment-dialog#open"
+                          aria-haspopup="dialog">
+                    Rebuild live PDF
+                  </button>
+                <% end %>
               </div>
             </div>
             <div class="generated-builder__pdf-status"
@@ -156,7 +164,7 @@
                   </header>
                   <div class="generated-builder__overlay-body generated-builder__segment-dialog-body">
                     <p class="generated-builder__live-rebuild-copy">
-                      We’ll clear the current live build and rerender the packet from source so the working PDF is fully fresh. Saved snapshots stay untouched.
+                      We’ll rerender the packet from source so the working PDF is fully fresh. The last successful live PDF and saved snapshots stay available while it rebuilds.
                     </p>
                   </div>
                   <footer class="generated-builder__overlay-actions generated-builder__segment-dialog-actions">

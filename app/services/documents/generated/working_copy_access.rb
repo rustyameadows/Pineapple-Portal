@@ -2,6 +2,7 @@ module Documents
   module Generated
     class WorkingCopyAccess
       FAILED_BUILD_RETRY_COOLDOWN = 30.seconds
+      AUTOMATIC_RETRY_LIMIT = 1
 
       Result = Struct.new(
         :build,
@@ -108,7 +109,8 @@ module Documents
         return false if definition_document.active_working_build.present?
 
         latest_build = definition_document.latest_working_build
-        if latest_build&.failed? && latest_build.manifest_hash == manifest.manifest_hash
+        if latest_build&.failed? && failed_build_matches_manifest?(latest_build, manifest.manifest_hash)
+          return false unless automatic_retry_allowed?(manifest.manifest_hash)
           return true if stale_build_recovered
 
           return failed_build_retry_due?(latest_build)
@@ -132,6 +134,18 @@ module Documents
         return true if retry_reference_time.blank?
 
         retry_reference_time <= FAILED_BUILD_RETRY_COOLDOWN.ago
+      end
+
+      def failed_build_matches_manifest?(build, manifest_hash)
+        build.manifest_hash.blank? || build.manifest_hash == manifest_hash
+      end
+
+      def automatic_retry_allowed?(manifest_hash)
+        consecutive_failures = definition_document.working_builds.recent_first.limit(AUTOMATIC_RETRY_LIMIT + 1).take_while do |build|
+          build.failed? && failed_build_matches_manifest?(build, manifest_hash)
+        end
+
+        consecutive_failures.length <= AUTOMATIC_RETRY_LIMIT
       end
 
       def reset_missing_state!

@@ -792,6 +792,7 @@ module Documents
       assert_response :success
       assert_select ".generated-builder__pdf-status-actions", count: 0
       assert_select ".generated-builder__live-pill[hidden]", count: 1
+      assert_select ".generated-builder__workspace-actions--pdf button[data-action='generated-segment-dialog#open']", text: "Rebuild live PDF", count: 1
       assert_select "dialog.generated-builder__live-rebuild-dialog", count: 1
       assert_select "form.generated-builder__inline-form[action='#{rebuild_live_event_documents_generated_path(@event, @document.logical_id)}']", count: 1
     end

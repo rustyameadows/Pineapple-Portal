@@ -5,7 +5,7 @@ module Documents
 
       def perform(build_id)
         build = DocumentBuild.find(build_id)
-        return if build.destroyed? || build.cancelled? || build.succeeded?
+        return unless build.active?
 
         mirror_legacy_working_refresh_started(build) if build.working?
         build.mark_running!
@@ -16,8 +16,8 @@ module Documents
       rescue BuildRunner::CancelledError
         build&.mark_cancelled!
       rescue StandardError => e
-        build&.mark_failed!(e)
-        mirror_legacy_working_failure(build, e) if build&.working?
+        transitioned_to_failed = build&.mark_failed!(e)
+        mirror_legacy_working_failure(build, e) if transitioned_to_failed && build&.working?
         raise
       end
 

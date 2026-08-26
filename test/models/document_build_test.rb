@@ -73,6 +73,20 @@ class DocumentBuildTest < ActiveSupport::TestCase
     assert_equal "Live PDF render stalled after 10 minutes with no progress. Last update: Rendering pages 4/10: Vendor Contacts.", build.stale_error_message
   end
 
+  test "a terminal build cannot be overwritten by a late success" do
+    build = @document.builds.create!(
+      status: DocumentBuild::STATUSES[:running],
+      build_kind: DocumentBuild::BUILD_KINDS[:working]
+    )
+    result = Struct.new(:page_count, :file_size, :checksum_sha256).new(4, 1024, "late-sha")
+
+    build.mark_failed!("stalled")
+
+    assert_equal false, build.mark_succeeded!(result)
+    assert build.reload.failed?
+    assert_equal "stalled", build.error_message
+  end
+
   test "builds default to snapshot and can be scoped by kind" do
     snapshot_build = @document.builds.create!(status: DocumentBuild::STATUSES[:pending])
     working_build = @document.builds.create!(

@@ -44,51 +44,63 @@ class DocumentBuild < ApplicationRecord
   before_validation :assign_defaults, on: :create
 
   def mark_running!
-    return if cancelled?
+    with_lock do
+      reload
+      next false unless active?
 
-    update!(
-      status: STATUSES[:running],
-      started_at: started_at || Time.current,
-      error_message: nil
-    )
+      update!(
+        status: STATUSES[:running],
+        started_at: started_at || Time.current,
+        error_message: nil
+      )
+    end
   end
 
   def mark_succeeded!(result)
-    return if cancelled?
+    with_lock do
+      reload
+      next false unless active?
 
-    attrs = {
-      status: STATUSES[:succeeded],
-      finished_at: Time.current,
-      compiled_page_count: result.page_count,
-      file_size: result.file_size,
-      checksum_sha256: result.checksum_sha256,
-      error_message: nil
-    }
-    attrs[:storage_uri] = result.storage_uri if result.respond_to?(:storage_uri)
-    attrs[:manifest_hash] = result.manifest_hash if result.respond_to?(:manifest_hash)
-    attrs[:page_numbers] = result.page_numbers if result.respond_to?(:page_numbers) && !result.page_numbers.nil?
+      attrs = {
+        status: STATUSES[:succeeded],
+        finished_at: Time.current,
+        compiled_page_count: result.page_count,
+        file_size: result.file_size,
+        checksum_sha256: result.checksum_sha256,
+        error_message: nil
+      }
+      attrs[:storage_uri] = result.storage_uri if result.respond_to?(:storage_uri)
+      attrs[:manifest_hash] = result.manifest_hash if result.respond_to?(:manifest_hash)
+      attrs[:page_numbers] = result.page_numbers if result.respond_to?(:page_numbers) && !result.page_numbers.nil?
 
-    update!(attrs)
+      update!(attrs)
+    end
   end
 
   def mark_failed!(error)
-    return if cancelled?
+    with_lock do
+      reload
+      next false unless active?
 
-    update!(
-      status: STATUSES[:failed],
-      finished_at: Time.current,
-      error_message: error_message_from(error)
-    )
+      update!(
+        status: STATUSES[:failed],
+        finished_at: Time.current,
+        error_message: error_message_from(error)
+      )
+    end
   end
 
   def mark_cancelled!
-    return if cancelled?
+    with_lock do
+      reload
+      next false unless active?
 
-    update!(
-      status: STATUSES[:cancelled],
-      finished_at: Time.current,
-      error_message: nil
-    )
+      update!(
+        status: STATUSES[:cancelled],
+        finished_at: Time.current,
+        error_message: nil
+      )
+    end
   end
 
   def cancelable?
