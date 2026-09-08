@@ -138,12 +138,12 @@ module GeneratedDocumentsHelper
     return { state: :missing } unless uploaded_document
 
     current_hash = Documents::Generated::SegmentHasher.call(source)
-    state = if segment.last_render_error.present?
+    state = if segment.cached? && source.cache_stale?(current_hash)
+              :new_version
+    elsif segment.last_render_error.present?
               :failed
     elsif !segment.cached?
               :preparing
-    elsif source.cache_stale?(current_hash)
-              :new_version
     else
               :ready
     end
