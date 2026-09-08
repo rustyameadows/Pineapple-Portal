@@ -4,6 +4,12 @@ require "digest"
 module Documents
   module Generated
     class PacketBundle
+      OPTIONAL_CONTENT_ERROR = "Optional Content PDF files aren't supported".freeze
+      LAYERED_PDF_ERROR = "This PDF contains layers (optional content) and cannot be safely combined. " \
+                          "Flatten or re-export it, upload a new version, then rebuild the live PDF.".freeze
+      UNREADABLE_PDF_ERROR = "This PDF could not be safely combined. " \
+                             "Re-export it, upload a new version, then rebuild the live PDF.".freeze
+
       PreparedEntries = Struct.new(:entries, :rendered_entries, :manifest_hash, keyword_init: true)
       Result = Struct.new(
         :entries,
@@ -30,7 +36,6 @@ module Documents
       end
 
       def build_from_prepared(prepared)
-        report_progress(stage: :assembling_pdf)
         compiled_pdf = stitch_segments(prepared.rendered_entries)
         if page_numbers
           report_progress(stage: :adding_page_numbers)
@@ -137,22 +142,68 @@ module Documents
       def stitch_segments(rendered_entries)
         combined_pdf = CombinePDF.new
 
-        rendered_entries.each do |entry|
+        rendered_entries.each_with_index do |entry, index|
           check_cancelled!
-          pdf_data = segment_storage.download(entry[:source].cached_pdf_key)
-          raise Compiler::CompileError, "Cached PDF not found for #{entry[:source].display_title.inspect}" unless pdf_data
+          source = entry[:source]
+          report_progress(
+            stage: :assembling_pdf,
+            message: "Assembling PDF #{index + 1}/#{rendered_entries.length}: #{source.display_title}",
+            current: index + 1,
+            total: rendered_entries.length
+          )
+          pdf_data = segment_storage.download(source.cached_pdf_key)
+          raise Compiler::CompileError, "Cached PDF not found for #{source.display_title.inspect}" unless pdf_data
 
           buffer = pdf_data.respond_to?(:read) ? pdf_data.read : pdf_data
           buffer = buffer.to_s
           buffer.force_encoding(Encoding::BINARY)
-          raise Compiler::CompileError, "Cached PDF empty for #{entry[:source].display_title.inspect}" if buffer.empty?
+          raise Compiler::CompileError, "Cached PDF empty for #{source.display_title.inspect}" if buffer.empty?
 
-          parsed_pdf = CombinePDF.parse(buffer)
+          parsed_pdf = parse_segment_pdf(buffer, entry)
           entry[:page_count] = parsed_pdf.pages.count
           combined_pdf << parsed_pdf
         end
 
         combined_pdf.to_pdf
+      end
+
+      def parse_segment_pdf(buffer, entry)
+        parsed_pdf = CombinePDF.parse(buffer)
+        clear_source_error(entry)
+        parsed_pdf
+      rescue CombinePDF::ParsingError => e
+        source = entry[:source]
+        source_error = source_error_message(e)
+        record_source_error(entry, source_error)
+        Rails.logger.error(
+          "[PacketBundle] Unable to assemble #{source.class.name}##{source.id} " \
+          "(#{source.display_title.inspect}): #{e.class}: #{e.message}"
+        )
+        raise Compiler::CompileError,
+              "PDF #{source.display_title.inspect} could not be added to the packet. #{source_error}"
+      end
+
+      def source_error_message(error)
+        return LAYERED_PDF_ERROR if error.message.include?(OPTIONAL_CONTENT_ERROR)
+
+        UNREADABLE_PDF_ERROR
+      end
+
+      def record_source_error(entry, message)
+        update_current_source(entry, last_render_error: message)
+      end
+
+      def clear_source_error(entry)
+        return if entry[:source].last_render_error.blank?
+
+        update_current_source(entry, last_render_error: nil)
+      end
+
+      def update_current_source(entry, attributes)
+        source = entry[:source]
+        source.class
+              .where(id: source.id, render_hash: entry[:render_hash])
+              .update_all(attributes.merge(updated_at: Time.current)) # rubocop:disable Rails/SkipsModelValidations
       end
 
       def apply_page_numbers(compiled_pdf, rendered_entries)

@@ -257,6 +257,28 @@ module Documents
       assert_select ".generated-builder__status-tag--link", text: /CACHED/, count: 0
     end
 
+    test "edit identifies a layered uploaded pdf on its packet row" do
+      uploaded_document = create_uploaded_pdf(title: "Saturday Reception Seating Chart")
+      upload_source = GeneratedPacketSource.find_or_create_upload_source!(@event, uploaded_document)
+      error_message = Documents::Generated::PacketBundle::LAYERED_PDF_ERROR
+      upload_source.update!(
+        render_hash: Documents::Generated::SegmentHasher.call(upload_source),
+        cached_pdf_key: "segments/saturday-reception-seating-chart.pdf",
+        cached_pdf_generated_at: Time.current,
+        cached_page_count: 21,
+        cached_file_size: 578_614,
+        last_render_error: error_message
+      )
+      @document.packet_placements.create!(source: upload_source, position: 1)
+
+      get edit_event_documents_generated_url(@event, @document.logical_id)
+
+      assert_response :success
+      assert_select ".generated-builder__toc-title", text: "Saturday Reception Seating Chart", count: 1
+      assert_select ".generated-builder__status-tag--error[title='#{error_message}']", text: /PDF HAS LAYERS · V1/, count: 1
+      assert_select ".generated-builder__status-tag--error .generated-builder__status-copy", text: /Flatten or re-export it/, count: 1
+    end
+
     test "edit shows when a newer uploaded pdf version is available" do
       original = create_uploaded_pdf(title: "Ceremony Insert", created_at: Time.utc(2026, 7, 12, 18, 42))
       upload_source = GeneratedPacketSource.find_or_create_upload_source!(@event, original)
@@ -265,7 +287,8 @@ module Documents
         cached_pdf_key: "segments/ceremony-insert-v1.pdf",
         cached_pdf_generated_at: Time.utc(2026, 7, 12, 18, 43),
         cached_page_count: 2,
-        cached_file_size: 1024
+        cached_file_size: 1024,
+        last_render_error: Documents::Generated::PacketBundle::LAYERED_PDF_ERROR
       )
       @document.packet_placements.create!(source: upload_source, position: 1)
       replacement_uploaded_at = Time.utc(2026, 7, 13, 19, 5)
@@ -846,6 +869,51 @@ module Documents
       assert_equal successful_build.viewer_token, @document.reload.working_viewer_token
       assert_select ".generated-builder__pdf-status", text: /Rendering pages 2\/5/
       assert_select ".generated-builder__pdf-status", text: /Showing the last live version until the refreshed packet is ready/
+    end
+
+    test "show identifies the uploaded pdf that prevented live assembly" do
+      placement = create_page_placement(
+        view_key: DocumentSegment::TEXT_PAGE_VIEW_KEY,
+        title: "Saturday Reception Seating Chart",
+        position: 1,
+        options: { "body_markdown" => "## Seating chart" }
+      )
+      render_hash = "layered-pdf-hash"
+      manifest_hash = placement_manifest_hash(placement, render_hash)
+      error_message =
+        "PDF \"Saturday Reception Seating Chart\" could not be added to the packet. " \
+        "#{Documents::Generated::PacketBundle::LAYERED_PDF_ERROR}"
+
+      placement.source.update!(
+        render_hash: render_hash,
+        cached_pdf_key: "segments/saturday-reception-seating-chart.pdf",
+        cached_pdf_generated_at: Time.current,
+        cached_page_count: 21,
+        cached_file_size: 578_614,
+        last_render_error: Documents::Generated::PacketBundle::LAYERED_PDF_ERROR
+      )
+      @document.builds.create!(
+        build_kind: DocumentBuild::BUILD_KINDS[:working],
+        status: DocumentBuild::STATUSES[:failed],
+        manifest_hash: manifest_hash,
+        page_numbers: true,
+        progress_stage: DocumentBuild::PROGRESS_STAGES[:assembling_pdf],
+        progress_message: "Assembling PDF 1/1: Saturday Reception Seating Chart",
+        progress_current: 1,
+        progress_total: 1,
+        last_progress_at: Time.current,
+        error_message: error_message,
+        finished_at: Time.current
+      )
+
+      Documents::Generated::SegmentHasher.stub :call, ->(_source) { render_hash } do
+        get event_documents_generated_url(@event, @document.logical_id)
+      end
+
+      assert_response :success
+      assert_select ".generated-builder__pdf-status", text: /Assembling PDF 1\/1: Saturday Reception Seating Chart/
+      assert_select ".generated-builder__pdf-status", text: /PDF "Saturday Reception Seating Chart" could not be added/
+      assert_select ".generated-builder__pdf-status", text: /contains layers \(optional content\)/
     end
 
     test "show renders the live update timestamp with browser local time hooks" do

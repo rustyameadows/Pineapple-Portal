@@ -44,9 +44,18 @@
       <% end %>
     </span>
   <% when :failed %>
-    <span class="generated-builder__status-tag generated-builder__status-tag--error"
-          title="<%= segment.last_render_error %>">
-      PDF preparation failed<%= " · #{version_label}" if version_label %>
+    <% failure_label = if segment.last_render_error.match?(/layers|optional content/i)
+                         "PDF HAS LAYERS"
+                       else
+                         "PDF PREPARATION FAILED"
+                       end %>
+    <span class="generated-builder__status-tag generated-builder__status-tag--error generated-builder__status-tag--detail"
+          title="<%= segment.last_render_error %>"
+          aria-label="<%= [failure_label, version_label, segment.last_render_error].compact.join('. ') %>">
+      <span class="generated-builder__status-emphasis">
+        <%= failure_label %><%= " · #{version_label}" if version_label %>
+      </span>
+      <span class="generated-builder__status-copy">· <%= segment.last_render_error %></span>
     </span>
   <% when :missing %>
     <span class="generated-builder__status-tag generated-builder__status-tag--error">PDF missing</span>
