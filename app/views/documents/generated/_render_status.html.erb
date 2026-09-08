@@ -6,7 +6,7 @@
                  end %>
 
 <% if segment.pdf_asset? %>
-  <% pdf_status = generated_uploaded_pdf_status(segment) %>
+  <% pdf_status = local_assigns[:pdf_status] || generated_uploaded_pdf_status(segment) %>
   <% uploaded_document = pdf_status[:document] %>
   <% uploaded_at = if uploaded_document&.created_at.present?
                      content_tag(
@@ -21,7 +21,7 @@
                      )
                    end %>
   <% version_label = "V#{uploaded_document.version}" if uploaded_document %>
-  <% page_count = segment.cached_page_count.present? ? pluralize(segment.cached_page_count, "page").upcase : nil %>
+  <% page_count = "#{segment.cached_page_count} PG" if segment.cached_page_count.present? %>
 
   <% case pdf_status[:state] %>
   <% when :ready %>
@@ -44,19 +44,18 @@
       <% end %>
     </span>
   <% when :failed %>
-    <% failure_label = if segment.last_render_error.match?(/layers|optional content/i)
-                         "PDF HAS LAYERS"
-                       else
-                         "PDF PREPARATION FAILED"
-                       end %>
-    <span class="generated-builder__status-tag generated-builder__status-tag--error generated-builder__status-tag--detail"
-          title="<%= segment.last_render_error %>"
-          aria-label="<%= [failure_label, version_label, segment.last_render_error].compact.join('. ') %>">
+    <% failure_label = "PDF ERROR" %>
+    <% failure_aria_label = "#{[failure_label, version_label].compact.join(' · ')}. #{segment.last_render_error} Open PDF settings." %>
+    <button type="button"
+            class="generated-builder__status-tag generated-builder__status-tag--error generated-builder__status-tag--button"
+            title="<%= segment.last_render_error %>"
+            aria-label="<%= failure_aria_label %>"
+            aria-haspopup="dialog"
+            data-action="generated-segment-dialog#open">
       <span class="generated-builder__status-emphasis">
         <%= failure_label %><%= " · #{version_label}" if version_label %>
       </span>
-      <span class="generated-builder__status-copy">· <%= segment.last_render_error %></span>
-    </span>
+    </button>
   <% when :missing %>
     <span class="generated-builder__status-tag generated-builder__status-tag--error">PDF missing</span>
   <% else %>
@@ -69,7 +68,7 @@
     </span>
   <% end %>
 <% elsif segment.cached? %>
-  <% page_count = segment.cached_page_count.present? ? pluralize(segment.cached_page_count, "page").upcase : nil %>
+  <% page_count = "#{segment.cached_page_count} PG" if segment.cached_page_count.present? %>
   <% cached_label = if segment.cached_pdf_generated_at.present?
                       content_tag(
                         :time,

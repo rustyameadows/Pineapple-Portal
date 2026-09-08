@@ -218,6 +218,7 @@ module Documents
       force_path = force_build_event_documents_generated_segment_path(@event, @document.logical_id, cached_placement)
       assert_select "form[action^='#{force_path}'] button", text: "Force build", count: 1
       assert_select "button", text: "Force build", count: 1
+      assert_select ".generated-builder__status-tag--link", text: /CACHED.*1 PG/m, count: 1
       assert_select ".generated-builder__toc-head span", text: "Build", count: 1
       assert_select "a", text: "Manage pages", count: 0
     end
@@ -252,7 +253,7 @@ module Documents
       get edit_event_documents_generated_url(@event, @document.logical_id)
 
       assert_response :success
-      assert_select ".generated-builder__status-tag--link", text: /READY · LATEST V1.*UPLOADED.*2 PAGES/m, count: 1
+      assert_select ".generated-builder__status-tag--link", text: /READY · LATEST V1.*UPLOADED.*2 PG/m, count: 1
       assert_select "time[data-controller='local-time'][datetime='#{uploaded_at.iso8601}']", count: 1
       assert_select ".generated-builder__status-tag--link", text: /CACHED/, count: 0
     end
@@ -275,8 +276,10 @@ module Documents
 
       assert_response :success
       assert_select ".generated-builder__toc-title", text: "Saturday Reception Seating Chart", count: 1
-      assert_select ".generated-builder__status-tag--error[title='#{error_message}']", text: /PDF HAS LAYERS · V1/, count: 1
-      assert_select ".generated-builder__status-tag--error .generated-builder__status-copy", text: /Flatten or re-export it/, count: 1
+      assert_select ".generated-builder__toc-item--error", count: 1
+      assert_select "button.generated-builder__status-tag--error[title='#{error_message}'][data-action='generated-segment-dialog#open']", text: /PDF ERROR · V1/, count: 1
+      assert_select ".generated-builder__toc-meta .generated-builder__status-copy", text: /Flatten or re-export it/, count: 0
+      assert_select ".generated-builder__segment-error", text: /PDF can’t be used.*Flatten or re-export it/m, count: 1
     end
 
     test "edit shows when a newer uploaded pdf version is available" do
@@ -333,7 +336,7 @@ module Documents
       assert_select ".generated-builder__toc-usage", count: 0
       assert_select ".generated-builder__toc-meta .generated-builder__status-tag", text: "Page", count: 0
       assert_select ".generated-builder__toc-meta .generated-builder__status-tag", text: "Not rendered", count: 1
-      assert_select ".generated-builder__toc-meta .generated-builder__status-tag[title='Used in: Generated Packet, Vendor Packet']", text: "Shared in 2 packets", count: 1
+      assert_select ".generated-builder__toc-meta .generated-builder__status-tag[title='Used in: Generated Packet, Vendor Packet']", text: "2 packets", count: 1
     end
 
     test "show keeps packet page management off the preview screen" do
