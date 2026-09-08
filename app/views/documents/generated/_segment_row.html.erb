@@ -3,6 +3,7 @@
   shared_packets = Array(source_usage_labels[segment.source.id])
   shared_packets_tooltip = "Used in: #{shared_packets.join(', ')}" if shared_packets.any?
   segment_warning = segment_warnings[segment.id]
+  segment_pdf_status = generated_uploaded_pdf_status(segment) if segment.pdf_asset?
   show_toc_meta = !segment.group? || shared_packets.size > 1 || segment_warning.present?
   packet_group_placements = Array(local_assigns.fetch(:packet_group_placements, []))
   parent_packet_document = local_assigns.fetch(:parent_packet_document, nil)
@@ -19,6 +20,7 @@
   item_classes = ["generated-builder__toc-item"]
   item_classes << "generated-builder__toc-item--group" if segment.group?
   item_classes << "generated-builder__toc-item--child" if nested
+  item_classes << "generated-builder__toc-item--error" if segment_pdf_status&.dig(:state) == :failed
 %>
 
 <div class="<%= item_classes.join(' ') %>"
@@ -47,13 +49,14 @@
                          segment: segment,
                          event: event,
                          document: document,
-                         return_to: return_to %>
+                         return_to: return_to,
+                         pdf_status: segment_pdf_status %>
             <% end %>
             <% if shared_packets.size > 1 %>
               <span class="generated-builder__status-tag generated-builder__status-tag--warning"
                     title="<%= shared_packets_tooltip %>"
                     aria-label="<%= "Shared in #{shared_packets.size} packets. #{shared_packets_tooltip}" %>">
-                Shared in <%= shared_packets.size %> packets
+                <%= shared_packets.size %> packets
               </span>
             <% end %>
             <% if segment_warning.present? %>
@@ -146,6 +149,13 @@
                         local: true,
                         class: "generated-builder__form generated-builder__segment-dialog-form" do |form| %>
             <div class="generated-builder__overlay-body generated-builder__segment-dialog-body">
+              <% if segment_pdf_status&.dig(:state) == :failed %>
+                <div class="generated-builder__segment-error" role="alert">
+                  <strong>PDF can’t be used</strong>
+                  <p><%= segment.last_render_error %></p>
+                </div>
+              <% end %>
+
               <div class="generated-builder__form-row">
                 <%= form.label :title, "Page title" %>
                 <%= form.text_field :title, value: segment.display_title %>
