@@ -22,6 +22,26 @@ module Events
       assert_equal "planner", team_member.member_role
     end
 
+    test "adds admin to event planning team" do
+      admin = User.create!(
+        name: "Alex Admin",
+        email: "alex-admin@example.test",
+        role: User::ROLES[:admin],
+        password: "password123",
+        password_confirmation: "password123"
+      )
+
+      assert_difference("EventTeamMember.count", 1) do
+        post event_team_members_url(@event), params: {
+          event_team_member: { user_id: admin.id }
+        }
+      end
+
+      assert_redirected_to planners_event_settings_url(@event)
+      team_member = EventTeamMember.find_by!(event: @event, user: admin)
+      assert_equal EventTeamMember::TEAM_ROLES[:planner], team_member.member_role
+    end
+
     test "planner cannot add team members" do
       delete logout_url
       log_in_as(users(:one))

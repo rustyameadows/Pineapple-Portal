@@ -78,7 +78,7 @@ module EventsSettingsPageSupport
 
     assigned_user_ids = @event.event_team_members.pluck(:user_id)
 
-    @available_planners = User.planners.order(:name)
+    @available_planners = User.planning_team_candidates.order(:name)
     @available_planners = @available_planners.where.not(id: assigned_user_ids) if assigned_user_ids.any?
   end
 
