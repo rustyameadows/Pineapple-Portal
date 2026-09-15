@@ -56,6 +56,7 @@ class User < ApplicationRecord
   validate :password_required_for_account
   validate :password_confirmation_matches
   scope :planners, -> { where(role: ROLES[:planner]) }
+  scope :planning_team_candidates, -> { where(role: [ROLES[:planner], ROLES[:admin]]) }
   scope :clients, -> { where(role: ROLES[:client]) }
 
   def planner_or_admin?

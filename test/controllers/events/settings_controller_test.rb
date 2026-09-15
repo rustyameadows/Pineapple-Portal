@@ -63,6 +63,25 @@ module Events
       assert_select "h1", text: "Planning Team"
     end
 
+    test "planner picker includes unassigned admins and excludes assigned users" do
+      unassigned_admin = User.create!(
+        name: "Alex Admin",
+        email: "alex-admin@example.test",
+        role: User::ROLES[:admin],
+        password: "password123",
+        password_confirmation: "password123"
+      )
+
+      get planners_event_settings_url(@event)
+
+      assert_response :success
+      assert_select "select[name='event_team_member[user_id]']" do
+        assert_select "option[value='#{unassigned_admin.id}']", text: "Alex Admin", count: 1
+        assert_select "option[value='#{users(:two).id}']", count: 0
+        assert_select "option[value='#{users(:client_contact).id}']", count: 0
+      end
+    end
+
     test "renders vendors page" do
       generic_vendor_count = Vendors::PlanningCompany.excluding(@event.event_vendors).count
       available_global_vendor = GlobalVendor.create!(
